@@ -8,32 +8,63 @@ function initials(name) {
   return (name || '?').trim().split(/\s+/).slice(-2).map((w) => w[0]).join('').toUpperCase();
 }
 
+// Các mục dùng chung luôn hiển thị dù đang ở phòng ban nào (điều hướng
+// nhanh) — không tính là "1 phòng ban" nên không bị lọc theo ngữ cảnh.
+const ALWAYS_VISIBLE_HREFS = new Set(['/dashboard.html', '/notifications.html', '/profile.html']);
+
+function findActiveGroup(currentPage) {
+  if (!currentPage) return null;
+  return NAV_CONFIG.find((group) =>
+    group.sectionKey && group.items.some((item) => currentPage.endsWith(item.href))
+  );
+}
+
 function renderNav(profile, currentPage) {
   const sidebarNav = document.getElementById('sidebarNav');
   if (!sidebarNav) return;
   sidebarNav.innerHTML = '';
-  NAV_CONFIG.forEach((group) => {
-    const visibleItems = group.items.filter((item) => item.visible(profile));
-    if (visibleItems.length === 0) return;
-    if (group.sectionKey) {
-      const heading = document.createElement('div');
-      heading.className = 'sidebar__section';
-      heading.textContent = t(group.sectionKey, group.section || '');
-      sidebarNav.appendChild(heading);
+
+  // 1) Mục dùng chung + "Trang chủ" để quay lại màn hình chọn phòng ban
+  const commonGroup = NAV_CONFIG.find((g) => !g.sectionKey);
+  if (commonGroup) {
+    const commonItems = commonGroup.items.filter(
+      (item) => item.visible(profile) && ALWAYS_VISIBLE_HREFS.has(item.href)
+    );
+    if (commonItems.length > 0) {
+      const ul = document.createElement('ul');
+      ul.className = 'sidebar__nav';
+      commonItems.forEach((item) => ul.appendChild(buildNavLi(item, profile, currentPage)));
+      sidebarNav.appendChild(ul);
     }
-    const ul = document.createElement('ul');
-    ul.className = 'sidebar__nav';
-    visibleItems.forEach((item) => {
-      const li = document.createElement('li');
-      const a = document.createElement('a');
-      a.href = item.href;
-      a.innerHTML = `<span class="icon">${item.icon}</span><span>${esc(t(item.labelKey, item.label))}</span>`;
-      if (currentPage && currentPage.endsWith(item.href)) a.classList.add('active');
-      li.appendChild(a);
-      ul.appendChild(li);
-    });
-    sidebarNav.appendChild(ul);
-  });
+  }
+
+  // 2) CHỈ hiển thị đúng 1 nhóm phòng ban tương ứng với trang đang mở —
+  // trước đây liệt kê hết mọi phòng ban cùng lúc gây rối mắt.
+  const activeGroup = findActiveGroup(currentPage);
+  if (!activeGroup) return;
+
+  const visibleItems = activeGroup.items.filter((item) => item.visible(profile));
+  if (visibleItems.length === 0) return;
+
+  const heading = document.createElement('div');
+  heading.className = 'sidebar__section';
+  heading.textContent = t(activeGroup.sectionKey, activeGroup.section || '');
+  sidebarNav.appendChild(heading);
+
+  const ul = document.createElement('ul');
+  ul.className = 'sidebar__nav';
+  visibleItems.forEach((item) => ul.appendChild(buildNavLi(item, profile, currentPage)));
+  sidebarNav.appendChild(ul);
+}
+
+function buildNavLi(item, profile, currentPage) {
+  const li = document.createElement('li');
+  const a = document.createElement('a');
+  a.href = item.href;
+  a.innerHTML = `<span class="icon">${item.icon}</span><span>${esc(t(item.labelKey, item.label))}</span>`;
+  if (currentPage && currentPage.endsWith(item.href)) a.classList.add('active');
+  li.appendChild(a);
+  return li;
 }
 
 function esc(s) { return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
@@ -152,6 +183,13 @@ export async function bootShell() {
   renderNav(profile, document.body.dataset.page || location.pathname);
   applyTranslations();
   injectLangSwitcher(profile.id);
+
+  // Bấm logo để quay về màn hình chọn phòng ban (Trang chủ)
+  const brand = document.querySelector('.sidebar__brand');
+  if (brand) {
+    brand.style.cursor = 'pointer';
+    brand.addEventListener('click', () => { window.location.href = '/dashboard.html'; });
+  }
   document.addEventListener('ais:langchange', () => {
     renderNav(profile, document.body.dataset.page || location.pathname);
     applyTranslations();
