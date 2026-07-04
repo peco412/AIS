@@ -1,5 +1,6 @@
 /* =====================================================================
-   DASHBOARD SHELL
+   DASHBOARD SHELL — phong cách macOS System Settings: sidebar kính mờ
+   sáng (vibrancy), topbar kính mờ, nội dung dạng thẻ nổi khối mềm.
    ===================================================================== */
 
 .app-shell {
@@ -13,18 +14,23 @@
 }
 
 @media (max-width: 960px) {
-  .app-shell {
-    grid-template-columns: 0 1fr;
+  .app-shell { grid-template-columns: 0 1fr; }
+  .sidebar {
+    position: fixed;
+    transform: translateX(-100%);
+    transition: transform var(--dur-base) var(--ease-spring);
+    box-shadow: var(--shadow-lg);
   }
-  .sidebar { transform: translateX(-100%); transition: transform 0.2s ease; }
   .sidebar.open { transform: translateX(0); }
 }
 
-/* ---------- Sidebar ---------- */
+/* ---------- Sidebar (kính mờ sáng) ---------- */
 .sidebar {
   grid-area: sidebar;
-  background: #101820;
-  color: #cbd4dd;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  color: var(--ink-soft);
   display: flex;
   flex-direction: column;
   position: sticky;
@@ -32,65 +38,74 @@
   height: 100vh;
   overflow-y: auto;
   z-index: 40;
+  border-right: 1px solid var(--separator);
 }
 
 .sidebar__brand {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 18px 20px;
+  padding: 20px 20px 16px;
   font-family: var(--font-display);
   font-weight: 800;
-  color: #fff;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  font-size: 15px;
+  color: var(--ink);
 }
-.sidebar__brand .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); }
+.sidebar__brand .dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 4px rgba(var(--accent-rgb), 0.15);
+}
 .sidebar__brand small {
-  display: block; font-weight: 500; font-size: 11px; color: #8592a1; margin-top: 2px;
+  display: block; font-weight: 500; font-size: 11px; color: var(--muted); margin-top: 2px;
 }
 
 .sidebar__section {
-  padding: 16px 12px 6px;
+  padding: 18px 16px 6px;
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #5c6773;
+  color: var(--muted);
 }
 
-.sidebar__nav { list-style: none; margin: 0; padding: 0 8px; }
-.sidebar__nav li { margin-bottom: 2px; }
+.sidebar__nav { list-style: none; margin: 0; padding: 0 10px; }
+.sidebar__nav li { margin-bottom: 1px; }
 .sidebar__nav a {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 9px 12px;
+  padding: 8px 12px;
   border-radius: var(--radius-sm);
-  color: #cbd4dd;
+  color: var(--ink-soft);
   font-size: 13.5px;
   font-weight: 500;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
 }
-.sidebar__nav a:hover { background: rgba(255,255,255,0.06); color: #fff; }
+.sidebar__nav a:hover { background: rgba(0, 0, 0, 0.05); color: var(--ink); }
 .sidebar__nav a.active {
   background: var(--accent);
   color: #fff;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(var(--accent-rgb), 0.4);
 }
 .sidebar__nav .icon { width: 18px; text-align: center; opacity: 0.9; font-size: 14px; }
 
 .sidebar__footer {
   margin-top: auto;
-  padding: 14px 16px;
-  border-top: 1px solid rgba(255,255,255,0.08);
-  font-size: 11.5px;
-  color: #5c6773;
+  padding: 14px 20px;
+  border-top: 1px solid var(--separator);
+  font-size: 11px;
+  color: var(--muted);
 }
 
-/* ---------- Topbar ---------- */
+/* ---------- Topbar (kính mờ) ---------- */
 .topbar {
   grid-area: topbar;
-  background: var(--surface-card);
-  border-bottom: 1px solid var(--border);
+  background: var(--glass-bg-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-bottom: 1px solid var(--separator);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -111,34 +126,41 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 999px;
+  background: var(--surface-fill);
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
   padding: 7px 14px;
   width: 280px;
   color: var(--muted);
   font-size: 13px;
+  transition: background var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
+}
+.search-box:focus-within {
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.18);
 }
 .search-box input {
   border: none; background: transparent; outline: none; width: 100%; font-size: 13px; color: var(--ink);
 }
 
-.topbar__right { display: flex; align-items: center; gap: 18px; }
+.topbar__right { display: flex; align-items: center; gap: 16px; }
 
 .icon-btn {
   position: relative;
   border: none;
   background: transparent;
-  font-size: 17px;
+  font-size: 16px;
   cursor: pointer;
   color: var(--ink-soft);
-  padding: 6px;
-  border-radius: 999px;
+  width: 34px; height: 34px;
+  border-radius: var(--radius-pill);
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: background var(--dur-fast) var(--ease);
 }
-.icon-btn:hover { background: var(--surface); }
+.icon-btn:hover { background: var(--surface-fill); }
 .icon-btn .badge {
   position: absolute;
-  top: 2px; right: 2px;
+  top: 1px; right: 1px;
   background: var(--danger);
   color: #fff;
   font-size: 10px;
@@ -150,33 +172,34 @@
   align-items: center;
   justify-content: center;
   padding: 0 3px;
+  border: 1.5px solid var(--glass-bg-strong);
 }
 
 .user-chip {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 9px;
   cursor: pointer;
-  padding: 4px 8px 4px 4px;
-  border-radius: 999px;
-  border: 1px solid transparent;
+  padding: 4px 10px 4px 4px;
+  border-radius: var(--radius-pill);
+  transition: background var(--dur-fast) var(--ease);
 }
-.user-chip:hover { border-color: var(--border); }
+.user-chip:hover { background: var(--surface-fill); }
 .user-chip__avatar {
-  width: 32px; height: 32px; border-radius: 50%;
+  width: 30px; height: 30px; border-radius: 50%;
   background: var(--accent-tint);
   color: var(--accent-deep);
   display: flex; align-items: center; justify-content: center;
-  font-weight: 700; font-size: 13px;
+  font-weight: 700; font-size: 12.5px;
 }
 .user-chip__meta { line-height: 1.25; }
-.user-chip__meta .name { font-size: 13px; font-weight: 700; color: var(--ink); }
+.user-chip__meta .name { font-size: 13px; font-weight: 600; color: var(--ink); }
 .user-chip__meta .role { font-size: 11.5px; color: var(--muted); }
 
 /* ---------- Main ---------- */
 .main {
   grid-area: main;
-  padding: 24px 28px 60px;
+  padding: 28px 32px 60px;
   max-width: 1280px;
   width: 100%;
 }
@@ -185,44 +208,54 @@
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  margin-bottom: 20px;
+  margin-bottom: 22px;
   gap: 12px;
   flex-wrap: wrap;
 }
-.page-header h1 { font-size: 22px; }
-.page-header .sub { color: var(--muted); font-size: 13.5px; margin-top: 4px; }
+.page-header h1 { font-size: 24px; }
+.page-header .sub { color: var(--muted); font-size: 13.5px; margin-top: 5px; }
 
 /* Banner sinh nhật */
 .birthday-banner {
   display: none;
   align-items: center;
   gap: 14px;
-  background: linear-gradient(90deg, var(--accent-tint), #fff);
-  border: 1px solid var(--accent-tint);
+  background: var(--surface-card);
+  border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 16px 20px;
+  padding: 16px 22px;
   margin-bottom: 20px;
+  box-shadow: var(--shadow-sm);
 }
 .birthday-banner.show { display: flex; }
-.birthday-banner__icon { font-size: 26px; }
-.birthday-banner__text strong { color: var(--accent-deep); }
-.birthday-banner__text p { margin: 2px 0 0; font-size: 13px; color: var(--ink-soft); }
+.birthday-banner__icon {
+  font-size: 22px;
+  width: 44px; height: 44px; border-radius: var(--radius-md);
+  background: var(--accent-tint);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.birthday-banner__text strong { color: var(--ink); }
+.birthday-banner__text p { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
 
 /* Lưới thẻ tổng quan */
 .stat-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 14px;
-  margin-bottom: 24px;
+  margin-bottom: 26px;
 }
 .stat-card {
   background: var(--surface-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  padding: 16px 18px;
+  padding: 18px 20px;
+  box-shadow: var(--shadow-xs);
+  transition: box-shadow var(--dur-base) var(--ease), transform var(--dur-base) var(--ease);
 }
+.stat-card:hover { box-shadow: var(--shadow-sm); transform: translateY(-1px); }
 .stat-card .label { font-size: 12.5px; color: var(--muted); font-weight: 600; }
-.stat-card .value { font-family: var(--font-mono); font-size: 26px; font-weight: 600; margin-top: 6px; color: var(--ink); }
+.stat-card .value { font-family: var(--font-mono); font-size: 27px; font-weight: 600; margin-top: 6px; color: var(--ink); letter-spacing: -0.01em; }
 .stat-card .delta { font-size: 12px; margin-top: 4px; color: var(--success); }
 
 .panel-grid {
@@ -236,7 +269,8 @@
   background: var(--surface-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  padding: 18px 20px;
+  padding: 20px 22px;
+  box-shadow: var(--shadow-xs);
 }
 .panel h3 { font-size: 15px; margin-bottom: 12px; }
 .panel .empty-state {
@@ -247,15 +281,16 @@
 }
 
 .shortcut-list { list-style: none; margin: 0; padding: 0; }
-.shortcut-list li + li { border-top: 1px solid var(--border); }
+.shortcut-list li + li { border-top: 1px solid var(--separator); }
 .shortcut-list a {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 11px 2px;
+  padding: 12px 2px;
   font-size: 13.5px;
   color: var(--ink-soft);
   font-weight: 500;
+  transition: color var(--dur-fast) var(--ease);
 }
 .shortcut-list a:hover { color: var(--accent-deep); }
 

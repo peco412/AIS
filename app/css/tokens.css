@@ -1,61 +1,80 @@
 /* =====================================================================
-   ERP AIS — DESIGN TOKENS
-   Chủ thể: hệ thống nội bộ cho trung tâm Anh ngữ ALOHA / iLingo.
-   Người dùng: nhân viên hành chính, giáo viên, kế toán — dùng hằng ngày.
-   Ưu tiên: rõ ràng, quét nhanh, tin cậy — không phải trang bán hàng.
-   Accent đổi theo phân hệ đang chọn (thuộc tính data-division trên <html>).
+   ERP AIS — DESIGN TOKENS — phong cách Apple (macOS System Settings /
+   Big Sur–Sonoma): nền xám trung tính nhẹ, thẻ trắng nổi khối mềm, bo góc
+   lớn, chất liệu kính mờ (vibrancy) cho sidebar/topbar/modal, accent màu
+   bão hoà dùng tiết chế — đổi theo phân hệ đang chọn (data-division).
    ===================================================================== */
 
 :root {
-  /* Nền trung tính mát, không dùng tông kem/be mặc định */
-  --ink: #12181f;
-  --ink-soft: #3a4451;
-  --muted: #6b7684;
-  --surface: #f3f5f7;
+  /* Nền & bề mặt — hệ xám trung tính kiểu macOS (systemGroupedBackground) */
+  --ink: #1d1d1f;
+  --ink-soft: #48484a;
+  --muted: #86868b;
+  --surface: #f5f5f7;
   --surface-card: #ffffff;
-  --surface-sunken: #e9edf1;
-  --border: #e1e5ea;
-  --border-strong: #cbd2da;
+  --surface-sunken: #ebebf0;
+  --surface-fill: #f0f0f3;          /* nền input/nút phụ kiểu "filled" của macOS */
+  --border: rgba(0, 0, 0, 0.08);
+  --border-strong: rgba(0, 0, 0, 0.14);
+  --separator: rgba(0, 0, 0, 0.07);
 
-  --success: #1e8e5a;
-  --success-tint: #e5f5ee;
-  --warning: #c77c13;
-  --warning-tint: #fbf0df;
-  --danger: #c1432d;
-  --danger-tint: #fbe9e5;
+  /* Vật liệu kính mờ (vibrancy) cho sidebar/topbar/modal overlay */
+  --glass-bg: rgba(246, 246, 248, 0.78);
+  --glass-bg-strong: rgba(255, 255, 255, 0.82);
+  --glass-blur: saturate(180%) blur(20px);
 
-  /* Font: Be Vietnam Pro hỗ trợ dấu tiếng Việt tốt, không dùng Inter mặc định */
-  --font-display: 'Be Vietnam Pro', system-ui, sans-serif;
-  --font-body: 'Be Vietnam Pro', system-ui, sans-serif;
-  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --success: #1d8a4c;
+  --success-tint: #e3f6e9;
+  --warning: #b9740a;
+  --warning-tint: #fdf1dc;
+  --danger: #d3352f;
+  --danger-tint: #fce7e6;
 
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
+  /* Font: Be Vietnam Pro hỗ trợ dấu tiếng Việt tốt — dùng theo cách của
+     SF Pro: heading chặt tracking + đậm, body rộng rãi dễ đọc */
+  --font-display: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-body: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', monospace;
 
-  --shadow-sm: 0 1px 2px rgba(18, 24, 31, 0.06);
-  --shadow-md: 0 4px 16px rgba(18, 24, 31, 0.08);
-  --shadow-lg: 0 12px 32px rgba(18, 24, 31, 0.14);
+  /* Bo góc lớn dần, phong cách "continuous corner" của Apple */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-pill: 999px;
 
-  --sidebar-w: 264px;
-  --topbar-h: 64px;
+  /* Đổ bóng mềm, nhiều lớp, không gắt */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 20px 48px rgba(0, 0, 0, 0.16), 0 4px 12px rgba(0, 0, 0, 0.06);
+
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 0.15s;
+  --dur-base: 0.22s;
+
+  --sidebar-w: 260px;
+  --topbar-h: 60px;
 
   /* Mặc định trước khi chọn phân hệ */
   --accent: #0094d9;
-  --accent-deep: #06628f;
-  --accent-tint: #e4f4fc;
+  --accent-deep: #0072a8;
+  --accent-tint: #e5f4fc;
+  --accent-rgb: 0, 148, 217;
 }
 
 html[data-division='aloha'] {
   --accent: #0094d9;
-  --accent-deep: #06628f;
-  --accent-tint: #e4f4fc;
+  --accent-deep: #0072a8;
+  --accent-tint: #e5f4fc;
+  --accent-rgb: 0, 148, 217;
 }
 
 html[data-division='ilingo'] {
   --accent: #0b6c37;
-  --accent-deep: #084723;
-  --accent-tint: #e5f3ea;
+  --accent-deep: #085228;
+  --accent-tint: #e3f3e9;
+  --accent-rgb: 11, 108, 55;
 }
 
 * { box-sizing: border-box; }
@@ -67,6 +86,7 @@ html, body {
   color: var(--ink);
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body { min-height: 100vh; }
@@ -74,22 +94,42 @@ body { min-height: 100vh; }
 h1, h2, h3, h4 {
   font-family: var(--font-display);
   font-weight: 700;
+  letter-spacing: -0.02em;
   color: var(--ink);
   margin: 0;
 }
+
+p { line-height: 1.55; }
 
 a { color: var(--accent-deep); text-decoration: none; }
 
 button { font-family: inherit; }
 
-.mono { font-family: var(--font-mono); letter-spacing: 0.02em; }
+.mono {
+  font-family: var(--font-mono);
+  letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
+}
 
 /* Focus rõ ràng cho bàn phím — bắt buộc theo yêu cầu chất lượng tối thiểu */
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
-  border-radius: 4px;
+  border-radius: 6px;
 }
+
+::selection { background: rgba(var(--accent-rgb), 0.22); }
+
+/* Thanh cuộn mảnh, kiểu macOS */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.18);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.3); background-clip: padding-box; }
 
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
