@@ -40,6 +40,8 @@
   .app-hub { grid-template-columns: repeat(2, 1fr); }
   .page-header { flex-direction: column; align-items: flex-start; }
   .user-chip__meta { display: none; } /* tiết kiệm chỗ trên màn hình rất nhỏ */
+  .hub-topbar { padding: 12px 14px; }
+  .hub-main { padding: 18px 12px 50px; }
 }
 
 /* ---------- Sidebar (kính mờ sáng) ---------- */
@@ -315,47 +317,88 @@
 
 .loading-row { color: var(--muted); font-size: 13px; padding: 10px 0; }
 
-/* ---------- App Hub: lưới icon phòng ban thay cho menu rối mắt ---------- */
+/* =====================================================================
+   HUB SCREEN — màn hình chọn phòng ban, KHÔNG dùng sidebar, full màn hình
+   kiểu app di động.
+   ===================================================================== */
+body.hub-body { background: var(--surface); }
+
+.hub-topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 28px;
+  background: var(--glass-bg-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-bottom: 1px solid var(--separator);
+  border-top: 3px solid var(--accent);
+  position: sticky; top: 0; z-index: 30;
+}
+.hub-topbar__brand {
+  display: flex; align-items: center; gap: 10px;
+  font-family: var(--font-display); font-weight: 800; font-size: 16px; color: var(--ink);
+}
+.hub-topbar__brand .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px rgba(var(--accent-rgb), 0.15); }
+.hub-topbar__brand small { display: block; font-weight: 500; font-size: 11px; color: var(--muted); margin-top: 2px; }
+.hub-topbar__right { display: flex; align-items: center; gap: 14px; }
+
+.hub-main { max-width: 1100px; margin: 0 auto; padding: 24px 20px 60px; }
+.hub-section-title {
+  font-family: var(--font-display); font-size: 15px; font-weight: 700; color: var(--ink);
+  margin: 26px 4px 14px;
+}
+.hub-stats { margin-bottom: 8px; }
+
+/* ---------- App Hub: icon vuông bo góc, màu rực rỡ riêng từng phòng ban,
+   giống mẫu ứng dụng di động (mỗi ô 1 màu gradient khác nhau) ---------- */
 .app-hub {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
-  gap: 16px;
-  margin-bottom: 28px;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 20px 12px;
+  margin-bottom: 8px;
 }
-.app-hub--small { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 12px; }
+.app-hub--small { grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 16px 10px; }
 
 .app-tile {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  padding: 20px 10px;
-  background: var(--surface-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-xs);
+  gap: 8px;
   cursor: pointer;
-  transition: transform var(--dur-base) var(--ease-spring), box-shadow var(--dur-base) var(--ease), border-color var(--dur-base) var(--ease);
   text-align: center;
   text-decoration: none;
   color: var(--ink);
+  background: none;
+  border: none;
+  padding: 0;
 }
-.app-tile:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); border-color: rgba(var(--accent-rgb), 0.3); }
-.app-tile:active { transform: translateY(-1px) scale(0.98); }
 .app-tile__icon {
-  width: 52px; height: 52px; border-radius: var(--radius-md);
-  background: var(--accent-tint);
+  width: 60px; height: 60px;
+  border-radius: 18px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 24px;
+  font-size: 26px;
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.14);
+  transition: transform var(--dur-base) var(--ease-spring), box-shadow var(--dur-base) var(--ease);
+  background: var(--tile-bg, linear-gradient(150deg, #94a3b8, #64748b));
 }
-.app-hub--small .app-tile__icon { width: 40px; height: 40px; font-size: 18px; border-radius: var(--radius-sm); }
-.app-tile__label { font-size: 12.5px; font-weight: 600; line-height: 1.3; }
-.app-hub--small .app-tile__label { font-size: 11.5px; font-weight: 500; }
+.app-hub--small .app-tile__icon { width: 46px; height: 46px; font-size: 19px; border-radius: 14px; }
+.app-tile:hover .app-tile__icon { transform: translateY(-3px) scale(1.04); box-shadow: 0 8px 20px rgba(0,0,0,0.2); }
+.app-tile:active .app-tile__icon { transform: translateY(-1px) scale(0.97); }
+.app-tile__label { font-size: 12px; font-weight: 600; line-height: 1.3; color: var(--ink-soft); }
+.app-hub--small .app-tile__label { font-size: 11px; font-weight: 500; }
 
-.app-tile.disabled {
-  cursor: not-allowed;
-  opacity: 0.42;
-  pointer-events: none;
-}
-.app-tile.disabled .app-tile__icon { background: var(--surface-sunken); }
-.app-tile__lock { font-size: 10px; color: var(--muted); margin-top: -4px; }
+.app-tile.disabled { cursor: not-allowed; opacity: 0.4; pointer-events: none; }
+.app-tile.disabled .app-tile__icon { background: linear-gradient(150deg, #c7c7cc, #9a9aa0); box-shadow: none; }
+.app-tile__lock { font-size: 9.5px; color: var(--muted); margin-top: -2px; }
+
+/* Bảng màu icon riêng từng phòng ban — vibrant, phân biệt rõ, giống mẫu ứng
+   dụng di động thay vì tất cả cùng 1 màu nhạt như trước. */
+.tile-hr     { --tile-bg: linear-gradient(150deg, #ffb238, #ff8a00); }
+.tile-acc    { --tile-bg: linear-gradient(150deg, #34d399, #059669); }
+.tile-mkt    { --tile-bg: linear-gradient(150deg, #60a5fa, #2563eb); }
+.tile-fac    { --tile-bg: linear-gradient(150deg, #22d3ee, #0891b2); }
+.tile-center { --tile-bg: linear-gradient(150deg, #a78bfa, #7c3aed); }
+.tile-teacher{ --tile-bg: linear-gradient(150deg, #fb7185, #e11d48); }
+.tile-consultant { --tile-bg: linear-gradient(150deg, #818cf8, #4f46e5); }
+.tile-exec   { --tile-bg: linear-gradient(150deg, #1e3a8a, #0f172a); }
+.tile-quick  { --tile-bg: linear-gradient(150deg, #38bdf8, #0284c7); }

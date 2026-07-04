@@ -6,8 +6,8 @@ import { t } from './i18n.js';
 const birthdayBanner = document.getElementById('birthdayBanner');
 const notifBadge = document.getElementById('notifBadge');
 
-// Icon đại diện cho từng nhóm phòng ban trên lưới App Hub (khác icon của
-// từng trang con trong sectionKey, vì đây là icon "cả phòng ban" to hơn).
+// Icon + màu riêng cho từng nhóm phòng ban trên lưới App Hub — mỗi phòng
+// ban 1 màu gradient khác nhau, giống mẫu ứng dụng di động.
 const HUB_ICON = {
   'nav.section.hr': '🧑‍💼',
   'nav.section.acc': '💰',
@@ -17,6 +17,16 @@ const HUB_ICON = {
   'nav.section.teacher': '🍎',
   'nav.section.consultant': '📇',
   'nav.section.exec': '🏛',
+};
+const HUB_COLOR_CLASS = {
+  'nav.section.hr': 'tile-hr',
+  'nav.section.acc': 'tile-acc',
+  'nav.section.mkt': 'tile-mkt',
+  'nav.section.fac': 'tile-fac',
+  'nav.section.center': 'tile-center',
+  'nav.section.teacher': 'tile-teacher',
+  'nav.section.consultant': 'tile-consultant',
+  'nav.section.exec': 'tile-exec',
 };
 
 function esc(s) { return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
@@ -37,7 +47,7 @@ function renderHub(profile) {
         const a = document.createElement('a');
         a.href = item.href;
         a.className = 'app-tile';
-        a.innerHTML = `<div class="app-tile__icon">${item.icon}</div><div class="app-tile__label">${esc(t(item.labelKey, item.label))}</div>`;
+        a.innerHTML = `<div class="app-tile__icon tile-quick">${item.icon}</div><div class="app-tile__label">${esc(t(item.labelKey, item.label))}</div>`;
         quickHub.appendChild(a);
       });
       return;
@@ -48,7 +58,7 @@ function renderHub(profile) {
     el.className = 'app-tile' + (hasAccess ? '' : ' disabled');
     if (hasAccess) el.href = visibleItems[0].href;
     el.innerHTML = `
-      <div class="app-tile__icon">${HUB_ICON[group.sectionKey] || '📁'}</div>
+      <div class="app-tile__icon ${hasAccess ? (HUB_COLOR_CLASS[group.sectionKey] || '') : ''}">${HUB_ICON[group.sectionKey] || '📁'}</div>
       <div class="app-tile__label">${esc(t(group.sectionKey, group.section || ''))}</div>
       ${!hasAccess ? `<div class="app-tile__lock">🔒 ${esc(t('dashboard.noAccess', 'Không có quyền'))}</div>` : ''}
     `;
