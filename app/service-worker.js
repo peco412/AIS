@@ -68,3 +68,37 @@ self.addEventListener('fetch', (event) => {
     caches.match(event.request).then((cached) => cached || fetch(event.request))
   );
 });
+
+// =====================================================================
+// ĐĂNG KÝ SERVICE WORKER + TỰ ĐỘNG RELOAD KHI CÓ BẢN MỚI
+// =====================================================================
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').then((reg) => {
+
+      // Kiểm tra định kỳ xem server có SW mới không (vd mỗi 5 phút)
+      setInterval(() => reg.update(), 5 * 60 * 1000);
+
+      // Khi phát hiện SW mới đang cài (do đổi CACHE_NAME/version)
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'activated') {
+            // SW mới đã activate và claim() các client
+            // -> reload để load JS/CSS/HTML mới thay vì bản đang chạy dở trong RAM
+            window.location.reload();
+          }
+        });
+      });
+
+    }).catch((err) => console.warn('SW register failed:', err));
+  });
+
+  // Phòng trường hợp reload() bị gọi lặp (một số trình duyệt bắn controllerchange nhiều lần)
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (refreshing) return;
+    refreshing = true;
+    window.location.reload();
+  });
+}

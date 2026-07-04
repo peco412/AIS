@@ -111,3 +111,38 @@ form.addEventListener('submit', async (e) => {
 supabase.auth.getSession().then(({ data }) => {
   if (data.session) window.location.href = 'dashboard.html';
 });
+
+// =====================================================================
+// ĐĂNG KÝ SERVICE WORKER + TỰ ĐỘNG HỎI RELOAD KHI CÓ BẢN MỚI
+// =====================================================================
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').then((reg) => {
+
+      // Kiểm tra định kỳ xem server có SW mới không (mỗi 5 phút)
+      setInterval(() => reg.update(), 5 * 60 * 1000);
+
+      // Khi phát hiện SW mới đang cài (do đổi CACHE_NAME trong sw.js)
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'activated') {
+            // Hỏi trước khi reload để tránh mất dữ liệu đang nhập dở
+            if (confirm('Có bản cập nhật mới. Tải lại trang ngay?')) {
+              window.location.reload();
+            }
+          }
+        });
+      });
+
+    }).catch((err) => console.warn('SW register failed:', err));
+  });
+
+  // Phòng trường hợp controllerchange bắn nhiều lần
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (refreshing) return;
+    refreshing = true;
+    window.location.reload();
+  });
+}
