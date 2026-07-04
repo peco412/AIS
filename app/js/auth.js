@@ -1,5 +1,4 @@
 import { supabase, usernameToEmail } from './supabase.js';
-import { setLang, getLang, applyTranslations, t } from './i18n.js';
 
 // ---------------------------------------------------------------------
 // Đổi phân hệ (chỉ đổi màu accent theo #0094D9 ALOHA / #0B6C37 iLingo)
@@ -24,20 +23,18 @@ divisionButtons.forEach((btn) => {
 setDivision(localStorage.getItem('ais_division') || 'aloha');
 
 // ---------------------------------------------------------------------
-// Đổi ngôn ngữ hiển thị (Việt / Anh) — dùng chung engine js/i18n.js với
-// toàn bộ hệ thống, chưa đăng nhập nên chỉ lưu localStorage (không có
-// employeeId để đồng bộ lên DB, việc đó xảy ra ở shell.js sau khi đăng nhập).
+// Đổi ngôn ngữ hiển thị (Việt / Anh) — lưu lựa chọn, áp dụng đầy đủ
+// khi có bảng nội dung đa ngôn ngữ ở bước sau
 // ---------------------------------------------------------------------
 const langButtons = document.querySelectorAll('[data-lang-btn]');
-function paintLangButtons() {
-  const current = getLang();
+function setLang(lang) {
   langButtons.forEach((btn) => {
-    btn.setAttribute('aria-pressed', btn.dataset.langBtn === current ? 'true' : 'false');
+    btn.setAttribute('aria-pressed', btn.dataset.langBtn === lang ? 'true' : 'false');
   });
+  localStorage.setItem('ais_lang', lang);
 }
-langButtons.forEach((btn) => btn.addEventListener('click', () => { setLang(btn.dataset.langBtn, { persist: false }); paintLangButtons(); }));
-applyTranslations();
-paintLangButtons();
+langButtons.forEach((btn) => btn.addEventListener('click', () => setLang(btn.dataset.langBtn)));
+setLang(localStorage.getItem('ais_lang') || 'vi');
 
 // ---------------------------------------------------------------------
 // Đăng nhập
@@ -63,20 +60,20 @@ form.addEventListener('submit', async (e) => {
   const password = document.getElementById('password').value;
 
   if (!username || !password) {
-    showError(t('login.errFields'));
+    showError('Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu.');
     return;
   }
 
   submitBtn.disabled = true;
-  submitBtn.textContent = t('login.submitting');
+  submitBtn.textContent = 'Đang đăng nhập...';
 
   const email = usernameToEmail(username);
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
     submitBtn.disabled = false;
-    submitBtn.textContent = t('login.submit');
-    showError(t('login.errCreds'));
+    submitBtn.textContent = 'Đăng nhập';
+    showError('Sai tên đăng nhập hoặc mật khẩu. Vui lòng thử lại.');
     return;
   }
 
@@ -88,16 +85,16 @@ form.addEventListener('submit', async (e) => {
     .single();
 
   submitBtn.disabled = false;
-  submitBtn.textContent = t('login.submit');
+  submitBtn.textContent = 'Đăng nhập';
 
   if (empError || !employee) {
-    showError(t('login.errNoEmployee'));
+    showError('Không tìm thấy hồ sơ nhân viên gắn với tài khoản này. Liên hệ phòng nhân sự.');
     await supabase.auth.signOut();
     return;
   }
 
   if (employee.status !== 'active') {
-    showError(t('login.errInactive'));
+    showError('Tài khoản của bạn hiện không ở trạng thái hoạt động.');
     await supabase.auth.signOut();
     return;
   }
@@ -114,3 +111,38 @@ form.addEventListener('submit', async (e) => {
 supabase.auth.getSession().then(({ data }) => {
   if (data.session) window.location.href = 'dashboard.html';
 });
+
+// =====================================================================
+// ĐĂNG KÝ SERVICE WORKER + TỰ ĐỘNG HỎI RELOAD KHI CÓ BẢN MỚI
+// =====================================================================
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').then((reg) => {
+
+      // Kiểm tra định kỳ xem server có SW mới không (mỗi 5 phút)
+      setInterval(() => reg.update(), 5 * 60 * 1000);
+
+      // Khi phát hiện SW mới đang cài (do đổi CACHE_NAME trong sw.js)
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'activated') {
+            // Hỏi trước khi reload để tránh mất dữ liệu đang nhập dở
+            if (confirm('Có bản cập nhật mới. Tải lại trang ngay?')) {
+              window.location.reload();
+            }
+          }
+        });
+      });
+
+    }).catch((err) => console.warn('SW register failed:', err));
+  });
+
+  // Phòng trường hợp controllerchange bắn nhiều lần
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (refreshing) return;
+    refreshing = true;
+    window.location.reload();
+  });
+}
