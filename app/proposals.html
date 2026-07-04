@@ -16,7 +16,7 @@
 
 <div class="app-shell">
   <aside class="sidebar" id="sidebar">
-    <div class="sidebar__brand"><span class="dot"></span><div>ERP AIS<small>Hệ thống quản trị nội bộ</small></div></div>
+    <div class="sidebar__brand"><span class="dot"></span><div>ERP AIS<small data-i18n="brand.subtitle">Hệ thống quản trị nội bộ</small></div></div>
     <nav id="sidebarNav"></nav>
     <div class="sidebar__footer">© 2026 ERP AIS</div>
   </aside>
@@ -54,7 +54,7 @@
 
     <div class="data-table-wrap">
       <table class="data-table">
-        <thead><tr><th>Mã đề xuất</th><th>Người đề xuất</th><th>Tiêu đề</th><th>Phòng ban</th><th>Trạng thái</th><th>Cập nhật</th><th></th></tr></thead>
+        <thead><tr><th>Mã đề xuất</th><th>Người đề xuất</th><th>Tiêu đề</th><th>Phòng ban</th><th data-i18n="common.status">Trạng thái</th><th>Cập nhật</th><th></th></tr></thead>
         <tbody id="tableBody"><tr><td colspan="7" class="empty-cell">Đang tải dữ liệu...</td></tr></tbody>
       </table>
     </div>
@@ -71,7 +71,7 @@
     <div class="field"><label for="content">Nội dung đề xuất *</label><textarea id="content" rows="3" required></textarea></div>
     <div class="field"><label for="proposalFile">File PDF đính kèm (nếu có)</label><input type="file" id="proposalFile" accept="application/pdf" /></div>
     <div class="modal-actions">
-      <button type="button" class="btn btn-outline" id="cancelCreate">Huỷ</button>
+      <button type="button" class="btn btn-outline" id="cancelCreate"><span data-i18n="common.cancel">Huỷ</span></button>
       <button type="button" class="btn btn-accent" id="submitCreate">Tạo đề xuất</button>
     </div>
   </div>

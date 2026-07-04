@@ -225,7 +225,12 @@ export async function openPdfEditor({ pdfUrl, signatureUrl = null, readOnly = fa
       });
     }
   } catch (err) {
-    body.innerHTML = `<div class="pdfed-loading">Lỗi tải PDF: ${err.message}</div>`;
+    // Log đầy đủ lỗi gốc ra console — alert/nhãn lỗi chỉ hiện được 1 dòng
+    // ngắn, còn console mới thấy stack trace + nguyên nhân thật (thường là
+    // CORS bị chặn hoặc URL đã hết hạn) để debug được.
+    console.error('Lỗi tải PDF:', err);
+    const reason = err?.message || err?.error_description || err?.error || 'Không rõ nguyên nhân (xem tab Console để biết chi tiết).';
+    body.innerHTML = `<div class="pdfed-loading">Lỗi tải PDF: ${reason}</div>`;
     return;
   }
 
@@ -278,7 +283,9 @@ export async function openPdfEditor({ pdfUrl, signatureUrl = null, readOnly = fa
       await onSave(blob);
       closeEditor();
     } catch (err) {
-      alert('Lỗi khi lưu PDF: ' + err.message);
+      console.error('Lỗi khi lưu PDF:', err);
+      const reason = err?.message || err?.error_description || err?.error || 'Không rõ nguyên nhân — có thể do CORS bị chặn hoặc phiên làm việc đã hết hạn. Mở tab Console (F12) để xem chi tiết lỗi thật.';
+      alert('Lỗi khi lưu PDF: ' + reason);
       saveBtn.disabled = false;
       saveBtn.textContent = '💾 Lưu';
     }
