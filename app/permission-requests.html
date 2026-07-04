@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Ký số hồ sơ — Kế toán — ERP AIS</title>
+<title>Xin thêm quyền hạn — ERP AIS</title>
 <link rel="manifest" href="/manifest.json" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -14,9 +14,8 @@
 <link rel="stylesheet" href="/css/tokens.css" />
 <link rel="stylesheet" href="/css/dashboard.css" />
 <link rel="stylesheet" href="/css/module.css" />
-<link rel="stylesheet" href="/css/pdfEditor.css" />
 </head>
-<body data-page="/acc/sign.html">
+<body data-page="/permission-requests.html">
 
 <div class="app-shell">
   <aside class="sidebar" id="sidebar">
@@ -38,29 +37,51 @@
 
   <main class="main">
     <div class="page-header">
-      <div><h1>Ký số hồ sơ — Phòng Kế toán</h1><div class="sub">Tự tải lên 1 file PDF bất kỳ, ký tại vị trí bất kỳ, tự chọn lưu vào Kho lưu trữ hệ thống.</div></div>
+      <div><h1>Xin thêm quyền hạn</h1><div class="sub">Trưởng/phó phòng xin cấp thêm quyền vào 1 mục cụ thể cho nhân sự trong phòng — Ban điều hành duyệt.</div></div>
+      <button class="btn btn-accent" id="btnAdd">+ Xin quyền mới</button>
     </div>
 
-    <div class="form-error" id="freeSignError"></div>
-    <label class="btn btn-accent" for="freeSignFile" style="display:inline-flex; cursor:pointer;">📎 Chọn file PDF để ký</label>
-    <input type="file" id="freeSignFile" accept="application/pdf" style="display:none;" />
+    <div class="toolbar">
+      <select class="select-input" id="filterStatus">
+        <option value="">Tất cả trạng thái</option>
+        <option value="pending">Chờ duyệt</option>
+        <option value="approved">Đã duyệt</option>
+        <option value="rejected">Từ chối</option>
+      </select>
+      <div class="cell-muted" id="resultCount"></div>
+    </div>
 
-    <div class="page-header" style="margin-top:28px;"><div><h1 style="font-size:18px;">Hồ sơ đã ký gần đây</h1></div></div>
     <div class="data-table-wrap">
       <table class="data-table">
-        <thead><tr><th>Tên file</th><th>Người ký</th><th>Thời gian</th><th></th></tr></thead>
-        <tbody id="signedTableBody"><tr><td colspan="4" class="empty-cell">Đang tải dữ liệu...</td></tr></tbody>
+        <thead><tr><th>Nhân sự được xin quyền</th><th>Mục xin quyền</th><th>Lý do</th><th>Người xin</th><th data-i18n="common.status">Trạng thái</th><th></th></tr></thead>
+        <tbody id="tableBody"><tr><td colspan="6" class="empty-cell">Đang tải dữ liệu...</td></tr></tbody>
       </table>
     </div>
   </main>
 </div>
 
+<div class="modal-overlay" id="reqModal">
+  <div class="modal-box">
+    <button class="modal-close" id="closeModal">✕</button>
+    <h3>Xin thêm quyền hạn</h3>
+    <div class="form-error" id="formError"></div>
+    <form id="reqForm">
+      <div class="field"><label for="targetEmployee">Nhân sự cần cấp thêm quyền *</label><select id="targetEmployee" required></select></div>
+      <div class="field"><label for="moduleKey">Mục cần xin quyền *</label>
+        <select id="moduleKey" required></select>
+      </div>
+      <div class="field"><label for="reason">Lý do *</label><textarea id="reason" rows="3" placeholder="VD: Nhân viên A cần hỗ trợ duyệt phiếu mua sắm khi trưởng phòng vắng mặt..." required></textarea></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-outline" id="cancelModal"><span data-i18n="common.cancel">Huỷ</span></button>
+        <button type="submit" class="btn btn-accent" id="submitReq">Gửi yêu cầu</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="/env.js"></script>
-<script type="module">
-  import { initFreeSign } from '/js/freeSign.js';
-  initFreeSign('ACC');
-</script>
+<script type="module" src="/permission-requests.js"></script>
 <script src="/js/pwa.js"></script>
 </body>
 </html>

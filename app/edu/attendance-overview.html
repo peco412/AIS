@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Ký số hồ sơ — Kế toán — ERP AIS</title>
+<title>Điểm danh &amp; thống kê học viên — ERP AIS</title>
 <link rel="manifest" href="/manifest.json" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -14,9 +14,8 @@
 <link rel="stylesheet" href="/css/tokens.css" />
 <link rel="stylesheet" href="/css/dashboard.css" />
 <link rel="stylesheet" href="/css/module.css" />
-<link rel="stylesheet" href="/css/pdfEditor.css" />
 </head>
-<body data-page="/acc/sign.html">
+<body data-page="/edu/attendance-overview.html">
 
 <div class="app-shell">
   <aside class="sidebar" id="sidebar">
@@ -38,29 +37,38 @@
 
   <main class="main">
     <div class="page-header">
-      <div><h1>Ký số hồ sơ — Phòng Kế toán</h1><div class="sub">Tự tải lên 1 file PDF bất kỳ, ký tại vị trí bất kỳ, tự chọn lưu vào Kho lưu trữ hệ thống.</div></div>
+      <div><h1>Điểm danh &amp; thống kê học viên</h1><div class="sub">Theo dõi số lượng học viên đi học, vắng mặt, đăng ký mới, nghỉ học — toàn bộ lớp trong trung tâm.</div></div>
+      <input class="text-input" type="date" id="filterDate" />
     </div>
 
-    <div class="form-error" id="freeSignError"></div>
-    <label class="btn btn-accent" for="freeSignFile" style="display:inline-flex; cursor:pointer;">📎 Chọn file PDF để ký</label>
-    <input type="file" id="freeSignFile" accept="application/pdf" style="display:none;" />
+    <div class="stat-grid" id="statCards"></div>
 
-    <div class="page-header" style="margin-top:28px;"><div><h1 style="font-size:18px;">Hồ sơ đã ký gần đây</h1></div></div>
+    <div class="data-table-wrap" style="padding:20px; margin-bottom:24px;">
+      <canvas id="attendanceChart" height="90"></canvas>
+    </div>
+
+    <div class="page-header" style="margin-top:8px;"><div><h1 style="font-size:16px;">Điểm danh theo lớp (ngày đã chọn)</h1></div></div>
     <div class="data-table-wrap">
       <table class="data-table">
-        <thead><tr><th>Tên file</th><th>Người ký</th><th>Thời gian</th><th></th></tr></thead>
-        <tbody id="signedTableBody"><tr><td colspan="4" class="empty-cell">Đang tải dữ liệu...</td></tr></tbody>
+        <thead><tr><th>Lớp</th><th>Giáo viên</th><th>Có mặt</th><th>Vắng</th><th>Tỷ lệ chuyên cần</th><th>Trạng thái điểm danh</th></tr></thead>
+        <tbody id="classTableBody"><tr><td colspan="6" class="empty-cell">Đang tải dữ liệu...</td></tr></tbody>
+      </table>
+    </div>
+
+    <div class="page-header" style="margin-top:24px;"><div><h1 style="font-size:16px;">Học viên vắng nhiều (30 ngày gần nhất)</h1></div></div>
+    <div class="data-table-wrap">
+      <table class="data-table">
+        <thead><tr><th>Học viên</th><th>Lớp</th><th>Số buổi vắng</th><th>SĐT phụ huynh</th></tr></thead>
+        <tbody id="absentTableBody"><tr><td colspan="4" class="empty-cell">Đang tải dữ liệu...</td></tr></tbody>
       </table>
     </div>
   </main>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script src="/env.js"></script>
-<script type="module">
-  import { initFreeSign } from '/js/freeSign.js';
-  initFreeSign('ACC');
-</script>
+<script type="module" src="/edu/attendance-overview.js"></script>
 <script src="/js/pwa.js"></script>
 </body>
 </html>

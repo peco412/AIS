@@ -10,6 +10,8 @@ const STATUS_LABEL = {
 let PROFILE = null;
 let ALL_ROWS = [];
 let IS_EXEC = false;
+let CURRENT_PAGE = 1;
+const PAGE_SIZE = 20;
 
 function fmtDate(d) { return d ? new Date(d).toLocaleString('vi-VN') : '—'; }
 
@@ -17,17 +19,26 @@ async function loadRows() {
   const tbody = document.getElementById('tableBody');
   tbody.innerHTML = '<tr><td colspan="7" class="empty-cell">Đang tải dữ liệu...</td></tr>';
   const scope = document.getElementById('viewScope').value;
+  const monthValue = document.getElementById('filterMonth').value; // "yyyy-mm" hoặc rỗng
 
   let query = supabase
     .from('internal_proposals')
-    .select('id, code, title, status, file_url, updated_at, employee_id, department_id, departments(name, code), employees!internal_proposals_employee_id_fkey(full_name, employee_code)')
+    .select('id, code, title, status, file_url, created_at, updated_at, employee_id, department_id, departments(name, code), employees!internal_proposals_employee_id_fkey(full_name, employee_code)')
     .order('updated_at', { ascending: false });
   if (scope === 'mine') query = query.eq('employee_id', PROFILE.id);
   else if (PROFILE.departmentId) query = query.eq('department_id', PROFILE.departmentId);
 
+  if (monthValue) {
+    const [y, m] = monthValue.split('-').map(Number);
+    const from = `${y}-${String(m).padStart(2, '0')}-01`;
+    const to = new Date(y, m, 1).toISOString().slice(0, 10); // ngày 1 tháng kế tiếp
+    query = query.gte('created_at', from).lt('created_at', to);
+  }
+
   const { data, error } = await query;
   if (error) { tbody.innerHTML = `<tr><td colspan="7" class="empty-cell">Lỗi: ${error.message}</td></tr>`; return; }
   ALL_ROWS = data || [];
+  CURRENT_PAGE = 1;
   render();
 }
 
@@ -45,9 +56,14 @@ function actionFor(row) {
 function render() {
   document.getElementById('resultCount').textContent = `${ALL_ROWS.length} đề xuất`;
   const tbody = document.getElementById('tableBody');
-  if (ALL_ROWS.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="empty-cell">Chưa có đề xuất nào.</td></tr>'; return; }
+  if (ALL_ROWS.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="empty-cell">Chưa có đề xuất nào trong khoảng thời gian này.</td></tr>'; renderPagination(); return; }
 
-  tbody.innerHTML = ALL_ROWS.map((r) => {
+  const totalPages = Math.max(1, Math.ceil(ALL_ROWS.length / PAGE_SIZE));
+  if (CURRENT_PAGE > totalPages) CURRENT_PAGE = totalPages;
+  const start = (CURRENT_PAGE - 1) * PAGE_SIZE;
+  const pageRows = ALL_ROWS.slice(start, start + PAGE_SIZE);
+
+  tbody.innerHTML = pageRows.map((r) => {
     const action = actionFor(r);
     return `
     <tr>
@@ -66,6 +82,22 @@ function render() {
 
   tbody.querySelectorAll('[data-view]').forEach((b) => b.addEventListener('click', () => viewRow(b.dataset.view)));
   tbody.querySelectorAll('[data-act]').forEach((b) => b.addEventListener('click', () => runAction(b.dataset.act)));
+  renderPagination();
+}
+
+// Nếu đề xuất quá nhiều, tách trang 1, 2, 3... (20 dòng/trang) thay vì
+// hiện hết trong 1 bảng dài.
+function renderPagination() {
+  const el = document.getElementById('pagination');
+  const totalPages = Math.max(1, Math.ceil(ALL_ROWS.length / PAGE_SIZE));
+  if (totalPages <= 1) { el.innerHTML = ''; return; }
+
+  let html = '';
+  for (let p = 1; p <= totalPages; p++) {
+    html += `<button class="btn btn-sm ${p === CURRENT_PAGE ? 'btn-accent' : 'btn-outline'}" data-page="${p}" style="min-width:36px;">${p}</button>`;
+  }
+  el.innerHTML = html;
+  el.querySelectorAll('[data-page]').forEach((b) => b.addEventListener('click', () => { CURRENT_PAGE = Number(b.dataset.page); render(); }));
 }
 
 async function viewRow(id) {
@@ -200,9 +232,15 @@ document.getElementById('submitCreate').addEventListener('click', async () => {
 });
 
 document.getElementById('viewScope').addEventListener('change', loadRows);
+document.getElementById('filterMonth').addEventListener('change', loadRows);
+document.getElementById('btnClearMonth').addEventListener('click', () => {
+  document.getElementById('filterMonth').value = '';
+  loadRows();
+});
 
 (async () => {
   try {
+    document.getElementById('filterMonth').value = new Date().toISOString().slice(0, 7);
     const { profile } = await bootShell();
     const { data: emp } = await supabase.from('employees').select('signature_url, department_id, center_id').eq('id', profile.id).single();
     PROFILE = { ...profile, signatureUrl: emp?.signature_url || null, departmentId: emp?.department_id, centerId: emp?.center_id };

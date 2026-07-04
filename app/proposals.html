@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Đề xuất nội bộ — ERP AIS</title>
 <link rel="manifest" href="/manifest.json" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="ERP AIS" />
+<link rel="apple-touch-icon" href="/assets/icon-192.png" />
 <meta name="theme-color" content="#0094D9" />
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="/css/tokens.css" />
@@ -16,7 +20,7 @@
 
 <div class="app-shell">
   <aside class="sidebar" id="sidebar">
-    <div class="sidebar__brand"><span class="dot"></span><div>ERP AIS<small>Hệ thống quản trị nội bộ</small></div></div>
+    <div class="sidebar__brand"><span class="dot"></span><div>ERP AIS<small data-i18n="brand.subtitle">Hệ thống quản trị nội bộ</small></div></div>
     <nav id="sidebarNav"></nav>
     <div class="sidebar__footer">© 2026 ERP AIS</div>
   </aside>
@@ -45,19 +49,24 @@
     </div>
 
     <div class="toolbar">
-      <select class="select-input" id="viewScope">
-        <option value="mine">Đề xuất của tôi</option>
-        <option value="dept" id="deptScopeOption" style="display:none;">Toàn phòng ban</option>
-      </select>
+      <div class="toolbar__filters">
+        <select class="select-input" id="viewScope">
+          <option value="mine">Đề xuất của tôi</option>
+          <option value="dept" id="deptScopeOption" style="display:none;">Toàn phòng ban</option>
+        </select>
+        <input class="text-input" type="month" id="filterMonth" />
+        <button class="btn btn-outline btn-sm" id="btnClearMonth" title="Xem tất cả các tháng">Xem tất cả</button>
+      </div>
       <div class="cell-muted" id="resultCount"></div>
     </div>
 
     <div class="data-table-wrap">
       <table class="data-table">
-        <thead><tr><th>Mã đề xuất</th><th>Người đề xuất</th><th>Tiêu đề</th><th>Phòng ban</th><th>Trạng thái</th><th>Cập nhật</th><th></th></tr></thead>
+        <thead><tr><th>Mã đề xuất</th><th>Người đề xuất</th><th>Tiêu đề</th><th>Phòng ban</th><th data-i18n="common.status">Trạng thái</th><th>Cập nhật</th><th></th></tr></thead>
         <tbody id="tableBody"><tr><td colspan="7" class="empty-cell">Đang tải dữ liệu...</td></tr></tbody>
       </table>
     </div>
+    <div class="week-nav" id="pagination" style="justify-content:center;"></div>
   </main>
 </div>
 
@@ -71,7 +80,7 @@
     <div class="field"><label for="content">Nội dung đề xuất *</label><textarea id="content" rows="3" required></textarea></div>
     <div class="field"><label for="proposalFile">File PDF đính kèm (nếu có)</label><input type="file" id="proposalFile" accept="application/pdf" /></div>
     <div class="modal-actions">
-      <button type="button" class="btn btn-outline" id="cancelCreate">Huỷ</button>
+      <button type="button" class="btn btn-outline" id="cancelCreate"><span data-i18n="common.cancel">Huỷ</span></button>
       <button type="button" class="btn btn-accent" id="submitCreate">Tạo đề xuất</button>
     </div>
   </div>

@@ -17,11 +17,29 @@
   .app-shell { grid-template-columns: 0 1fr; }
   .sidebar {
     position: fixed;
+    width: min(86vw, 320px);
     transform: translateX(-100%);
     transition: transform var(--dur-base) var(--ease-spring);
     box-shadow: var(--shadow-lg);
   }
   .sidebar.open { transform: translateX(0); }
+  .main { padding: 16px 14px 80px; }
+  .topbar { padding: 0 14px; }
+  .search-box { display: none; }
+  .stat-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .app-hub { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .app-hub--small { grid-template-columns: repeat(4, 1fr); }
+  .icon-btn, .menu-toggle { width: 40px; height: 40px; font-size: 18px; } /* mục tiêu chạm tối thiểu 40px, dễ bấm trên di động */
+  .btn { padding: 10px 16px; } /* nút to hơn để dễ bấm bằng ngón tay */
+  .modal-box { padding: 20px 18px; max-width: 100%; }
+  table.week-grid { min-width: 720px; } /* vẫn cuộn ngang được trong khung */
+}
+
+@media (max-width: 480px) {
+  .stat-grid { grid-template-columns: 1fr 1fr; }
+  .app-hub { grid-template-columns: repeat(2, 1fr); }
+  .page-header { flex-direction: column; align-items: flex-start; }
+  .user-chip__meta { display: none; } /* tiết kiệm chỗ trên màn hình rất nhỏ */
 }
 
 /* ---------- Sidebar (kính mờ sáng) ---------- */
@@ -106,6 +124,7 @@
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   border-bottom: 1px solid var(--separator);
+  border-top: 3px solid var(--accent);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -295,3 +314,48 @@
 .shortcut-list a:hover { color: var(--accent-deep); }
 
 .loading-row { color: var(--muted); font-size: 13px; padding: 10px 0; }
+
+/* ---------- App Hub: lưới icon phòng ban thay cho menu rối mắt ---------- */
+.app-hub {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+.app-hub--small { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 12px; }
+
+.app-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 10px;
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xs);
+  cursor: pointer;
+  transition: transform var(--dur-base) var(--ease-spring), box-shadow var(--dur-base) var(--ease), border-color var(--dur-base) var(--ease);
+  text-align: center;
+  text-decoration: none;
+  color: var(--ink);
+}
+.app-tile:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); border-color: rgba(var(--accent-rgb), 0.3); }
+.app-tile:active { transform: translateY(-1px) scale(0.98); }
+.app-tile__icon {
+  width: 52px; height: 52px; border-radius: var(--radius-md);
+  background: var(--accent-tint);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px;
+}
+.app-hub--small .app-tile__icon { width: 40px; height: 40px; font-size: 18px; border-radius: var(--radius-sm); }
+.app-tile__label { font-size: 12.5px; font-weight: 600; line-height: 1.3; }
+.app-hub--small .app-tile__label { font-size: 11.5px; font-weight: 500; }
+
+.app-tile.disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+  pointer-events: none;
+}
+.app-tile.disabled .app-tile__icon { background: var(--surface-sunken); }
+.app-tile__lock { font-size: 10px; color: var(--muted); margin-top: -4px; }

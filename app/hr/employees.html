@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Danh sách nhân viên — ERP AIS</title>
 <link rel="manifest" href="/manifest.json" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="ERP AIS" />
+<link rel="apple-touch-icon" href="/assets/icon-192.png" />
 <meta name="theme-color" content="#0094D9" />
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="/css/tokens.css" />
@@ -17,7 +21,7 @@
   <aside class="sidebar" id="sidebar">
     <div class="sidebar__brand">
       <span class="dot" aria-hidden="true"></span>
-      <div>ERP AIS<small>Hệ thống quản trị nội bộ</small></div>
+      <div>ERP AIS<small data-i18n="brand.subtitle">Hệ thống quản trị nội bộ</small></div>
     </div>
     <nav id="sidebarNav"></nav>
     <div class="sidebar__footer">© 2026 ERP AIS</div>
@@ -75,7 +79,7 @@
         <thead>
           <tr>
             <th>Mã NV</th><th>Họ và tên</th><th>Chức vụ</th><th>Phòng ban</th>
-            <th>Trung tâm</th><th>SĐT</th><th>Trạng thái</th><th></th>
+            <th>Trung tâm</th><th>SĐT</th><th data-i18n="common.status">Trạng thái</th><th></th>
           </tr>
         </thead>
         <tbody id="employeeTableBody">
@@ -106,6 +110,20 @@
       </div>
       <div class="field-grid-2">
         <div class="field">
+          <label for="division">Phân hệ</label>
+          <select id="division">
+            <option value="">— Khối văn phòng (không thuộc trung tâm) —</option>
+            <option value="ALOHA">ALOHA</option>
+            <option value="ILINGO">iLingo</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="center">Trung tâm</label>
+          <select id="center"><option value="">— Chọn phân hệ trước —</option></select>
+        </div>
+      </div>
+      <div class="field-grid-2">
+        <div class="field">
           <label for="department">Phòng ban *</label>
           <select id="department" required></select>
         </div>
@@ -116,15 +134,9 @@
       </div>
       <div class="field-grid-2">
         <div class="field">
-          <label for="center">Trung tâm</label>
-          <select id="center"><option value="">— Khối văn phòng —</option></select>
-        </div>
-        <div class="field">
           <label for="role">Vai trò hệ thống *</label>
           <select id="role" required></select>
         </div>
-      </div>
-      <div class="field-grid-2">
         <div class="field">
           <label for="contractType">Loại hợp đồng</label>
           <select id="contractType">
@@ -134,10 +146,20 @@
             <option value="service">Hợp đồng dịch vụ</option>
           </select>
         </div>
+      </div>
+      <div class="field-grid-2">
         <div class="field">
           <label for="hireDate">Ngày vào làm</label>
           <input type="date" id="hireDate" />
         </div>
+      </div>
+
+      <div class="form-section-title">Vai trò kiêm nhiệm (không thay đổi phòng ban chính ở trên)</div>
+      <div class="field field-checkbox">
+        <label for="isAcademicBoard"><input type="checkbox" id="isAcademicBoard" /> Thuộc Ban chuyên môn</label>
+      </div>
+      <div class="field field-checkbox">
+        <label for="canTeach"><input type="checkbox" id="canTeach" /> Có thể đứng lớp giảng dạy (kể cả nhân sự khối văn phòng)</label>
       </div>
       <div class="field field-checkbox">
         <label for="isForeignTeacher"><input type="checkbox" id="isForeignTeacher" /> Là giáo viên nước ngoài</label>
@@ -170,8 +192,8 @@
       </div>
 
       <div class="modal-actions">
-        <button type="button" class="btn btn-outline" id="cancelModal">Huỷ</button>
-        <button type="submit" class="btn btn-accent" id="submitEmployee">Lưu</button>
+        <button type="button" class="btn btn-outline" id="cancelModal"><span data-i18n="common.cancel">Huỷ</span></button>
+        <button type="submit" class="btn btn-accent" id="submitEmployee"><span data-i18n="common.save">Lưu</span></button>
       </div>
     </form>
   </div>

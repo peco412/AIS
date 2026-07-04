@@ -30,6 +30,7 @@ const DICT = {
   'nav.meetings': { vi: 'Lịch họp', en: 'Meetings' },
   'nav.proposals': { vi: 'Đề xuất nội bộ', en: 'Internal proposals' },
   'nav.archive': { vi: 'Kho lưu trữ hệ thống', en: 'Document archive' },
+  'nav.permissions': { vi: 'Xin thêm quyền hạn', en: 'Permission requests' },
 
   'nav.section.hr': { vi: 'Phòng nhân sự', en: 'Human Resources' },
   'nav.hr.employees': { vi: 'Danh sách nhân viên', en: 'Employee directory' },
@@ -62,6 +63,8 @@ const DICT = {
 
   'nav.section.center': { vi: 'Quản lý trung tâm', en: 'Center management' },
   'nav.edu.overview': { vi: 'Tổng quan trung tâm', en: 'Center overview' },
+  'nav.edu.attendance': { vi: 'Điểm danh & thống kê', en: 'Attendance & stats' },
+  'nav.edu.tuition': { vi: 'Thu học phí', en: 'Tuition collection' },
   'nav.edu.dutySchedule': { vi: 'Phân lịch trực trung tâm', en: 'Center duty schedule' },
   'nav.edu.teacherSchedule': { vi: 'Phân lịch tuần giáo viên', en: 'Teacher weekly schedule' },
   'nav.edu.teachers': { vi: 'Danh sách giáo viên', en: 'Teacher directory' },
@@ -144,9 +147,22 @@ const DICT = {
   'login.errCreds': { vi: 'Sai tên đăng nhập hoặc mật khẩu. Vui lòng thử lại.', en: 'Incorrect username or password. Please try again.' },
   'login.errNoEmployee': { vi: 'Không tìm thấy hồ sơ nhân viên gắn với tài khoản này. Liên hệ phòng nhân sự.', en: 'No employee record found for this account. Please contact HR.' },
   'login.errInactive': { vi: 'Tài khoản của bạn hiện không ở trạng thái hoạt động.', en: 'Your account is not currently active.' },
+  'login.errWrongDivision': { vi: 'Tài khoản này thuộc phân hệ khác. Vui lòng chọn đúng phân hệ (ALOHA/iLingo) trước khi đăng nhập.', en: 'This account belongs to a different division. Please select the correct division (ALOHA/iLingo) before signing in.' },
 
   // ---------- Dashboard ----------
   'dashboard.title': { vi: 'Trang chủ', en: 'Home' },
+  'dashboard.apps': { vi: 'Phòng ban', en: 'Departments' },
+  'dashboard.appsSub': { vi: 'Bấm vào 1 phòng ban để mở — ô mờ nghĩa là bạn chưa có quyền truy cập.', en: 'Tap a department to open it — greyed out tiles mean you don\'t have access.' },
+  'dashboard.quickLinks': { vi: 'Truy cập nhanh', en: 'Quick access' },
+  'dashboard.noAccess': { vi: 'Không có quyền', en: 'No access' },
+  'dashboard.overview': { vi: 'Tổng quan', en: 'Overview' },
+  'dashboard.welcome': { vi: 'Chào mừng quay lại hệ thống ERP AIS.', en: 'Welcome back to ERP AIS.' },
+  'dashboard.statUnread': { vi: 'Thông báo chưa đọc', en: 'Unread notifications' },
+  'dashboard.statLeave': { vi: 'Ngày phép còn lại', en: 'Leave days left' },
+  'dashboard.statPending': { vi: 'Phiếu đang chờ duyệt', en: 'Pending approvals' },
+  'dashboard.statMeetings': { vi: 'Cuộc họp sắp tới', en: 'Upcoming meetings' },
+  'dashboard.birthday': { vi: 'Chúc mừng sinh nhật!', en: 'Happy Birthday!' },
+  'dashboard.searchPlaceholder': { vi: 'Tìm nhân viên, phiếu, lớp học...', en: 'Search employees, forms, classes...' },
 };
 
 export function getLang() {

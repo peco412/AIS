@@ -26,25 +26,45 @@ function fillSelect(el, items, { valueKey = 'id', labelKey = 'name', placeholder
 }
 
 async function loadLookups() {
-  const [{ data: departments }, { data: positions }, { data: centers }, { data: roles }] = await Promise.all([
+  const [{ data: departments }, { data: positions }, { data: centers }, { data: roles }, { data: divisions }] = await Promise.all([
     supabase.from('departments').select('id, code, name').order('name'),
     supabase.from('positions').select('id, name, department_id').order('name'),
-    supabase.from('centers').select('id, name').order('name'),
+    supabase.from('centers').select('id, name, division_id').order('name'),
     supabase.from('system_roles').select('id, code, name').order('name'),
+    supabase.from('divisions').select('id, code').order('code'),
   ]);
   LOOKUPS = {
     departments: departments || [],
     positions: positions || [],
     centers: centers || [],
     roles: roles || [],
+    divisions: divisions || [],
   };
 
   fillSelect(document.getElementById('filterDept'), LOOKUPS.departments, { placeholder: 'Tất cả phòng ban' });
   fillSelect(document.getElementById('filterCenter'), LOOKUPS.centers, { placeholder: 'Tất cả trung tâm' });
   fillSelect(document.getElementById('department'), LOOKUPS.departments, { placeholder: '— Chọn phòng ban —' });
-  fillSelect(document.getElementById('center'), LOOKUPS.centers, { placeholder: '— Khối văn phòng —' });
   fillSelect(document.getElementById('role'), LOOKUPS.roles, { valueKey: 'id', labelKey: 'name', placeholder: '— Chọn vai trò —' });
+  updateCenterOptions('');
 }
+
+// Chỉ hiện đúng trung tâm thuộc phân hệ đã chọn — tránh gán nhầm nhân viên
+// ALOHA vào trung tâm iLingo hoặc ngược lại. Bỏ trống = khối văn phòng,
+// không thuộc trung tâm nào (đúng nhân sự HR/ACC/BĐH... theo đề bài).
+function updateCenterOptions(divisionCode) {
+  const centerSelect = document.getElementById('center');
+  if (!divisionCode) {
+    centerSelect.innerHTML = '<option value="">— Không thuộc trung tâm nào (khối văn phòng) —</option>';
+    centerSelect.disabled = true;
+    return;
+  }
+  const division = LOOKUPS.divisions.find((d) => d.code === divisionCode);
+  const centersInDivision = LOOKUPS.centers.filter((c) => c.division_id === division?.id);
+  centerSelect.disabled = false;
+  fillSelect(centerSelect, centersInDivision, { placeholder: '— Chọn trung tâm —' });
+}
+
+document.getElementById('division').addEventListener('change', (e) => updateCenterOptions(e.target.value));
 
 function updatePositionOptions(departmentId) {
   const positions = LOOKUPS.positions.filter((p) => p.department_id === departmentId);
@@ -133,6 +153,7 @@ function openAddModal() {
   document.getElementById('modalTitle').textContent = 'Thêm nhân viên';
   document.getElementById('username').closest('.field').style.display = 'block';
   document.getElementById('tempPassword').closest('.field').style.display = 'block';
+  updateCenterOptions('');
   formError.classList.remove('show');
   modal.classList.add('show');
 }
@@ -172,11 +193,21 @@ async function openEditModal(employeeId) {
   document.getElementById('department').value = row.department_id || '';
   updatePositionOptions(row.department_id);
   document.getElementById('position').value = row.position_id || '';
+
+  // Suy ra phân hệ từ trung tâm hiện tại của nhân viên (nếu có) để hiện đúng
+  // danh sách trung tâm tương ứng trước khi set giá trị center thật.
+  const centerRow = LOOKUPS.centers.find((c) => c.id === row.center_id);
+  const divisionOfCenter = LOOKUPS.divisions.find((d) => d.id === centerRow?.division_id);
+  document.getElementById('division').value = divisionOfCenter?.code || '';
+  updateCenterOptions(divisionOfCenter?.code || '');
   document.getElementById('center').value = row.center_id || '';
+
   document.getElementById('role').value = row.role_id || '';
   document.getElementById('contractType').value = row.contract_type || 'full_time';
   document.getElementById('hireDate').value = row.hire_date || '';
   document.getElementById('isForeignTeacher').checked = !!row.is_foreign_teacher;
+  document.getElementById('isAcademicBoard').checked = !!row.is_academic_board;
+  document.getElementById('canTeach').checked = !!row.can_teach;
   document.getElementById('hometown').value = row.hometown || '';
   document.getElementById('idCardNumber').value = row.id_card_number || '';
   document.getElementById('address').value = row.address || '';
@@ -212,6 +243,8 @@ form.addEventListener('submit', async (e) => {
     contract_type: document.getElementById('contractType').value,
     hire_date: document.getElementById('hireDate').value || null,
     is_foreign_teacher: document.getElementById('isForeignTeacher').checked,
+    is_academic_board: document.getElementById('isAcademicBoard').checked,
+    can_teach: document.getElementById('canTeach').checked,
     hometown: document.getElementById('hometown').value.trim() || null,
     id_card_number: document.getElementById('idCardNumber').value.trim() || null,
     address: document.getElementById('address').value.trim() || null,

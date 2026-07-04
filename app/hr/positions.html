@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Quản lý chức vụ — ERP AIS</title>
 <link rel="manifest" href="/manifest.json" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="ERP AIS" />
+<link rel="apple-touch-icon" href="/assets/icon-192.png" />
 <meta name="theme-color" content="#0094D9" />
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="/css/tokens.css" />
@@ -17,7 +21,7 @@
   <aside class="sidebar" id="sidebar">
     <div class="sidebar__brand">
       <span class="dot" aria-hidden="true"></span>
-      <div>ERP AIS<small>Hệ thống quản trị nội bộ</small></div>
+      <div>ERP AIS<small data-i18n="brand.subtitle">Hệ thống quản trị nội bộ</small></div>
     </div>
     <nav id="sidebarNav"></nav>
     <div class="sidebar__footer">© 2026 ERP AIS</div>
@@ -114,8 +118,8 @@
       </div>
 
       <div class="modal-actions">
-        <button type="button" class="btn btn-outline" id="cancelModal">Huỷ</button>
-        <button type="submit" class="btn btn-accent" id="submitPosition">Lưu</button>
+        <button type="button" class="btn btn-outline" id="cancelModal"><span data-i18n="common.cancel">Huỷ</span></button>
+        <button type="submit" class="btn btn-accent" id="submitPosition"><span data-i18n="common.save">Lưu</span></button>
       </div>
     </form>
   </div>

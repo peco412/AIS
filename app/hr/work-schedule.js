@@ -19,6 +19,7 @@ function addDays(dateStr, n) {
   return d.toISOString().slice(0, 10);
 }
 function fmtShort(d) { return new Date(d).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }); }
+function fmtTime(t) { return t ? t.slice(0, 5) : '--:--'; }
 
 async function loadLookups() {
   const [{ data: centers }, { data: employees }] = await Promise.all([
@@ -53,7 +54,7 @@ async function loadWeek() {
 
   let query = supabase
     .from('work_schedules')
-    .select('id, work_date, shift, employee_id, center_id')
+    .select('id, work_date, start_time, end_time, employee_id, center_id')
     .gte('work_date', weekStart)
     .lte('work_date', weekEnd);
   if (centerFilter) query = query.eq('center_id', centerFilter);
@@ -91,7 +92,7 @@ function renderBody(employeesInView, weekStart) {
         const sched = byEmpDay[`${emp.id}_${date}`];
         return `<td>
           <div class="week-cell ${sched ? 'has-shift' : ''}" data-emp="${emp.id}" data-center="${emp.center_id || ''}" data-date="${date}" data-sched="${sched?.id || ''}">
-            ${sched ? `<span class="shift-label">${esc(sched.shift || 'Có lịch')}</span>` : (CAN_EDIT ? '<span class="shift-empty">+</span>' : '')}
+            ${sched ? `<span class="shift-label">${esc(fmtTime(sched.start_time))}–${esc(fmtTime(sched.end_time))}</span>` : (CAN_EDIT ? '<span class="shift-empty">+</span>' : '')}
           </div>
         </td>`;
       }).join('')}
@@ -147,7 +148,8 @@ function openEdit(id) {
   document.getElementById('employeeSelect').value = row.employee_id;
   document.getElementById('centerSelect').value = row.center_id;
   document.getElementById('workDate').value = row.work_date;
-  document.getElementById('shift').value = row.shift || '';
+  document.getElementById('startTime').value = row.start_time || '';
+  document.getElementById('endTime').value = row.end_time || '';
   deleteBtn.style.display = 'inline-flex';
   formError.classList.remove('show');
   modal.classList.add('show');
@@ -173,7 +175,8 @@ form.addEventListener('submit', async (e) => {
     employee_id: document.getElementById('employeeSelect').value,
     center_id: document.getElementById('centerSelect').value,
     work_date: document.getElementById('workDate').value,
-    shift: document.getElementById('shift').value || null,
+    start_time: document.getElementById('startTime').value,
+    end_time: document.getElementById('endTime').value,
     created_by: PROFILE.id,
   };
   const btn = document.getElementById('submitSched');
