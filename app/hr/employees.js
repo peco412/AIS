@@ -132,9 +132,27 @@ function openAddModal() {
   document.getElementById('employeeId').value = '';
   document.getElementById('modalTitle').textContent = 'Thêm nhân viên';
   document.getElementById('username').closest('.field').style.display = 'block';
+  document.getElementById('tempPassword').closest('.field').style.display = 'block';
   formError.classList.remove('show');
   modal.classList.add('show');
 }
+
+// Tạo mật khẩu tạm ngẫu nhiên đủ mạnh (chữ hoa/thường/số), HR có thể bấm lại
+// nhiều lần hoặc tự gõ tay đè lên nếu muốn đặt mật khẩu cụ thể.
+function generateTempPassword() {
+  const upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const lower = 'abcdefghijkmnpqrstuvwxyz';
+  const digits = '23456789';
+  const all = upper + lower + digits;
+  const bytes = new Uint32Array(8);
+  crypto.getRandomValues(bytes);
+  let pass = upper[bytes[0] % upper.length] + digits[bytes[1] % digits.length];
+  for (let i = 2; i < 8; i++) pass += all[bytes[i] % all.length];
+  return pass;
+}
+document.getElementById('btnGenPassword').addEventListener('click', () => {
+  document.getElementById('tempPassword').value = generateTempPassword();
+});
 
 async function openEditModal(employeeId) {
   formError.classList.remove('show');
@@ -159,7 +177,14 @@ async function openEditModal(employeeId) {
   document.getElementById('contractType').value = row.contract_type || 'full_time';
   document.getElementById('hireDate').value = row.hire_date || '';
   document.getElementById('isForeignTeacher').checked = !!row.is_foreign_teacher;
+  document.getElementById('hometown').value = row.hometown || '';
+  document.getElementById('idCardNumber').value = row.id_card_number || '';
+  document.getElementById('address').value = row.address || '';
+  document.getElementById('emergencyName').value = row.emergency_contact_name || '';
+  document.getElementById('emergencyPhone').value = row.emergency_contact_phone || '';
+  document.getElementById('note').value = row.note || '';
   document.getElementById('username').closest('.field').style.display = 'none'; // không đổi username khi sửa
+  document.getElementById('tempPassword').closest('.field').style.display = 'none';
 
   modal.classList.add('show');
 }
@@ -187,6 +212,12 @@ form.addEventListener('submit', async (e) => {
     contract_type: document.getElementById('contractType').value,
     hire_date: document.getElementById('hireDate').value || null,
     is_foreign_teacher: document.getElementById('isForeignTeacher').checked,
+    hometown: document.getElementById('hometown').value.trim() || null,
+    id_card_number: document.getElementById('idCardNumber').value.trim() || null,
+    address: document.getElementById('address').value.trim() || null,
+    emergency_contact_name: document.getElementById('emergencyName').value.trim() || null,
+    emergency_contact_phone: document.getElementById('emergencyPhone').value.trim() || null,
+    note: document.getElementById('note').value.trim() || null,
   };
 
   const submitBtn = document.getElementById('submitEmployee');
@@ -200,13 +231,14 @@ form.addEventListener('submit', async (e) => {
     } else {
       const username = document.getElementById('username').value.trim();
       if (!username) throw new Error('Vui lòng nhập tên đăng nhập cho nhân viên mới.');
+      const tempPassword = document.getElementById('tempPassword').value.trim() || generateTempPassword();
 
       // Tạo tài khoản đăng nhập (auth.users) đòi hỏi quyền service_role,
       // KHÔNG thể gọi trực tiếp bằng anon key từ trình duyệt vì lý do bảo mật.
       // -> gọi Supabase Edge Function "create-employee-account" (xem
       // supabase/functions/create-employee-account/index.ts) đứng ra làm việc này.
       const { data: fnResult, error: fnError } = await supabase.functions.invoke('create-employee-account', {
-        body: { email: usernameToEmail(username), employee: payload },
+        body: { email: usernameToEmail(username), employee: payload, tempPassword },
       });
       if (fnError) throw fnError;
       if (fnResult?.error) throw new Error(fnResult.error);

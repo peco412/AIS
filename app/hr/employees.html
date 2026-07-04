@@ -139,13 +139,34 @@
           <input type="date" id="hireDate" />
         </div>
       </div>
-      <div class="field">
-        <label><input type="checkbox" id="isForeignTeacher" /> Là giáo viên nước ngoài</label>
+      <div class="field field-checkbox">
+        <label for="isForeignTeacher"><input type="checkbox" id="isForeignTeacher" /> Là giáo viên nước ngoài</label>
       </div>
+
+      <div class="form-section-title">Thông tin cá nhân (lưu để tra cứu khi cần)</div>
+      <div class="field-grid-2">
+        <div class="field"><label for="hometown">Quê quán</label><input type="text" id="hometown" /></div>
+        <div class="field"><label for="idCardNumber">CCCD / Căn cước</label><input type="text" id="idCardNumber" /></div>
+      </div>
+      <div class="field"><label for="address">Địa chỉ thường trú</label><input type="text" id="address" /></div>
+      <div class="field-grid-2">
+        <div class="field"><label for="emergencyName">Người liên lạc khẩn cấp</label><input type="text" id="emergencyName" placeholder="Họ tên" /></div>
+        <div class="field"><label for="emergencyPhone">SĐT liên lạc khẩn cấp</label><input type="text" id="emergencyPhone" /></div>
+      </div>
+      <div class="field"><label for="note">Ghi chú</label><textarea id="note" rows="2" placeholder="Ghi chú nội bộ (nếu có)..."></textarea></div>
+
+      <div class="form-section-title">Tài khoản đăng nhập</div>
       <div class="field">
         <label for="username">Tên đăng nhập (tạo tài khoản)</label>
         <input type="text" id="username" placeholder="VD: nguyenvana" />
-        <p class="cell-muted" style="margin-top:4px;">Chỉ điền khi tạo mới. Mật khẩu tạm sẽ được gửi qua email/thông báo nội bộ.</p>
+      </div>
+      <div class="field">
+        <label for="tempPassword">Mật khẩu tạm</label>
+        <div class="input-with-btn">
+          <input type="text" id="tempPassword" placeholder="Bấm nút để tạo tự động, hoặc tự nhập" class="mono" />
+          <button type="button" class="btn btn-outline btn-sm" id="btnGenPassword">🎲 Tạo tự động</button>
+        </div>
+        <p class="cell-muted" style="margin-top:6px;">Nhân viên bắt buộc đổi mật khẩu ngay lần đăng nhập đầu tiên.</p>
       </div>
 
       <div class="modal-actions">

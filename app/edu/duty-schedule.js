@@ -1,11 +1,24 @@
 import { bootShell } from '/js/shell.js';
 import { supabase, esc } from '/js/supabase.js';
 
+const DAY_LABEL = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'];
 let PROFILE = null;
-let ALL_ROWS = [];
 let CAN_EDIT = false;
+let EMPLOYEES = [];
+let WEEK_ROWS = [];
 
-function fmtDate(d) { return d ? new Date(d).toLocaleDateString('vi-VN') : '—'; }
+function mondayOf(dateStr) {
+  const d = dateStr ? new Date(dateStr) : new Date();
+  const day = d.getDay() || 7;
+  d.setDate(d.getDate() - day + 1);
+  return d.toISOString().slice(0, 10);
+}
+function addDays(dateStr, n) {
+  const d = new Date(dateStr);
+  d.setDate(d.getDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+function fmtShort(d) { return new Date(d).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }); }
 
 async function loadLookups() {
   const { data: centers } = await supabase.from('centers').select('id, name').order('name');
@@ -20,78 +33,126 @@ async function loadLookups() {
 
     const { data: employees } = await supabase
       .from('employees').select('id, employee_code, full_name').eq('center_id', PROFILE.centerId).order('full_name');
+    EMPLOYEES = employees || [];
     document.getElementById('employeeSelect').innerHTML = '<option value="">— Chọn nhân viên —</option>' +
-      (employees || []).map((e) => `<option value="${e.id}">${esc(e.employee_code)} — ${esc(e.full_name)}</option>`).join('');
+      EMPLOYEES.map((e) => `<option value="${e.id}">${esc(e.employee_code)} — ${esc(e.full_name)}</option>`).join('');
   } else {
-    filterCenter.innerHTML = '<option value="">Tất cả trung tâm</option>' +
+    filterCenter.innerHTML = '<option value="">— Chọn trung tâm để xem —</option>' +
       (centers || []).map((c) => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
   }
 }
 
-async function loadRows() {
-  const tbody = document.getElementById('tableBody');
-  tbody.innerHTML = '<tr><td colspan="5" class="empty-cell">Đang tải dữ liệu...</td></tr>';
+function currentWeekStart() { return mondayOf(document.getElementById('weekPicker').value); }
 
-  let query = supabase
-    .from('center_duty_schedules')
-    .select('id, duty_date, shift, employee_id, center_id, employees!center_duty_schedules_employee_id_fkey(full_name, employee_code), centers(name)')
-    .order('duty_date', { ascending: false });
-
-  const center = document.getElementById('filterCenter').value;
-  const from = document.getElementById('filterFrom').value;
-  const to = document.getElementById('filterTo').value;
-  if (center) query = query.eq('center_id', center);
-  if (from) query = query.gte('duty_date', from);
-  if (to) query = query.lte('duty_date', to);
-
-  const { data, error } = await query;
-  if (error) { tbody.innerHTML = `<tr><td colspan="5" class="empty-cell">Lỗi: ${esc(error.message)}</td></tr>`; return; }
-  ALL_ROWS = data || [];
-  render();
+async function loadEmployeesForCenter(centerId) {
+  if (CAN_EDIT) return EMPLOYEES;
+  if (!centerId) return [];
+  const { data } = await supabase.from('employees').select('id, employee_code, full_name').eq('center_id', centerId).order('full_name');
+  return data || [];
 }
 
-function render() {
-  const search = document.getElementById('searchInput').value.trim().toLowerCase();
-  const rows = ALL_ROWS.filter((r) => !search || (r.employees?.full_name || '').toLowerCase().includes(search));
-  document.getElementById('resultCount').textContent = `${rows.length} lịch trực`;
+async function loadWeek() {
+  const tbody = document.getElementById('weekGridBody');
+  tbody.innerHTML = '<tr><td class="empty-cell">Đang tải dữ liệu...</td></tr>';
 
-  const tbody = document.getElementById('tableBody');
-  if (rows.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="empty-cell">Chưa có lịch trực nào.</td></tr>'; return; }
+  const centerId = CAN_EDIT ? PROFILE.centerId : document.getElementById('filterCenter').value;
+  if (!centerId) {
+    tbody.innerHTML = '<tr><td class="empty-cell">Chọn 1 trung tâm để xem lịch trực.</td></tr>';
+    document.getElementById('resultCount').textContent = '';
+    return;
+  }
 
-  tbody.innerHTML = rows.map((r) => `
+  const weekStart = currentWeekStart();
+  const weekEnd = addDays(weekStart, 6);
+  document.getElementById('weekLabel').textContent = `Tuần ${fmtShort(weekStart)} – ${fmtShort(weekEnd)}`;
+
+  const employeesInView = await loadEmployeesForCenter(centerId);
+
+  const { data, error } = await supabase
+    .from('center_duty_schedules')
+    .select('id, duty_date, shift, employee_id, center_id')
+    .eq('center_id', centerId)
+    .gte('duty_date', weekStart)
+    .lte('duty_date', weekEnd);
+
+  if (error) { tbody.innerHTML = `<tr><td class="empty-cell">Lỗi: ${esc(error.message)}</td></tr>`; return; }
+  WEEK_ROWS = data || [];
+
+  document.getElementById('resultCount').textContent = `${employeesInView.length} nhân viên`;
+  renderHead(weekStart);
+  renderBody(employeesInView, weekStart, centerId);
+}
+
+function renderHead(weekStart) {
+  const head = document.getElementById('weekGridHead');
+  head.innerHTML = '<th class="week-grid__name-col">Nhân viên</th>' +
+    DAY_LABEL.map((label, i) => `<th>${label}<span class="day-date">${fmtShort(addDays(weekStart, i))}</span></th>`).join('');
+}
+
+function renderBody(employeesInView, weekStart, centerId) {
+  const tbody = document.getElementById('weekGridBody');
+  if (employeesInView.length === 0) {
+    tbody.innerHTML = '<tr><td class="empty-cell">Trung tâm này chưa có nhân viên.</td></tr>';
+    return;
+  }
+
+  const byEmpDay = {};
+  WEEK_ROWS.forEach((r) => { byEmpDay[`${r.employee_id}_${r.duty_date}`] = r; });
+
+  tbody.innerHTML = employeesInView.map((emp) => `
     <tr>
-      <td class="cell-code">${fmtDate(r.duty_date)}</td>
-      <td>${esc(r.shift || '—')}</td>
-      <td>${esc(r.employees?.employee_code || '')} — ${esc(r.employees?.full_name || '')}</td>
-      <td class="cell-muted">${esc(r.centers?.name || '—')}</td>
-      <td>${CAN_EDIT ? `<button class="btn btn-outline btn-sm" data-edit="${r.id}">Sửa</button>` : ''}</td>
+      <td class="week-grid__name-col">${esc(emp.full_name)}<div class="cell-muted" style="font-weight:400;">${esc(emp.employee_code)}</div></td>
+      ${DAY_LABEL.map((_, i) => {
+        const date = addDays(weekStart, i);
+        const sched = byEmpDay[`${emp.id}_${date}`];
+        return `<td>
+          <div class="week-cell ${sched ? 'has-shift' : ''}" data-emp="${emp.id}" data-date="${date}" data-sched="${sched?.id || ''}">
+            ${sched ? `<span class="shift-label">${esc(sched.shift || 'Trực')}</span>` : (CAN_EDIT ? '<span class="shift-empty">+</span>' : '')}
+          </div>
+        </td>`;
+      }).join('')}
     </tr>
   `).join('');
 
-  tbody.querySelectorAll('[data-edit]').forEach((b) => b.addEventListener('click', () => openEdit(b.dataset.edit)));
+  if (!CAN_EDIT) return;
+  tbody.querySelectorAll('.week-cell').forEach((cell) => {
+    cell.addEventListener('click', () => {
+      const schedId = cell.dataset.sched;
+      if (schedId) openEdit(schedId);
+      else openAddForCell(cell.dataset.emp, cell.dataset.date);
+    });
+  });
 }
 
-['filterCenter', 'filterFrom', 'filterTo'].forEach((id) => document.getElementById(id).addEventListener('change', loadRows));
-document.getElementById('searchInput').addEventListener('input', render);
+document.getElementById('filterCenter').addEventListener('change', loadWeek);
+document.getElementById('weekPicker').addEventListener('change', loadWeek);
+document.getElementById('btnPrevWeek').addEventListener('click', () => {
+  document.getElementById('weekPicker').value = addDays(currentWeekStart(), -7);
+  loadWeek();
+});
+document.getElementById('btnNextWeek').addEventListener('click', () => {
+  document.getElementById('weekPicker').value = addDays(currentWeekStart(), 7);
+  loadWeek();
+});
 
 const modal = document.getElementById('dutyModal');
 const form = document.getElementById('dutyForm');
 const formError = document.getElementById('formError');
 const deleteBtn = document.getElementById('deleteDuty');
 
-document.getElementById('btnAdd').addEventListener('click', () => {
+function openAddForCell(employeeId, date) {
   form.reset();
   document.getElementById('dutyId').value = '';
   document.getElementById('modalTitle').textContent = 'Thêm lịch trực';
+  document.getElementById('employeeSelect').value = employeeId;
+  document.getElementById('dutyDate').value = date;
   deleteBtn.style.display = 'none';
   formError.classList.remove('show');
   modal.classList.add('show');
-});
-document.getElementById('closeModal').addEventListener('click', () => modal.classList.remove('show'));
-document.getElementById('cancelModal').addEventListener('click', () => modal.classList.remove('show'));
+}
 
 function openEdit(id) {
-  const row = ALL_ROWS.find((r) => r.id === id);
+  const row = WEEK_ROWS.find((r) => r.id === id);
   if (!row || !CAN_EDIT) return;
   document.getElementById('modalTitle').textContent = 'Sửa lịch trực';
   document.getElementById('dutyId').value = row.id;
@@ -103,13 +164,16 @@ function openEdit(id) {
   modal.classList.add('show');
 }
 
+document.getElementById('closeModal').addEventListener('click', () => modal.classList.remove('show'));
+document.getElementById('cancelModal').addEventListener('click', () => modal.classList.remove('show'));
+
 deleteBtn.addEventListener('click', async () => {
   const id = document.getElementById('dutyId').value;
   if (!id || !confirm('Xoá lịch trực này?')) return;
   const { error } = await supabase.from('center_duty_schedules').delete().eq('id', id);
   if (error) { formError.textContent = error.message; formError.classList.add('show'); return; }
   modal.classList.remove('show');
-  await loadRows();
+  await loadWeek();
 });
 
 form.addEventListener('submit', async (e) => {
@@ -131,7 +195,7 @@ form.addEventListener('submit', async (e) => {
       : await supabase.from('center_duty_schedules').insert(payload);
     if (error) throw error;
     modal.classList.remove('show');
-    await loadRows();
+    await loadWeek();
   } catch (err) {
     formError.textContent = err.message || 'Có lỗi xảy ra.';
     formError.classList.add('show');
@@ -145,8 +209,8 @@ form.addEventListener('submit', async (e) => {
     const { profile } = await bootShell();
     PROFILE = profile;
     CAN_EDIT = profile.isCenterManager;
-    document.getElementById('btnAdd').style.display = CAN_EDIT ? '' : 'none';
+    document.getElementById('weekPicker').value = mondayOf();
     await loadLookups();
-    await loadRows();
+    await loadWeek();
   } catch (e) { /* bootShell tự điều hướng */ }
 })();

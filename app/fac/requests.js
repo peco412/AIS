@@ -17,7 +17,7 @@ async function loadRows() {
 
   let query = supabase
     .from('facility_requests')
-    .select('id, title, request_type, status, current_state_file_url, requester_id, employees(full_name)')
+    .select('id, title, request_type, status, current_state_file_url, requester_id, employees!facility_requests_requester_id_fkey(full_name)')
     .order('created_at', { ascending: false });
   if (scope === 'mine') query = query.eq('requester_id', PROFILE.id);
 

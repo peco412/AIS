@@ -11,7 +11,7 @@ async function fetchPending() {
 
   // Hợp đồng lao động
   if (isHead('HR') || isExec()) {
-    const { data } = await supabase.from('contracts').select('id, code, status, employees(full_name)').in('status', ['submitted', 'approved_1']);
+    const { data } = await supabase.from('contracts').select('id, code, status, employees:employee_id(full_name)').in('status', ['submitted', 'approved_1']);
     (data || []).forEach((r) => {
       if (r.status === 'submitted' && isHead('HR')) rows.push(row('Hợp đồng lao động', r.code, r.employees?.full_name, 'Chờ trưởng phòng NS ký', '/hr/contracts.html'));
       if (r.status === 'approved_1' && isExec()) rows.push(row('Hợp đồng lao động', r.code, r.employees?.full_name, 'Chờ ban điều hành ký', '/hr/contracts.html'));
@@ -20,7 +20,7 @@ async function fetchPending() {
 
   // Phiếu đề nghị thanh toán
   if (isHead('ACC') || isExec()) {
-    const { data } = await supabase.from('payment_requests').select('id, code, status, employees(full_name)').in('status', ['submitted', 'approved_1']);
+    const { data } = await supabase.from('payment_requests').select('id, code, status, employees:requester_id(full_name)').in('status', ['submitted', 'approved_1']);
     (data || []).forEach((r) => {
       if (r.status === 'submitted' && (isHead('ACC') || isExec())) rows.push(row('Phiếu đề nghị thanh toán', r.code, r.employees?.full_name, 'Chờ kế toán ký', '/acc/payment-requests.html'));
       if (r.status === 'approved_1' && isExec()) rows.push(row('Phiếu đề nghị thanh toán', r.code, r.employees?.full_name, 'Chờ ban điều hành ký', '/acc/payment-requests.html'));
@@ -29,7 +29,7 @@ async function fetchPending() {
 
   // Phiếu đề nghị tạm ứng
   if (isHead('ACC') || isExec()) {
-    const { data } = await supabase.from('advance_requests').select('id, code, status, employees(full_name)').in('status', ['draft', 'approved_1']);
+    const { data } = await supabase.from('advance_requests').select('id, code, status, employees:requester_id(full_name)').in('status', ['draft', 'approved_1']);
     (data || []).forEach((r) => {
       if (r.status === 'draft' && (isHead('ACC') || isExec())) rows.push(row('Phiếu đề nghị tạm ứng', r.code, r.employees?.full_name, 'Chờ kế toán ký', '/acc/advance-requests.html'));
       if (r.status === 'approved_1' && isExec()) rows.push(row('Phiếu đề nghị tạm ứng', r.code, r.employees?.full_name, 'Chờ ban điều hành ký', '/acc/advance-requests.html'));
@@ -47,7 +47,7 @@ async function fetchPending() {
 
   // Phiếu đề nghị mua sắm
   if (isHead('FAC') || isExec()) {
-    const { data } = await supabase.from('purchase_requests').select('id, code, status, employees(full_name)').in('status', ['draft', 'approved_1']);
+    const { data } = await supabase.from('purchase_requests').select('id, code, status, employees:requester_id(full_name)').in('status', ['draft', 'approved_1']);
     (data || []).forEach((r) => {
       if (r.status === 'draft' && (isHead('FAC') || isExec())) rows.push(row('Phiếu đề nghị mua sắm', r.code, r.employees?.full_name, 'Chờ trưởng phòng CSVC duyệt', '/fac/purchase-requests.html'));
       if (r.status === 'approved_1' && isExec()) rows.push(row('Phiếu đề nghị mua sắm', r.code, r.employees?.full_name, 'Chờ ban điều hành ký', '/fac/purchase-requests.html'));
@@ -56,7 +56,7 @@ async function fetchPending() {
 
   // Đề xuất nội bộ (mọi phòng ban nếu là trưởng phòng, hoặc exec/tech cho tất cả)
   {
-    const { data } = await supabase.from('internal_proposals').select('id, code, status, department_id, employees(full_name), departments(code)').in('status', ['submitted', 'approved_1']);
+    const { data } = await supabase.from('internal_proposals').select('id, code, status, department_id, employees:employee_id(full_name), departments(code)').in('status', ['submitted', 'approved_1']);
     (data || []).forEach((r) => {
       const deptCode = r.departments?.code;
       if (r.status === 'submitted' && (isHead(deptCode) || isExec())) rows.push(row('Đề xuất nội bộ', r.code, r.employees?.full_name, 'Chờ trưởng phòng duyệt', '/proposals.html'));

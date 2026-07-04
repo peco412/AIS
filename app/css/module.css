@@ -136,18 +136,51 @@ table.data-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 }
 .modal-box h3 { font-size: 18px; margin-bottom: 4px; }
 .modal-box .modal-sub { color: var(--muted); font-size: 13px; margin-bottom: 18px; }
-.modal-box .field { margin-bottom: 14px; }
-.modal-box .field label {
+/* Style cho mọi ô nhập liệu dạng ".field" — dùng chung cho form trong modal
+   VÀ form nằm thẳng trên trang (ví dụ exec/orders.html, profile.html) —
+   trước đây chỉ áp dụng trong ".modal-box" nên các trang có form ngoài modal
+   bị mất toàn bộ style (textarea/input trông như mặc định của trình duyệt). */
+.field { margin-bottom: 14px; }
+.field label {
   display: block; font-size: 12.5px; font-weight: 600; color: var(--ink-soft); margin-bottom: 6px;
 }
-.modal-box .field input, .modal-box .field select, .modal-box .field textarea {
+.field input, .field select, .field textarea {
   width: 100%; padding: 10px 13px; border: 1px solid transparent;
   border-radius: var(--radius-sm); font-size: 13.5px; background: var(--surface-fill); font-family: inherit;
+  color: var(--ink);
   transition: background var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
 }
-.modal-box .field input:focus, .modal-box .field select:focus, .modal-box .field textarea:focus {
+.field textarea { resize: vertical; min-height: 76px; line-height: 1.5; }
+.field input:focus, .field select:focus, .field textarea:focus {
   background: #fff; outline: none; box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.18);
 }
+.field input:disabled, .field select:disabled, .field textarea:disabled {
+  opacity: 0.65; cursor: not-allowed;
+}
+
+/* Checkbox nằm cùng hàng với nội dung nhãn (không bị kéo dãn / lệch dòng) */
+.field-checkbox label {
+  display: flex; align-items: center; gap: 9px;
+  font-size: 13.5px; font-weight: 500; color: var(--ink);
+  margin-bottom: 0; cursor: pointer;
+}
+.field-checkbox input[type="checkbox"] {
+  width: 17px; height: 17px; flex-shrink: 0; accent-color: var(--accent); cursor: pointer;
+}
+
+/* Tiêu đề phân đoạn trong form dài (ví dụ hồ sơ nhân viên) */
+.form-section-title {
+  font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+  color: var(--muted); margin: 22px 0 12px; padding-top: 14px; border-top: 1px solid var(--separator);
+}
+.form-section-title:first-child { margin-top: 0; padding-top: 0; border-top: none; }
+
+/* Ô nhập liệu đi kèm 1 nút hành động (ví dụ "Tạo mật khẩu tự động") */
+.input-with-btn { display: flex; gap: 8px; align-items: stretch; }
+.input-with-btn input { flex: 1; }
+.input-with-btn .btn { flex-shrink: 0; white-space: nowrap; }
+
+.modal-box .field { margin-bottom: 14px; }
 .field-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; }
 .modal-close {
@@ -165,3 +198,37 @@ table.data-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
   border-radius: var(--radius-sm); padding: 10px 13px; font-size: 12.5px; margin-bottom: 14px;
 }
 .form-error.show { display: block; }
+
+/* ---------- Bảng lịch dạng lưới theo tuần (Phân lịch làm việc / trực trung tâm) ---------- */
+.week-nav {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap;
+}
+.week-nav .week-label { font-weight: 600; font-size: 14px; color: var(--ink); min-width: 200px; text-align: center; }
+.week-grid-wrap {
+  background: var(--surface-card); border: 1px solid var(--border); border-radius: var(--radius-md);
+  overflow-x: auto; box-shadow: var(--shadow-xs);
+}
+table.week-grid { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 860px; }
+.week-grid th {
+  padding: 10px 10px; background: var(--surface-sunken); color: var(--ink-soft);
+  font-weight: 700; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--separator); white-space: nowrap; text-align: center;
+}
+.week-grid th.week-grid__name-col { text-align: left; padding-left: 16px; min-width: 180px; }
+.week-grid th .day-date { display: block; font-size: 11px; color: var(--muted); font-weight: 500; text-transform: none; margin-top: 2px; }
+.week-grid td { border-bottom: 1px solid var(--separator); vertical-align: top; padding: 6px; }
+.week-grid td.week-grid__name-col {
+  padding: 10px 16px; font-weight: 600; color: var(--ink); white-space: nowrap; vertical-align: middle;
+}
+.week-grid tbody tr:last-child td { border-bottom: none; }
+.week-grid tbody tr:hover { background: var(--surface); }
+.week-cell {
+  min-height: 46px; border-radius: var(--radius-sm); padding: 6px 8px; cursor: pointer;
+  display: flex; flex-direction: column; gap: 2px; justify-content: center; align-items: center; text-align: center;
+  transition: background var(--dur-fast) var(--ease);
+}
+.week-cell:hover { background: var(--surface-sunken); }
+.week-cell.has-shift { background: var(--accent-tint); }
+.week-cell.has-shift:hover { background: rgba(var(--accent-rgb), 0.18); }
+.week-cell .shift-label { font-size: 12px; font-weight: 600; color: var(--accent-deep); }
+.week-cell .shift-empty { font-size: 16px; color: var(--border-strong); }

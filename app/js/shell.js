@@ -54,7 +54,7 @@ export async function bootShell() {
       departments ( code, name ),
       positions ( name, is_teacher_eligible ),
       system_roles ( code, name ),
-      centers ( id, name )
+      centers ( id, name, divisions ( code ) )
     `)
     .eq('auth_user_id', sessionData.session.user.id)
     .single();
@@ -62,6 +62,16 @@ export async function bootShell() {
   if (error || !employee) {
     window.location.href = '/index.html';
     throw new Error('NO_EMPLOYEE');
+  }
+
+  // Màu giao diện phải theo ĐÚNG trung tâm thật của nhân viên (qua division),
+  // không phải theo lựa chọn tạm ở màn hình đăng nhập (localStorage) — nhân
+  // viên khối văn phòng (HR/ACC/BĐH...) không gắn 1 trung tâm cụ thể thì mới
+  // dùng lại lựa chọn đăng nhập làm mặc định.
+  const realDivisionCode = employee.centers?.divisions?.code?.toLowerCase();
+  if (realDivisionCode) {
+    document.documentElement.setAttribute('data-division', realDivisionCode);
+    localStorage.setItem('ais_division', realDivisionCode);
   }
 
   const profile = {

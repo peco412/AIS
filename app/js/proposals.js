@@ -20,7 +20,7 @@ async function loadRows() {
 
   let query = supabase
     .from('internal_proposals')
-    .select('id, code, title, status, file_url, updated_at, employee_id, department_id, departments(name, code), employees(full_name, employee_code)')
+    .select('id, code, title, status, file_url, updated_at, employee_id, department_id, departments(name, code), employees!internal_proposals_employee_id_fkey(full_name, employee_code)')
     .order('updated_at', { ascending: false });
   if (scope === 'mine') query = query.eq('employee_id', PROFILE.id);
   else if (PROFILE.departmentId) query = query.eq('department_id', PROFILE.departmentId);

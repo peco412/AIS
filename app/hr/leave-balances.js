@@ -39,9 +39,9 @@ async function loadTable() {
 
   const { data, error } = await supabase
     .from('leave_balances')
-    .select('id, annual_leave_accrued, annual_leave_used, compensatory_leave, employee_id, employees(employee_code, full_name)')
+    .select('id, annual_leave_accrued, annual_leave_used, compensatory_leave, employee_id, employees!leave_balances_employee_id_fkey(employee_code, full_name)')
     .eq('year', year).eq('month', month)
-    .order('employees(employee_code)');
+    .order('employee_code', { foreignTable: 'employees!leave_balances_employee_id_fkey' });
 
   if (error) { tbody.innerHTML = `<tr><td colspan="7" class="empty-cell">Lỗi: ${error.message}</td></tr>`; return; }
 

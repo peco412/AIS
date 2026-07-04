@@ -37,7 +37,7 @@ async function loadRows() {
   const scope = document.getElementById('viewScope').value;
   let query = supabase
     .from('leave_requests')
-    .select('id, code, leave_type, leave_reason, start_date, days, return_date, reason_note, status, employee_id, attachment_url, employees(full_name, employee_code)')
+    .select('id, code, leave_type, leave_reason, start_date, days, return_date, reason_note, status, employee_id, attachment_url, employees!leave_requests_employee_id_fkey(full_name, employee_code)')
     .order('created_at', { ascending: false });
 
   if (scope === 'mine') query = query.eq('employee_id', PROFILE.id);

@@ -22,6 +22,7 @@ export const NAV_CONFIG = [
     items: [
       { label: 'Trang chủ', href: '/dashboard.html', icon: '⌂', visible: () => true },
       { label: 'Thông báo', href: '/notifications.html', icon: '🔔', visible: () => true },
+      { label: 'Thông tin liên lạc', href: '/directory.html', icon: '📇', visible: () => true },
       { label: 'Hồ sơ cá nhân', href: '/profile.html', icon: '👤', visible: () => true },
       { label: 'Lịch họp', href: '/meetings.html', icon: '📅', visible: () => true },
       { label: 'Đề xuất nội bộ', href: '/proposals.html', icon: '📝', visible: () => true },
@@ -105,6 +106,7 @@ export const NAV_CONFIG = [
   {
     section: 'Ban điều hành',
     items: [
+      { label: 'Báo cáo tổng hợp', href: '/exec/reports.html', icon: '📊', visible: (p) => isExecOrTech(p) },
       { label: 'Ký số hồ sơ', href: '/exec/sign.html', icon: '✍️', visible: (p) => isExecOrTech(p) },
       { label: 'Ban hành thông báo', href: '/exec/broadcast.html', icon: '📢', visible: (p) => isDeptHeadOrAbove(p) },
       { label: 'Lệnh yêu cầu', href: '/exec/orders.html', icon: '📮', visible: (p) => p.roleCode === 'EXECUTIVE' || p.roleCode === 'TECH' },

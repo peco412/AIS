@@ -16,7 +16,7 @@ async function loadRows() {
 
   let query = supabase
     .from('business_trips')
-    .select('id, code, title, destination_address, distance_km, trip_date, days, status, employee_id, attachment_url, employees(full_name, employee_code)')
+    .select('id, code, title, destination_address, distance_km, trip_date, days, status, employee_id, attachment_url, employees!business_trips_employee_id_fkey(full_name, employee_code)')
     .order('created_at', { ascending: false });
   if (scope === 'mine') query = query.eq('employee_id', PROFILE.id);
 

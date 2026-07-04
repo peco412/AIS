@@ -28,7 +28,7 @@ async function loadRows() {
   const scope = document.getElementById('viewScope').value;
   let query = supabase
     .from('advance_requests')
-    .select('id, code, amount, reason, status, draft_file_url, final_file_url, updated_at, requester_id, employees(full_name, employee_code)')
+    .select('id, code, amount, reason, status, draft_file_url, final_file_url, updated_at, requester_id, employees!advance_requests_requester_id_fkey(full_name, employee_code)')
     .order('updated_at', { ascending: false });
   if (scope === 'mine') query = query.eq('requester_id', PROFILE.id);
   const { data, error } = await query;
