@@ -173,7 +173,7 @@ export function t(key, fallback) {
   const entry = DICT[key];
   const lang = getLang();
   if (!entry) return fallback ?? key;
-  return entry[lang] || entry.vi || fallback ?? key;
+  return entry[lang] || entry.vi || (fallback ?? key);
 }
 
 /**

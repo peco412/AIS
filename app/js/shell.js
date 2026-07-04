@@ -95,6 +95,11 @@ export async function bootShell() {
     .single();
 
   if (error || !employee) {
+    // Log lỗi thật ra console — trước đây lỗi bị nuốt im lặng, khiến người
+    // dùng thấy như "không đăng nhập được" dù auth đã thành công, chỉ là
+    // bước tải hồ sơ nhân viên ngay sau đó bị lỗi (ví dụ thiếu cột DB do
+    // chưa chạy đủ migration).
+    console.error('bootShell: không tải được hồ sơ nhân viên.', error);
     window.location.href = '/index.html';
     throw new Error('NO_EMPLOYEE');
   }
