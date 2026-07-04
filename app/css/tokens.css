@@ -1,0 +1,96 @@
+/* =====================================================================
+   ERP AIS — DESIGN TOKENS
+   Chủ thể: hệ thống nội bộ cho trung tâm Anh ngữ ALOHA / iLingo.
+   Người dùng: nhân viên hành chính, giáo viên, kế toán — dùng hằng ngày.
+   Ưu tiên: rõ ràng, quét nhanh, tin cậy — không phải trang bán hàng.
+   Accent đổi theo phân hệ đang chọn (thuộc tính data-division trên <html>).
+   ===================================================================== */
+
+:root {
+  /* Nền trung tính mát, không dùng tông kem/be mặc định */
+  --ink: #12181f;
+  --ink-soft: #3a4451;
+  --muted: #6b7684;
+  --surface: #f3f5f7;
+  --surface-card: #ffffff;
+  --surface-sunken: #e9edf1;
+  --border: #e1e5ea;
+  --border-strong: #cbd2da;
+
+  --success: #1e8e5a;
+  --success-tint: #e5f5ee;
+  --warning: #c77c13;
+  --warning-tint: #fbf0df;
+  --danger: #c1432d;
+  --danger-tint: #fbe9e5;
+
+  /* Font: Be Vietnam Pro hỗ trợ dấu tiếng Việt tốt, không dùng Inter mặc định */
+  --font-display: 'Be Vietnam Pro', system-ui, sans-serif;
+  --font-body: 'Be Vietnam Pro', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+
+  --shadow-sm: 0 1px 2px rgba(18, 24, 31, 0.06);
+  --shadow-md: 0 4px 16px rgba(18, 24, 31, 0.08);
+  --shadow-lg: 0 12px 32px rgba(18, 24, 31, 0.14);
+
+  --sidebar-w: 264px;
+  --topbar-h: 64px;
+
+  /* Mặc định trước khi chọn phân hệ */
+  --accent: #0094d9;
+  --accent-deep: #06628f;
+  --accent-tint: #e4f4fc;
+}
+
+html[data-division='aloha'] {
+  --accent: #0094d9;
+  --accent-deep: #06628f;
+  --accent-tint: #e4f4fc;
+}
+
+html[data-division='ilingo'] {
+  --accent: #0b6c37;
+  --accent-deep: #084723;
+  --accent-tint: #e5f3ea;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+body { min-height: 100vh; }
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0;
+}
+
+a { color: var(--accent-deep); text-decoration: none; }
+
+button { font-family: inherit; }
+
+.mono { font-family: var(--font-mono); letter-spacing: 0.02em; }
+
+/* Focus rõ ràng cho bàn phím — bắt buộc theo yêu cầu chất lượng tối thiểu */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+}

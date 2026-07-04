@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="vi" data-division="aloha">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Lệnh yêu cầu Ban điều hành — ERP AIS</title>
+<link rel="manifest" href="/manifest.json" />
+<meta name="theme-color" content="#0094D9" />
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/css/tokens.css" />
+<link rel="stylesheet" href="/css/dashboard.css" />
+<link rel="stylesheet" href="/css/module.css" />
+</head>
+<body data-page="/exec/orders.html">
+
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar__brand"><span class="dot"></span><div>ERP AIS<small>Hệ thống quản trị nội bộ</small></div></div>
+    <nav id="sidebarNav"></nav>
+    <div class="sidebar__footer">© 2026 ERP AIS</div>
+  </aside>
+  <header class="topbar">
+    <div class="topbar__left">
+      <button class="menu-toggle" id="menuToggle">☰</button>
+    </div>
+    <div class="topbar__right">
+      <button class="icon-btn" onclick="location.href='/notifications.html'">🔔<span class="badge" id="notifBadge" style="display:none;">0</span></button>
+      <div class="user-chip" onclick="location.href='/profile.html'">
+        <div class="user-chip__avatar" id="userChipAvatar">--</div>
+        <div class="user-chip__meta"><div class="name" id="userChipName">Đang tải...</div><div class="role" id="userChipRole">—</div></div>
+      </div>
+      <button class="icon-btn" id="logoutBtn">⎋</button>
+    </div>
+  </header>
+
+  <main class="main">
+    <div class="page-header">
+      <div><h1>Lệnh yêu cầu Ban điều hành</h1><div class="sub">Khởi tạo nhanh yêu cầu gửi tới Kế toán / Truyền thông / CSVC, không cần vào từng phân hệ.</div></div>
+    </div>
+
+    <div class="toolbar">
+      <button class="btn btn-accent btn-sm" data-tab="payment">💳 Đề nghị thanh toán</button>
+      <button class="btn btn-outline btn-sm" data-tab="comm">📣 Yêu cầu truyền thông</button>
+      <button class="btn btn-outline btn-sm" data-tab="fac">🛠 Yêu cầu CSVC</button>
+    </div>
+
+    <!-- FORM: Phiếu đề nghị thanh toán (tạo bản nháp, hoàn tất ký ở Kế toán) -->
+    <form id="paymentForm" class="order-panel">
+      <div class="form-error" id="paymentError"></div>
+      <div class="field-grid-2">
+        <div class="field"><label for="payAmount">Số tiền đề nghị (đ) *</label><input type="number" id="payAmount" min="0" step="1000" required /></div>
+        <div class="field"><label for="payCenter">Trung tâm liên quan</label><select id="payCenter"><option value="">— Không áp dụng —</option></select></div>
+      </div>
+      <div class="field"><label for="payContent">Nội dung thanh toán *</label><textarea id="payContent" rows="3" required></textarea></div>
+      <div class="modal-actions"><button type="submit" class="btn btn-accent">Tạo lệnh & chuyển sang ký/hoàn tất</button></div>
+    </form>
+
+    <!-- FORM: Yêu cầu truyền thông -->
+    <form id="commForm" class="order-panel" style="display:none;">
+      <div class="form-error" id="commError"></div>
+      <div class="field-grid-2">
+        <div class="field"><label for="commType">Loại yêu cầu *</label>
+          <select id="commType" required>
+            <option value="design">Thiết kế</option><option value="print">In ấn</option><option value="ads">Quảng cáo</option>
+            <option value="event">Tổ chức sự kiện</option><option value="photo_video">Quay phim / chụp ảnh</option>
+          </select>
+        </div>
+        <div class="field"><label for="commPriority">Mức ưu tiên</label>
+          <select id="commPriority"><option value="normal">Bình thường</option><option value="high">Cao</option><option value="urgent">Khẩn cấp</option></select>
+        </div>
+      </div>
+      <div class="field"><label for="commTitle">Tiêu đề yêu cầu *</label><input type="text" id="commTitle" required /></div>
+      <div class="field"><label for="commDeadline">Thời hạn xử lý</label><input type="date" id="commDeadline" /></div>
+      <div class="modal-actions"><button type="submit" class="btn btn-accent">Gửi yêu cầu</button></div>
+    </form>
+
+    <!-- FORM: Yêu cầu CSVC -->
+    <form id="facForm" class="order-panel" style="display:none;">
+      <div class="form-error" id="facError"></div>
+      <div class="field"><label for="facType">Loại yêu cầu *</label>
+        <select id="facType" required><option value="repair">Sửa chữa</option><option value="new_supply">Cấp mới</option><option value="purchase">Mua mới</option></select>
+      </div>
+      <div class="field"><label for="facTitle">Tiêu đề yêu cầu *</label><input type="text" id="facTitle" required /></div>
+      <div class="modal-actions"><button type="submit" class="btn btn-accent">Gửi yêu cầu</button></div>
+    </form>
+
+    <div class="page-header" style="margin-top:28px;"><div><h1 style="font-size:18px;">Lệnh yêu cầu đã gửi</h1></div></div>
+    <div class="data-table-wrap">
+      <table class="data-table">
+        <thead><tr><th>Loại</th><th>Mã / Tiêu đề</th><th>Trạng thái</th><th>Ngày gửi</th></tr></thead>
+        <tbody id="tableBody"><tr><td colspan="4" class="empty-cell">Đang tải dữ liệu...</td></tr></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<style>.order-panel{background:#fff;border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:8px;max-width:640px;}</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="/env.js"></script>
+<script type="module" src="/exec/orders.js"></script>
+<script src="/js/pwa.js"></script>
+</body>
+</html>

@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="vi" data-division="aloha">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Quản lý chức vụ — ERP AIS</title>
+<link rel="manifest" href="/manifest.json" />
+<meta name="theme-color" content="#0094D9" />
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/css/tokens.css" />
+<link rel="stylesheet" href="/css/dashboard.css" />
+<link rel="stylesheet" href="/css/module.css" />
+</head>
+<body data-page="/hr/positions.html">
+
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar__brand">
+      <span class="dot" aria-hidden="true"></span>
+      <div>ERP AIS<small>Hệ thống quản trị nội bộ</small></div>
+    </div>
+    <nav id="sidebarNav"></nav>
+    <div class="sidebar__footer">© 2026 ERP AIS</div>
+  </aside>
+
+  <header class="topbar">
+    <div class="topbar__left">
+      <button class="menu-toggle" id="menuToggle" aria-label="Mở menu">☰</button>
+      <div class="search-box">
+        <span aria-hidden="true">🔎</span>
+        <input type="text" id="searchInput" placeholder="Tìm theo tên chức vụ..." />
+      </div>
+    </div>
+    <div class="topbar__right">
+      <button class="icon-btn" title="Thông báo" onclick="location.href='/notifications.html'">
+        🔔<span class="badge" id="notifBadge" style="display:none;">0</span>
+      </button>
+      <div class="user-chip" onclick="location.href='/profile.html'">
+        <div class="user-chip__avatar" id="userChipAvatar">--</div>
+        <div class="user-chip__meta">
+          <div class="name" id="userChipName">Đang tải...</div>
+          <div class="role" id="userChipRole">—</div>
+        </div>
+      </div>
+      <button class="icon-btn" title="Đăng xuất" id="logoutBtn">⎋</button>
+    </div>
+  </header>
+
+  <main class="main">
+    <div class="page-header">
+      <div>
+        <h1>Quản lý chức vụ</h1>
+        <div class="sub">Cấp duyệt và cờ "có thể kiêm dạy" áp dụng cho mọi nhân viên giữ chức vụ này — kể cả nhân viên khối văn phòng.</div>
+      </div>
+      <button class="btn btn-accent" id="btnAddPosition">+ Thêm chức vụ</button>
+    </div>
+
+    <div class="toolbar">
+      <div class="toolbar__filters">
+        <select class="select-input" id="filterDept"><option value="">Tất cả phòng ban</option></select>
+      </div>
+      <div class="cell-muted" id="resultCount"></div>
+    </div>
+
+    <div class="form-error" id="listError"></div>
+
+    <div class="data-table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Chức vụ</th><th>Phòng ban</th><th>Cấp duyệt</th>
+            <th>Có thể kiêm dạy</th><th>Số NV đang giữ</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="positionTableBody">
+          <tr><td colspan="6" class="empty-cell">Đang tải dữ liệu...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<!-- Modal Thêm / Sửa chức vụ -->
+<div class="modal-overlay" id="positionModal">
+  <div class="modal-box">
+    <button class="modal-close" id="closeModal">✕</button>
+    <h3 id="modalTitle">Thêm chức vụ</h3>
+    <p class="modal-sub">Cờ "có thể kiêm dạy" là điểm mấu chốt để nhân viên khối văn phòng vẫn thấy được menu Giáo viên khi được phân công dạy.</p>
+    <div class="form-error" id="formError"></div>
+
+    <form id="positionForm">
+      <input type="hidden" id="positionId" />
+      <div class="field">
+        <label for="positionName">Tên chức vụ *</label>
+        <input type="text" id="positionName" required placeholder="VD: Trưởng phòng Đào tạo" />
+      </div>
+      <div class="field-grid-2">
+        <div class="field">
+          <label for="positionDept">Phòng ban *</label>
+          <select id="positionDept" required></select>
+        </div>
+        <div class="field">
+          <label for="approvalLevel">Cấp duyệt *</label>
+          <select id="approvalLevel" required>
+            <option value="0">0 — Nhân viên thường</option>
+            <option value="1">1 — Trưởng/phó phòng (duyệt cấp 1)</option>
+            <option value="2">2 — Ban điều hành (duyệt cấp 2)</option>
+            <option value="9">9 — Nhân viên kỹ thuật (toàn quyền)</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label><input type="checkbox" id="isTeacherEligible" /> Có thể kiêm dạy (nhân viên giữ chức vụ này sẽ thấy menu "Giáo viên" nếu được phân lớp)</label>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn btn-outline" id="cancelModal">Huỷ</button>
+        <button type="submit" class="btn btn-accent" id="submitPosition">Lưu</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="/env.js"></script>
+<script type="module" src="/hr/positions.js"></script>
+<script src="/js/pwa.js"></script>
+</body>
+</html>

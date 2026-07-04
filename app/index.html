@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="vi" data-division="aloha">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Đăng nhập — ERP AIS</title>
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#0094D9" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/tokens.css" />
+<link rel="stylesheet" href="css/login.css" />
+</head>
+<body>
+
+<div class="login-shell">
+
+  <!-- Cột thương hiệu -->
+  <div class="login-brand">
+    <div class="level-rungs" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="login-brand__top">
+      <div class="login-brand__mark">
+        <span class="dot" aria-hidden="true"></span>
+        <span>ERP AIS</span>
+      </div>
+      <div class="division-switch" role="group" aria-label="Chọn phân hệ">
+        <button type="button" data-division-btn="aloha" aria-pressed="true">ALOHA</button>
+        <button type="button" data-division-btn="ilingo" aria-pressed="false">iLingo</button>
+      </div>
+    </div>
+
+    <div class="login-brand__headline">
+      <div class="eyebrow">Hệ thống quản trị nội bộ</div>
+      <h1 id="brandTitle">ALOHA</h1>
+      <p>Quản lý nhân sự, kế toán, truyền thông, cơ sở vật chất và học vụ cho toàn bộ 8 trung tâm — trong một hệ thống duy nhất.</p>
+    </div>
+
+    <div class="login-brand__footer">
+      © 2026 ERP AIS · Bảo mật theo phân quyền vai trò
+    </div>
+  </div>
+
+  <!-- Cột form -->
+  <div class="login-form-col">
+    <form class="login-form" id="loginForm" novalidate>
+      <h2>Đăng nhập</h2>
+      <p class="sub">Nhập thông tin tài khoản được cấp bởi phòng nhân sự.</p>
+
+      <div class="login-error" id="loginError" role="alert"></div>
+
+      <div class="field">
+        <label for="username">Tên đăng nhập</label>
+        <input type="text" id="username" name="username" autocomplete="username" placeholder="VD: VMTDTP" required />
+      </div>
+
+      <div class="field">
+        <label for="password">Mật khẩu</label>
+        <input type="password" id="password" name="password" autocomplete="current-password" placeholder="••••••••" required />
+      </div>
+
+      <div class="field-row-between">
+        <label><input type="checkbox" id="remember" checked /> Ghi nhớ đăng nhập</label>
+        <a href="#" id="forgotLink">Quên mật khẩu?</a>
+      </div>
+
+      <button type="submit" class="btn-primary" id="loginSubmit">Đăng nhập</button>
+
+      <div class="login-lang" role="group" aria-label="Ngôn ngữ">
+        <button type="button" data-lang-btn="vi" aria-pressed="true">Tiếng Việt</button>
+        <button type="button" data-lang-btn="en" aria-pressed="false">English</button>
+      </div>
+    </form>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="/env.js"></script>
+<script type="module" src="js/auth.js"></script>
+<script src="js/pwa.js"></script>
+</body>
+</html>

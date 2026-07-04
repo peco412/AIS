@@ -1,0 +1,15 @@
+{
+  "name": "ERP AIS",
+  "short_name": "AIS",
+  "description": "Hệ thống quản trị nội bộ ALOHA / iLingo",
+  "start_url": "/index.html",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#F3F5F7",
+  "theme_color": "#0094D9",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "assets/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

@@ -1,0 +1,20 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#06628F"/>
+      <stop offset="100%" stop-color="#0094D9"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="96" fill="url(#bg)"/>
+
+  <!-- Hoạ tiết bậc cấp độ (đồng bộ trang login) -->
+  <g opacity="0.28">
+    <rect x="330" y="330" width="70" height="16" rx="8" fill="#ffffff"/>
+    <rect x="300" y="356" width="100" height="16" rx="8" fill="#ffffff"/>
+    <rect x="270" y="382" width="130" height="16" rx="8" fill="#ffffff"/>
+  </g>
+
+  <!-- Chữ AIS -->
+  <text x="256" y="270" font-family="Arial, Helvetica, sans-serif" font-weight="800"
+        font-size="150" fill="#ffffff" text-anchor="middle">AIS</text>
+</svg>
