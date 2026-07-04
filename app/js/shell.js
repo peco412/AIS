@@ -1,6 +1,5 @@
 import { supabase } from './supabase.js';
 import { NAV_CONFIG } from './navConfig.js';
-import { t, applyTranslations, syncLangFromProfile, setLang, getLang } from './i18n.js';
 
 document.documentElement.setAttribute('data-division', localStorage.getItem('ais_division') || 'aloha');
 
@@ -15,10 +14,10 @@ function renderNav(profile, currentPage) {
   NAV_CONFIG.forEach((group) => {
     const visibleItems = group.items.filter((item) => item.visible(profile));
     if (visibleItems.length === 0) return;
-    if (group.sectionKey) {
+    if (group.section) {
       const heading = document.createElement('div');
       heading.className = 'sidebar__section';
-      heading.textContent = t(group.sectionKey, group.section || '');
+      heading.textContent = group.section;
       sidebarNav.appendChild(heading);
     }
     const ul = document.createElement('ul');
@@ -27,47 +26,13 @@ function renderNav(profile, currentPage) {
       const li = document.createElement('li');
       const a = document.createElement('a');
       a.href = item.href;
-      a.innerHTML = `<span class="icon">${item.icon}</span><span>${esc(t(item.labelKey, item.label))}</span>`;
+      a.innerHTML = `<span class="icon">${item.icon}</span><span>${item.label}</span>`;
       if (currentPage && currentPage.endsWith(item.href)) a.classList.add('active');
       li.appendChild(a);
       ul.appendChild(li);
     });
     sidebarNav.appendChild(ul);
   });
-}
-
-function esc(s) { return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
-
-/**
- * Chèn 1 nút chuyển ngôn ngữ (VI/EN) vào topbar bằng JS — tránh phải sửa
- * lại phần <header> của mọi trang HTML trong hệ thống.
- */
-function injectLangSwitcher(profileId) {
-  const topbarRight = document.querySelector('.topbar__right');
-  if (!topbarRight || document.getElementById('langSwitcher')) return;
-
-  const wrap = document.createElement('div');
-  wrap.id = 'langSwitcher';
-  wrap.style.cssText = 'display:flex;background:var(--surface-fill);border-radius:999px;padding:2px;gap:2px;';
-  wrap.innerHTML = `
-    <button type="button" data-lang="vi" style="border:none;background:transparent;padding:5px 10px;border-radius:999px;font-size:11.5px;font-weight:700;cursor:pointer;color:var(--muted);">VI</button>
-    <button type="button" data-lang="en" style="border:none;background:transparent;padding:5px 10px;border-radius:999px;font-size:11.5px;font-weight:700;cursor:pointer;color:var(--muted);">EN</button>
-  `;
-  topbarRight.insertBefore(wrap, topbarRight.firstChild);
-
-  function paint() {
-    const current = getLang();
-    wrap.querySelectorAll('button').forEach((b) => {
-      const active = b.dataset.lang === current;
-      b.style.background = active ? 'var(--accent)' : 'transparent';
-      b.style.color = active ? '#fff' : 'var(--muted)';
-    });
-  }
-  wrap.querySelectorAll('button').forEach((b) => {
-    b.addEventListener('click', () => setLang(b.dataset.lang, { supabase, employeeId: profileId }));
-  });
-  document.addEventListener('ais:langchange', paint);
-  paint();
 }
 
 /**
@@ -85,7 +50,7 @@ export async function bootShell() {
   const { data: employee, error } = await supabase
     .from('employees')
     .select(`
-      id, full_name, avatar_url, dob, language_preference,
+      id, full_name, avatar_url, dob,
       departments ( code, name ),
       positions ( name, is_teacher_eligible ),
       system_roles ( code, name ),
@@ -127,10 +92,6 @@ export async function bootShell() {
     isTeacher: !!employee.positions?.is_teacher_eligible,
   };
 
-  // Ngôn ngữ hiển thị theo đúng hồ sơ nhân viên (employees.language_preference),
-  // để đăng nhập ở thiết bị khác vẫn giữ đúng lựa chọn đã lưu.
-  syncLangFromProfile(employee.language_preference);
-
   window.__AIS_PROFILE__ = profile;
 
   const userChipName = document.getElementById('userChipName');
@@ -141,15 +102,7 @@ export async function bootShell() {
   if (userChipAvatar) userChipAvatar.textContent = initials(profile.fullName);
 
   renderNav(profile, document.body.dataset.page || location.pathname);
-  applyTranslations();
-  injectLangSwitcher(profile.id);
-  document.addEventListener('ais:langchange', () => {
-    renderNav(profile, document.body.dataset.page || location.pathname);
-    applyTranslations();
-    document.getElementById('logoutBtn')?.setAttribute('title', t('common.logout'));
-  });
 
-  document.getElementById('logoutBtn')?.setAttribute('title', t('common.logout'));
   document.getElementById('logoutBtn')?.addEventListener('click', async () => {
     await supabase.auth.signOut();
     window.location.href = '/index.html';
