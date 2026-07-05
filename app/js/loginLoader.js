@@ -24,6 +24,7 @@ export function showLoginLoader({ division = 'aloha', message = 'Đang vào hệ
       <img class="login-loader__logo login-loader__logo--gray" src="${logoSrc}" alt="" />
       <div class="login-loader__color-mask">
         <img class="login-loader__logo login-loader__logo--color" src="${logoSrc}" alt="ERP AIS" />
+        <div class="login-loader__wave-glow"></div>
       </div>
       <div class="login-loader__sheen"></div>
     </div>
@@ -41,6 +42,6 @@ export function showLoginLoader({ division = 'aloha', message = 'Đang vào hệ
     setTimeout(() => {
       el.classList.add('fade-out');
       setTimeout(() => { el.remove(); resolve(); }, 350);
-    }, 1900);
+    }, 3000);
   });
 }

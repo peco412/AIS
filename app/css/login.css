@@ -25,12 +25,33 @@
     radial-gradient(circle at 15% 15%, rgba(255,255,255,0.18), transparent 45%),
     radial-gradient(circle at 85% 90%, rgba(255,255,255,0.12), transparent 50%),
     linear-gradient(160deg, var(--accent-deep), var(--accent) 68%);
+  background-size: 140% 140%, 140% 140%, 100% 100%;
+  animation: brandGradientBreathe 12s ease-in-out infinite;
   color: #fff;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   padding: 44px 52px;
   transition: background var(--dur-base) var(--ease);
+}
+@keyframes brandGradientBreathe {
+  0%, 100% { background-position: 0% 0%, 100% 100%, 0 0; }
+  50% { background-position: 20% 20%, 80% 80%, 0 0; }
+}
+
+.login-brand__orb {
+  position: absolute;
+  width: 340px; height: 340px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,0.14), transparent 70%);
+  top: -90px; left: 55%;
+  animation: orbFloat 9s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+@keyframes orbFloat {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(-40px, 30px); }
 }
 
 /* Logo mờ lớn làm hoạ tiết nền — sang trọng hơn dải "bậc thang" cũ */
@@ -107,6 +128,11 @@
   position: relative;
   z-index: 2;
   max-width: 480px;
+  animation: brandContentIn 0.7s var(--ease-spring) 0.1s backwards;
+}
+@keyframes brandContentIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 .login-brand__headline .eyebrow {
   font-size: 12.5px;
@@ -157,6 +183,11 @@
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.09), 0 4px 14px rgba(0, 0, 0, 0.05);
   border: 1px solid var(--border);
   position: relative;
+  animation: formCardIn 0.6s var(--ease-spring) 0.15s backwards;
+}
+@keyframes formCardIn {
+  from { opacity: 0; transform: translateY(18px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 .login-form::before {
   content: '';
@@ -268,7 +299,7 @@
    ===================================================================== */
 .login-loader {
   position: fixed; inset: 0; z-index: 9999;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 26px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px;
   background:
     radial-gradient(circle at 50% 38%, var(--accent-tint) 0%, #ffffff 68%);
   animation: loaderFadeIn 0.35s ease;
@@ -279,9 +310,9 @@
 
 .login-loader__ring {
   position: absolute;
-  width: 260px; height: 260px;
+  width: 280px; height: 280px;
   border-radius: 50%;
-  border: 2px solid rgba(var(--accent-rgb), 0.18);
+  border: 2px solid rgba(var(--accent-rgb), 0.16);
   border-top-color: var(--accent);
   animation: loaderRingSpin 1.8s linear infinite;
 }
@@ -289,9 +320,9 @@
 
 .login-loader__logo-wrap {
   position: relative;
-  width: 148px; height: 148px;
-  filter: drop-shadow(0 14px 30px rgba(0, 0, 0, 0.18));
-  animation: loaderLogoPop 0.6s var(--ease-spring);
+  width: 200px; height: 200px;
+  filter: drop-shadow(0 16px 34px rgba(0, 0, 0, 0.18));
+  animation: loaderLogoPop 0.55s var(--ease-spring);
 }
 @keyframes loaderLogoPop {
   from { transform: scale(0.7); opacity: 0; }
@@ -299,27 +330,56 @@
 }
 
 .login-loader__logo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
-.login-loader__logo--gray { filter: grayscale(1) opacity(0.22) brightness(1.4); }
 
-/* Bản màu thật được "rót" dần từ dưới lên trên bằng clip-path animate —
-   đúng hiệu ứng "màu chảy vào logo". */
+/* Trạng thái "chưa có màu" — rõ ràng là ảnh xám/nhạt, giữ nguyên ~0.6s
+   trước khi màu bắt đầu chảy vào (để mắt kịp nhận ra "trước" và "sau"). */
+.login-loader__logo--gray { filter: grayscale(1) contrast(0.9) opacity(0.42); }
+
+/* Bản màu thật được "rót" từ dưới lên trên bằng mask-image dạng gradient
+   mềm (không phải đường cắt cứng clip-path) — mép chuyển màu có 1 dải mờ
+   dần giống chất lỏng thật đang dâng lên, thay vì 1 đường thẳng lộ ra. */
 .login-loader__color-mask {
   position: absolute; inset: 0;
-  clip-path: inset(100% 0 0 0);
-  animation: colorFlowUp 1.7s cubic-bezier(0.65, 0, 0.35, 1) forwards 0.15s;
+  -webkit-mask-image: linear-gradient(to top, #000 0%, #000 42%, transparent 58%, transparent 100%);
+  mask-image: linear-gradient(to top, #000 0%, #000 42%, transparent 58%, transparent 100%);
+  -webkit-mask-size: 100% 280%;
+  mask-size: 100% 280%;
+  -webkit-mask-position: 0 100%;
+  mask-position: 0 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  animation: colorPourUp 1.9s cubic-bezier(0.5, 0, 0.15, 1) forwards 0.6s;
 }
 .login-loader__color-mask .login-loader__logo--color { position: absolute; inset: 0; }
-@keyframes colorFlowUp {
-  0% { clip-path: inset(100% 0 0 0); }
-  100% { clip-path: inset(0% 0 0 0); }
+@keyframes colorPourUp {
+  0%   { -webkit-mask-position: 0 100%; mask-position: 0 100%; }
+  100% { -webkit-mask-position: 0 -180%; mask-position: 0 -180%; }
 }
 
-/* Vệt sáng quét chéo qua logo để tạo cảm giác lung linh, độc đáo hơn */
+/* Viền sáng đi theo đúng mép "mực nước màu" đang dâng lên — mô phỏng ánh
+   phản chiếu ở bề mặt chất lỏng, đây là chi tiết tạo cảm giác "độc đáo". */
+.login-loader__wave-glow {
+  position: absolute;
+  left: -10%; right: -10%;
+  height: 26px;
+  bottom: -13px;
+  background: radial-gradient(ellipse at center, rgba(255,255,255,0.9), transparent 70%);
+  filter: blur(2px);
+  opacity: 0;
+  animation: waveTravel 1.9s cubic-bezier(0.5, 0, 0.15, 1) forwards 0.6s;
+}
+@keyframes waveTravel {
+  0%   { bottom: -13px; opacity: 0.9; }
+  92%  { opacity: 0.7; }
+  100% { bottom: 100%; opacity: 0; }
+}
+
+/* Vệt sáng quét chéo toàn logo sau khi màu đã lên đầy — điểm nhấn cuối cùng */
 .login-loader__sheen {
   position: absolute; inset: -20%;
-  background: linear-gradient(115deg, transparent 40%, rgba(255,255,255,0.65) 50%, transparent 60%);
+  background: linear-gradient(115deg, transparent 40%, rgba(255,255,255,0.6) 50%, transparent 60%);
   transform: translateX(-120%);
-  animation: sheenSweep 1.7s ease-in-out forwards 0.3s;
+  animation: sheenSweep 0.9s ease-in-out forwards 2.35s;
   mix-blend-mode: overlay;
   pointer-events: none;
 }
@@ -331,21 +391,22 @@
   font-family: var(--font-display); font-weight: 600; font-size: 13.5px; color: var(--ink-soft);
   letter-spacing: 0.01em;
   opacity: 0;
-  animation: loaderTextIn 0.4s ease forwards 1.3s;
+  animation: loaderTextIn 0.4s ease forwards 1.7s;
 }
 @keyframes loaderTextIn { to { opacity: 1; } }
 
 .login-loader__bar {
-  width: 190px; height: 4px; border-radius: 999px; background: var(--surface-sunken); overflow: hidden;
+  width: 200px; height: 4px; border-radius: 999px; background: var(--surface-sunken); overflow: hidden;
 }
 .login-loader__bar-fill {
   height: 100%; width: 0%; border-radius: 999px;
   background: linear-gradient(90deg, var(--accent), var(--accent-deep));
-  animation: loaderBarFill 1.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  animation: loaderBarFill 2.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 @keyframes loaderBarFill { to { width: 100%; } }
 
 @media (prefers-reduced-motion: reduce) {
-  .login-loader__ring, .login-loader__sheen { animation: none; display: none; }
-  .login-loader__color-mask { animation: none; clip-path: inset(0 0 0 0); }
+  .login-loader__ring, .login-loader__sheen, .login-loader__wave-glow { animation: none; display: none; }
+  .login-loader__color-mask { animation: none; -webkit-mask-image: none; mask-image: none; }
+  .login-brand, .login-brand__orb, .login-brand__headline, .login-form { animation: none; }
 }
