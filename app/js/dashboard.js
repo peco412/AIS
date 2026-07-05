@@ -127,7 +127,8 @@ async function loadStats(profile) {
     renderHub(profile);
     document.addEventListener('ais:langchange', () => renderHub(profile));
 
-    registerInstallBanner(document.getElementById('installBanner'), document.getElementById('installBannerBtn'));
+    const installCard = document.getElementById('installBanner');
+    registerInstallBanner(installCard, installCard);
     loadStats(profile).catch(console.warn);
   } catch (e) {
     // bootShell đã tự điều hướng về login nếu cần

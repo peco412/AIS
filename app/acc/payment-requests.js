@@ -1,5 +1,5 @@
 import { bootShell } from '/js/shell.js';
-import { supabase, esc, resolveFileUrl, openFile } from '/js/supabase.js';
+import { supabase, esc, resolveFileUrl, openFile, notifyDepartmentHeads } from '/js/supabase.js';
 import { t } from '/js/i18n.js';
 import { openPdfEditor } from '/js/pdfEditor.js';
 
@@ -199,6 +199,8 @@ document.getElementById('submitDocs').addEventListener('click', async () => {
       .update({ original_document_urls: urls, status: 'submitted' })
       .eq('id', row.id);
     if (error) throw error;
+    notifyDepartmentHeads('ACC', 'Có phiếu đề nghị thanh toán mới cần phân việc',
+      `${PROFILE.fullName} vừa gửi phiếu ${row.code} (${fmtMoney(row.amount)}) — vào Phân việc để giao cho nhân sự xử lý.`, '/acc/tasks.html');
     docsModal.classList.remove('show');
     await loadRows();
   } catch (err) {

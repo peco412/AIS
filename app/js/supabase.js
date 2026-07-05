@@ -101,3 +101,32 @@ export async function triggerPush(notification) {
     console.warn('Không gửi được thông báo đẩy:', e.message);
   }
 }
+
+// ---------------------------------------------------------------------
+// Báo cho ĐÚNG trưởng/phó phòng (không phải cả phòng ban) mỗi khi có 1
+// yêu cầu/phiếu mới cần họ vào "Phân việc" giao cho nhân sự xử lý — đây
+// là mắt xích trước đây bị thiếu: tạo phiếu xong không ai được báo, nên
+// trưởng phòng không biết có việc mới để phân công.
+// ---------------------------------------------------------------------
+export async function notifyDepartmentHeads(deptCode, title, content, url) {
+  try {
+    const { data: dept } = await supabase.from('departments').select('id').eq('code', deptCode).single();
+    if (!dept) return;
+    const { data: heads } = await supabase
+      .from('employees')
+      .select('id, system_roles(code)')
+      .eq('department_id', dept.id);
+
+    const headIds = (heads || [])
+      .filter((e) => ['DEPT_HEAD', 'DEPT_DEPUTY'].includes(e.system_roles?.code))
+      .map((e) => e.id);
+
+    for (const employeeId of headIds) {
+      const notif = { scope: 'personal', target_employee_id: employeeId, title, content, url };
+      await supabase.from('notifications').insert(notif);
+      triggerPush(notif);
+    }
+  } catch (e) {
+    console.warn('Không gửi được thông báo cho trưởng phòng:', e.message);
+  }
+}

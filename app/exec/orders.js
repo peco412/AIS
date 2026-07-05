@@ -1,5 +1,5 @@
 import { bootShell } from '/js/shell.js';
-import { supabase, esc } from '/js/supabase.js';
+import { supabase, esc, notifyDepartmentHeads } from '/js/supabase.js';
 
 let PROFILE = null;
 
@@ -87,6 +87,8 @@ document.getElementById('commForm').addEventListener('submit', async (e) => {
     deadline: document.getElementById('commDeadline').value || null,
   });
   if (error) { errBox.textContent = error.message; errBox.classList.add('show'); return; }
+  notifyDepartmentHeads('MKT', 'Có yêu cầu truyền thông mới cần phân việc (từ Ban điều hành)',
+    `${PROFILE.fullName} vừa gửi yêu cầu "${document.getElementById('commTitle').value.trim()}" — vào Phân việc để giao cho nhân sự xử lý.`, '/mkt/tasks.html');
   e.target.reset();
   await loadOrders();
 });
@@ -102,6 +104,8 @@ document.getElementById('facForm').addEventListener('submit', async (e) => {
     title: document.getElementById('facTitle').value.trim(),
   });
   if (error) { errBox.textContent = error.message; errBox.classList.add('show'); return; }
+  notifyDepartmentHeads('FAC', 'Có yêu cầu CSVC mới cần phân việc (từ Ban điều hành)',
+    `${PROFILE.fullName} vừa gửi yêu cầu "${document.getElementById('facTitle').value.trim()}" — vào Phân việc để giao cho nhân sự xử lý.`, '/fac/tasks.html');
   e.target.reset();
   await loadOrders();
 });

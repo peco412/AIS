@@ -23,25 +23,46 @@
     box-shadow: var(--shadow-lg);
   }
   .sidebar.open { transform: translateX(0); }
-  .main { padding: 16px 14px 80px; }
+  .main { padding: 14px 12px 76px; }
   .topbar { padding: 0 14px; }
   .search-box { display: none; }
-  .stat-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+
+  /* Stat card chiếm quá nhiều diện tích trên điện thoại — thu gọn hẳn:
+     4 ô nằm gọn 1 hàng thay vì 2 hàng cao, số liệu vẫn đọc được rõ. */
+  .stat-grid { grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }
+  .stat-card { padding: 10px 8px; border-radius: 12px; }
+  .stat-card .label { font-size: 9.5px; line-height: 1.25; }
+  .stat-card .value { font-size: 17px; margin-top: 3px; }
+  .stat-card .delta { font-size: 9px; margin-top: 2px; }
+
   .app-hub { grid-template-columns: repeat(3, 1fr); gap: 10px; }
   .app-hub--small { grid-template-columns: repeat(4, 1fr); }
   .icon-btn, .menu-toggle { width: 40px; height: 40px; font-size: 18px; } /* mục tiêu chạm tối thiểu 40px, dễ bấm trên di động */
   .btn { padding: 10px 16px; } /* nút to hơn để dễ bấm bằng ngón tay */
   .modal-box { padding: 20px 18px; max-width: 100%; }
   table.week-grid { min-width: 720px; } /* vẫn cuộn ngang được trong khung */
+
+  /* Giảm khoảng trắng dọc — trang đỡ dài, đỡ phải cuộn nhiều */
+  .page-header { margin-bottom: 14px; }
+  .page-header h1 { font-size: 19px; }
+  .page-header .sub { font-size: 12px; margin-top: 3px; }
+  .hub-section-title { margin: 18px 2px 10px; font-size: 13.5px; }
+  .form-section-title { margin: 16px 0 10px; }
+  .toolbar { margin-bottom: 12px; gap: 8px; }
 }
 
 @media (max-width: 480px) {
-  .stat-grid { grid-template-columns: 1fr 1fr; }
+  /* Màn hình rất hẹp: 4 cột số liệu bắt đầu chật — co về 2x2 nhưng vẫn
+     giữ kích thước nhỏ gọn, KHÔNG quay lại cỡ to như trước. */
+  .stat-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .stat-card { padding: 11px 12px; }
+  .stat-card .value { font-size: 19px; }
   .app-hub { grid-template-columns: repeat(2, 1fr); }
   .page-header { flex-direction: column; align-items: flex-start; }
   .user-chip__meta { display: none; } /* tiết kiệm chỗ trên màn hình rất nhỏ */
-  .hub-topbar { padding: 12px 14px; }
-  .hub-main { padding: 18px 12px 50px; }
+  .hub-topbar { padding: 10px 14px; }
+  .hub-main { padding: 14px 10px 44px; }
+  .install-guide-card { padding: 12px 14px; gap: 10px; }
 }
 
 /* ---------- Sidebar (kính mờ sáng) ---------- */
@@ -393,6 +414,48 @@ body.hub-body { background: var(--surface); }
 .app-tile.disabled { cursor: not-allowed; opacity: 0.4; pointer-events: none; }
 .app-tile.disabled .app-tile__icon { background: linear-gradient(150deg, #c7c7cc, #9a9aa0); box-shadow: none; }
 .app-tile__lock { font-size: 9.5px; color: var(--muted); margin-top: -2px; }
+
+/* ---------- Hộp hướng dẫn cài đặt ứng dụng (thay banner kiểu sinh nhật cũ) ---------- */
+.install-guide-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 14px 18px;
+  margin-bottom: 20px;
+  cursor: pointer;
+  transition: box-shadow var(--dur-base) var(--ease), transform var(--dur-base) var(--ease);
+}
+.install-guide-card:hover { box-shadow: var(--shadow-sm); transform: translateY(-1px); }
+.install-guide-card__icon {
+  width: 42px; height: 42px; border-radius: var(--radius-md);
+  background: var(--accent-tint); color: var(--accent-deep);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 19px; flex-shrink: 0;
+}
+.install-guide-card__text { flex: 1; min-width: 0; }
+.install-guide-card__text strong { display: block; font-size: 13px; color: var(--ink); }
+.install-guide-card__text span { display: block; font-size: 11.5px; color: var(--muted); margin-top: 1px; }
+.install-guide-card__arrow { color: var(--muted); font-size: 16px; flex-shrink: 0; }
+
+.install-guide-tabs {
+  display: flex;
+  gap: 6px;
+  margin: 16px 0 18px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+.install-guide-tab {
+  display: flex; align-items: center; gap: 6px;
+  border: none; background: var(--surface-fill); color: var(--ink-soft);
+  padding: 8px 13px; border-radius: var(--radius-pill);
+  font-size: 12.5px; font-weight: 600; cursor: pointer; white-space: nowrap;
+  transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+.install-guide-tab.active { background: var(--accent); color: #fff; }
+.install-guide-tab:hover:not(.active) { background: var(--surface-sunken); }
 
 /* Bảng màu icon riêng từng phòng ban — vibrant, phân biệt rõ, giống mẫu ứng
    dụng di động thay vì tất cả cùng 1 màu nhạt như trước. */

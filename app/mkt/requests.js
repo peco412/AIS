@@ -1,5 +1,5 @@
 import { bootShell } from '/js/shell.js';
-import { supabase, esc, uploadPrivateFile, openFile, triggerPush } from '/js/supabase.js';
+import { supabase, esc, uploadPrivateFile, openFile, triggerPush, notifyDepartmentHeads } from '/js/supabase.js';
 import { t } from '/js/i18n.js';
 
 const TYPE_LABEL = { design: 'Thiết kế', print: 'In ấn', ads: 'Quảng cáo', event: 'Tổ chức sự kiện', photo_video: 'Quay phim/chụp ảnh' };
@@ -100,6 +100,8 @@ document.getElementById('submitCreate').addEventListener('click', async () => {
       brief_file_url: briefUrl, status: 'pending',
     });
     if (error) throw error;
+    notifyDepartmentHeads('MKT', 'Có yêu cầu truyền thông mới cần phân việc',
+      `${PROFILE.fullName} vừa gửi yêu cầu "${title}" — vào Phân việc để giao cho nhân sự xử lý.`, '/mkt/tasks.html');
     createModal.classList.remove('show');
     await loadRows();
   } catch (err) {

@@ -1,5 +1,5 @@
 import { bootShell } from '/js/shell.js';
-import { supabase, esc, resolveFileUrl } from '/js/supabase.js';
+import { supabase, esc, resolveFileUrl, notifyDepartmentHeads } from '/js/supabase.js';
 import { t } from '/js/i18n.js';
 import { openPdfEditor } from '/js/pdfEditor.js';
 
@@ -169,6 +169,8 @@ document.getElementById('openFillEditor').addEventListener('click', async () => 
         draft_file_url: fileUrl, requester_signed_at: new Date().toISOString(), status: 'draft',
       });
       if (error) throw error;
+      notifyDepartmentHeads('FAC', 'Có phiếu đề nghị mua sắm mới cần phân việc',
+        `${PROFILE.fullName} vừa gửi 1 phiếu đề nghị mua sắm — vào Phân việc để giao cho nhân sự xử lý.`, '/fac/tasks.html');
       await loadRows();
     },
   });

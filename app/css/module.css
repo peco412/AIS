@@ -207,6 +207,17 @@ table.data-table { width: 100%; min-width: 640px; border-collapse: collapse; fon
   .toolbar__filters { flex-direction: column; }
   .toolbar__filters .select-input, .toolbar__filters .text-input { width: 100%; }
   .week-grid-wrap { -webkit-overflow-scrolling: touch; }
+
+  /* Bảng dữ liệu gọn hơn — vẫn cuộn ngang được (đã xử lý ở data-table-wrap),
+     nhưng giảm padding/cỡ chữ để đỡ chiếm chiều dọc khi có nhiều dòng. */
+  .data-table thead th { padding: 9px 12px; font-size: 10.5px; }
+  .data-table tbody td { padding: 9px 12px; font-size: 13px; }
+  .avatar-sm { width: 26px; height: 26px; font-size: 10.5px; }
+
+  .modal-box { border-radius: 18px; }
+  .modal-box h3 { font-size: 16px; }
+  .modal-box .field { margin-bottom: 11px; }
+  .modal-actions { margin-top: 16px; }
 }
 
 /* ---------- Bảng lịch dạng lưới theo tuần (Phân lịch làm việc / trực trung tâm) ---------- */
