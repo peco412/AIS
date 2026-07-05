@@ -1,11 +1,6 @@
 // =====================================================================
-// LOGIN LOADER — hiệu ứng "mở quyển sách" như cánh cổng bước vào thế
-// giới Anh ngữ, hiện ngay sau khi đăng nhập thành công, trước khi
-// chuyển vào dashboard.
-//
-// Cách hoạt động: 2 cánh "bìa sách" phủ kín màn hình, xoay mở ra 2 bên
-// theo trục 3D (giống cửa đôi/mở sách), để lộ dần logo + trạng thái
-// đăng nhập phía sau.
+// LOGIN LOADER — logo phân hệ hiện mờ dần rồi rõ nét (blur-to-focus),
+// hiện ngay sau khi đăng nhập thành công, trước khi chuyển vào dashboard.
 //
 // Muốn đổi logo theo từng phân hệ: thêm file assets/logo-ilingo.png rồi
 // hàm bên dưới sẽ tự dùng đúng logo của phân hệ đang chọn (mặc định dùng
@@ -19,24 +14,12 @@ export function showLoginLoader({ division = 'aloha', message = 'Đang vào hệ
   const el = document.createElement('div');
   el.className = 'login-loader';
   el.innerHTML = `
-    <div class="login-loader__content">
-      <div class="login-loader__logo-wrap">
-        <img class="login-loader__logo" src="${logoSrc}" alt="ERP AIS" />
-      </div>
-      <div class="login-loader__text">${message}</div>
-      <div class="login-loader__bar"><div class="login-loader__bar-fill"></div></div>
+    <div class="login-loader__glow"></div>
+    <div class="login-loader__logo-wrap">
+      <img class="login-loader__logo" src="${logoSrc}" alt="ERP AIS" />
     </div>
-    <div class="login-loader__spine"></div>
-    <div class="login-loader__stage">
-      <div class="book-door book-door--left">
-        <div class="book-door__frame"></div>
-        <span class="book-door__emblem">📖</span>
-      </div>
-      <div class="book-door book-door--right">
-        <div class="book-door__frame"></div>
-        <span class="book-door__emblem">🎓</span>
-      </div>
-    </div>
+    <div class="login-loader__text">${message}</div>
+    <div class="login-loader__bar"><div class="login-loader__bar-fill"></div></div>
   `;
   document.body.appendChild(el);
 
@@ -49,6 +32,6 @@ export function showLoginLoader({ division = 'aloha', message = 'Đang vào hệ
     setTimeout(() => {
       el.classList.add('fade-out');
       setTimeout(() => { el.remove(); resolve(); }, 350);
-    }, 2300);
+    }, 1500);
   });
 }

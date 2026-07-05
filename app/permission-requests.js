@@ -3,7 +3,7 @@ import { supabase, esc } from '/js/supabase.js';
 import { NAV_CONFIG } from '/js/navConfig.js';
 import { t } from '/js/i18n.js';
 
-const STATUS_LABEL = { pending: 'Chờ duyệt', approved: 'Đã duyệt', rejected: 'Từ chối' };
+const STATUS_LABEL = new Proxy({}, { get: (_, code) => t('status.permission_' + code, code) });
 const STATUS_BADGE = { pending: 'submitted', approved: 'active', rejected: 'rejected' };
 
 let PROFILE = null;
@@ -17,8 +17,14 @@ function fmtDate(d) { return d ? new Date(d).toLocaleString('vi-VN') : '—'; }
 function allModuleOptions() {
   const options = [];
   NAV_CONFIG.forEach((group) => {
+    const deptLabel = group.sectionKey ? t(group.sectionKey, group.section || '') : null;
     group.items.forEach((item) => {
-      options.push({ key: item.href, label: t(item.labelKey, item.label) });
+      const itemLabel = t(item.labelKey, item.label);
+      // Nhiều mục trùng tên giữa các phòng ban (vd "Ký số hồ sơ", "Phân việc"
+      // đều xuất hiện ở HR/ACC/MKT/FAC/EDU) — phải ghi rõ phòng ban đứng
+      // trước để không chọn nhầm khi xin quyền.
+      const label = deptLabel ? `${deptLabel} — ${itemLabel}` : itemLabel;
+      options.push({ key: item.href, label });
     });
   });
   return options;

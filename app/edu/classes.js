@@ -1,7 +1,8 @@
 import { bootShell } from '/js/shell.js';
 import { supabase, esc } from '/js/supabase.js';
+import { t } from '/js/i18n.js';
 
-const STATUS_LABEL = { active: 'Đang học', completed: 'Đã kết thúc', cancelled: 'Đã huỷ' };
+const STATUS_LABEL = new Proxy({}, { get: (_, code) => t('status.class_' + code, code) });
 let PROFILE = null;
 let PROGRAMS = [], LEVELS = [], SUBLEVELS = [], TEACHERS = [];
 let ALL_ROWS = [];

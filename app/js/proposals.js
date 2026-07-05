@@ -1,11 +1,9 @@
 import { bootShell } from '/js/shell.js';
 import { supabase, esc, uploadPrivateFile, resolveFileUrl, triggerPush } from '/js/supabase.js';
+import { t } from '/js/i18n.js';
 import { openPdfEditor } from '/js/pdfEditor.js';
 
-const STATUS_LABEL = {
-  draft: 'Nháp', submitted: 'Chờ trưởng phòng duyệt', approved_1: 'Chờ ban điều hành duyệt',
-  approved_2: 'Đã duyệt & lưu trữ', archived: 'Đã duyệt & lưu trữ', rejected: 'Từ chối',
-};
+const STATUS_LABEL = new Proxy({}, { get: (_, code) => t('status.proposal_' + code, code) });
 
 let PROFILE = null;
 let ALL_ROWS = [];

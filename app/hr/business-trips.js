@@ -1,8 +1,9 @@
 import { bootShell } from '/js/shell.js';
 import { supabase, esc, uploadPrivateFile, openFile } from '/js/supabase.js';
+import { t } from '/js/i18n.js';
 import { attachPlaceAutocomplete, computeDrivingDistanceKm } from '/js/googleMaps.js';
 
-const STATUS_LABEL = { draft: 'Nháp', submitted: 'Đã gửi', approved_1: 'Duyệt cấp 1', approved_2: 'Đã duyệt', archived: 'Lưu trữ', rejected: 'Từ chối' };
+const STATUS_LABEL = new Proxy({}, { get: (_, code) => t('status.' + code, code) });
 let PROFILE = null;
 let CAN_APPROVE = false;
 let ALL_ROWS = [];

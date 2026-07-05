@@ -1,12 +1,13 @@
 import { bootShell } from '/js/shell.js';
 import { supabase, esc, uploadPrivateFile, openFile } from '/js/supabase.js';
+import { t } from '/js/i18n.js';
 
 const LEAVE_TYPE_LABEL = { annual: 'Nghỉ phép', unpaid: 'Nghỉ không lương', social_insurance: 'Nghỉ BHXH' };
 const REASON_LABEL = {
   work_swap: 'Bù ngày làm', personal_family: 'Cá nhân / gia đình', sick: 'Bệnh / ốm',
   maternity: 'Thai sản', ceremony: 'Hiếu hỉ', funeral: 'Đám tang',
 };
-const STATUS_LABEL = { draft: 'Nháp', submitted: 'Đã gửi', approved_1: 'Duyệt cấp 1', approved_2: 'Đã duyệt', archived: 'Lưu trữ', rejected: 'Từ chối' };
+const STATUS_LABEL = new Proxy({}, { get: (_, code) => t('status.' + code, code) });
 
 let PROFILE = null;
 let CAN_APPROVE = false;

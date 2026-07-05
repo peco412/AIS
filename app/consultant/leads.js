@@ -1,7 +1,8 @@
 import { bootShell } from '/js/shell.js';
 import { supabase, esc } from '/js/supabase.js';
+import { t } from '/js/i18n.js';
 
-const STATUS_LABEL = { potential: 'Tiềm năng', success: 'Thành công', rejected: 'Từ chối' };
+const STATUS_LABEL = new Proxy({}, { get: (_, code) => t('status.lead_' + code, code) });
 let PROFILE = null;
 let ALL_ROWS = [];
 

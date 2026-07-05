@@ -1,13 +1,12 @@
 import { bootShell } from '/js/shell.js';
 import { supabase, usernameToEmail, esc } from '/js/supabase.js';
+import { t } from '/js/i18n.js';
 
 let PROFILE = null;
 let LOOKUPS = { departments: [], positions: [], centers: [], roles: [] };
 let ALL_ROWS = [];
 
-const STATUS_LABEL = {
-  active: 'Đang làm việc', probation: 'Thử việc', inactive: 'Ngừng hoạt động', resigned: 'Đã nghỉ việc',
-};
+const STATUS_LABEL = new Proxy({}, { get: (_, code) => t('status.employee_' + code, code) });
 
 function fillSelect(el, items, { valueKey = 'id', labelKey = 'name', placeholder } = {}) {
   el.innerHTML = '';

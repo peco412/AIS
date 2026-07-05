@@ -1,11 +1,9 @@
 import { bootShell } from '/js/shell.js';
 import { supabase, esc, resolveFileUrl, openFile } from '/js/supabase.js';
+import { t } from '/js/i18n.js';
 import { openPdfEditor } from '/js/pdfEditor.js';
 
-const STATUS_LABEL = {
-  draft: 'Chờ ký & đính kèm chứng từ', submitted: 'Chờ kế toán ký',
-  approved_1: 'Chờ ban điều hành ký', approved_2: 'Đã lưu trữ', archived: 'Đã lưu trữ', rejected: 'Từ chối',
-};
+const STATUS_LABEL = new Proxy({}, { get: (_, code) => t('status.payment_' + code, code) });
 
 let PROFILE = null;
 let TEMPLATE = null;

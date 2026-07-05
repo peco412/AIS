@@ -1,9 +1,10 @@
 import { bootShell } from '/js/shell.js';
 import { supabase, esc, uploadPrivateFile, openFile, triggerPush } from '/js/supabase.js';
+import { t } from '/js/i18n.js';
 
 const TYPE_LABEL = { design: 'Thiết kế', print: 'In ấn', ads: 'Quảng cáo', event: 'Tổ chức sự kiện', photo_video: 'Quay phim/chụp ảnh' };
 const PRIORITY_LABEL = { low: 'Thấp', normal: 'Bình thường', high: 'Cao', urgent: 'Khẩn cấp' };
-const STATUS_LABEL = { pending: 'Chờ xử lý', in_progress: 'Đang xử lý', done: 'Hoàn thành', rejected: 'Từ chối' };
+const STATUS_LABEL = new Proxy({}, { get: (_, code) => t('status.request_' + code, code) });
 const STATUS_BADGE = { pending: 'submitted', in_progress: 'approved_1', done: 'active', rejected: 'rejected' };
 
 let PROFILE = null;

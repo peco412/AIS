@@ -296,124 +296,145 @@
 
 
 /* =====================================================================
-   LOGIN LOADER — hiệu ứng "mở quyển sách" như cánh cổng bước vào thế
-   giới Anh ngữ: 2 cánh bìa sách (kiểu bìa da/vải cổ điển, viền chỉ vàng)
-   đóng kín màn hình, xoay mở ra như cửa đôi theo trục 3D, để lộ dần nội
-   dung (logo + trạng thái đăng nhập) phía sau — ẩn dụ "mở trang sách,
-   bước vào thế giới học thuật".
+   LOGIN LOADER — logo phân hệ hiện mờ dần rồi rõ nét (blur-to-focus),
+   nhẹ nhàng và nhanh hơn hiệu ứng cũ, vẫn giữ cảm giác có sức sống nhờ
+   quầng sáng mạch đập phía sau + thanh tiến trình.
    ===================================================================== */
 .login-loader {
   position: fixed; inset: 0; z-index: 9999;
-  display: flex; align-items: center; justify-content: center;
-  background: radial-gradient(circle at 50% 40%, var(--accent-tint) 0%, #ffffff 70%);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px;
+  background: radial-gradient(circle at 50% 42%, var(--accent-tint) 0%, #ffffff 72%);
   animation: loaderFadeIn 0.3s ease;
-  perspective: 2400px;
-  overflow: hidden;
 }
 .login-loader.fade-out { animation: loaderFadeOut 0.35s ease forwards; }
 @keyframes loaderFadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes loaderFadeOut { to { opacity: 0; } }
 
-/* Nội dung phía sau cánh cổng — logo nhỏ + trạng thái, lộ ra dần khi 2
-   cánh cửa mở hết ra hai bên. */
-.login-loader__content {
-  position: relative;
-  z-index: 1;
-  display: flex; flex-direction: column; align-items: center; gap: 22px;
-  opacity: 0;
-  animation: contentReveal 0.6s ease forwards 1.15s;
+.login-loader__glow {
+  position: absolute;
+  width: 240px; height: 240px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(var(--accent-rgb), 0.22), transparent 72%);
+  animation: glowPulse 1.8s ease-in-out infinite;
 }
-@keyframes contentReveal {
-  from { opacity: 0; transform: translateY(10px) scale(0.96); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+@keyframes glowPulse {
+  0%, 100% { transform: scale(0.92); opacity: 0.7; }
+  50% { transform: scale(1.08); opacity: 1; }
 }
 
 .login-loader__logo-wrap {
-  width: 108px; height: 108px;
-  filter: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.16));
+  position: relative;
+  z-index: 1;
+  width: 128px; height: 128px;
+  opacity: 0;
+  filter: blur(16px);
+  animation: logoRevealBlur 1.1s cubic-bezier(0.16, 1, 0.3, 1) forwards 0.1s;
 }
-.login-loader__logo { width: 100%; height: 100%; object-fit: contain; }
+@keyframes logoRevealBlur {
+  0%   { opacity: 0; filter: blur(16px); transform: scale(1.18); }
+  65%  { opacity: 1; filter: blur(2px); }
+  100% { opacity: 1; filter: blur(0); transform: scale(1); }
+}
+.login-loader__logo {
+  width: 100%; height: 100%; object-fit: contain;
+  filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.16));
+}
 
 .login-loader__text {
+  position: relative; z-index: 1;
   font-family: var(--font-display); font-weight: 600; font-size: 13.5px; color: var(--ink-soft);
   letter-spacing: 0.01em;
+  opacity: 0;
+  animation: loaderTextIn 0.4s ease forwards 0.9s;
 }
+@keyframes loaderTextIn { to { opacity: 1; } }
 
 .login-loader__bar {
+  position: relative; z-index: 1;
   width: 190px; height: 4px; border-radius: 999px; background: var(--surface-sunken); overflow: hidden;
 }
 .login-loader__bar-fill {
   height: 100%; width: 0%; border-radius: 999px;
   background: linear-gradient(90deg, var(--accent), var(--accent-deep));
-  animation: loaderBarFill 1s cubic-bezier(0.4, 0, 0.2, 1) forwards 1.2s;
+  animation: loaderBarFill 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 @keyframes loaderBarFill { to { width: 100%; } }
 
-/* Sân khấu chứa 2 cánh cổng — phủ kín toàn màn hình */
-.login-loader__stage {
-  position: absolute; inset: 0;
-  z-index: 2;
-  display: flex;
-  transform-style: preserve-3d;
-  pointer-events: none;
-}
-
-.book-door {
-  width: 50%; height: 100%;
-  position: relative;
-  background:
-    linear-gradient(155deg, rgba(255,255,255,0.08), transparent 40%),
-    linear-gradient(155deg, var(--accent-deep), var(--accent) 75%);
-  backface-visibility: hidden;
-  box-shadow: 0 0 60px rgba(0,0,0,0.35);
-  display: flex; align-items: center; justify-content: center;
-}
-.book-door--left {
-  transform-origin: left center;
-  border-right: 2px solid rgba(255, 214, 120, 0.55);
-  animation: openDoorLeft 1.05s cubic-bezier(0.76, 0, 0.24, 1) forwards 0.35s;
-}
-.book-door--right {
-  transform-origin: right center;
-  border-left: 2px solid rgba(255, 214, 120, 0.55);
-  animation: openDoorRight 1.05s cubic-bezier(0.76, 0, 0.24, 1) forwards 0.35s;
-}
-@keyframes openDoorLeft { to { transform: rotateY(-112deg); box-shadow: 40px 0 80px rgba(0,0,0,0.5); } }
-@keyframes openDoorRight { to { transform: rotateY(112deg); box-shadow: -40px 0 80px rgba(0,0,0,0.5); } }
-
-/* Khung viền vàng + hoạ tiết trang trí trên mỗi cánh bìa — cảm giác bìa
-   sách cổ điển kiểu học thuật (gợi liên tưởng Cambridge English) */
-.book-door__frame {
-  position: absolute; inset: 22px;
-  border: 1.5px solid rgba(255, 214, 120, 0.55);
-  border-radius: 4px;
-}
-.book-door__emblem {
-  font-size: 34px;
-  opacity: 0.85;
-  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.25));
-  animation: emblemFade 0.5s ease forwards 0.85s;
-  opacity: 0;
-}
-@keyframes emblemFade { to { opacity: 0.85; } }
-.book-door--left .book-door__emblem { transform: translateX(6px); }
-.book-door--right .book-door__emblem { transform: translateX(-6px); }
-
-/* Gáy sách ở giữa — vệt tối mờ mô phỏng nếp gấp sách thật */
-.login-loader__spine {
-  position: absolute; top: 0; bottom: 0; left: 50%;
-  width: 14px; margin-left: -7px;
-  background: linear-gradient(90deg, transparent, rgba(0,0,0,0.25), transparent);
-  z-index: 3;
-  opacity: 1;
-  animation: spineFade 0.4s ease forwards 0.9s;
-  pointer-events: none;
-}
-@keyframes spineFade { to { opacity: 0; } }
-
 @media (prefers-reduced-motion: reduce) {
-  .book-door--left, .book-door--right, .login-loader__spine { animation: none; display: none; }
-  .login-loader__content { animation: none; opacity: 1; }
+  .login-loader__glow { animation: none; }
+  .login-loader__logo-wrap { animation: none; opacity: 1; filter: blur(0); }
   .login-loader__bar-fill { animation: none; width: 100%; }
-  .login-brand, .login-brand__orb, .login-brand__headline, .login-form { animation: none; }
+  .login-brand, .login-brand__orb, .login-brand__headline, .login-form,
+  .login-brand__shape { animation: none; }
 }
+
+/* =====================================================================
+   CHI TIẾT ĐỘNG TRÊN TRANG ĐĂNG NHẬP — thêm hoạ tiết hình khối trôi nổi
+   + điểm nhấn phát sáng để trang không còn cảm giác tĩnh/đơn điệu.
+   ===================================================================== */
+.login-brand__shape {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.22), rgba(255,255,255,0.03));
+  pointer-events: none;
+  z-index: 1;
+}
+.login-brand__shape--1 { width: 90px; height: 90px; top: 18%; right: 12%; animation: shapeFloat1 7s ease-in-out infinite; }
+.login-brand__shape--2 { width: 46px; height: 46px; top: 62%; right: 22%; animation: shapeFloat2 5.5s ease-in-out infinite; }
+.login-brand__shape--3 { width: 130px; height: 130px; bottom: 10%; left: 8%; animation: shapeFloat3 9s ease-in-out infinite; opacity: 0.5; }
+.login-brand__shape--4 { width: 22px; height: 22px; top: 38%; left: 20%; animation: shapeFloat2 4.5s ease-in-out infinite reverse; }
+
+@keyframes shapeFloat1 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(-18px, 22px); } }
+@keyframes shapeFloat2 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(14px, -16px) scale(1.15); } }
+@keyframes shapeFloat3 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(20px, -14px); } }
+
+/* Chấm nhỏ lấp lánh rải rác — tăng cảm giác chuyển động tinh tế */
+.login-brand__sparkle {
+  position: absolute;
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.85);
+  z-index: 1;
+  animation: sparkleTwinkle 2.6s ease-in-out infinite;
+}
+.login-brand__sparkle--1 { top: 24%; left: 42%; animation-delay: 0s; }
+.login-brand__sparkle--2 { top: 55%; left: 68%; animation-delay: 0.8s; }
+.login-brand__sparkle--3 { top: 72%; left: 30%; animation-delay: 1.6s; }
+.login-brand__sparkle--4 { top: 15%; left: 65%; animation-delay: 2.2s; }
+
+@keyframes sparkleTwinkle {
+  0%, 100% { opacity: 0; transform: scale(0.6); }
+  50% { opacity: 1; transform: scale(1.3); }
+}
+
+/* Viền sáng chạy quanh khung logo nhỏ trên thanh brand (mark) */
+.login-brand__mark-logo {
+  position: relative;
+}
+.login-brand__mark-logo::after {
+  content: '';
+  position: absolute; inset: -4px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255,255,255,0.5);
+  animation: markRingPulse 2.4s ease-in-out infinite;
+}
+@keyframes markRingPulse {
+  0%, 100% { transform: scale(1); opacity: 0.6; }
+  50% { transform: scale(1.35); opacity: 0; }
+}
+
+/* Nút đăng nhập: quầng sáng nhẹ nhàng lan toả phía sau khi rảnh (mời bấm) */
+.btn-primary { position: relative; overflow: visible; }
+.btn-primary::before {
+  content: '';
+  position: absolute; inset: -3px;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent), var(--accent-deep), var(--accent));
+  background-size: 200% 100%;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity var(--dur-base) var(--ease);
+  animation: btnGradientShift 3s linear infinite;
+}
+.btn-primary:hover::before { opacity: 0.55; filter: blur(6px); }
+@keyframes btnGradientShift { to { background-position: 200% 0; } }

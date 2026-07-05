@@ -1,7 +1,8 @@
 import { bootShell } from '/js/shell.js';
 import { supabase, esc } from '/js/supabase.js';
+import { t } from '/js/i18n.js';
 
-const STATUS_LABEL = { pending: 'Chưa bắt đầu', in_progress: 'Đang xử lý', done: 'Hoàn thành', overdue: 'Trễ hạn' };
+const STATUS_LABEL = new Proxy({}, { get: (_, code) => t('status.' + code, code) });
 const STATUS_BADGE = { pending: 'draft', in_progress: 'approved_1', done: 'active', overdue: 'rejected' };
 
 // Nguồn "đầu việc" thật của từng phòng ban — đây chính là ý nghĩa của "Phân

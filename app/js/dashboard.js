@@ -2,7 +2,7 @@ import { bootShell } from './shell.js';
 import { supabase } from './supabase.js';
 import { NAV_CONFIG } from './navConfig.js';
 import { t } from './i18n.js';
-import { attachInstallButton, isInstallable } from './installPrompt.js';
+import { registerInstallBanner } from './installPrompt.js';
 
 const birthdayBanner = document.getElementById('birthdayBanner');
 const notifBadge = document.getElementById('notifBadge');
@@ -127,10 +127,7 @@ async function loadStats(profile) {
     renderHub(profile);
     document.addEventListener('ais:langchange', () => renderHub(profile));
 
-    if (isInstallable()) {
-      document.getElementById('installBanner').style.display = 'flex';
-      attachInstallButton(document.getElementById('installBannerBtn'), { alwaysVisible: true });
-    }
+    registerInstallBanner(document.getElementById('installBanner'), document.getElementById('installBannerBtn'));
     loadStats(profile).catch(console.warn);
   } catch (e) {
     // bootShell đã tự điều hướng về login nếu cần

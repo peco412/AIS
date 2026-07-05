@@ -1,8 +1,9 @@
 import { bootShell } from '/js/shell.js';
 import { supabase, esc, uploadPrivateFile, openFile, triggerPush } from '/js/supabase.js';
+import { t } from '/js/i18n.js';
 
 const TYPE_LABEL = { repair: 'Sửa chữa', new_supply: 'Cấp mới', purchase: 'Mua mới' };
-const STATUS_LABEL = { pending: 'Chờ xử lý', approved: 'Đã duyệt', in_progress: 'Đang xử lý', done: 'Hoàn thành', rejected: 'Từ chối' };
+const STATUS_LABEL = new Proxy({}, { get: (_, code) => t('status.request_' + code, code) });
 const STATUS_BADGE = { pending: 'submitted', approved: 'approved_1', in_progress: 'approved_1', done: 'active', rejected: 'rejected' };
 
 let PROFILE = null;

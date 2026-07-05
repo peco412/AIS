@@ -12,6 +12,7 @@
 
 let deferredPrompt = null;
 let installBtnEls = [];
+let bannerEls = [];
 
 function isStandalone() {
   return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
@@ -19,16 +20,24 @@ function isStandalone() {
 function isIOS() {
   return /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
 }
+// Chỉ hiện gợi ý "Cài đặt ứng dụng" trên ĐIỆN THOẠI — trên máy tính (web)
+// không cần thiết và gây rối giao diện không đúng chỗ.
+function isMobileDevice() {
+  return /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent);
+}
 
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredPrompt = e;
+  if (!isMobileDevice()) return;
   installBtnEls.forEach((el) => { el.style.display = ''; });
+  bannerEls.forEach((el) => { el.style.display = 'flex'; });
 });
 
 window.addEventListener('appinstalled', () => {
   deferredPrompt = null;
   installBtnEls.forEach((el) => { el.style.display = 'none'; });
+  bannerEls.forEach((el) => { el.style.display = 'none'; });
 });
 
 function showIOSInstructions() {
@@ -64,23 +73,34 @@ async function handleInstallClick() {
 
 /**
  * Gắn hành vi "Cài đặt ứng dụng" vào 1 nút có sẵn trong trang.
- * Nút sẽ tự ẩn nếu đã cài rồi, và tự động HIỆN khi trình duyệt sẵn sàng
- * cho cài đặt (Android/Chrome) — trên iOS luôn hiện sẵn vì không có cách
- * nào phát hiện "có thể cài" như Android.
+ * Nút sẽ tự ẩn nếu đã cài rồi, tự ẩn trên máy tính (web) — CHỈ hiện trên
+ * điện thoại, và tự động HIỆN khi trình duyệt sẵn sàng cho cài đặt
+ * (Android/Chrome) — trên iOS luôn hiện sẵn vì không có cách nào phát
+ * hiện "có thể cài" như Android.
  */
-export function attachInstallButton(el, { alwaysVisible = false } = {}) {
+export function attachInstallButton(el) {
   if (!el) return;
-  if (isStandalone()) { el.style.display = 'none'; return; }
+  if (isStandalone() || !isMobileDevice()) { el.style.display = 'none'; return; }
 
-  if (alwaysVisible) {
-    el.style.display = '';
-  } else {
-    installBtnEls.push(el);
-    el.style.display = isIOS() ? '' : 'none'; // Android/Chrome chờ beforeinstallprompt mới hiện
-  }
+  installBtnEls.push(el);
+  el.style.display = isIOS() ? '' : 'none'; // Android/Chrome chờ beforeinstallprompt mới hiện
   el.addEventListener('click', handleInstallClick);
 }
 
 export function isInstallable() {
-  return !isStandalone();
+  return !isStandalone() && isMobileDevice();
+}
+
+/**
+ * Đăng ký 1 banner "gợi ý cài đặt" (khối cha + nút bấm bên trong) — khác
+ * attachInstallButton ở chỗ ẩn/hiện CẢ KHỐI CHA khi cài xong, không chỉ
+ * riêng nút bấm.
+ */
+export function registerInstallBanner(containerEl, buttonEl) {
+  if (!containerEl || !buttonEl) return;
+  if (isStandalone() || !isMobileDevice()) { containerEl.style.display = 'none'; return; }
+
+  containerEl.style.display = 'flex';
+  bannerEls.push(containerEl);
+  buttonEl.addEventListener('click', handleInstallClick);
 }

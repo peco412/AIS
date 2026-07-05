@@ -1,5 +1,6 @@
 import { bootShell } from '/js/shell.js';
 import { supabase } from '/js/supabase.js';
+import { t } from '/js/i18n.js';
 
 let PROFILE = null;
 let chartInstance = null;
@@ -66,7 +67,7 @@ async function loadReceivables() {
   if (error) { tbody.innerHTML = `<tr><td colspan="4" class="empty-cell">Lỗi: ${error.message}</td></tr>`; return; }
   if (!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="empty-cell">Không có công nợ nào.</td></tr>'; return; }
 
-  const STATUS_LABEL = { open: 'Chưa thu', partial: 'Thu một phần', paid: 'Đã thu đủ', overdue: 'Quá hạn' };
+  const STATUS_LABEL = new Proxy({}, { get: (_, code) => t('status.receivable_' + code, code) });
   const STATUS_BADGE = { open: 'submitted', partial: 'approved_1', paid: 'active', overdue: 'rejected' };
   tbody.innerHTML = data.map((r) => `
     <tr>

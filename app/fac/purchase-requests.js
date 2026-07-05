@@ -1,11 +1,9 @@
 import { bootShell } from '/js/shell.js';
 import { supabase, esc, resolveFileUrl } from '/js/supabase.js';
+import { t } from '/js/i18n.js';
 import { openPdfEditor } from '/js/pdfEditor.js';
 
-const STATUS_LABEL = {
-  draft: 'Chờ trưởng phòng CSVC duyệt', submitted: 'Chờ trưởng phòng CSVC duyệt',
-  approved_1: 'Chờ ban điều hành ký', approved_2: 'Đã lưu trữ', archived: 'Đã lưu trữ', rejected: 'Từ chối',
-};
+const STATUS_LABEL = new Proxy({}, { get: (_, code) => t('status.purchase_' + code, code) });
 
 let PROFILE = null;
 let TEMPLATE = null;
