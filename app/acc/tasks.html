@@ -41,7 +41,7 @@
 
   <main class="main">
     <div class="page-header">
-      <div><h1>Phân việc xử lý yêu cầu</h1><div class="sub">Phòng Kế toán — trưởng phòng giao việc cho nhân viên hoặc chính mình.</div></div>
+      <div><h1>Phân việc xử lý yêu cầu</h1><div class="sub">Phòng Kế toán — các yêu cầu đang chờ xử lý hiện ngay bên dưới để phân công tại chỗ; dùng nút + để giao việc khác ngoài các yêu cầu này.</div></div>
       <button class="btn btn-accent" id="btnAdd" style="display:none;">+ Giao việc mới</button>
     </div>
 
@@ -65,9 +65,8 @@
 <div class="modal-overlay" id="taskModal">
   <div class="modal-box">
     <button class="modal-close" id="closeModal">✕</button>
-    <h3>Giao việc mới</h3>
+    <h3>Giao việc khác (ngoài luồng)</h3>
     <div class="form-error" id="formError"></div>
-    <div class="field"><label for="linkedRequest">Yêu cầu cần xử lý</label><select id="linkedRequest"></select></div>
     <div class="field"><label for="assignTo">Giao cho *</label><select id="assignTo"></select></div>
     <div class="field"><label for="taskTitle">Tiêu đề công việc *</label><input type="text" id="taskTitle" /></div>
     <div class="field"><label for="taskDesc">Mô tả</label><textarea id="taskDesc" rows="2"></textarea></div>
