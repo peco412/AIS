@@ -26,6 +26,7 @@ async function loadHR() {
     statCard('Đơn nghỉ phép chờ duyệt', pendingLeave ?? 0, pendingLeave ? 'var(--warning)' : null),
     statCard('Hợp đồng chờ ký', pendingContracts ?? 0, pendingContracts ? 'var(--warning)' : null),
   ].join('');
+  return (pendingLeave ?? 0) + (pendingContracts ?? 0);
 }
 
 async function loadACC(centerId) {
@@ -47,6 +48,7 @@ async function loadACC(centerId) {
     statCard('Công nợ phải thu', fmtMoney(totalReceivable) + ' đ'),
     statCard('Dòng tiền tháng này', fmtMoney(inflow - outflow) + ' đ', (inflow - outflow) < 0 ? 'var(--danger)' : 'var(--success)'),
   ].join('');
+  return { pending: (pendingPay ?? 0) + (pendingAdv ?? 0), inflow, outflow };
 }
 
 async function loadMKT(centerId) {
@@ -63,6 +65,7 @@ async function loadMKT(centerId) {
     statCard('Trình sự kiện chờ duyệt', pendingEvent ?? 0, pendingEvent ? 'var(--warning)' : null),
     statCard('Chi phí quảng cáo tháng này', fmtMoney(totalExpense) + ' đ'),
   ].join('');
+  return (pendingComm ?? 0) + (pendingEvent ?? 0);
 }
 
 async function loadFAC(centerId) {
@@ -79,6 +82,7 @@ async function loadFAC(centerId) {
     statCard('Phiếu mua sắm chờ duyệt', pendingPurchase ?? 0, pendingPurchase ? 'var(--warning)' : null),
     statCard('Tài sản cần sửa chữa/hỏng', needsRepair, needsRepair ? 'var(--danger)' : null),
   ].join('');
+  return (pendingReq ?? 0) + (pendingPurchase ?? 0);
 }
 
 async function loadEDU(centerId) {
@@ -98,9 +102,57 @@ async function loadEDU(centerId) {
   ].join('');
 }
 
+let pendingChart = null;
+let cashChart = null;
+
 async function loadAll() {
   const centerId = document.getElementById('filterCenter').value;
-  await Promise.all([loadHR(), loadACC(centerId), loadMKT(centerId), loadFAC(centerId), loadEDU(centerId)]);
+  const [hrPending, accData, mktPending, facPending] = await Promise.all([
+    loadHR(), loadACC(centerId), loadMKT(centerId), loadFAC(centerId), loadEDU(centerId),
+  ]);
+
+  renderPendingChart({ 'Nhân sự': hrPending, 'Kế toán': accData.pending, 'Truyền thông': mktPending, 'CSVC': facPending });
+  renderCashFlowChart(accData.inflow, accData.outflow);
+}
+
+function renderPendingChart(byDept) {
+  const ctx = document.getElementById('pendingByDeptChart').getContext('2d');
+  if (pendingChart) pendingChart.destroy();
+  pendingChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: Object.keys(byDept),
+      datasets: [{
+        label: 'Đang chờ xử lý',
+        data: Object.values(byDept),
+        backgroundColor: ['#ff8a00', '#059669', '#2563eb', '#0891b2'],
+        borderRadius: 8,
+        maxBarThickness: 46,
+      }],
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+    },
+  });
+}
+
+function renderCashFlowChart(inflow, outflow) {
+  const ctx = document.getElementById('cashFlowChart').getContext('2d');
+  if (cashChart) cashChart.destroy();
+  cashChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Thu vào', 'Chi ra'],
+      datasets: [{ data: [inflow, outflow], backgroundColor: ['#22c55e', '#ef4444'], borderWidth: 0 }],
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11.5 } } } },
+      cutout: '68%',
+    },
+  });
 }
 
 document.getElementById('filterCenter').addEventListener('change', loadAll);

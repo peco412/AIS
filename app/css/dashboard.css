@@ -286,6 +286,9 @@
 }
 @media (max-width: 860px) { .panel-grid { grid-template-columns: 1fr; } }
 
+.chart-row { grid-template-columns: 1.3fr 1fr; }
+@media (max-width: 860px) { .chart-row { grid-template-columns: 1fr; } }
+
 .panel {
   background: var(--surface-card);
   border: 1px solid var(--border);

@@ -2,20 +2,29 @@
 // SERVICE WORKER — cache "app shell" tối thiểu để mở nhanh lần sau
 // và hoạt động cơ bản khi mất mạng tạm thời (KHÔNG cache dữ liệu Supabase,
 // dữ liệu nghiệp vụ luôn cần mạng để đảm bảo tính đúng đắn/bảo mật).
+//
+// CHIẾN LƯỢC: network-first cho HTML/JS/CSS (luôn ưu tiên bản MỚI NHẤT từ
+// server, cache chỉ dùng khi mất mạng) — trước đây CSS bị bỏ sót, dùng
+// cache-first, là nguyên nhân chính khiến giao diện hay bị "dính" bản cũ
+// sau mỗi lần cập nhật code.
+//
+// Tăng số version CACHE_NAME này (v3, v4...) MỖI KHI deploy code mới có
+// thay đổi quan trọng, để buộc mọi client xoá sạch cache cũ ngay lập tức.
 // =====================================================================
-// Tăng số version này (v2, v3...) MỖI KHI deploy code mới có thay đổi quan
-// trọng (đặc biệt config như supabase.js) để buộc mọi client tải bản mới.
-const CACHE_NAME = 'ais-shell-v2';
+const CACHE_NAME = 'ais-shell-v3';
 const APP_SHELL = [
   '/index.html',
   '/dashboard.html',
   '/css/tokens.css',
   '/css/login.css',
   '/css/dashboard.css',
+  '/css/module.css',
+  '/css/pdfEditor.css',
   '/js/supabase.js',
   '/js/auth.js',
   '/js/dashboard.js',
   '/js/navConfig.js',
+  '/js/i18n.js',
   '/manifest.json',
 ];
 
@@ -30,7 +39,7 @@ self.addEventListener('install', (event) => {
       )
     )
   );
-  self.skipWaiting();
+  self.skipWaiting(); // kích hoạt bản mới ngay, không đợi mọi tab cũ đóng lại
 });
 
 self.addEventListener('activate', (event) => {
@@ -39,7 +48,7 @@ self.addEventListener('activate', (event) => {
       Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
     )
   );
-  self.clients.claim();
+  self.clients.claim(); // chiếm quyền điều khiển các tab đang mở ngay lập tức
 });
 
 self.addEventListener('fetch', (event) => {
@@ -48,15 +57,17 @@ self.addEventListener('fetch', (event) => {
   // Không cache API Supabase — luôn lấy dữ liệu mới nhất
   if (url.hostname.includes('supabase.co')) return;
 
-  // Network-first cho JS/HTML: luôn ưu tiên bản mới nhất từ server,
-  // chỉ dùng cache khi mất mạng. Tránh việc code deploy mới bị "kẹt"
-  // sau bản cache cũ (đây là nguyên nhân gây lỗi gọi nhầm URL cũ).
-  if (event.request.destination === 'script' || event.request.destination === 'document') {
+  // Network-first cho HTML/JS/CSS: luôn ưu tiên bản mới nhất từ server,
+  // chỉ dùng cache khi mất mạng. Đây là danh sách ĐẦY ĐỦ 3 loại tài
+  // nguyên hay đổi khi deploy — thiếu 'style' ở đây chính là lý do CSS
+  // từng bị dính bản cũ trước đây.
+  const dest = event.request.destination;
+  if (dest === 'script' || dest === 'document' || dest === 'style') {
     event.respondWith(
-      fetch(event.request)
+      fetch(event.request, { cache: 'no-store' })
         .then((res) => {
           const resClone = res.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, resClone));
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, resClone)).catch(() => {});
           return res;
         })
         .catch(() => caches.match(event.request))
@@ -64,41 +75,9 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Các tài nguyên khác (icon, font, ảnh...) — cache-first cho nhanh,
+  // ít khi đổi nên không cần luôn xin lại server.
   event.respondWith(
     caches.match(event.request).then((cached) => cached || fetch(event.request))
   );
 });
-
-// =====================================================================
-// ĐĂNG KÝ SERVICE WORKER + TỰ ĐỘNG RELOAD KHI CÓ BẢN MỚI
-// =====================================================================
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').then((reg) => {
-
-      // Kiểm tra định kỳ xem server có SW mới không (vd mỗi 5 phút)
-      setInterval(() => reg.update(), 5 * 60 * 1000);
-
-      // Khi phát hiện SW mới đang cài (do đổi CACHE_NAME/version)
-      reg.addEventListener('updatefound', () => {
-        const newWorker = reg.installing;
-        newWorker.addEventListener('statechange', () => {
-          if (newWorker.state === 'activated') {
-            // SW mới đã activate và claim() các client
-            // -> reload để load JS/CSS/HTML mới thay vì bản đang chạy dở trong RAM
-            window.location.reload();
-          }
-        });
-      });
-
-    }).catch((err) => console.warn('SW register failed:', err));
-  });
-
-  // Phòng trường hợp reload() bị gọi lặp (một số trình duyệt bắn controllerchange nhiều lần)
-  let refreshing = false;
-  navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (refreshing) return;
-    refreshing = true;
-    window.location.reload();
-  });
-}

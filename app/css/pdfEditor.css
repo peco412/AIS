@@ -45,14 +45,34 @@
 .pdfed-toolbar button:disabled { opacity: 0.35; cursor: not-allowed; }
 .pdfed-toolbar .hint { font-size: 11.5px; color: rgba(255,255,255,0.55); }
 
+.pdfed-pagenav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 8px 16px;
+  background: rgba(29, 29, 31, 0.7);
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 600;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.pdfed-pagenav button {
+  border: none; background: rgba(255,255,255,0.12); color: #fff;
+  padding: 6px 14px; border-radius: 999px; font-size: 12px; font-weight: 600; cursor: pointer;
+}
+.pdfed-pagenav button:hover { background: rgba(255,255,255,0.22); }
+.pdfed-pagenav button:disabled { opacity: 0.3; cursor: not-allowed; }
+
 .pdfed-body {
   flex: 1;
   overflow-y: auto;
+  overflow-x: auto; /* an toàn nếu trang PDF nằm ngang (landscape) trên màn hình hẹp */
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 22px;
-  padding: 28px 0 64px;
+  padding: 28px 16px 64px;
 }
 
 .pdfed-page {
@@ -62,9 +82,24 @@
   overflow: hidden;
   box-shadow: 0 12px 36px rgba(0,0,0,0.35);
   cursor: default;
+  flex-shrink: 0; /* không bị bóp méo khi flex container hẹp hơn trang PDF */
 }
 .pdfed-page.place-armed { cursor: crosshair; }
 .pdfed-page canvas { display: block; }
+
+/* Đánh số trang khi biểu mẫu có nhiều trang cần điền — dễ theo dõi đang ở
+   trang nào khi cuộn qua form dài, đặc biệt hữu ích trên điện thoại. */
+.pdfed-page-badge {
+  position: absolute;
+  top: 10px; right: 10px;
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+  pointer-events: none;
+}
 
 .pdfed-overlay-item {
   position: absolute;
@@ -96,4 +131,14 @@
 
 .pdfed-loading {
   color: #fff; padding: 60px; text-align: center; font-size: 14px;
+}
+
+@media (max-width: 640px) {
+  .pdfed-toolbar { padding: 10px 12px; gap: 8px; }
+  .pdfed-toolbar .title { width: 100%; margin: 0 0 4px; order: -1; font-size: 13px; }
+  .pdfed-toolbar button { padding: 8px 12px; font-size: 12px; flex: 1; min-width: 0; }
+  .pdfed-toolbar .hint { display: none; } /* nhường chỗ cho nút trên màn hình nhỏ */
+  .pdfed-pagenav { padding: 7px 10px; gap: 10px; font-size: 11.5px; }
+  .pdfed-pagenav button { padding: 5px 10px; font-size: 11px; }
+  .pdfed-body { padding: 16px 8px 48px; gap: 14px; }
 }

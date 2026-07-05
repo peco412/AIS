@@ -85,6 +85,11 @@ export async function openPdfEditor({ pdfUrl, signatureUrl = null, readOnly = fa
       <button type="button" id="pdfedCancel">Đóng</button>
       ${readOnly ? '' : '<button type="button" id="pdfedSave" class="primary">💾 Lưu</button>'}
     </div>
+    <div class="pdfed-pagenav" id="pdfedPageNav" style="display:none;">
+      <button type="button" id="pdfedPrevPage">‹ Trang trước</button>
+      <span id="pdfedPageIndicator">Trang 1</span>
+      <button type="button" id="pdfedNextPage">Trang sau ›</button>
+    </div>
     <div class="pdfed-body" id="pdfedBody">
       <div class="pdfed-loading">Đang tải PDF...</div>
     </div>
@@ -199,14 +204,33 @@ export async function openPdfEditor({ pdfUrl, signatureUrl = null, readOnly = fa
     const pdf = await loadingTask.promise;
     body.innerHTML = '';
 
+    // Tính tỉ lệ hiển thị theo đúng bề rộng khung xem thực tế (thay vì
+    // scale cố định 1.3 trước đây) — mới hiện đúng khổ A4 vừa khít trên
+    // mọi kích thước màn hình, kể cả điện thoại (trước đây trang A4 tràn
+    // ra ngoài màn hình nhỏ, phải cuộn ngang mới xem hết).
+    const firstPage = await pdf.getPage(1);
+    const baseViewport = firstPage.getViewport({ scale: 1 });
+    const availableWidth = body.clientWidth - 32; // trừ padding 2 bên
+    let displayScale = availableWidth / baseViewport.width;
+    displayScale = Math.min(Math.max(displayScale, 0.35), 1.6); // giới hạn hợp lý, không quá nhỏ/quá to
+
+    // Render nét trên màn hình retina/điện thoại: canvas thật vẽ ở độ phân
+    // giải cao hơn (scale × devicePixelRatio) nhưng kích thước CSS hiển thị
+    // vẫn đúng displayScale -> hình không bị mờ mà cũng không tràn màn hình.
+    const pixelRatio = Math.min(window.devicePixelRatio || 1, 2.5);
+
     for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i);
-      const viewport = page.getViewport({ scale: 1.3 });
+      const page = i === 1 ? firstPage : await pdf.getPage(i);
+      const viewport = page.getViewport({ scale: displayScale });
+      const renderViewport = page.getViewport({ scale: displayScale * pixelRatio });
+
       const canvas = document.createElement('canvas');
-      canvas.width = viewport.width;
-      canvas.height = viewport.height;
+      canvas.width = renderViewport.width;
+      canvas.height = renderViewport.height;
+      canvas.style.width = viewport.width + 'px';
+      canvas.style.height = viewport.height + 'px';
       const ctx = canvas.getContext('2d');
-      await page.render({ canvasContext: ctx, viewport }).promise;
+      await page.render({ canvasContext: ctx, viewport: renderViewport }).promise;
 
       const pageEl = document.createElement('div');
       pageEl.className = 'pdfed-page';
@@ -214,6 +238,15 @@ export async function openPdfEditor({ pdfUrl, signatureUrl = null, readOnly = fa
       pageEl.style.height = viewport.height + 'px';
       pageEl.appendChild(canvas);
       body.appendChild(pageEl);
+
+      // Nếu có nhiều trang cần điền, đánh số trang rõ ràng để dễ theo dõi
+      // đang ở trang nào khi cuộn qua form dài.
+      if (pdf.numPages > 1) {
+        const badge = document.createElement('div');
+        badge.className = 'pdfed-page-badge';
+        badge.textContent = `Trang ${i} / ${pdf.numPages}`;
+        pageEl.appendChild(badge);
+      }
 
       pageEl.addEventListener('click', (e) => {
         if (!armedTool || e.target !== canvas) return;
@@ -223,6 +256,43 @@ export async function openPdfEditor({ pdfUrl, signatureUrl = null, readOnly = fa
         addOverlayItem(pageEl, i - 1, x, y, armedTool);
         setArmed(null);
       });
+    }
+
+    // Thanh điều hướng trang — chỉ hiện khi biểu mẫu có từ 2 trang trở lên,
+    // giúp không phải cuộn dài tay trên điện thoại khi form nhiều trang.
+    if (pdf.numPages > 1) {
+      const pageNav = overlay.querySelector('#pdfedPageNav');
+      const indicator = overlay.querySelector('#pdfedPageIndicator');
+      const pageEls = Array.from(body.querySelectorAll('.pdfed-page'));
+      let currentPageIdx = 0;
+      pageNav.style.display = 'flex';
+
+      function updateIndicator() {
+        indicator.textContent = `Trang ${currentPageIdx + 1} / ${pdf.numPages}`;
+        overlay.querySelector('#pdfedPrevPage').disabled = currentPageIdx === 0;
+        overlay.querySelector('#pdfedNextPage').disabled = currentPageIdx === pdf.numPages - 1;
+      }
+      function goToPage(idx) {
+        currentPageIdx = Math.max(0, Math.min(pdf.numPages - 1, idx));
+        pageEls[currentPageIdx].scrollIntoView({ behavior: 'smooth', block: 'start' });
+        updateIndicator();
+      }
+      overlay.querySelector('#pdfedPrevPage').addEventListener('click', () => goToPage(currentPageIdx - 1));
+      overlay.querySelector('#pdfedNextPage').addEventListener('click', () => goToPage(currentPageIdx + 1));
+
+      // Cập nhật số trang hiện tại theo đúng vị trí đang cuộn tới (không chỉ
+      // theo nút bấm) — dùng IntersectionObserver, nhẹ và chính xác.
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            currentPageIdx = pageEls.indexOf(entry.target);
+            updateIndicator();
+          }
+        });
+      }, { root: body, threshold: 0.5 });
+      pageEls.forEach((el) => observer.observe(el));
+
+      updateIndicator();
     }
   } catch (err) {
     // Log đầy đủ lỗi gốc ra console — alert/nhãn lỗi chỉ hiện được 1 dòng

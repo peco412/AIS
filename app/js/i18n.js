@@ -148,6 +148,8 @@ const DICT = {
   'login.errNoEmployee': { vi: 'Không tìm thấy hồ sơ nhân viên gắn với tài khoản này. Liên hệ phòng nhân sự.', en: 'No employee record found for this account. Please contact HR.' },
   'login.errInactive': { vi: 'Tài khoản của bạn hiện không ở trạng thái hoạt động.', en: 'Your account is not currently active.' },
   'login.errWrongDivision': { vi: 'Tài khoản này thuộc phân hệ khác. Vui lòng chọn đúng phân hệ (ALOHA/iLingo) trước khi đăng nhập.', en: 'This account belongs to a different division. Please select the correct division (ALOHA/iLingo) before signing in.' },
+  'login.loaderMessage': { vi: 'Đang vào hệ thống...', en: 'Signing you in...' },
+  'login.loaderChangePassword': { vi: 'Đang chuẩn bị đổi mật khẩu...', en: 'Preparing password change...' },
 
   // ---------- Dashboard ----------
   'dashboard.title': { vi: 'Trang chủ', en: 'Home' },

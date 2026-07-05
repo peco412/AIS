@@ -1,5 +1,6 @@
 import { supabase, usernameToEmail } from './supabase.js';
 import { setLang, getLang, applyTranslations, t } from './i18n.js';
+import { showLoginLoader } from './loginLoader.js';
 
 // ---------------------------------------------------------------------
 // Đổi phân hệ (chỉ đổi màu accent theo #0094D9 ALOHA / #0B6C37 iLingo)
@@ -15,6 +16,14 @@ function setDivision(div) {
   localStorage.setItem('ais_division', div);
   document.getElementById('brandTitle').textContent =
     div === 'ilingo' ? 'iLingo' : 'ALOHA';
+
+  // Đổi logo theo đúng phân hệ nếu có file riêng (assets/logo-ilingo.png),
+  // tự quay về logo ALOHA nếu chưa có logo riêng cho phân hệ đó.
+  [document.getElementById('brandMarkLogo'), document.getElementById('watermarkLogo')].forEach((img) => {
+    if (!img) return;
+    img.src = `assets/logo-${div}.png`;
+    img.onerror = () => { img.onerror = null; img.src = 'assets/logo-aloha.png'; };
+  });
 }
 
 divisionButtons.forEach((btn) => {
@@ -115,10 +124,12 @@ form.addEventListener('submit', async (e) => {
   }
 
   if (employee.temp_password_flag) {
+    await showLoginLoader({ division: selectedDivision, message: t('login.loaderChangePassword', 'Đang chuẩn bị đổi mật khẩu...') });
     window.location.href = 'change-password.html';
     return;
   }
 
+  await showLoginLoader({ division: selectedDivision, message: t('login.loaderMessage', 'Đang vào hệ thống...') });
   window.location.href = 'dashboard.html';
 });
 
