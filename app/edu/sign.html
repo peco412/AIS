@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Bảng lương nhân viên — ERP AIS</title>
+<title>Ký số hồ sơ — Học vụ — ERP AIS</title>
 <link rel="manifest" href="/manifest.json" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="mobile-web-app-capable" content="yes" />
@@ -15,12 +15,9 @@
 <link rel="stylesheet" href="/css/tokens.css" />
 <link rel="stylesheet" href="/css/dashboard.css" />
 <link rel="stylesheet" href="/css/module.css" />
-<style>
-  .data-table input { padding: 6px 8px; border: 1.5px solid var(--border-strong); border-radius: 6px; font-size: 13px; width: 120px; font-family: var(--font-mono); }
-  .data-table input:focus { border-color: var(--accent); outline: none; }
-</style>
+<link rel="stylesheet" href="/css/pdfEditor.css" />
 </head>
-<body data-page="/acc/payroll.html">
+<body data-page="/edu/sign.html">
 
 <div class="app-shell">
   <aside class="sidebar" id="sidebar">
@@ -29,10 +26,7 @@
     <div class="sidebar__footer">© 2026 ERP AIS</div>
   </aside>
   <header class="topbar">
-    <div class="topbar__left">
-      <button class="menu-toggle" id="menuToggle">☰</button>
-      <div class="search-box"><span>🔎</span><input type="text" id="searchInput" placeholder="Tìm nhân viên..." /></div>
-    </div>
+    <div class="topbar__left"><button class="menu-toggle" id="menuToggle">☰</button></div>
     <div class="topbar__right">
       <button class="icon-btn" onclick="location.href='/notifications.html'">🔔<span class="badge" id="notifBadge" style="display:none;">0</span></button>
       <div class="user-chip" onclick="location.href='/profile.html'">
@@ -45,19 +39,18 @@
 
   <main class="main">
     <div class="page-header">
-      <div><h1>Bảng lương nhân viên</h1><div class="sub">Lương thực nhận tự tính = Lương cơ bản + Thưởng - Khấu trừ. Cột "Nghỉ không lương" lấy từ đơn nghỉ phép đã duyệt trong tháng.</div></div>
-      <div style="display:flex; gap:8px;">
-        <button class="btn btn-outline" id="btnAutoDeduction" title="Tự điền khấu trừ = (Lương cơ bản / 26) × số ngày nghỉ không lương — vẫn có thể sửa tay trước khi lưu">⚙️ Tự tính khấu trừ theo nghỉ phép</button>
-        <select class="select-input" id="filterMonth"></select>
-      </div>
+      <div><h1>Ký số hồ sơ — Học vụ / Quản lý trung tâm</h1><div class="sub">Tự tải lên 1 file PDF bất kỳ, ký tại vị trí bất kỳ, tự chọn lưu vào Kho lưu trữ hệ thống.</div></div>
     </div>
 
-    <div class="stat-grid" id="statCards"></div>
+    <div class="form-error" id="freeSignError"></div>
+    <label class="btn btn-accent" for="freeSignFile" style="display:inline-flex; cursor:pointer;">📎 Chọn file PDF để ký</label>
+    <input type="file" id="freeSignFile" accept="application/pdf" style="display:none;" />
 
+    <div class="page-header" style="margin-top:28px;"><div><h1 style="font-size:18px;">Hồ sơ đã ký gần đây</h1></div></div>
     <div class="data-table-wrap">
       <table class="data-table">
-        <thead><tr><th>Mã NV</th><th>Nhân viên</th><th>Lương cơ bản</th><th>Nghỉ không lương</th><th>Thưởng</th><th>Khấu trừ</th><th>Thực nhận</th><th></th></tr></thead>
-        <tbody id="tableBody"><tr><td colspan="8" class="empty-cell">Đang tải dữ liệu...</td></tr></tbody>
+        <thead><tr><th>Tên file</th><th>Người ký</th><th>Thời gian</th><th></th></tr></thead>
+        <tbody id="signedTableBody"><tr><td colspan="4" class="empty-cell">Đang tải dữ liệu...</td></tr></tbody>
       </table>
     </div>
   </main>
@@ -65,7 +58,10 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="/env.js"></script>
-<script type="module" src="/acc/payroll.js"></script>
+<script type="module">
+  import { initFreeSign } from '/js/freeSign.js';
+  initFreeSign('EDU');
+</script>
 <script src="/js/pwa.js"></script>
 </body>
 </html>

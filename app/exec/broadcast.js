@@ -1,5 +1,5 @@
 import { bootShell } from '/js/shell.js';
-import { supabase, esc } from '/js/supabase.js';
+import { supabase, esc, triggerPush } from '/js/supabase.js';
 
 let PROFILE = null;
 
@@ -60,6 +60,7 @@ document.getElementById('broadcastForm').addEventListener('submit', async (e) =>
   btn.disabled = false; btn.textContent = 'Ban hành thông báo';
 
   if (error) { formError.textContent = error.message; formError.classList.add('show'); return; }
+  triggerPush(payload); // gửi thông báo đẩy thật, không chặn UI nếu lỗi
   e.target.reset();
   document.getElementById('centerField').style.display = 'none';
   document.getElementById('deptField').style.display = 'none';

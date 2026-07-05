@@ -92,6 +92,7 @@ export const NAV_CONFIG = [
       { labelKey: 'nav.edu.students', label: 'Danh sách học viên', href: '/edu/students.html', icon: '🎒', visible: (p) => p.isCenterManager || inDept(p, 'HR') || inDept(p, 'MKT') },
       { labelKey: 'nav.edu.classAssignment', label: 'Phân lớp học viên', href: '/edu/class-assignment.html', icon: '🔀', visible: (p) => p.isCenterManager || inDept(p, 'HR') || inDept(p, 'MKT') },
       { labelKey: 'nav.edu.grades', label: 'Bảng điểm học viên', href: '/edu/grades.html', icon: '📈', visible: (p) => p.isCenterManager || inDept(p, 'HR') || inDept(p, 'MKT') },
+      { labelKey: 'nav.sign', label: 'Ký số hồ sơ', href: '/edu/sign.html', icon: '✍️', visible: (p) => p.isCenterManager || isExecOrTech(p) },
     ],
   },
   {

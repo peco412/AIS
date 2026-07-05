@@ -1,5 +1,5 @@
 import { bootShell } from '/js/shell.js';
-import { supabase, esc, uploadPrivateFile, openFile } from '/js/supabase.js';
+import { supabase, esc, uploadPrivateFile, openFile, triggerPush } from '/js/supabase.js';
 
 const TYPE_LABEL = { repair: 'Sửa chữa', new_supply: 'Cấp mới', purchase: 'Mua mới' };
 const STATUS_LABEL = { pending: 'Chờ xử lý', approved: 'Đã duyệt', in_progress: 'Đang xử lý', done: 'Hoàn thành', rejected: 'Từ chối' };
@@ -132,6 +132,7 @@ document.getElementById('submitResult').addEventListener('click', async () => {
       content: note || `Trạng thái mới: ${STATUS_LABEL[status]}`,
       created_by: PROFILE.id,
     });
+    triggerPush({ scope: 'personal', target_employee_id: row.requester_id, title: `Yêu cầu cơ sở vật chất "${row.title}" đã được cập nhật`, content: note || `Trạng thái mới: ${STATUS_LABEL[status]}` });
 
     resultModal.classList.remove('show');
     await loadRows();

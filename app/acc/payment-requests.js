@@ -246,6 +246,7 @@ document.getElementById('openFillEditor').addEventListener('click', async () => 
     pdfUrl,
     signatureUrl,
     title: 'Điền & ký phiếu đề nghị thanh toán',
+    fieldMap: TEMPLATE.field_map || [],
     onSave: async (blob) => {
       const fileUrl = await uploadFile(blob, PROFILE.id, 'draft');
       const { error } = await supabase.from('payment_requests').insert({

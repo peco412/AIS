@@ -1,6 +1,7 @@
 import { supabase } from './supabase.js';
 import { NAV_CONFIG } from './navConfig.js';
 import { t, applyTranslations, syncLangFromProfile, setLang, getLang } from './i18n.js';
+import { attachInstallButton } from './installPrompt.js';
 
 document.documentElement.setAttribute('data-division', localStorage.getItem('ais_division') || 'aloha');
 
@@ -11,6 +12,13 @@ function initials(name) {
 // Các mục dùng chung luôn hiển thị dù đang ở phòng ban nào (điều hướng
 // nhanh) — không tính là "1 phòng ban" nên không bị lọc theo ngữ cảnh.
 const ALWAYS_VISIBLE_HREFS = new Set(['/dashboard.html', '/notifications.html', '/profile.html']);
+
+// Kiểm tra quyền hiển thị mặc định THEO đúng vai trò/phòng ban, HOẶC đã
+// được cấp thêm riêng qua module "Xin thêm quyền hạn" (granted_permissions,
+// nạp sẵn vào profile.grantedModules ở trên).
+function canAccess(item, profile) {
+  return item.visible(profile) || !!profile.grantedModules?.has(item.href);
+}
 
 function findActiveGroup(currentPage) {
   if (!currentPage) return null;
@@ -28,7 +36,7 @@ function renderNav(profile, currentPage) {
   const commonGroup = NAV_CONFIG.find((g) => !g.sectionKey);
   if (commonGroup) {
     const commonItems = commonGroup.items.filter(
-      (item) => item.visible(profile) && ALWAYS_VISIBLE_HREFS.has(item.href)
+      (item) => canAccess(item, profile) && ALWAYS_VISIBLE_HREFS.has(item.href)
     );
     if (commonItems.length > 0) {
       const ul = document.createElement('ul');
@@ -43,7 +51,7 @@ function renderNav(profile, currentPage) {
   const activeGroup = findActiveGroup(currentPage);
   if (!activeGroup) return;
 
-  const visibleItems = activeGroup.items.filter((item) => item.visible(profile));
+  const visibleItems = activeGroup.items.filter((item) => canAccess(item, profile));
   if (visibleItems.length === 0) return;
 
   const heading = document.createElement('div');
@@ -99,6 +107,24 @@ function injectLangSwitcher(profileId) {
   });
   document.addEventListener('ais:langchange', paint);
   paint();
+}
+
+/**
+ * Chèn nút "📲 Cài đặt ứng dụng" vào topbar bằng JS — trước đây không có
+ * nơi nào để tải ứng dụng về máy, người dùng không biết là cài được.
+ */
+function injectInstallButton() {
+  const topbarRight = document.querySelector('.topbar__right, .hub-topbar__right');
+  if (!topbarRight || document.getElementById('installAppBtn')) return;
+
+  const btn = document.createElement('button');
+  btn.id = 'installAppBtn';
+  btn.className = 'icon-btn';
+  btn.title = t('common.installApp', 'Cài đặt ứng dụng');
+  btn.textContent = '📲';
+  btn.style.display = 'none';
+  topbarRight.insertBefore(btn, topbarRight.firstChild);
+  attachInstallButton(btn);
 }
 
 /**
@@ -167,6 +193,16 @@ export async function bootShell() {
     isAcademicBoard: !!employee.is_academic_board,
   };
 
+  // Quyền hạn được cấp thêm riêng cho nhân sự này (đã được duyệt qua module
+  // "Xin thêm quyền hạn") — mở thêm đúng mục menu tương ứng ngoài quyền mặc
+  // định theo phòng ban/vai trò. module_key chính là href của mục menu đó
+  // (xem js/navConfig.js và permission-requests.js).
+  const { data: grants } = await supabase
+    .from('granted_permissions')
+    .select('module_key')
+    .eq('employee_id', profile.id);
+  profile.grantedModules = new Set((grants || []).map((g) => g.module_key));
+
   // Ngôn ngữ hiển thị theo đúng hồ sơ nhân viên (employees.language_preference),
   // để đăng nhập ở thiết bị khác vẫn giữ đúng lựa chọn đã lưu.
   syncLangFromProfile(employee.language_preference);
@@ -183,6 +219,7 @@ export async function bootShell() {
   renderNav(profile, document.body.dataset.page || location.pathname);
   applyTranslations();
   injectLangSwitcher(profile.id);
+  injectInstallButton();
 
   // Bấm logo để quay về màn hình chọn phòng ban (Trang chủ)
   const brand = document.querySelector('.sidebar__brand');

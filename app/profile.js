@@ -1,5 +1,6 @@
 import { bootShell } from '/js/shell.js';
 import { supabase, esc, uploadPrivateFile, resolveFileUrl, openFile } from '/js/supabase.js';
+import { isPushSupported, getPushPermissionState, isPushEnabledOnThisDevice, enablePush, disablePush } from '/js/pushNotifications.js';
 
 const DOC_TYPE_LABEL = { degree: 'Bằng cấp', certificate: 'Chứng chỉ', cv: 'CV' };
 let PROFILE = null;
@@ -157,11 +158,70 @@ document.getElementById('btnChangePassword').addEventListener('click', async () 
   alert('Đã đổi mật khẩu thành công.');
 });
 
+// ---------------------------------------------------------------------
+// Thông báo đẩy (Web Push)
+// ---------------------------------------------------------------------
+async function refreshPushUI() {
+  const statusEl = document.getElementById('pushStatus');
+  const btnEnable = document.getElementById('btnEnablePush');
+  const btnDisable = document.getElementById('btnDisablePush');
+
+  if (!isPushSupported()) {
+    statusEl.textContent = 'Trình duyệt này không hỗ trợ thông báo đẩy.';
+    btnEnable.style.display = 'none';
+    btnDisable.style.display = 'none';
+    return;
+  }
+
+  const permission = getPushPermissionState();
+  if (permission === 'denied') {
+    statusEl.textContent = 'Bạn đã chặn quyền thông báo cho trang này. Vào cài đặt trình duyệt để bật lại.';
+    btnEnable.style.display = 'none';
+    btnDisable.style.display = 'none';
+    return;
+  }
+
+  const enabled = await isPushEnabledOnThisDevice();
+  statusEl.textContent = enabled ? '✅ Đang bật trên thiết bị này.' : 'Chưa bật trên thiết bị này.';
+  btnEnable.style.display = enabled ? 'none' : 'inline-flex';
+  btnDisable.style.display = enabled ? 'inline-flex' : 'none';
+}
+
+document.getElementById('btnEnablePush').addEventListener('click', async (e) => {
+  const btn = e.currentTarget;
+  const errBox = document.getElementById('pushError');
+  errBox.classList.remove('show');
+  btn.disabled = true; btn.textContent = 'Đang bật...';
+  try {
+    await enablePush(supabase, PROFILE.id);
+    await refreshPushUI();
+  } catch (err) {
+    errBox.textContent = err.message || 'Không bật được thông báo đẩy.';
+    errBox.classList.add('show');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Bật thông báo đẩy trên thiết bị này';
+  }
+});
+
+document.getElementById('btnDisablePush').addEventListener('click', async (e) => {
+  const btn = e.currentTarget;
+  btn.disabled = true; btn.textContent = 'Đang tắt...';
+  try {
+    await disablePush(supabase);
+    await refreshPushUI();
+  } catch (err) {
+    alert('Lỗi: ' + err.message);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Tắt thông báo đẩy trên thiết bị này';
+  }
+});
+
 (async () => {
   try {
     const { profile } = await bootShell();
     PROFILE = profile;
     await loadEmployee();
     await loadDocs();
+    await refreshPushUI();
   } catch (e) { /* bootShell tự điều hướng */ }
 })();

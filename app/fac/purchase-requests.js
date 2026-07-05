@@ -163,6 +163,7 @@ document.getElementById('openFillEditor').addEventListener('click', async () => 
     pdfUrl,
     signatureUrl,
     title: 'Điền & ký Phiếu đề nghị mua sắm',
+    fieldMap: TEMPLATE.field_map || [],
     onSave: async (blob) => {
       const fileUrl = await uploadFile(blob, PROFILE.id, 'draft');
       const { error } = await supabase.from('purchase_requests').insert({

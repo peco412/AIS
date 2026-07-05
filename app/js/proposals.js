@@ -1,5 +1,5 @@
 import { bootShell } from '/js/shell.js';
-import { supabase, esc, uploadPrivateFile, resolveFileUrl } from '/js/supabase.js';
+import { supabase, esc, uploadPrivateFile, resolveFileUrl, triggerPush } from '/js/supabase.js';
 import { openPdfEditor } from '/js/pdfEditor.js';
 
 const STATUS_LABEL = {
@@ -123,12 +123,14 @@ async function overwriteProposalFile(proposalId, blob) {
 
 async function finalizeApproval(row) {
   // Duyệt cấp 2 xong: gửi thông báo cho đúng phòng ban + lưu vào kho lưu trữ
-  await supabase.from('notifications').insert({
+  const notifPayload = {
     scope: 'department', department_id: row.department_id,
     title: `Đề xuất "${row.title}" đã được duyệt`,
     content: `Đề xuất ${row.code} của ${row.employees?.full_name || ''} đã được Ban điều hành phê duyệt.`,
     created_by: PROFILE.id,
-  });
+  };
+  await supabase.from('notifications').insert(notifPayload);
+  triggerPush(notifPayload);
   if (row.file_url) {
     const now = new Date();
     await supabase.from('archive_files').insert({

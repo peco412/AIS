@@ -69,7 +69,10 @@ async function fetchBytes(url) {
  * @param {string} [opts.title]
  * @param {(blob: Blob) => Promise<void>} opts.onSave - gọi khi người dùng bấm Lưu
  */
-export async function openPdfEditor({ pdfUrl, signatureUrl = null, readOnly = false, title = 'Xem / điền / ký PDF', onSave }) {
+export async function openPdfEditor({
+  pdfUrl, signatureUrl = null, readOnly = false, title = 'Xem / điền / ký PDF', onSave,
+  fieldMap = null, isTemplateDesigner = false, onSaveFieldMap = null,
+}) {
   await ensureLibs();
 
   const overlay = document.createElement('div');
@@ -80,10 +83,11 @@ export async function openPdfEditor({ pdfUrl, signatureUrl = null, readOnly = fa
       ${readOnly ? '' : `
         <button type="button" id="pdfedAddText">📝 Thêm văn bản</button>
         <button type="button" id="pdfedAddSig" ${signatureUrl ? '' : 'disabled title="Bạn chưa có chữ ký cá nhân — cập nhật ở Hồ sơ cá nhân"'}>✍️ Chèn chữ ký</button>
+        ${isTemplateDesigner ? '<button type="button" id="pdfedSaveFieldMap">📐 Lưu vị trí mẫu</button>' : ''}
         <span class="hint" id="pdfedHint"></span>
       `}
       <button type="button" id="pdfedCancel">Đóng</button>
-      ${readOnly ? '' : '<button type="button" id="pdfedSave" class="primary">💾 Lưu</button>'}
+      ${readOnly || isTemplateDesigner ? '' : '<button type="button" id="pdfedSave" class="primary">💾 Lưu</button>'}
     </div>
     <div class="pdfed-pagenav" id="pdfedPageNav" style="display:none;">
       <button type="button" id="pdfedPrevPage">‹ Trang trước</button>
@@ -153,15 +157,24 @@ export async function openPdfEditor({ pdfUrl, signatureUrl = null, readOnly = fa
     window.addEventListener('mouseup', () => { resizing = false; });
   }
 
-  function addOverlayItem(pageEl, pageIndex, x, y, type) {
+  function addOverlayItem(pageEl, pageIndex, x, y, type, opts = {}) {
     const el = document.createElement('div');
     el.className = 'pdfed-overlay-item';
-    const w = type === 'signature' ? 150 : 200;
-    const h = type === 'signature' ? 60 : 30;
-    el.style.left = Math.max(0, x - w / 2) + 'px';
-    el.style.top = Math.max(0, y - h / 2) + 'px';
+    const w = opts.width || (type === 'signature' ? 150 : 200);
+    const h = opts.height || (type === 'signature' ? 60 : 30);
+    // opts.exact = true -> x/y đã là toạ độ góc trên-trái thật (dùng khi đặt
+    // sẵn theo field_map), false -> x/y là điểm click, cần trừ nửa kích
+    // thước để item nằm giữa đúng điểm bấm (hành vi đặt tay như cũ).
+    if (opts.exact) {
+      el.style.left = x + 'px';
+      el.style.top = y + 'px';
+    } else {
+      el.style.left = Math.max(0, x - w / 2) + 'px';
+      el.style.top = Math.max(0, y - h / 2) + 'px';
+    }
     el.style.width = w + 'px';
     el.style.height = h + 'px';
+    if (opts.fieldKey) el.dataset.fieldKey = opts.fieldKey;
 
     if (type === 'signature') {
       const img = document.createElement('img');
@@ -169,7 +182,8 @@ export async function openPdfEditor({ pdfUrl, signatureUrl = null, readOnly = fa
       el.appendChild(img);
     } else {
       const ta = document.createElement('textarea');
-      ta.placeholder = 'Nhập nội dung...';
+      ta.placeholder = opts.label || 'Nhập nội dung...';
+      if (opts.textValue) ta.value = opts.textValue;
       el.appendChild(ta);
     }
     const removeBtn = document.createElement('button');
@@ -189,8 +203,57 @@ export async function openPdfEditor({ pdfUrl, signatureUrl = null, readOnly = fa
     overlays.push({ pageIndex, el, type, pageEl });
   }
 
+  // Đặt sẵn các ô ký/điền theo đúng vị trí đã lưu trong field_map của biểu
+  // mẫu (nếu có) — field_map lưu toạ độ dạng PHẦN TRĂM theo kích thước
+  // trang (không phải pixel tuyệt đối) nên áp dụng đúng dù màn hình to nhỏ
+  // khác nhau (khớp với cơ chế scale co giãn theo màn hình đã có).
+  function applyFieldMap(fieldMap, pageEls) {
+    (fieldMap || []).forEach((f) => {
+      const pageEl = pageEls[f.page];
+      if (!pageEl) return;
+      const w = pageEl.offsetWidth, h = pageEl.offsetHeight;
+      addOverlayItem(pageEl, f.page, (f.xPct / 100) * w, (f.yPct / 100) * h, f.type, {
+        exact: true,
+        width: (f.wPct / 100) * w,
+        height: (f.hPct / 100) * h,
+        label: f.label,
+        fieldKey: f.key,
+      });
+    });
+  }
+
+  // Chế độ "thiết kế mẫu": TECH/HR đặt sẵn vị trí 1 lần cho cả mẫu, lưu lại
+  // field_map để những lần điền/ký sau tự động có sẵn đúng chỗ, không phải
+  // kéo-thả lại từ đầu mỗi lần.
+  function collectFieldMap(pageEls) {
+    return overlays.map((o) => {
+      const pageEl = o.pageEl;
+      const w = pageEl.offsetWidth, h = pageEl.offsetHeight;
+      return {
+        page: pageEls.indexOf(pageEl),
+        type: o.type,
+        xPct: (o.el.offsetLeft / w) * 100,
+        yPct: (o.el.offsetTop / h) * 100,
+        wPct: (o.el.offsetWidth / w) * 100,
+        hPct: (o.el.offsetHeight / h) * 100,
+        label: o.el.querySelector('textarea')?.placeholder || undefined,
+        key: o.el.dataset.fieldKey || undefined,
+      };
+    });
+  }
+
   overlay.querySelector('#pdfedAddText')?.addEventListener('click', () => setArmed(armedTool === 'text' ? null : 'text'));
   overlay.querySelector('#pdfedAddSig')?.addEventListener('click', () => setArmed(armedTool === 'signature' ? null : 'signature'));
+  overlay.querySelector('#pdfedSaveFieldMap')?.addEventListener('click', async () => {
+    const pageEls = Array.from(body.querySelectorAll('.pdfed-page'));
+    const fieldMap = collectFieldMap(pageEls);
+    try {
+      await onSaveFieldMap(fieldMap);
+      alert('Đã lưu vị trí mẫu. Từ lần sau, biểu mẫu này sẽ tự có sẵn đúng vị trí ký/điền.');
+    } catch (err) {
+      alert('Không lưu được vị trí mẫu: ' + (err.message || 'Có lỗi xảy ra.'));
+    }
+  });
 
   function closeEditor() { overlay.remove(); }
   overlay.querySelector('#pdfedCancel').addEventListener('click', closeEditor);
@@ -256,6 +319,13 @@ export async function openPdfEditor({ pdfUrl, signatureUrl = null, readOnly = fa
         addOverlayItem(pageEl, i - 1, x, y, armedTool);
         setArmed(null);
       });
+    }
+
+    // Nếu biểu mẫu đã có sẵn field_map (vị trí ký/điền đã lưu từ trước),
+    // tự động đặt sẵn các ô đúng vị trí đó — không cần kéo-thả lại từ đầu.
+    if (fieldMap && fieldMap.length > 0) {
+      const pageEls = Array.from(body.querySelectorAll('.pdfed-page'));
+      applyFieldMap(fieldMap, pageEls);
     }
 
     // Thanh điều hướng trang — chỉ hiện khi biểu mẫu có từ 2 trang trở lên,

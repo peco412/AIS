@@ -183,6 +183,7 @@ document.getElementById('openFillEditor').addEventListener('click', async () => 
     pdfUrl: templateUrl,
     signatureUrl: null, // bước điền nội dung, chưa ký
     title: 'Điền nội dung hợp đồng lao động',
+    fieldMap: (TEMPLATE.field_map || []).filter((f) => f.type === 'text'), // chỉ đặt sẵn ô văn bản, chưa ký ở bước này
     onSave: async (blob) => {
       const fileUrl = await uploadContractFile(blob, employeeId, 'draft');
       const { error } = await supabase.from('contracts').insert({

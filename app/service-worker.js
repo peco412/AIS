@@ -11,7 +11,7 @@
 // Tăng số version CACHE_NAME này (v3, v4...) MỖI KHI deploy code mới có
 // thay đổi quan trọng, để buộc mọi client xoá sạch cache cũ ngay lập tức.
 // =====================================================================
-const CACHE_NAME = 'ais-shell-v4';
+const CACHE_NAME = 'ais-shell-v5';
 const APP_SHELL = [
   '/index.html',
   '/dashboard.html',
@@ -79,5 +79,48 @@ self.addEventListener('fetch', (event) => {
   // ít khi đổi nên không cần luôn xin lại server.
   event.respondWith(
     caches.match(event.request).then((cached) => cached || fetch(event.request))
+  );
+});
+
+// =====================================================================
+// THÔNG BÁO ĐẨY (WEB PUSH) — hiện thông báo hệ thống ngay cả khi đã tắt
+// màn hình / đóng tab trình duyệt, đúng yêu cầu "dùng như app thật".
+// =====================================================================
+self.addEventListener('push', (event) => {
+  let payload = { title: 'ERP AIS', body: 'Bạn có thông báo mới.' };
+  try {
+    if (event.data) payload = { ...payload, ...event.data.json() };
+  } catch (e) {
+    payload.body = event.data ? event.data.text() : payload.body;
+  }
+
+  event.waitUntil(
+    self.registration.showNotification(payload.title, {
+      body: payload.body,
+      icon: '/assets/icon-192.png',
+      badge: '/assets/icon-192.png',
+      data: { url: payload.url || '/notifications.html' },
+      tag: payload.tag || 'ais-notification',
+      renotify: true,
+    })
+  );
+});
+
+// Bấm vào thông báo -> mở đúng trang liên quan, hoặc focus tab đang mở sẵn
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const targetUrl = event.notification.data?.url || '/notifications.html';
+
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if (client.url.includes(targetUrl) && 'focus' in client) return client.focus();
+      }
+      if (clientList.length > 0 && 'focus' in clientList[0]) {
+        clientList[0].navigate(targetUrl);
+        return clientList[0].focus();
+      }
+      return self.clients.openWindow(targetUrl);
+    })
   );
 });

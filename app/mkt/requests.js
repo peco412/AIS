@@ -1,5 +1,5 @@
 import { bootShell } from '/js/shell.js';
-import { supabase, esc, uploadPrivateFile, openFile } from '/js/supabase.js';
+import { supabase, esc, uploadPrivateFile, openFile, triggerPush } from '/js/supabase.js';
 
 const TYPE_LABEL = { design: 'Thiết kế', print: 'In ấn', ads: 'Quảng cáo', event: 'Tổ chức sự kiện', photo_video: 'Quay phim/chụp ảnh' };
 const PRIORITY_LABEL = { low: 'Thấp', normal: 'Bình thường', high: 'Cao', urgent: 'Khẩn cấp' };
@@ -152,6 +152,7 @@ document.getElementById('submitResult').addEventListener('click', async () => {
       content: note || `Trạng thái mới: ${STATUS_LABEL[status]}`,
       created_by: PROFILE.id,
     });
+    triggerPush({ scope: 'personal', target_employee_id: row.requester_id, title: `Yêu cầu truyền thông "${row.title}" đã được cập nhật`, content: note || `Trạng thái mới: ${STATUS_LABEL[status]}` });
 
     resultModal.classList.remove('show');
     await loadRows();

@@ -77,3 +77,27 @@ export async function openFile(stored) {
     alert('Không thể mở file: ' + (e.message || 'Có lỗi xảy ra.'));
   }
 }
+
+// ---------------------------------------------------------------------
+// Gọi Edge Function "send-push" để gửi thông báo đẩy thật ngay sau khi
+// tạo 1 dòng thông báo trong bảng "notifications". Không chặn luồng
+// chính nếu gửi push thất bại (chỉ log cảnh báo) — bản thân thông báo
+// trong app vẫn đã được lưu thành công dù push có gửi được hay không.
+// ---------------------------------------------------------------------
+export async function triggerPush(notification) {
+  try {
+    await supabase.functions.invoke('send-push', {
+      body: {
+        scope: notification.scope,
+        center_id: notification.center_id || null,
+        department_id: notification.department_id || null,
+        target_employee_id: notification.target_employee_id || null,
+        title: notification.title,
+        content: notification.content || '',
+        url: notification.url || '/notifications.html',
+      },
+    });
+  } catch (e) {
+    console.warn('Không gửi được thông báo đẩy:', e.message);
+  }
+}

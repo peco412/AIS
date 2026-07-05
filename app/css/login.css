@@ -294,119 +294,126 @@
   background: var(--accent-tint);
 }
 
+
 /* =====================================================================
-   LOGIN LOADER — hiệu ứng "chảy màu vào logo" khi đăng nhập thành công
+   LOGIN LOADER — hiệu ứng "mở quyển sách" như cánh cổng bước vào thế
+   giới Anh ngữ: 2 cánh bìa sách (kiểu bìa da/vải cổ điển, viền chỉ vàng)
+   đóng kín màn hình, xoay mở ra như cửa đôi theo trục 3D, để lộ dần nội
+   dung (logo + trạng thái đăng nhập) phía sau — ẩn dụ "mở trang sách,
+   bước vào thế giới học thuật".
    ===================================================================== */
 .login-loader {
   position: fixed; inset: 0; z-index: 9999;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px;
-  background:
-    radial-gradient(circle at 50% 38%, var(--accent-tint) 0%, #ffffff 68%);
-  animation: loaderFadeIn 0.35s ease;
+  display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(circle at 50% 40%, var(--accent-tint) 0%, #ffffff 70%);
+  animation: loaderFadeIn 0.3s ease;
+  perspective: 2400px;
+  overflow: hidden;
 }
 .login-loader.fade-out { animation: loaderFadeOut 0.35s ease forwards; }
 @keyframes loaderFadeIn { from { opacity: 0; } to { opacity: 1; } }
-@keyframes loaderFadeOut { to { opacity: 0; transform: scale(1.03); } }
+@keyframes loaderFadeOut { to { opacity: 0; } }
 
-.login-loader__ring {
-  position: absolute;
-  width: 280px; height: 280px;
-  border-radius: 50%;
-  border: 2px solid rgba(var(--accent-rgb), 0.16);
-  border-top-color: var(--accent);
-  animation: loaderRingSpin 1.8s linear infinite;
+/* Nội dung phía sau cánh cổng — logo nhỏ + trạng thái, lộ ra dần khi 2
+   cánh cửa mở hết ra hai bên. */
+.login-loader__content {
+  position: relative;
+  z-index: 1;
+  display: flex; flex-direction: column; align-items: center; gap: 22px;
+  opacity: 0;
+  animation: contentReveal 0.6s ease forwards 1.15s;
 }
-@keyframes loaderRingSpin { to { transform: rotate(360deg); } }
+@keyframes contentReveal {
+  from { opacity: 0; transform: translateY(10px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
 
 .login-loader__logo-wrap {
-  position: relative;
-  width: 200px; height: 200px;
-  filter: drop-shadow(0 16px 34px rgba(0, 0, 0, 0.18));
-  animation: loaderLogoPop 0.55s var(--ease-spring);
+  width: 108px; height: 108px;
+  filter: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.16));
 }
-@keyframes loaderLogoPop {
-  from { transform: scale(0.7); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
-}
-
-.login-loader__logo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
-
-/* Trạng thái "chưa có màu" — rõ ràng là ảnh xám/nhạt, giữ nguyên ~0.6s
-   trước khi màu bắt đầu chảy vào (để mắt kịp nhận ra "trước" và "sau"). */
-.login-loader__logo--gray { filter: grayscale(1) contrast(0.9) opacity(0.42); }
-
-/* Bản màu thật được "rót" từ dưới lên trên bằng mask-image dạng gradient
-   mềm (không phải đường cắt cứng clip-path) — mép chuyển màu có 1 dải mờ
-   dần giống chất lỏng thật đang dâng lên, thay vì 1 đường thẳng lộ ra. */
-.login-loader__color-mask {
-  position: absolute; inset: 0;
-  -webkit-mask-image: linear-gradient(to top, #000 0%, #000 42%, transparent 58%, transparent 100%);
-  mask-image: linear-gradient(to top, #000 0%, #000 42%, transparent 58%, transparent 100%);
-  -webkit-mask-size: 100% 280%;
-  mask-size: 100% 280%;
-  -webkit-mask-position: 0 100%;
-  mask-position: 0 100%;
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-  animation: colorPourUp 1.9s cubic-bezier(0.5, 0, 0.15, 1) forwards 0.6s;
-}
-.login-loader__color-mask .login-loader__logo--color { position: absolute; inset: 0; }
-@keyframes colorPourUp {
-  0%   { -webkit-mask-position: 0 100%; mask-position: 0 100%; }
-  100% { -webkit-mask-position: 0 -180%; mask-position: 0 -180%; }
-}
-
-/* Viền sáng đi theo đúng mép "mực nước màu" đang dâng lên — mô phỏng ánh
-   phản chiếu ở bề mặt chất lỏng, đây là chi tiết tạo cảm giác "độc đáo". */
-.login-loader__wave-glow {
-  position: absolute;
-  left: -10%; right: -10%;
-  height: 26px;
-  bottom: -13px;
-  background: radial-gradient(ellipse at center, rgba(255,255,255,0.9), transparent 70%);
-  filter: blur(2px);
-  opacity: 0;
-  animation: waveTravel 1.9s cubic-bezier(0.5, 0, 0.15, 1) forwards 0.6s;
-}
-@keyframes waveTravel {
-  0%   { bottom: -13px; opacity: 0.9; }
-  92%  { opacity: 0.7; }
-  100% { bottom: 100%; opacity: 0; }
-}
-
-/* Vệt sáng quét chéo toàn logo sau khi màu đã lên đầy — điểm nhấn cuối cùng */
-.login-loader__sheen {
-  position: absolute; inset: -20%;
-  background: linear-gradient(115deg, transparent 40%, rgba(255,255,255,0.6) 50%, transparent 60%);
-  transform: translateX(-120%);
-  animation: sheenSweep 0.9s ease-in-out forwards 2.35s;
-  mix-blend-mode: overlay;
-  pointer-events: none;
-}
-@keyframes sheenSweep {
-  to { transform: translateX(120%); }
-}
+.login-loader__logo { width: 100%; height: 100%; object-fit: contain; }
 
 .login-loader__text {
   font-family: var(--font-display); font-weight: 600; font-size: 13.5px; color: var(--ink-soft);
   letter-spacing: 0.01em;
-  opacity: 0;
-  animation: loaderTextIn 0.4s ease forwards 1.7s;
 }
-@keyframes loaderTextIn { to { opacity: 1; } }
 
 .login-loader__bar {
-  width: 200px; height: 4px; border-radius: 999px; background: var(--surface-sunken); overflow: hidden;
+  width: 190px; height: 4px; border-radius: 999px; background: var(--surface-sunken); overflow: hidden;
 }
 .login-loader__bar-fill {
   height: 100%; width: 0%; border-radius: 999px;
   background: linear-gradient(90deg, var(--accent), var(--accent-deep));
-  animation: loaderBarFill 2.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  animation: loaderBarFill 1s cubic-bezier(0.4, 0, 0.2, 1) forwards 1.2s;
 }
 @keyframes loaderBarFill { to { width: 100%; } }
 
+/* Sân khấu chứa 2 cánh cổng — phủ kín toàn màn hình */
+.login-loader__stage {
+  position: absolute; inset: 0;
+  z-index: 2;
+  display: flex;
+  transform-style: preserve-3d;
+  pointer-events: none;
+}
+
+.book-door {
+  width: 50%; height: 100%;
+  position: relative;
+  background:
+    linear-gradient(155deg, rgba(255,255,255,0.08), transparent 40%),
+    linear-gradient(155deg, var(--accent-deep), var(--accent) 75%);
+  backface-visibility: hidden;
+  box-shadow: 0 0 60px rgba(0,0,0,0.35);
+  display: flex; align-items: center; justify-content: center;
+}
+.book-door--left {
+  transform-origin: left center;
+  border-right: 2px solid rgba(255, 214, 120, 0.55);
+  animation: openDoorLeft 1.05s cubic-bezier(0.76, 0, 0.24, 1) forwards 0.35s;
+}
+.book-door--right {
+  transform-origin: right center;
+  border-left: 2px solid rgba(255, 214, 120, 0.55);
+  animation: openDoorRight 1.05s cubic-bezier(0.76, 0, 0.24, 1) forwards 0.35s;
+}
+@keyframes openDoorLeft { to { transform: rotateY(-112deg); box-shadow: 40px 0 80px rgba(0,0,0,0.5); } }
+@keyframes openDoorRight { to { transform: rotateY(112deg); box-shadow: -40px 0 80px rgba(0,0,0,0.5); } }
+
+/* Khung viền vàng + hoạ tiết trang trí trên mỗi cánh bìa — cảm giác bìa
+   sách cổ điển kiểu học thuật (gợi liên tưởng Cambridge English) */
+.book-door__frame {
+  position: absolute; inset: 22px;
+  border: 1.5px solid rgba(255, 214, 120, 0.55);
+  border-radius: 4px;
+}
+.book-door__emblem {
+  font-size: 34px;
+  opacity: 0.85;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.25));
+  animation: emblemFade 0.5s ease forwards 0.85s;
+  opacity: 0;
+}
+@keyframes emblemFade { to { opacity: 0.85; } }
+.book-door--left .book-door__emblem { transform: translateX(6px); }
+.book-door--right .book-door__emblem { transform: translateX(-6px); }
+
+/* Gáy sách ở giữa — vệt tối mờ mô phỏng nếp gấp sách thật */
+.login-loader__spine {
+  position: absolute; top: 0; bottom: 0; left: 50%;
+  width: 14px; margin-left: -7px;
+  background: linear-gradient(90deg, transparent, rgba(0,0,0,0.25), transparent);
+  z-index: 3;
+  opacity: 1;
+  animation: spineFade 0.4s ease forwards 0.9s;
+  pointer-events: none;
+}
+@keyframes spineFade { to { opacity: 0; } }
+
 @media (prefers-reduced-motion: reduce) {
-  .login-loader__ring, .login-loader__sheen, .login-loader__wave-glow { animation: none; display: none; }
-  .login-loader__color-mask { animation: none; -webkit-mask-image: none; mask-image: none; }
+  .book-door--left, .book-door--right, .login-loader__spine { animation: none; display: none; }
+  .login-loader__content { animation: none; opacity: 1; }
+  .login-loader__bar-fill { animation: none; width: 100%; }
   .login-brand, .login-brand__orb, .login-brand__headline, .login-form { animation: none; }
 }

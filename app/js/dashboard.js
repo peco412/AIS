@@ -2,6 +2,7 @@ import { bootShell } from './shell.js';
 import { supabase } from './supabase.js';
 import { NAV_CONFIG } from './navConfig.js';
 import { t } from './i18n.js';
+import { attachInstallButton, isInstallable } from './installPrompt.js';
 
 const birthdayBanner = document.getElementById('birthdayBanner');
 const notifBadge = document.getElementById('notifBadge');
@@ -38,8 +39,10 @@ function renderHub(profile) {
   appHub.innerHTML = '';
   quickHub.innerHTML = '';
 
+  const canAccess = (item) => item.visible(profile) || !!profile.grantedModules?.has(item.href);
+
   NAV_CONFIG.forEach((group) => {
-    const visibleItems = group.items.filter((item) => item.visible(profile));
+    const visibleItems = group.items.filter((item) => canAccess(item));
 
     if (!group.sectionKey) {
       // Nhóm không tiêu đề = mục dùng chung, ai cũng có -> hiển thị ở "Truy cập nhanh"
@@ -123,6 +126,11 @@ async function loadStats(profile) {
     checkBirthday(profile.dob, profile.fullName.split(' ').slice(-1)[0]);
     renderHub(profile);
     document.addEventListener('ais:langchange', () => renderHub(profile));
+
+    if (isInstallable()) {
+      document.getElementById('installBanner').style.display = 'flex';
+      attachInstallButton(document.getElementById('installBannerBtn'), { alwaysVisible: true });
+    }
     loadStats(profile).catch(console.warn);
   } catch (e) {
     // bootShell đã tự điều hướng về login nếu cần

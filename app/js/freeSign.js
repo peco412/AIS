@@ -8,7 +8,7 @@ import { bootShell } from '/js/shell.js';
 import { supabase, esc, uploadPrivateFile, resolveFileUrl, openFile } from '/js/supabase.js';
 import { openPdfEditor } from '/js/pdfEditor.js';
 
-const DEPT_LABEL = { HR: 'Nhân sự', ACC: 'Kế toán', MKT: 'Truyền thông', FAC: 'Cơ sở vật chất' };
+const DEPT_LABEL = { HR: 'Nhân sự', ACC: 'Kế toán', MKT: 'Truyền thông', FAC: 'Cơ sở vật chất', EDU: 'Học vụ' };
 
 // Danh mục kho lưu trữ hợp lệ để lưu file tự ký, theo đúng cơ cấu từng phòng
 // (khớp DEPT_CATEGORIES trong js/archive.js).
@@ -17,6 +17,7 @@ const DEPT_ARCHIVE_CATEGORIES = {
   ACC: ['other'],
   MKT: ['other'],
   FAC: ['other'],
+  EDU: ['other'],
 };
 
 export async function initFreeSign(deptCode) {
@@ -27,6 +28,11 @@ export async function initFreeSign(deptCode) {
   function fmtDate(d) { return d ? new Date(d).toLocaleString('vi-VN') : '—'; }
 
   function canUse(profile) {
+    if (deptCode === 'EDU') {
+      // Học vụ không có "trưởng phòng" riêng — người tương đương là Quản lý
+      // trung tâm (isCenterManager), theo đúng cơ cấu tổ chức trong đề bài.
+      return profile.isCenterManager || ['EXECUTIVE', 'TECH'].includes(profile.roleCode);
+    }
     return (profile.departmentCode === deptCode && ['DEPT_HEAD', 'DEPT_DEPUTY'].includes(profile.roleCode))
       || ['EXECUTIVE', 'TECH'].includes(profile.roleCode);
   }

@@ -165,6 +165,7 @@ document.getElementById('openFillEditor').addEventListener('click', async () => 
     pdfUrl,
     signatureUrl,
     title: 'Điền & ký Trình sự kiện',
+    fieldMap: TEMPLATE.field_map || [],
     onSave: async (blob) => {
       const fileUrl = await uploadFile(blob, PROFILE.id, 'draft');
       const { error } = await supabase.from('event_proposals').insert({

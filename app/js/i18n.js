@@ -116,6 +116,7 @@ const DICT = {
   'common.submit': { vi: 'Gửi', en: 'Submit' },
   'common.note': { vi: 'Ghi chú', en: 'Note' },
   'common.error': { vi: 'Có lỗi xảy ra.', en: 'Something went wrong.' },
+  'common.installApp': { vi: 'Cài đặt ứng dụng', en: 'Install app' },
 
   // ---------- Nhãn trạng thái (badge) ----------
   'status.draft': { vi: 'Nháp', en: 'Draft' },

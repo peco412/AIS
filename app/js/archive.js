@@ -1,5 +1,6 @@
 import { bootShell } from '/js/shell.js';
-import { supabase, esc, uploadPrivateFile, openFile } from '/js/supabase.js';
+import { supabase, esc, uploadPrivateFile, openFile, resolveFileUrl } from '/js/supabase.js';
+import { openPdfEditor } from '/js/pdfEditor.js';
 
 const CATEGORY_LABEL = {
   labor_contract: 'Hợp đồng lao động', service_contract: 'Hợp đồng dịch vụ', admin_paper: 'Giấy tờ hành chính',
@@ -137,17 +138,50 @@ async function loadTemplates() {
   const { data, error } = await supabase.from('document_templates').select('*').order('code');
   if (error) { tbody.innerHTML = `<tr><td colspan="6" class="empty-cell">Lỗi: ${error.message}</td></tr>`; return; }
 
+  const canDesign = PROFILE && (
+    ['EXECUTIVE', 'TECH'].includes(PROFILE.roleCode) ||
+    (PROFILE.departmentCode === 'HR' && ['DEPT_HEAD', 'DEPT_DEPUTY'].includes(PROFILE.roleCode))
+  );
+
   tbody.innerHTML = data.map((t) => `
     <tr>
       <td>${esc(t.name)}</td>
       <td><span class="cell-code">${esc(t.code)}</span></td>
-      <td class="cell-muted">—</td>
+      <td class="cell-muted">${t.field_map?.length ? `${t.field_map.length} vị trí đã lưu` : 'Chưa thiết kế vị trí'}</td>
       <td class="cell-muted">Hệ thống</td>
       <td class="cell-muted">${fmtDate(t.updated_at)}</td>
-      <td><button class="btn btn-outline btn-sm" data-open="${esc(t.file_url)}">Xem / tải</button></td>
+      <td>
+        <button class="btn btn-outline btn-sm" data-open="${esc(t.file_url)}">Xem / tải</button>
+        ${canDesign ? `<button class="btn btn-outline btn-sm" data-design="${t.id}" data-url="${esc(t.file_url)}">📐 Thiết kế vị trí</button>` : ''}
+      </td>
     </tr>
   `).join('') || '<tr><td colspan="6" class="empty-cell">Chưa có biểu mẫu.</td></tr>';
   tbody.querySelectorAll('[data-open]').forEach((b) => b.addEventListener('click', () => openFile(b.dataset.open)));
+  tbody.querySelectorAll('[data-design]').forEach((b) => b.addEventListener('click', () => openTemplateDesigner(b.dataset.design, b.dataset.url)));
+}
+
+// Cho TECH/HR đặt sẵn vị trí ký/điền 1 lần cho mỗi loại biểu mẫu — những
+// lần điền/ký sau (hợp đồng, phiếu thanh toán...) sẽ tự có sẵn đúng chỗ.
+async function openTemplateDesigner(templateId, storedUrl) {
+  let pdfUrl;
+  try {
+    pdfUrl = await resolveFileUrl(storedUrl, 1800);
+  } catch (e) {
+    alert('Không thể mở biểu mẫu: ' + (e.message || 'Có lỗi xảy ra.'));
+    return;
+  }
+  await openPdfEditor({
+    pdfUrl,
+    signatureUrl: PROFILE.signatureUrl || null,
+    title: 'Thiết kế vị trí ký/điền cho biểu mẫu',
+    isTemplateDesigner: true,
+    onSave: async () => {}, // không dùng nút Lưu thường ở chế độ này
+    onSaveFieldMap: async (fieldMap) => {
+      const { error } = await supabase.from('document_templates').update({ field_map: fieldMap }).eq('id', templateId);
+      if (error) throw error;
+      await loadTemplates();
+    },
+  });
 }
 
 ['filterYear', 'filterMonth', 'filterCategory', 'searchInput'].forEach((id) => {
