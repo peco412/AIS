@@ -238,8 +238,32 @@ export async function bootShell() {
     await supabase.auth.signOut();
     window.location.href = '/index.html';
   });
+
+  // Lớp phủ tối phía sau sidebar khi mở trên điện thoại (xem CSS
+  // .sidebar-backdrop trong dashboard.css) — tạo bằng JS 1 lần để khỏi
+  // phải sửa lại <body> của mọi trang HTML trong hệ thống. Chạm vào lớp
+  // phủ này, hoặc bấm lại nút ☰, sẽ đóng sidebar; khi sidebar mở cũng
+  // khoá cuộn nền để tránh cuộn "xuyên" qua sidebar trên di động.
+  let backdrop = document.querySelector('.sidebar-backdrop');
+  if (!backdrop) {
+    backdrop = document.createElement('div');
+    backdrop.className = 'sidebar-backdrop';
+    document.body.appendChild(backdrop);
+  }
+  function setSidebarOpen(open) {
+    document.querySelector('.sidebar')?.classList.toggle('open', open);
+    backdrop.classList.toggle('show', open);
+    document.body.style.overflow = open ? 'hidden' : '';
+  }
   document.getElementById('menuToggle')?.addEventListener('click', () => {
-    document.querySelector('.sidebar')?.classList.toggle('open');
+    const isOpen = document.querySelector('.sidebar')?.classList.contains('open');
+    setSidebarOpen(!isOpen);
+  });
+  backdrop.addEventListener('click', () => setSidebarOpen(false));
+  // Bấm 1 mục menu trên điện thoại thì đóng sidebar lại trước khi điều
+  // hướng, đỡ cảm giác menu "còn mở" khi trang mới vừa tải xong.
+  document.getElementById('sidebarNav')?.addEventListener('click', (e) => {
+    if (e.target.closest('a')) setSidebarOpen(false);
   });
 
   return { profile, supabase };

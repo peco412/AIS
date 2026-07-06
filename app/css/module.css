@@ -15,6 +15,16 @@
 }
 .toolbar__filters { display: flex; gap: 10px; flex-wrap: wrap; }
 
+/* Ô tìm kiếm cần rộng hơn input thường để gõ được câu tìm dài (tên, mã NV,
+   SĐT...) trên desktop — nhưng min-width cố định trước đây (280–340px)
+   từng bị đặt trực tiếp bằng inline style, KHÔNG co lại được trên điện
+   thoại và làm tràn ngang toàn trang ở màn hình ≤360px. Dùng class này
+   thay cho inline style để media query bên dưới override được. */
+.search-wide { min-width: 300px; }
+@media (max-width: 640px) {
+  .search-wide { min-width: 0; width: 100%; }
+}
+
 .select-input, .text-input {
   padding: 9px 14px;
   border: 1px solid transparent;

@@ -44,10 +44,24 @@
       <div><h1>Ký số hồ sơ</h1><div class="sub">Tổng hợp toàn bộ hồ sơ từ mọi phòng ban đang chờ bạn ký hoặc duyệt.</div></div>
     </div>
 
+    <div class="stat-grid" style="grid-template-columns: repeat(2, 1fr); margin-bottom:22px;">
+      <div class="stat-card"><div class="label">🔴 Chờ Ban điều hành duyệt cấp 2</div><div class="value" id="countLevel2">—</div></div>
+      <div class="stat-card"><div class="label">🟡 Đang ở cấp 1 (có thể duyệt thay)</div><div class="value" id="countLevel1">—</div></div>
+    </div>
+
+    <div class="hub-section-title">🔴 Cấp 2 — chỉ Ban điều hành mới duyệt được (đã qua trưởng phòng)</div>
+    <div class="data-table-wrap" style="margin-bottom:26px;">
+      <table class="data-table">
+        <thead><tr><th>Loại hồ sơ</th><th>Mã</th><th>Người gửi</th><th>Bước hiện tại</th><th></th></tr></thead>
+        <tbody id="level2Body"><tr><td colspan="5" class="empty-cell">Đang tải dữ liệu...</td></tr></tbody>
+      </table>
+    </div>
+
+    <div class="hub-section-title">🟡 Cấp 1 — đang chờ trưởng phòng (bạn có thể duyệt thay nếu cần)</div>
     <div class="data-table-wrap">
       <table class="data-table">
         <thead><tr><th>Loại hồ sơ</th><th>Mã</th><th>Người gửi</th><th>Bước hiện tại</th><th></th></tr></thead>
-        <tbody id="tableBody"><tr><td colspan="5" class="empty-cell">Đang tải dữ liệu...</td></tr></tbody>
+        <tbody id="level1Body"><tr><td colspan="5" class="empty-cell">Đang tải dữ liệu...</td></tr></tbody>
       </table>
     </div>
   </main>

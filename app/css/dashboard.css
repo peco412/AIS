@@ -14,7 +14,10 @@
 }
 
 @media (max-width: 960px) {
-  .app-shell { grid-template-columns: 0 1fr; }
+  /* Hàng topbar giờ có thể co giãn chiều cao (auto) thay vì cố định
+     var(--topbar-h) — cần thiết vì ô tìm kiếm xuống hàng riêng bên dưới
+     trên điện thoại (xem .search-box bên dưới), topbar sẽ cao hơn 60px. */
+  .app-shell { grid-template-columns: 0 1fr; grid-template-rows: auto 1fr; }
   .sidebar {
     position: fixed;
     width: min(86vw, 320px);
@@ -24,8 +27,27 @@
   }
   .sidebar.open { transform: translateX(0); }
   .main { padding: 14px 12px 76px; }
-  .topbar { padding: 0 14px; }
-  .search-box { display: none; }
+
+  /* Topbar: cho phép xuống hàng khi không đủ chỗ (thay vì tràn ngang) —
+     trước đây topbar__right chứa nhiều icon (thông báo, đổi ngôn ngữ, cài
+     app, avatar, đăng xuất) có thể vượt quá bề rộng màn hình hẹp mà không
+     có chỗ thoát, gây cuộn ngang toàn trang. */
+  .topbar { padding: 10px 14px; flex-wrap: wrap; row-gap: 8px; height: auto; }
+  .topbar__left { flex: 1 1 auto; min-width: 0; flex-wrap: wrap; row-gap: 8px; }
+  .topbar__right { gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+
+  /* QUAN TRỌNG: ô tìm kiếm ở nhiều trang (nhân sự, học viên, hồ sơ lưu trữ,
+     bảng lương, đầu mối tư vấn...) là CHỨC NĂNG LỌC DỮ LIỆU THẬT của trang
+     đó, không phải trang trí — trước đây bị ẩn hoàn toàn trên điện thoại
+     (display:none) khiến không thể tìm kiếm được trên di động. Giờ hiện
+     full-width, xuống hàng riêng bên dưới menu/icon để không bị chật. */
+  .search-box {
+    display: flex;
+    order: 3;
+    flex: 1 1 100%;
+    width: 100%;
+    max-width: none;
+  }
 
   /* Stat card chiếm quá nhiều diện tích trên điện thoại — thu gọn hẳn:
      4 ô nằm gọn 1 hàng thay vì 2 hàng cao, số liệu vẫn đọc được rõ. */
@@ -63,6 +85,12 @@
   .hub-topbar { padding: 10px 14px; }
   .hub-main { padding: 14px 10px 44px; }
   .install-guide-card { padding: 12px 14px; gap: 10px; }
+
+  /* Rất nhiều icon dồn vào topbar__right (thông báo, đổi ngôn ngữ, cài
+     app, avatar, đăng xuất) — thu nhỏ khoảng cách để tránh dồn cục/tràn
+     dòng trên các máy nhỏ nhất (iPhone SE, Android giá rẻ ~360px). */
+  .topbar__right { gap: 8px; }
+  #langSwitcher button { padding: 5px 8px !important; font-size: 11px !important; }
 }
 
 /* ---------- Sidebar (kính mờ sáng) ---------- */
@@ -80,6 +108,25 @@
   overflow-y: auto;
   z-index: 40;
   border-right: 1px solid var(--separator);
+}
+
+/* Lớp phủ tối phía sau sidebar khi mở trên điện thoại — trước đây mở
+   sidebar không có gì che nội dung phía sau, người dùng dễ chạm nhầm
+   vào bảng dữ liệu bên dưới mà không biết cách đóng menu lại. Chạm vào
+   vùng tối này (hoặc bấm lại nút ☰) sẽ đóng sidebar. Chỉ xuất hiện khi
+   sidebar đang mở trên màn hình ≤960px (được inject bằng JS trong shell.js). */
+.sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.32);
+  z-index: 39;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-base) var(--ease);
+}
+.sidebar-backdrop.show { opacity: 1; pointer-events: auto; }
+@media (min-width: 961px) {
+  .sidebar-backdrop { display: none !important; }
 }
 
 .sidebar__brand {
