@@ -11,7 +11,7 @@ function initials(name) {
 
 // Các mục dùng chung luôn hiển thị dù đang ở phòng ban nào (điều hướng
 // nhanh) — không tính là "1 phòng ban" nên không bị lọc theo ngữ cảnh.
-const ALWAYS_VISIBLE_HREFS = new Set(['/dashboard.html', '/notifications.html', '/profile.html']);
+const ALWAYS_VISIBLE_HREFS = new Set(['/dashboard.html', '/notifications.html', '/profile.html', '/attendance-checkin.html']);
 
 // Kiểm tra quyền hiển thị mặc định THEO đúng vai trò/phòng ban, HOẶC đã
 // được cấp thêm riêng qua module "Xin thêm quyền hạn" (granted_permissions,
@@ -238,32 +238,8 @@ export async function bootShell() {
     await supabase.auth.signOut();
     window.location.href = '/index.html';
   });
-
-  // Lớp phủ tối phía sau sidebar khi mở trên điện thoại (xem CSS
-  // .sidebar-backdrop trong dashboard.css) — tạo bằng JS 1 lần để khỏi
-  // phải sửa lại <body> của mọi trang HTML trong hệ thống. Chạm vào lớp
-  // phủ này, hoặc bấm lại nút ☰, sẽ đóng sidebar; khi sidebar mở cũng
-  // khoá cuộn nền để tránh cuộn "xuyên" qua sidebar trên di động.
-  let backdrop = document.querySelector('.sidebar-backdrop');
-  if (!backdrop) {
-    backdrop = document.createElement('div');
-    backdrop.className = 'sidebar-backdrop';
-    document.body.appendChild(backdrop);
-  }
-  function setSidebarOpen(open) {
-    document.querySelector('.sidebar')?.classList.toggle('open', open);
-    backdrop.classList.toggle('show', open);
-    document.body.style.overflow = open ? 'hidden' : '';
-  }
   document.getElementById('menuToggle')?.addEventListener('click', () => {
-    const isOpen = document.querySelector('.sidebar')?.classList.contains('open');
-    setSidebarOpen(!isOpen);
-  });
-  backdrop.addEventListener('click', () => setSidebarOpen(false));
-  // Bấm 1 mục menu trên điện thoại thì đóng sidebar lại trước khi điều
-  // hướng, đỡ cảm giác menu "còn mở" khi trang mới vừa tải xong.
-  document.getElementById('sidebarNav')?.addEventListener('click', (e) => {
-    if (e.target.closest('a')) setSidebarOpen(false);
+    document.querySelector('.sidebar')?.classList.toggle('open');
   });
 
   return { profile, supabase };

@@ -16,9 +16,9 @@ function last14Days() {
 }
 
 async function loadTopStats() {
-  const [{ count: studying }, { count: paused }, { count: withdrawn }, { count: newThisMonth }] = await Promise.all([
+  const [{ count: studying }, { count: reserved }, { count: withdrawn }, { count: newThisMonth }] = await Promise.all([
     supabase.from('students').select('id', { count: 'exact', head: true }).eq('center_id', PROFILE.centerId).eq('status', 'studying'),
-    supabase.from('students').select('id', { count: 'exact', head: true }).eq('center_id', PROFILE.centerId).eq('status', 'paused'),
+    supabase.from('students').select('id', { count: 'exact', head: true }).eq('center_id', PROFILE.centerId).eq('status', 'reserved'),
     supabase.from('students').select('id', { count: 'exact', head: true }).eq('center_id', PROFILE.centerId).eq('status', 'withdrawn'),
     supabase.from('students').select('id', { count: 'exact', head: true }).eq('center_id', PROFILE.centerId)
       .gte('enrollment_date', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10)),
@@ -26,7 +26,7 @@ async function loadTopStats() {
 
   document.getElementById('statCards').innerHTML = `
     <div class="stat-card"><div class="label">Đang học</div><div class="value mono" style="color:var(--success);">${studying ?? 0}</div></div>
-    <div class="stat-card"><div class="label">Tạm nghỉ</div><div class="value mono" style="color:var(--warning);">${paused ?? 0}</div></div>
+    <div class="stat-card"><div class="label">Bảo lưu</div><div class="value mono" style="color:var(--warning);">${reserved ?? 0}</div></div>
     <div class="stat-card"><div class="label">Nghỉ học vĩnh viễn</div><div class="value mono" style="color:var(--danger);">${withdrawn ?? 0}</div></div>
     <div class="stat-card"><div class="label">Đăng ký mới tháng này</div><div class="value mono">${newThisMonth ?? 0}</div></div>
   `;

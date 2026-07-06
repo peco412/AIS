@@ -3,7 +3,10 @@ import { supabase, esc } from '/js/supabase.js';
 
 let PROFILE = null;
 let STUDENTS = [];
-let ATTENDANCE_STATE = {}; // student_id -> boolean (true = có mặt)
+let SESSION_DATES = []; // các ngày có phiên học thật (class_sessions) của lớp đang chọn
+let ATTENDANCE_STATE = {}; // student_id -> 'present' | 'excused' | 'unexcused'
+
+const TYPE_LABEL = { present: 'Có mặt', excused: 'Vắng có phép (P)', unexcused: 'Vắng không phép (KP)' };
 
 function todayStr() { return new Date().toISOString().slice(0, 10); }
 
@@ -18,6 +21,31 @@ async function loadClasses() {
   return classes || [];
 }
 
+// Chỉ điểm danh được đúng ngày đã lên lịch (class_sessions) — nếu lớp
+// chưa được tạo lịch tự động (không dùng tính năng "tự sinh lịch" lúc tạo
+// lớp) thì cho phép điểm danh tự do như trước, không chặn gì cả.
+async function loadSessionDates() {
+  const classId = document.getElementById('classSelect').value;
+  const { data } = await supabase.from('class_sessions').select('session_date').eq('class_id', classId).order('session_date');
+  SESSION_DATES = (data || []).map((r) => r.session_date);
+
+  const dateInput = document.getElementById('sessionDate');
+  const hint = document.getElementById('sessionDateHint');
+  if (SESSION_DATES.length === 0) {
+    hint.textContent = 'Lớp này chưa có lịch phiên học tự động — có thể điểm danh tự do theo ngày bất kỳ.';
+    dateInput.removeAttribute('min');
+    dateInput.removeAttribute('max');
+    return;
+  }
+
+  const today = todayStr();
+  const isTodaySession = SESSION_DATES.includes(today);
+  dateInput.value = isTodaySession ? today : SESSION_DATES[0];
+  hint.textContent = isTodaySession
+    ? '✅ Hôm nay có lịch học — điểm danh bình thường.'
+    : '⚠️ Hôm nay KHÔNG có lịch học của lớp này theo kế hoạch.';
+}
+
 async function loadStudents() {
   const classId = document.getElementById('classSelect').value;
   const date = document.getElementById('sessionDate').value;
@@ -28,10 +56,10 @@ async function loadStudents() {
   const { data: students } = await supabase.from('students').select('id, full_name').eq('class_id', classId).order('full_name');
   STUDENTS = students || [];
 
-  const { data: existing } = await supabase.from('class_attendance').select('student_id, present').eq('class_id', classId).eq('session_date', date);
+  const { data: existing } = await supabase.from('class_attendance').select('student_id, present, attendance_type').eq('class_id', classId).eq('session_date', date);
   ATTENDANCE_STATE = {};
-  STUDENTS.forEach((s) => { ATTENDANCE_STATE[s.id] = true; }); // mặc định có mặt
-  (existing || []).forEach((e) => { ATTENDANCE_STATE[e.student_id] = e.present; });
+  STUDENTS.forEach((s) => { ATTENDANCE_STATE[s.id] = 'present'; }); // mặc định có mặt
+  (existing || []).forEach((e) => { ATTENDANCE_STATE[e.student_id] = e.attendance_type || (e.present ? 'present' : 'unexcused'); });
 
   render();
 }
@@ -44,8 +72,9 @@ function render() {
     <div class="attendance-row">
       <span>${esc(s.full_name)}</span>
       <div class="attendance-toggle" data-student="${s.id}">
-        <button type="button" class="present ${ATTENDANCE_STATE[s.id] ? 'active' : ''}" data-val="true">Có mặt</button>
-        <button type="button" class="absent ${!ATTENDANCE_STATE[s.id] ? 'active' : ''}" data-val="false">Vắng</button>
+        <button type="button" class="present ${ATTENDANCE_STATE[s.id] === 'present' ? 'active' : ''}" data-val="present">Có mặt</button>
+        <button type="button" class="excused ${ATTENDANCE_STATE[s.id] === 'excused' ? 'active' : ''}" data-val="excused">P</button>
+        <button type="button" class="absent ${ATTENDANCE_STATE[s.id] === 'unexcused' ? 'active' : ''}" data-val="unexcused">KP</button>
       </div>
     </div>
   `).join('');
@@ -53,14 +82,17 @@ function render() {
   list.querySelectorAll('.attendance-toggle').forEach((toggle) => {
     toggle.querySelectorAll('button').forEach((btn) => {
       btn.addEventListener('click', () => {
-        ATTENDANCE_STATE[toggle.dataset.student] = btn.dataset.val === 'true';
+        ATTENDANCE_STATE[toggle.dataset.student] = btn.dataset.val;
         render();
       });
     });
   });
 }
 
-document.getElementById('classSelect').addEventListener('change', loadStudents);
+document.getElementById('classSelect').addEventListener('change', async () => {
+  await loadSessionDates();
+  await loadStudents();
+});
 document.getElementById('sessionDate').addEventListener('change', loadStudents);
 
 document.getElementById('btnSave').addEventListener('click', async () => {
@@ -73,12 +105,19 @@ document.getElementById('btnSave').addEventListener('click', async () => {
 
   const rows = STUDENTS.map((s) => ({
     class_id: classId, student_id: s.id, session_date: date,
-    present: ATTENDANCE_STATE[s.id], taken_by: PROFILE.id,
+    present: ATTENDANCE_STATE[s.id] === 'present',
+    attendance_type: ATTENDANCE_STATE[s.id],
+    taken_by: PROFILE.id,
   }));
 
   const { error } = await supabase.from('class_attendance').upsert(rows, { onConflict: 'class_id,student_id,session_date' });
   btn.disabled = false; btn.textContent = '💾 Lưu điểm danh';
-  if (error) { alert('Lỗi lưu điểm danh: ' + error.message); return; }
+  if (error) {
+    // Lỗi phổ biến nhất ở đây là chặn điểm danh lùi ngày (xem trigger DB) —
+    // hiện thẳng thông báo gốc vì nó đã giải thích rõ cách xin quyền.
+    alert('Lỗi lưu điểm danh: ' + error.message);
+    return;
+  }
   alert('Đã lưu điểm danh buổi học.');
 });
 
@@ -89,6 +128,7 @@ document.getElementById('btnSave').addEventListener('click', async () => {
     document.getElementById('sessionDate').value = todayStr();
     const classes = await loadClasses();
     if (classes.length === 0) { document.getElementById('attendanceList').innerHTML = '<div class="empty-cell">Bạn hiện chưa được phân công lớp nào.</div>'; return; }
+    await loadSessionDates();
     await loadStudents();
   } catch (e) { /* bootShell tự điều hướng */ }
 })();

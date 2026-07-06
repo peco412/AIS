@@ -50,9 +50,10 @@
         <select class="select-input" id="filterClass"><option value="">Tất cả các lớp</option></select>
         <select class="select-input" id="filterStatus">
           <option value="">Tất cả trạng thái</option>
+          <option value="trial">Học thử</option>
           <option value="studying">Đang học</option>
-          <option value="paused">Tạm nghỉ</option>
-          <option value="dropped">Đã nghỉ</option>
+          <option value="reserved">Bảo lưu</option>
+          <option value="withdrawn">Đã nghỉ</option>
         </select>
       </div>
       <div class="cell-muted" id="resultCount"></div>
@@ -95,7 +96,7 @@
         <div class="field"><label for="enrollmentDate">Ngày nhập học</label><input type="date" id="enrollmentDate" /></div>
         <div class="field">
           <label for="status">Trạng thái</label>
-          <select id="status"><option value="studying">Đang học</option><option value="paused">Tạm nghỉ</option><option value="dropped">Đã nghỉ</option></select>
+          <select id="status"><option value="trial">Học thử</option><option value="studying">Đang học</option><option value="reserved">Bảo lưu</option><option value="withdrawn">Đã nghỉ</option></select>
         </div>
       </div>
       <div class="modal-actions">

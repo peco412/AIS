@@ -41,7 +41,13 @@ async function loadRows() {
 }
 
 function isDeptHeadOf(row) {
-  return row.department_id === PROFILE.departmentId && ['DEPT_HEAD', 'DEPT_DEPUTY'].includes(PROFILE.roleCode);
+  if (row.department_id !== PROFILE.departmentId) return false;
+  // Học vụ (EDU) không có chức "Trưởng phòng" riêng — người tương đương
+  // đúng nghĩa là Quản lý trung tâm (role CENTER_MANAGER), nên phải tính
+  // luôn vai trò này là "trưởng phòng" cho đề xuất thuộc phòng Học vụ —
+  // trước đây bỏ sót trường hợp này khiến không ai duyệt được cấp 1.
+  if (PROFILE.roleCode === 'CENTER_MANAGER') return true;
+  return ['DEPT_HEAD', 'DEPT_DEPUTY'].includes(PROFILE.roleCode);
 }
 
 function actionFor(row) {
@@ -74,6 +80,7 @@ function render() {
       <td>
         ${r.file_url ? `<button class="btn btn-outline btn-sm" data-view="${r.id}">Xem</button>` : ''}
         ${action ? `<button class="btn btn-accent btn-sm" data-act="${r.id}">${action.label}</button>` : ''}
+        ${(r.status === 'approved_2' || r.status === 'archived') ? `<div><a href="/archive.html" class="cell-muted" style="text-decoration:underline; font-size:11.5px;">↳ Đã lưu vào Kho lưu trữ &gt; Đề xuất nội bộ</a></div>` : ''}
       </td>
     </tr>`;
   }).join('');
@@ -124,7 +131,7 @@ async function finalizeApproval(row) {
   const notifPayload = {
     scope: 'department', department_id: row.department_id,
     title: `Đề xuất "${row.title}" đã được duyệt`,
-    content: `Đề xuất ${row.code} của ${row.employees?.full_name || ''} đã được Ban điều hành phê duyệt.`,
+    content: `Đề xuất ${row.code} của ${row.employees?.full_name || ''} đã được Ban điều hành phê duyệt và lưu vào Kho lưu trữ > Đề xuất nội bộ.`,
     created_by: PROFILE.id,
   };
   await supabase.from('notifications').insert(notifPayload);

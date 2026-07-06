@@ -3,7 +3,6 @@ import { supabase } from './supabase.js';
 import { NAV_CONFIG } from './navConfig.js';
 import { t } from './i18n.js';
 import { registerInstallBanner } from './installPrompt.js';
-import { fetchPendingApprovals } from './execApprovals.js';
 
 const birthdayBanner = document.getElementById('birthdayBanner');
 const notifBadge = document.getElementById('notifBadge');
@@ -94,34 +93,6 @@ async function loadUnreadCount(profile) {
   return unread;
 }
 
-async function loadPendingApprovalStat(profile) {
-  const card = document.getElementById('statPendingCard');
-  const valueEl = document.getElementById('statPending');
-  const isExec = ['EXECUTIVE', 'TECH'].includes(profile.roleCode);
-  const isHead = ['DEPT_HEAD', 'DEPT_DEPUTY'].includes(profile.roleCode);
-
-  // Chỉ Ban điều hành/kỹ thuật hệ thống và trưởng phòng mới có khái niệm rõ
-  // ràng "phiếu đang chờ TÔI duyệt" (nhân viên thường không duyệt phiếu nào
-  // cả) — với 2 nhóm này, nối thẻ thành số liệu thật + bấm vào đi thẳng tới
-  // trang Ký số hồ sơ, đỡ phải tự tìm menu.
-  if (!isExec && !isHead) return;
-
-  try {
-    const { level1Rows, level2Rows } = await fetchPendingApprovals(profile);
-    // BĐH quan tâm nhất số hồ sơ CẤP 2 (chỉ mình họ duyệt được); trưởng
-    // phòng quan tâm số hồ sơ CẤP 1 của đúng phòng mình.
-    const count = isExec ? level2Rows.length : level1Rows.length;
-    valueEl.textContent = count;
-    if (card) {
-      card.style.cursor = 'pointer';
-      card.title = 'Xem chi tiết ở trang Ký số hồ sơ';
-      card.addEventListener('click', () => { window.location.href = '/exec/sign.html'; });
-    }
-  } catch (e) {
-    // Giữ nguyên dấu gạch ngang nếu không tải được, tránh hiện số sai
-  }
-}
-
 async function loadStats(profile) {
   // Ngày phép còn lại (tháng hiện tại)
   const now = new Date();
@@ -144,7 +115,7 @@ async function loadStats(profile) {
     .eq('employee_id', profile.id);
   document.getElementById('statMeetings').textContent = meetingCount ?? 0;
 
-  await loadPendingApprovalStat(profile);
+  document.getElementById('statPending').textContent = '—';
   const unread = await loadUnreadCount(profile).catch(() => 0);
   document.getElementById('statUnread').textContent = unread;
 }

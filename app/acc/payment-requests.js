@@ -6,7 +6,7 @@ import { openPdfEditor } from '/js/pdfEditor.js';
 const STATUS_LABEL = new Proxy({}, { get: (_, code) => t('status.payment_' + code, code) });
 
 let PROFILE = null;
-let TEMPLATE = null;
+let TEMPLATES = { regular: null, trip: null };
 let ACC_DEPT_ID = null;
 let ALL_ROWS = [];
 let IS_ACC_HEAD = false;
@@ -16,8 +16,11 @@ function fmtMoney(n) { return n ? Number(n).toLocaleString('vi-VN') + ' đ' : '�
 function fmtDate(d) { return d ? new Date(d).toLocaleString('vi-VN') : '—'; }
 
 async function loadTemplate() {
-  const { data } = await supabase.from('document_templates').select('*').eq('code', '02.Phieudenghithanhtoan').single();
-  TEMPLATE = data;
+  const [{ data: regular }, { data: trip }] = await Promise.all([
+    supabase.from('document_templates').select('*').eq('code', '02.Phieudenghithanhtoan').maybeSingle(),
+    supabase.from('document_templates').select('*').ilike('code', '01.phieudenghithanhtoancongtacphi%').maybeSingle(),
+  ]);
+  TEMPLATES = { regular, trip };
 }
 
 async function loadRows() {
@@ -226,7 +229,10 @@ document.getElementById('closeCreateModal').addEventListener('click', () => crea
 document.getElementById('cancelCreate').addEventListener('click', () => createModal.classList.remove('show'));
 
 document.getElementById('openFillEditor').addEventListener('click', async () => {
-  if (!TEMPLATE) { createError.textContent = 'Chưa cấu hình biểu mẫu 02.Phieudenghithanhtoan trong Kho lưu trữ > Biểu mẫu.'; createError.classList.add('show'); return; }
+  const paymentType = document.getElementById('paymentType').value; // 'regular' | 'trip'
+  const TEMPLATE = paymentType === 'trip' ? TEMPLATES.trip : TEMPLATES.regular;
+  const templateCode = paymentType === 'trip' ? '01.phieudenghithanhtoancongtacphi' : '02.Phieudenghithanhtoan';
+  if (!TEMPLATE) { createError.textContent = `Chưa cấu hình biểu mẫu ${templateCode} trong Kho lưu trữ > Biểu mẫu.`; createError.classList.add('show'); return; }
   const amount = document.getElementById('amount').value;
   const content = document.getElementById('content').value.trim();
   if (!amount || !content) { createError.textContent = 'Vui lòng nhập đầy đủ số tiền và nội dung.'; createError.classList.add('show'); return; }
@@ -245,7 +251,7 @@ document.getElementById('openFillEditor').addEventListener('click', async () => 
   await openPdfEditor({
     pdfUrl,
     signatureUrl,
-    title: 'Điền & ký phiếu đề nghị thanh toán',
+    title: paymentType === 'trip' ? 'Điền & ký phiếu đề nghị thanh toán công tác phí' : 'Điền & ký phiếu đề nghị thanh toán',
     fieldMap: TEMPLATE.field_map || [],
     onSave: async (blob) => {
       const fileUrl = await uploadFile(blob, PROFILE.id, 'draft');

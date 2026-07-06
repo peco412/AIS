@@ -32,7 +32,7 @@ async function loadUnpaidLeaveDays(year, month) {
     .from('leave_requests')
     .select('employee_id, days')
     .eq('leave_type', 'unpaid')
-    .eq('status', 'approved_2')
+    .eq('status', 'approved_3')
     .gte('start_date', from)
     .lt('start_date', to);
 

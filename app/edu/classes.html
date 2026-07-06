@@ -83,10 +83,30 @@
         <div class="field"><label for="sublevel">Cấp độ con</label><select id="sublevel"><option value="">—</option></select></div>
         <div class="field"><label for="teacher">Giáo viên phụ trách</label><select id="teacher"><option value="">— Chưa phân công —</option></select></div>
       </div>
-      <div class="field"><label for="scheduleNote">Lịch học</label><input type="text" id="scheduleNote" placeholder="VD: T2-4-6, 18h00-19h30" /></div>
+      <div class="field"><label for="scheduleNote">Lịch học (mô tả)</label><input type="text" id="scheduleNote" placeholder="VD: T2-4-6, 18h00-19h30" /></div>
+      <div class="field">
+        <label>Các ngày học trong tuần</label>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:4px;">
+          <label class="field-checkbox" style="display:inline-flex;"><input type="checkbox" class="day-of-week" value="1" /> T2</label>
+          <label class="field-checkbox" style="display:inline-flex;"><input type="checkbox" class="day-of-week" value="2" /> T3</label>
+          <label class="field-checkbox" style="display:inline-flex;"><input type="checkbox" class="day-of-week" value="3" /> T4</label>
+          <label class="field-checkbox" style="display:inline-flex;"><input type="checkbox" class="day-of-week" value="4" /> T5</label>
+          <label class="field-checkbox" style="display:inline-flex;"><input type="checkbox" class="day-of-week" value="5" /> T6</label>
+          <label class="field-checkbox" style="display:inline-flex;"><input type="checkbox" class="day-of-week" value="6" /> T7</label>
+          <label class="field-checkbox" style="display:inline-flex;"><input type="checkbox" class="day-of-week" value="7" /> CN</label>
+        </div>
+      </div>
+      <div class="field-grid-2">
+        <div class="field"><label for="classStartTime">Giờ bắt đầu</label><input type="time" id="classStartTime" /></div>
+        <div class="field"><label for="classEndTime">Giờ kết thúc</label><input type="time" id="classEndTime" /></div>
+      </div>
       <div class="field-grid-2">
         <div class="field"><label for="startDate">Ngày khai giảng</label><input type="date" id="startDate" /></div>
         <div class="field"><label for="endDate">Ngày kết thúc (dự kiến)</label><input type="date" id="endDate" /></div>
+      </div>
+      <div class="field field-checkbox">
+        <label for="autoGenSchedule"><input type="checkbox" id="autoGenSchedule" /> Tự động tạo lịch điểm danh &amp; lịch tuần giáo viên cho cả khoá học</label>
+        <p class="cell-muted" style="margin-top:6px;">Cần đầy đủ: Ngày khai giảng, Ngày kết thúc, ít nhất 1 ngày học/tuần, Giáo viên phụ trách.</p>
       </div>
       <div class="field">
         <label for="status">Trạng thái</label>

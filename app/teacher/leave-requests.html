@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Đơn nghỉ — Cán bộ khối văn phòng — ERP AIS</title>
+<title>Đơn nghỉ — Giáo viên — ERP AIS</title>
 <link rel="manifest" href="/manifest.json" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="mobile-web-app-capable" content="yes" />
@@ -16,7 +16,7 @@
 <link rel="stylesheet" href="/css/dashboard.css" />
 <link rel="stylesheet" href="/css/module.css" />
 </head>
-<body data-page="/hr/leave-requests.html">
+<body data-page="/teacher/leave-requests.html">
 
 <div class="app-shell">
   <aside class="sidebar" id="sidebar">
@@ -38,7 +38,7 @@
 
   <main class="main">
     <div class="page-header">
-      <div><h1>Đơn nghỉ — Cán bộ khối văn phòng</h1><div class="sub">4 loại đơn: Hoán đổi ngày nghỉ / Nghỉ phép / Nghỉ bù / Nghỉ không lương — duyệt 3 cấp: Trưởng phòng → Nhân sự → Ban điều hành.</div></div>
+      <div><h1>Đơn nghỉ — Giáo viên</h1><div class="sub">4 loại đơn: Hoán đổi lịch dạy/dạy bù / Nghỉ phép / Nghỉ bù / Nghỉ không lương — duyệt 3 cấp: Quản lý trung tâm → Nhân sự → Ban điều hành.</div></div>
       <button class="btn btn-accent" id="btnAdd">+ Tạo đơn mới</button>
     </div>
 
@@ -83,7 +83,7 @@
 <script src="/env.js"></script>
 <script type="module">
   import { initLeaveFormFlow } from '/js/leaveFormFlow.js';
-  initLeaveFormFlow('office');
+  initLeaveFormFlow('teacher');
 </script>
 <script src="/js/pwa.js"></script>
 </body>

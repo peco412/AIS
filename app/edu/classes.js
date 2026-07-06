@@ -98,6 +98,7 @@ document.getElementById('btnAdd').addEventListener('click', () => {
   form.reset();
   document.getElementById('classId').value = '';
   document.getElementById('modalTitle').textContent = 'Thêm lớp';
+  document.getElementById('autoGenSchedule').closest('.field').style.display = 'block';
   fillSelect(document.getElementById('level'), [], { placeholder: '—' });
   fillSelect(document.getElementById('sublevel'), [], { placeholder: '—' });
   formError.classList.remove('show');
@@ -119,6 +120,11 @@ async function openEdit(id) {
   document.getElementById('sublevel').value = row.sublevel_id || '';
   document.getElementById('teacher').value = row.teacher_id || '';
   document.getElementById('scheduleNote').value = row.schedule_note || '';
+  document.querySelectorAll('.day-of-week').forEach((el) => { el.checked = (row.days_of_week || []).includes(Number(el.value)); });
+  document.getElementById('classStartTime').value = row.start_time || '';
+  document.getElementById('classEndTime').value = row.end_time || '';
+  document.getElementById('autoGenSchedule').checked = false;
+  document.getElementById('autoGenSchedule').closest('.field').style.display = 'none'; // chỉ tự sinh lịch lúc TẠO MỚI, không áp dụng khi sửa
   document.getElementById('startDate').value = row.start_date || '';
   document.getElementById('endDate').value = row.end_date || '';
   document.getElementById('status').value = row.status;
@@ -131,6 +137,7 @@ form.addEventListener('submit', async (e) => {
   e.preventDefault();
   formError.classList.remove('show');
   const id = document.getElementById('classId').value;
+  const daysOfWeek = Array.from(document.querySelectorAll('.day-of-week:checked')).map((el) => Number(el.value));
   const payload = {
     name: document.getElementById('className').value.trim(),
     center_id: PROFILE.centerId,
@@ -141,17 +148,39 @@ form.addEventListener('submit', async (e) => {
     schedule_note: document.getElementById('scheduleNote').value || null,
     start_date: document.getElementById('startDate').value || null,
     end_date: document.getElementById('endDate').value || null,
+    start_time: document.getElementById('classStartTime').value || null,
+    end_time: document.getElementById('classEndTime').value || null,
+    days_of_week: daysOfWeek.length ? daysOfWeek : null,
     status: document.getElementById('status').value,
     note: document.getElementById('note').value || null,
   };
 
+  const autoGen = document.getElementById('autoGenSchedule').checked;
+  if (!id && autoGen) {
+    if (!payload.start_date || !payload.end_date || !daysOfWeek.length || !payload.teacher_id) {
+      formError.textContent = 'Để tự động tạo lịch, cần đủ: Ngày khai giảng, Ngày kết thúc, ít nhất 1 ngày học/tuần, và Giáo viên phụ trách.';
+      formError.classList.add('show');
+      return;
+    }
+  }
+
   const btn = document.getElementById('submitClass');
   btn.disabled = true; btn.textContent = 'Đang lưu...';
   try {
-    const { error } = id
-      ? await supabase.from('classes').update(payload).eq('id', id)
-      : await supabase.from('classes').insert(payload);
-    if (error) throw error;
+    let newClassId = id;
+    if (id) {
+      const { error } = await supabase.from('classes').update(payload).eq('id', id);
+      if (error) throw error;
+    } else {
+      const { data, error } = await supabase.from('classes').insert(payload).select('id').single();
+      if (error) throw error;
+      newClassId = data.id;
+    }
+
+    if (!id && autoGen) {
+      await generateSchedule(newClassId, payload);
+    }
+
     modal.classList.remove('show');
     await loadRows();
   } catch (err) {
@@ -161,6 +190,49 @@ form.addEventListener('submit', async (e) => {
     btn.disabled = false; btn.textContent = 'Lưu';
   }
 });
+
+// Tự sinh "phiên học" (class_sessions) cho mọi ngày khớp days_of_week từ
+// start_date đến end_date, VÀ tự sinh lịch tuần giáo viên tương ứng
+// (teacher_weekly_schedules lưu theo từng tuần nên cần 1 dòng/tuần).
+async function generateSchedule(classId, payload) {
+  const start = new Date(payload.start_date);
+  const end = new Date(payload.end_date);
+  const sessions = [];
+  const weeksSeen = new Set();
+  const teacherRows = [];
+
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    const isoDay = d.getDay() === 0 ? 7 : d.getDay(); // JS: 0=CN -> quy về 7 khớp check(1..7)
+    if (!payload.days_of_week.includes(isoDay)) continue;
+
+    const dateStr = d.toISOString().slice(0, 10);
+    sessions.push({ class_id: classId, session_date: dateStr });
+
+    // Mỗi tuần chỉ cần 1 dòng lịch/ngày trong tuần đó cho giáo viên (không lặp
+    // lại nếu cùng tuần đã có nhiều ngày trùng day_of_week — thực tế không
+    // xảy ra vì mỗi ngày trong vòng lặp là duy nhất).
+    const monday = new Date(d);
+    monday.setDate(d.getDate() - (isoDay - 1));
+    const weekKey = `${monday.toISOString().slice(0, 10)}_${isoDay}`;
+    if (!weeksSeen.has(weekKey)) {
+      weeksSeen.add(weekKey);
+      teacherRows.push({
+        teacher_id: payload.teacher_id, class_id: classId, center_id: payload.center_id,
+        week_start_date: monday.toISOString().slice(0, 10), day_of_week: isoDay,
+        start_time: payload.start_time, end_time: payload.end_time,
+      });
+    }
+  }
+
+  if (sessions.length > 0) {
+    const { error: sessErr } = await supabase.from('class_sessions').insert(sessions);
+    if (sessErr) console.warn('Không tạo được lịch điểm danh:', sessErr.message);
+  }
+  if (teacherRows.length > 0) {
+    const { error: schedErr } = await supabase.from('teacher_weekly_schedules').insert(teacherRows);
+    if (schedErr) console.warn('Không tạo được lịch tuần giáo viên:', schedErr.message);
+  }
+}
 
 (async () => {
   try {

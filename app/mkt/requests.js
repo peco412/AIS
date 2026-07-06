@@ -21,7 +21,7 @@ async function loadRows() {
 
   let query = supabase
     .from('communication_requests')
-    .select('id, title, request_type, priority, deadline, status, brief_file_url, result_file_urls, requester_id, employees!communication_requests_requester_id_fkey(full_name)')
+    .select('id, title, request_type, priority, deadline, status, brief_file_url, result_drive_link, requester_id, employees!communication_requests_requester_id_fkey(full_name)')
     .order('created_at', { ascending: false });
   if (scope === 'mine') query = query.eq('requester_id', PROFILE.id);
 
@@ -46,7 +46,7 @@ function render() {
       <td>
         ${esc(r.title)}
         ${r.brief_file_url ? `<button class="btn-link cell-muted" data-open="${esc(r.brief_file_url)}" style="border:none;background:none;text-decoration:underline;cursor:pointer;">(brief)</button>` : ''}
-        ${r.result_file_urls?.[0] ? `<button class="btn-link cell-muted" data-open="${esc(r.result_file_urls[0])}" style="border:none;background:none;text-decoration:underline;cursor:pointer;">(kết quả)</button>` : ''}
+        ${r.result_drive_link ? `<a href="${esc(r.result_drive_link)}" target="_blank" rel="noopener" class="cell-muted" style="text-decoration:underline;">(kết quả — Drive)</a>` : ''}
       </td>
       <td class="cell-muted">${esc(PRIORITY_LABEL[r.priority] || r.priority)}</td>
       <td class="cell-muted">${fmtDate(r.deadline)}</td>
@@ -122,7 +122,7 @@ function openResultModal(id) {
   ACTIVE_ID = id;
   resultError.classList.remove('show');
   document.getElementById('resultNote').value = '';
-  document.getElementById('resultFile').value = '';
+  document.getElementById('resultDriveLink').value = '';
   resultModal.classList.add('show');
 }
 document.getElementById('closeResultModal').addEventListener('click', () => resultModal.classList.remove('show'));
@@ -130,22 +130,15 @@ document.getElementById('cancelResult').addEventListener('click', () => resultMo
 
 document.getElementById('submitResult').addEventListener('click', async () => {
   resultError.classList.remove('show');
-  const row = ALL_ROWS.find((r) => r.id === ACTIVE_ID);
   const status = document.getElementById('resultStatus').value;
   const note = document.getElementById('resultNote').value.trim();
+  const driveLink = document.getElementById('resultDriveLink').value.trim();
 
   const btn = document.getElementById('submitResult');
   btn.disabled = true; btn.textContent = 'Đang lưu...';
   try {
-    let resultUrls = null;
-    const file = document.getElementById('resultFile').files[0];
-    if (file) {
-      const path = `mkt-requests/${row.requester_id}/result_${Date.now()}_${file.name}`;
-      resultUrls = [await uploadPrivateFile(path, file)];
-    }
-
     const { error } = await supabase.from('communication_requests').update({
-      status, result_note: note || null, result_file_urls: resultUrls, handled_by: PROFILE.id,
+      status, result_note: note || null, result_drive_link: driveLink || null, handled_by: PROFILE.id,
     }).eq('id', ACTIVE_ID);
     if (error) throw error;
 

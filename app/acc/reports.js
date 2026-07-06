@@ -61,6 +61,69 @@ async function loadChart() {
   });
 }
 
+// Nhật ký dòng tiền — cho kế toán biết rõ TỪNG khoản thu/chi phát sinh từ
+// đâu (thu học phí tự động, phiếu thanh toán, phiếu tạm ứng, hay ghi tay),
+// không chỉ dừng ở biểu đồ tổng hợp theo tháng như trước.
+let ALL_CASH_ROWS = [];
+
+function sourceInfo(row) {
+  if (row.category === 'tuition') return { label: 'Thu học phí', key: 'tuition' };
+  if (row.related_payment_request_id) return { label: 'Phiếu thanh toán', key: 'payment_request', href: '/acc/payment-requests.html' };
+  if (row.related_advance_request_id) return { label: 'Phiếu tạm ứng', key: 'advance_request', href: '/acc/advance-requests.html' };
+  return { label: 'Ghi tay', key: 'manual' };
+}
+
+async function loadCashLog() {
+  const tbody = document.getElementById('cashLogBody');
+  tbody.innerHTML = '<tr><td colspan="7" class="empty-cell">Đang tải dữ liệu...</td></tr>';
+
+  const { data, error } = await supabase
+    .from('cash_flow_entries')
+    .select('id, entry_type, amount, entry_date, category, note, related_payment_request_id, related_advance_request_id, employees:created_by(full_name)')
+    .order('entry_date', { ascending: false })
+    .limit(200);
+
+  if (error) { tbody.innerHTML = `<tr><td colspan="7" class="empty-cell">Lỗi: ${error.message}</td></tr>`; return; }
+  ALL_CASH_ROWS = data || [];
+  renderCashLog();
+}
+
+function renderCashLog() {
+  const typeFilter = document.getElementById('logFilterType').value;
+  const sourceFilter = document.getElementById('logFilterSource').value;
+  const monthFilter = document.getElementById('logFilterMonth').value;
+
+  const rows = ALL_CASH_ROWS.filter((r) => {
+    if (typeFilter && r.entry_type !== typeFilter) return false;
+    if (sourceFilter && sourceInfo(r).key !== sourceFilter) return false;
+    if (monthFilter && r.entry_date.slice(0, 7) !== monthFilter) return false;
+    return true;
+  });
+
+  document.getElementById('logResultCount').textContent = `${rows.length} dòng`;
+  const tbody = document.getElementById('cashLogBody');
+  if (rows.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="empty-cell">Không có dòng tiền nào khớp bộ lọc.</td></tr>'; return; }
+
+  tbody.innerHTML = rows.map((r) => {
+    const src = sourceInfo(r);
+    return `
+    <tr>
+      <td class="cell-muted">${fmtDate(r.entry_date)}</td>
+      <td><span class="badge badge-${r.entry_type === 'inflow' ? 'active' : 'rejected'}">${r.entry_type === 'inflow' ? 'Tiền vào' : 'Tiền ra'}</span></td>
+      <td class="mono" style="color:${r.entry_type === 'inflow' ? 'var(--success)' : 'var(--danger)'};">${r.entry_type === 'inflow' ? '+' : '-'}${fmtMoney(r.amount)} đ</td>
+      <td class="cell-muted">${r.category || '—'}</td>
+      <td>${src.href ? `<a href="${src.href}" style="text-decoration:underline;">${src.label}</a>` : `<span class="cell-muted">${src.label}</span>`}</td>
+      <td class="cell-muted">${r.note || '—'}</td>
+      <td class="cell-muted">${r.employees?.full_name || '—'}</td>
+    </tr>
+  `;
+  }).join('');
+}
+
+['logFilterType', 'logFilterSource', 'logFilterMonth'].forEach((id) => {
+  document.getElementById(id).addEventListener('change', renderCashLog);
+});
+
 async function loadReceivables() {
   const tbody = document.getElementById('receivablesBody');
   const { data, error } = await supabase.from('receivables').select('*').order('due_date', { ascending: true });
@@ -110,7 +173,7 @@ document.getElementById('submitEntry').addEventListener('click', async () => {
   btn.disabled = false; btn.textContent = 'Lưu';
   if (error) { formError.textContent = error.message; formError.classList.add('show'); return; }
   modal.classList.remove('show');
-  await loadChart();
+  await Promise.all([loadChart(), loadCashLog()]);
 });
 
 (async () => {
@@ -123,6 +186,7 @@ document.getElementById('submitEntry').addEventListener('click', async () => {
       return;
     }
     await loadChart();
+    await loadCashLog();
     await loadReceivables();
   } catch (e) { /* bootShell tự điều hướng */ }
 })();

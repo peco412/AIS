@@ -6,8 +6,11 @@ const STATUS_LABEL = new Proxy({}, { get: (_, code) => t('status.' + code, code)
 const STATUS_BADGE = { pending: 'draft', in_progress: 'approved_1', done: 'active', overdue: 'rejected' };
 
 // Nguồn "đầu việc" thật của từng phòng ban — đây chính là ý nghĩa của "Phân
-// việc": trưởng phòng giao 1 YÊU CẦU CỤ THỂ đang chờ xử lý (không phải việc
-// tự nghĩ ra) cho nhân viên trong phòng xử lý.
+// việc": các yêu cầu/phiếu phát sinh từ đúng module của phòng ban (vd Kế
+// toán có Phiếu thanh toán + Phiếu tạm ứng) được LIỆT KÊ TRỰC TIẾP ở đây
+// để trưởng phòng thấy ngay và phân công cho nhân sự — không phải việc tự
+// nghĩ ra. "Giao việc ngoài luồng" chỉ dùng cho việc phát sinh KHÁC hẳn,
+// không nằm trong các module yêu cầu này.
 const REQUEST_SOURCES = {
   ACC: [
     { table: 'payment_requests', label: 'Phiếu đề nghị thanh toán', statuses: ['submitted', 'approved_1'], titleFn: (r) => `Xử lý phiếu thanh toán ${r.code}`, href: '/acc/payment-requests.html' },
@@ -43,11 +46,11 @@ export async function initTaskAssignments(deptCode) {
     sel.innerHTML = TEAM.map((e) => `<option value="${e.id}">${esc(e.full_name)}</option>`).join('');
   }
 
-  // Lấy các yêu cầu đang chờ xử lý của phòng ban này, đã lọc bỏ những yêu
-  // cầu đã có người phụ trách (đã tồn tại task_assignments trỏ tới) để
-  // tránh giao trùng. Các yêu cầu này được hiện TRỰC TIẾP thành dòng ở
-  // đầu bảng Phân việc (xem renderPendingRow) để trưởng phòng thấy ngay
-  // và phân công tại chỗ — không còn giấu trong dropdown của modal nữa.
+  // Lấy các yêu cầu đang chờ xử lý của phòng ban này TRỰC TIẾP từ đúng
+  // module nghiệp vụ (payment_requests, advance_requests...), đã lọc bỏ
+  // những yêu cầu đã có người phụ trách (đã tồn tại task_assignments trỏ
+  // tới) để tránh giao trùng — rồi hiển thị NGAY trên trang, không giấu
+  // trong dropdown của modal nữa.
   async function loadPendingRequests() {
     const sources = REQUEST_SOURCES[deptCode] || [];
     const existing = await supabase
@@ -58,10 +61,36 @@ export async function initTaskAssignments(deptCode) {
     const alreadyAssigned = new Set((existing.data || []).map((t) => `${t.related_table}:${t.related_id}`));
 
     const results = await Promise.all(sources.map((src) =>
-      supabase.from(src.table).select('id, code, title').in('status', src.statuses).then((r) => (r.data || []).map((row) => ({ ...row, src })))
+      supabase.from(src.table).select('id, code, title, created_at').in('status', src.statuses).then((r) => (r.data || []).map((row) => ({ ...row, src })))
     ));
 
-    PENDING_REQUESTS = results.flat().filter((r) => !alreadyAssigned.has(`${r.src.table}:${r.id}`));
+    PENDING_REQUESTS = results.flat()
+      .filter((r) => !alreadyAssigned.has(`${r.src.table}:${r.id}`))
+      .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+
+    renderPending();
+  }
+
+  function renderPending() {
+    const tbody = document.getElementById('pendingTableBody');
+    if (!tbody) return;
+
+    if (PENDING_REQUESTS.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="3" class="empty-cell">🎉 Không có yêu cầu nào đang chờ phân công.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = PENDING_REQUESTS.map((r, i) => `
+      <tr>
+        <td><span class="badge badge-submitted">${esc(r.src.label)}</span></td>
+        <td>${esc(r.code || r.title)}</td>
+        <td>${IS_HEAD ? `<button class="btn btn-accent btn-sm" data-assign="${i}">Giao việc</button>` : `<a href="${esc(r.src.href)}" class="btn btn-outline btn-sm">Xem</a>`}</td>
+      </tr>
+    `).join('');
+
+    tbody.querySelectorAll('[data-assign]').forEach((btn) => {
+      btn.addEventListener('click', () => openAssignModal(PENDING_REQUESTS[Number(btn.dataset.assign)]));
+    });
   }
 
   async function loadRows() {
@@ -82,55 +111,21 @@ export async function initTaskAssignments(deptCode) {
     render();
   }
 
-  // Dòng "chờ phân công" — hiện trực tiếp trong bảng để trưởng phòng thấy
-  // ngay và phân công tại chỗ, không cần mở modal chọn từ dropdown.
-  function renderPendingRow(r, idx) {
-    const teamOptions = TEAM.map((e) => `<option value="${e.id}">${esc(e.full_name)}</option>`).join('');
-    return `
-      <tr class="row-pending" style="background:var(--warning-bg, rgba(245,158,11,0.06));">
-        <td>
-          <strong>${esc(r.src.titleFn(r))}</strong>
-          <div class="cell-muted">${esc(r.src.label)}</div>
-          <div><a href="${esc(r.src.href)}" class="cell-muted" style="text-decoration:underline;">↳ Xem yêu cầu gốc</a></div>
-        </td>
-        <td>
-          ${IS_HEAD ? `
-            <select class="select-input" data-pending-assignee="${idx}" style="padding:5px 8px;font-size:12px;">
-              <option value="">— Chọn người nhận —</option>
-              ${teamOptions}
-            </select>` : '<span class="cell-muted">—</span>'}
-        </td>
-        <td class="cell-muted">—</td>
-        <td>
-          ${IS_HEAD ? `<input type="date" class="select-input" data-pending-due="${idx}" style="padding:4px 6px;font-size:12px;" />` : '—'}
-        </td>
-        <td><span class="badge badge-draft">Chưa phân công</span></td>
-        <td>
-          ${IS_HEAD ? `<button class="btn btn-accent btn-sm" data-pending-assign="${idx}">Giao việc</button>` : ''}
-        </td>
-      </tr>
-    `;
-  }
-
   function render() {
-    const pendingCount = PENDING_REQUESTS.length;
-    document.getElementById('resultCount').textContent = pendingCount > 0
-      ? `${ALL_ROWS.length} công việc · ${pendingCount} yêu cầu chờ phân công`
-      : `${ALL_ROWS.length} công việc`;
-
+    document.getElementById('resultCount').textContent = `${ALL_ROWS.length} công việc`;
     const tbody = document.getElementById('tableBody');
+    if (ALL_ROWS.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="empty-cell">Chưa có công việc nào.</td></tr>'; return; }
+
     const sourceByTable = {};
     Object.values(REQUEST_SOURCES).flat().forEach((s) => { sourceByTable[s.table] = s; });
 
-    const pendingHtml = PENDING_REQUESTS.map((r, idx) => renderPendingRow(r, idx)).join('');
-
-    const assignedHtml = ALL_ROWS.map((r) => {
+    tbody.innerHTML = ALL_ROWS.map((r) => {
       const src = r.related_table ? sourceByTable[r.related_table] : null;
       return `
       <tr>
         <td>
           <strong>${esc(r.title)}</strong>${r.description ? `<div class="cell-muted">${esc(r.description)}</div>` : ''}
-          ${src ? `<div><a href="${esc(src.href)}" class="cell-muted" style="text-decoration:underline;">↳ Xem yêu cầu gốc</a></div>` : ''}
+          ${src ? `<div><a href="${esc(src.href)}" class="cell-muted" style="text-decoration:underline;">↳ Xem yêu cầu gốc</a></div>` : '<div class="cell-muted">Việc ngoài luồng</div>'}
         </td>
         <td>${esc(r.employees?.full_name || '—')}</td>
         <td class="cell-muted">${esc(r.assigner?.full_name || '—')}</td>
@@ -148,42 +143,10 @@ export async function initTaskAssignments(deptCode) {
     `;
     }).join('');
 
-    if (!pendingHtml && !assignedHtml) {
-      tbody.innerHTML = '<tr><td colspan="6" class="empty-cell">Chưa có công việc nào.</td></tr>';
-      return;
-    }
-    tbody.innerHTML = pendingHtml + assignedHtml;
-
     tbody.querySelectorAll('[data-status]').forEach((sel) => {
       sel.addEventListener('change', async () => {
         const { error } = await supabase.from('task_assignments').update({ status: sel.value }).eq('id', sel.dataset.status);
         if (error) { alert('Lỗi: ' + error.message); return; }
-        await loadRows();
-      });
-    });
-
-    tbody.querySelectorAll('[data-pending-assign]').forEach((btn) => {
-      btn.addEventListener('click', async () => {
-        const idx = Number(btn.dataset.pendingAssign);
-        const req = PENDING_REQUESTS[idx];
-        const assigneeSel = tbody.querySelector(`[data-pending-assignee="${idx}"]`);
-        const dueInput = tbody.querySelector(`[data-pending-due="${idx}"]`);
-        const assignedTo = assigneeSel?.value;
-        if (!assignedTo) { alert('Vui lòng chọn người nhận trước khi giao việc.'); return; }
-
-        btn.disabled = true; btn.textContent = 'Đang giao...';
-        const { error } = await supabase.from('task_assignments').insert({
-          department_id: DEPT_ID, assigned_by: PROFILE.id,
-          assigned_to: assignedTo,
-          title: req.src.titleFn(req),
-          description: null,
-          due_date: dueInput?.value || null,
-          status: 'pending',
-          related_table: req.src.table,
-          related_id: req.id,
-        });
-        if (error) { alert('Lỗi: ' + error.message); btn.disabled = false; btn.textContent = 'Giao việc'; return; }
-        await loadPendingRequests();
         await loadRows();
       });
     });
@@ -192,21 +155,43 @@ export async function initTaskAssignments(deptCode) {
   document.getElementById('viewScope').addEventListener('change', loadRows);
 
   // ---------------------------------------------------------------------
-  // Giao việc mới — CHỈ dùng cho việc ngoài luồng (không gắn 1 yêu cầu cụ
-  // thể nào). Các yêu cầu đang chờ xử lý (phiếu thanh toán, tạm ứng...)
-  // giờ hiện trực tiếp thành dòng ở đầu bảng (xem renderPendingRow) để
-  // trưởng phòng thấy ngay và phân công tại chỗ, không cần qua modal này.
+  // Modal giao việc — 2 cách mở:
+  // 1) Bấm "Giao việc" ngay trên 1 yêu cầu đang chờ (openAssignModal) —
+  //    tiêu đề tự điền sẵn, chỉ cần chọn người nhận.
+  // 2) Bấm "+ Giao việc ngoài luồng" (openOffPipelineModal) — nhập tay
+  //    hoàn toàn, dùng cho việc phát sinh KHÔNG nằm trong các module yêu
+  //    cầu ở trên.
   // ---------------------------------------------------------------------
   const modal = document.getElementById('taskModal');
   const formError = document.getElementById('formError');
+  let CURRENT_LINKED = null;
 
-  document.getElementById('btnAdd')?.addEventListener('click', () => {
+  function openAssignModal(request) {
+    CURRENT_LINKED = request;
     formError.classList.remove('show');
-    document.getElementById('taskTitle').value = '';
+    document.getElementById('taskModalTitle').textContent = `Giao việc: ${request.src.label}`;
+    document.getElementById('taskModalSub').style.display = 'block';
+    document.getElementById('taskModalSub').textContent = `Yêu cầu gốc: ${request.code || request.title}`;
+    document.getElementById('taskTitle').value = request.src.titleFn(request);
+    document.getElementById('taskTitle').readOnly = true;
     document.getElementById('taskDesc').value = '';
     document.getElementById('dueDate').value = '';
     modal.classList.add('show');
-  });
+  }
+
+  function openOffPipelineModal() {
+    CURRENT_LINKED = null;
+    formError.classList.remove('show');
+    document.getElementById('taskModalTitle').textContent = 'Giao việc ngoài luồng';
+    document.getElementById('taskModalSub').style.display = 'none';
+    document.getElementById('taskTitle').value = '';
+    document.getElementById('taskTitle').readOnly = false;
+    document.getElementById('taskDesc').value = '';
+    document.getElementById('dueDate').value = '';
+    modal.classList.add('show');
+  }
+
+  document.getElementById('btnAdd')?.addEventListener('click', openOffPipelineModal);
   document.getElementById('closeModal')?.addEventListener('click', () => modal.classList.remove('show'));
   document.getElementById('cancelModal')?.addEventListener('click', () => modal.classList.remove('show'));
 
@@ -224,12 +209,12 @@ export async function initTaskAssignments(deptCode) {
         title, description: document.getElementById('taskDesc').value || null,
         due_date: document.getElementById('dueDate').value || null,
         status: 'pending',
-        related_table: null,
-        related_id: null,
+        related_table: CURRENT_LINKED?.src.table || null,
+        related_id: CURRENT_LINKED?.id || null,
       });
       if (error) throw error;
       modal.classList.remove('show');
-      await loadRows();
+      await Promise.all([loadRows(), loadPendingRequests()]);
     } catch (err) {
       formError.textContent = err.message || 'Có lỗi xảy ra.';
       formError.classList.add('show');
@@ -247,15 +232,9 @@ export async function initTaskAssignments(deptCode) {
       || ['EXECUTIVE', 'TECH'].includes(profile.roleCode);
 
     document.getElementById('btnAdd').style.display = IS_HEAD ? 'inline-flex' : 'none';
-    if (IS_HEAD) {
-      document.getElementById('deptScopeOption').style.display = 'block';
-      // Mặc định xem "Toàn phòng" để trưởng phòng thấy ngay các yêu cầu
-      // đang chờ phân công, không phải bấm chuyển tab mới thấy.
-      document.getElementById('viewScope').value = 'dept';
-    }
+    if (IS_HEAD) document.getElementById('deptScopeOption').style.display = 'block';
 
     await loadTeam();
-    await loadPendingRequests();
-    await loadRows();
+    await Promise.all([loadRows(), loadPendingRequests()]);
   } catch (e) { /* bootShell tự điều hướng */ }
 }

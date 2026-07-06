@@ -52,6 +52,34 @@
       <canvas id="cashFlowChart" height="90"></canvas>
     </div>
 
+    <div class="panel" style="margin-bottom:20px;">
+      <h3>Nhật ký dòng tiền — biết rõ từng khoản ra/vào từ đâu</h3>
+      <div class="toolbar" style="margin-top:12px;">
+        <div class="toolbar__filters">
+          <select class="select-input" id="logFilterType">
+            <option value="">Tất cả loại</option>
+            <option value="inflow">Chỉ tiền vào</option>
+            <option value="outflow">Chỉ tiền ra</option>
+          </select>
+          <select class="select-input" id="logFilterSource">
+            <option value="">Tất cả nguồn</option>
+            <option value="tuition">Thu học phí</option>
+            <option value="payment_request">Phiếu thanh toán</option>
+            <option value="advance_request">Phiếu tạm ứng</option>
+            <option value="manual">Ghi tay</option>
+          </select>
+          <input class="text-input" type="month" id="logFilterMonth" />
+        </div>
+        <div class="cell-muted" id="logResultCount"></div>
+      </div>
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Ngày</th><th>Loại</th><th>Số tiền</th><th>Danh mục</th><th>Nguồn phát sinh</th><th>Ghi chú</th><th>Người ghi nhận</th></tr></thead>
+          <tbody id="cashLogBody"><tr><td colspan="7" class="empty-cell">Đang tải dữ liệu...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
     <div class="panel">
       <h3>Công nợ</h3>
       <div class="data-table-wrap">
