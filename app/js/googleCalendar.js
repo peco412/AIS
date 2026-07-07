@@ -10,7 +10,7 @@
 //    đây là OAuth Client ID chứ không phải secret).
 // =====================================================================
 
-const GOOGLE_CLIENT_ID = window.__ENV__?.GOOGLE_CLIENT_ID || 'YOUR-GOOGLE-CLIENT-ID.apps.googleusercontent.com';
+const GOOGLE_CLIENT_ID = window.__ENV__?.GOOGLE_CLIENT_ID || '799232695798-k3cto6uncd7a96ml51ds6jcfnnehhcq1.apps.googleusercontent.com';
 const SCOPES = 'https://www.googleapis.com/auth/calendar.events';
 
 let gisLoaded = null;
