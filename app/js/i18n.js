@@ -39,8 +39,7 @@ const DICT = {
   'nav.hr.leaveBalances': { vi: 'Ngày nghỉ / ngày phép', en: 'Leave balances' },
   'nav.hr.workSchedule': { vi: 'Phân lịch làm việc', en: 'Work schedule' },
   'nav.hr.contracts': { vi: 'Hợp đồng lao động', en: 'Labor contracts' },
-  'nav.hr.leaveRequests': { vi: 'Đơn nghỉ (Cán bộ)', en: 'Leave requests (Staff)' },
-  'nav.teacher.leaveRequests': { vi: 'Đơn nghỉ (Giáo viên)', en: 'Leave requests (Teachers)' },
+  'nav.hr.leaveRequests': { vi: 'Đơn nghỉ', en: 'Leave requests' },
   'nav.teacher.leaveRequestsApprove': { vi: 'Duyệt đơn nghỉ giáo viên', en: 'Approve teacher leave' },
   'nav.hr.businessTrips': { vi: 'Đơn công tác', en: 'Business trips' },
 

@@ -43,7 +43,7 @@ export const NAV_CONFIG = [
       { labelKey: 'nav.hr.leaveBalances', label: 'Ngày nghỉ / ngày phép', href: '/hr/leave-balances.html', icon: '🗓', visible: (p) => inDept(p, 'HR') },
       { labelKey: 'nav.hr.workSchedule', label: 'Phân lịch làm việc', href: '/hr/work-schedule.html', icon: '📋', visible: (p) => inDept(p, 'HR') || p.isCenterManager },
       { labelKey: 'nav.hr.contracts', label: 'Hợp đồng lao động', href: '/hr/contracts.html', icon: '📄', visible: () => true },
-      { labelKey: 'nav.hr.leaveRequests', label: 'Đơn nghỉ (Cán bộ)', href: '/hr/leave-requests.html', icon: '🌴', visible: (p) => !p.isTeacher },
+      { labelKey: 'nav.hr.leaveRequests', label: 'Đơn nghỉ', href: '/hr/leave-requests.html', icon: '🌴', visible: () => true },
       { labelKey: 'nav.hr.businessTrips', label: 'Đơn công tác', href: '/hr/business-trips.html', icon: '🧳', visible: () => true },
       { labelKey: 'nav.sign', label: 'Ký số hồ sơ', href: '/hr/sign.html', icon: '✍️', visible: (p) => (p.departmentCode === 'HR' && isDeptHeadOrAbove(p)) || isExecOrTech(p) },
     ],
@@ -99,7 +99,6 @@ export const NAV_CONFIG = [
       { labelKey: 'nav.edu.students', label: 'Danh sách học viên', href: '/edu/students.html', icon: '🎒', visible: (p) => p.isCenterManager || inDept(p, 'HR') || inDept(p, 'MKT') },
       { labelKey: 'nav.edu.classAssignment', label: 'Phân lớp học viên', href: '/edu/class-assignment.html', icon: '🔀', visible: (p) => p.isCenterManager || inDept(p, 'HR') || inDept(p, 'MKT') },
       { labelKey: 'nav.edu.grades', label: 'Bảng điểm học viên', href: '/edu/grades.html', icon: '📈', visible: (p) => p.isCenterManager || inDept(p, 'HR') || inDept(p, 'MKT') },
-      { labelKey: 'nav.hr.leaveRequests', label: 'Đơn nghỉ (Cán bộ và Giáo viên)', href: '/hr/leave-requests.html', icon: '🌴', visible: (p) => p.isCenterManager },
       { labelKey: 'nav.sign', label: 'Ký số hồ sơ', href: '/edu/sign.html', icon: '✍️', visible: (p) => p.isCenterManager || isExecOrTech(p) },
     ],
   },
@@ -110,7 +109,6 @@ export const NAV_CONFIG = [
       { labelKey: 'nav.teacher.classes', label: 'Lớp phụ trách', href: '/teacher/classes.html', icon: '🏷', visible: (p) => p.isTeacher },
       { labelKey: 'nav.teacher.attendance', label: 'Điểm danh', href: '/teacher/attendance.html', icon: '✔️', visible: (p) => p.isTeacher },
       { labelKey: 'nav.teacher.grades', label: 'Bảng điểm lớp học', href: '/teacher/grades.html', icon: '📝', visible: (p) => p.isTeacher },
-      { labelKey: 'nav.hr.leaveRequests', label: 'Đơn nghỉ', href: '/hr/leave-requests.html', icon: '🌴', visible: (p) => p.isTeacher },
     ],
   },
   {
@@ -118,7 +116,6 @@ export const NAV_CONFIG = [
     items: [
       { labelKey: 'nav.consultant.leads', label: 'Hồ sơ khách hàng', href: '/consultant/leads.html', icon: '📇', visible: (p) => p.roleCode === 'CONSULTANT' },
       { labelKey: 'nav.consultant.stats', label: 'Thống kê hồ sơ', href: '/consultant/stats.html', icon: '📊', visible: (p) => p.roleCode === 'CONSULTANT' },
-      { labelKey: 'nav.hr.leaveRequests', label: 'Đơn nghỉ (Cán bộ)', href: '/hr/leave-requests.html', icon: '🌴', visible: (p) => p.roleCode === 'CONSULTANT' },
     ],
   },
   {
