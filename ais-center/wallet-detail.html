@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Chi tiết ví — AIS Center</title>
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#0094D9" />
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/parent.css" />
+</head>
+<body>
+
+<header class="app-topbar">
+  <div class="app-topbar__title">💳 Chi tiết ví</div>
+  <div class="app-topbar__right"><button class="icon-btn" onclick="location.href='home.html'">✕</button></div>
+</header>
+
+<main class="app-main">
+  <div class="balance-hero">
+    <div class="balance-hero__label">Tổng số dư AIScoins</div>
+    <div class="balance-hero__value" id="totalBalance">–</div>
+  </div>
+
+  <div class="card">
+    <h3>Từng lô nạp (cũ nhất bị trừ trước)</h3>
+    <div id="batchList"></div>
+  </div>
+</main>
+
+<nav class="bottom-nav">
+  <a href="home.html"><span class="icon">🏠</span>Trang chủ</a>
+  <a href="wallet-detail.html" class="active"><span class="icon">💳</span>Ví</a>
+  <a href="debt.html"><span class="icon">🧾</span>Công nợ</a>
+</nav>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="env.js"></script>
+<script type="module" src="js/walletDetail.js"></script>
+</body>
+</html>

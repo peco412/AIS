@@ -56,6 +56,7 @@ document.getElementById('closeContactsModal').addEventListener('click', () => {
         <div class="delta">Sĩ số: ${c.student_count}</div>
         <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
           <a class="btn btn-outline btn-sm" href="/teacher/attendance.html?class=${c.id}">Điểm danh</a>
+          <a class="btn btn-outline btn-sm" href="/edu/class-attendance-matrix.html?class=${c.id}">📋 Xem bảng</a>
           <a class="btn btn-outline btn-sm" href="/teacher/grades.html?class=${c.id}">Bảng điểm</a>
           <button class="btn btn-outline btn-sm" data-contacts="${c.id}" data-name="${esc(c.name)}">Liên lạc PH</button>
         </div>

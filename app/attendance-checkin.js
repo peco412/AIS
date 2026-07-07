@@ -124,7 +124,26 @@ document.getElementById('btnCheckOut').addEventListener('click', () => doCheckin
     PROFILE = profile;
 
     if (!profile.centerId) {
-      document.getElementById('noCenterNotice').style.display = 'block';
+      // Khối văn phòng không gắn cố định 1 trung tâm — vẫn cho chấm công
+      // nếu họ đang thực sự có mặt tại 1 trung tâm nào đó (ví dụ đi công
+      // tác/họp), tự chọn đúng trung tâm đang đứng thay vì bị chặn hẳn.
+      const { data: centers } = await supabase.from('centers').select('id, name, latitude, longitude').order('name');
+      document.getElementById('officeCenterPicker').style.display = 'block';
+      document.getElementById('centerSelect').innerHTML = '<option value="">— Chọn trung tâm —</option>' +
+        (centers || []).map((c) => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
+
+      document.getElementById('centerSelect').addEventListener('change', async (e) => {
+        const chosen = (centers || []).find((c) => c.id === e.target.value);
+        if (!chosen || !chosen.latitude || !chosen.longitude) {
+          document.getElementById('checkinCard').style.display = 'none';
+          return;
+        }
+        CENTER = chosen;
+        document.getElementById('centerName').textContent = chosen.name;
+        document.getElementById('checkinCard').style.display = 'block';
+        watchPosition();
+        await loadTodayHistory();
+      });
       return;
     }
 

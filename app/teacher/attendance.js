@@ -1,5 +1,5 @@
 import { bootShell } from '/js/shell.js';
-import { supabase, esc } from '/js/supabase.js';
+import { supabase, esc, triggerPush } from '/js/supabase.js';
 
 let PROFILE = null;
 let STUDENTS = [];
@@ -118,8 +118,35 @@ document.getElementById('btnSave').addEventListener('click', async () => {
     alert('Lỗi lưu điểm danh: ' + error.message);
     return;
   }
+
+  // Học viên vắng KHÔNG PHÉP -> báo ngay cho Quản lý trung tâm để liên hệ
+  // phụ huynh, đúng yêu cầu — không đợi đến báo cáo tổng hợp cuối ngày.
+  const unexcusedStudents = STUDENTS.filter((s) => ATTENDANCE_STATE[s.id] === 'unexcused');
+  if (unexcusedStudents.length > 0) {
+    await notifyUnexcusedAbsence(classId, date, unexcusedStudents);
+  }
+
   alert('Đã lưu điểm danh buổi học.');
 });
+
+async function notifyUnexcusedAbsence(classId, date, students) {
+  const { data: classInfo } = await supabase.from('classes').select('name, center_id').eq('id', classId).single();
+  if (!classInfo) return;
+
+  const { data: role } = await supabase.from('system_roles').select('id').eq('code', 'CENTER_MANAGER').single();
+  if (!role) return;
+  const { data: managers } = await supabase.from('employees').select('id').eq('center_id', classInfo.center_id).eq('role_id', role.id);
+
+  const names = students.map((s) => s.full_name).join(', ');
+  const title = `⚠️ ${students.length} học viên vắng không phép hôm ${new Date(date).toLocaleDateString('vi-VN')}`;
+  const content = `Lớp ${classInfo.name}: ${names} — vắng không phép, cần liên hệ ngay với phụ huynh.`;
+
+  for (const manager of managers || []) {
+    const notif = { scope: 'personal', target_employee_id: manager.id, title, content, url: `/edu/class-attendance-matrix.html?class=${classId}` };
+    await supabase.from('notifications').insert({ ...notif, created_by: PROFILE.id });
+    triggerPush(notif);
+  }
+}
 
 (async () => {
   try {

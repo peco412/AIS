@@ -41,12 +41,14 @@ const DICT = {
   'nav.hr.contracts': { vi: 'Hợp đồng lao động', en: 'Labor contracts' },
   'nav.hr.leaveRequests': { vi: 'Đơn nghỉ (Cán bộ)', en: 'Leave requests (Staff)' },
   'nav.teacher.leaveRequests': { vi: 'Đơn nghỉ (Giáo viên)', en: 'Leave requests (Teachers)' },
+  'nav.teacher.leaveRequestsApprove': { vi: 'Duyệt đơn nghỉ giáo viên', en: 'Approve teacher leave' },
   'nav.hr.businessTrips': { vi: 'Đơn công tác', en: 'Business trips' },
 
   'nav.section.acc': { vi: 'Phòng kế toán', en: 'Accounting' },
   'nav.acc.paymentRequests': { vi: 'Phiếu đề nghị thanh toán', en: 'Payment requests' },
   'nav.acc.advanceRequests': { vi: 'Phiếu tạm ứng', en: 'Advance requests' },
   'nav.acc.reports': { vi: 'Báo cáo tài chính', en: 'Financial reports' },
+  'nav.acc.discountPrograms': { vi: 'Chương trình ưu đãi nạp ví', en: 'Wallet discount programs' },
   'nav.acc.payroll': { vi: 'Bảng lương', en: 'Payroll' },
 
   'nav.section.mkt': { vi: 'Phòng truyền thông', en: 'Marketing & Communications' },
@@ -67,6 +69,8 @@ const DICT = {
   'nav.edu.overview': { vi: 'Tổng quan trung tâm', en: 'Center overview' },
   'nav.edu.attendance': { vi: 'Điểm danh & thống kê', en: 'Attendance & stats' },
   'nav.edu.tuition': { vi: 'Thu học phí', en: 'Tuition collection' },
+  'nav.edu.debtOverview': { vi: 'Công nợ tổng hợp', en: 'Consolidated debt' },
+  'nav.edu.parentLinks': { vi: 'Liên kết Phụ huynh', en: 'Parent-student links' },
   'nav.edu.dutySchedule': { vi: 'Phân lịch trực trung tâm', en: 'Center duty schedule' },
   'nav.edu.teacherSchedule': { vi: 'Phân lịch tuần giáo viên', en: 'Teacher weekly schedule' },
   'nav.edu.teachers': { vi: 'Danh sách giáo viên', en: 'Teacher directory' },

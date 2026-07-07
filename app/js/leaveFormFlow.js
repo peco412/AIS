@@ -5,6 +5,10 @@ import { openPdfEditor } from '/js/pdfEditor.js';
 
 const STATUS_LABEL = new Proxy({}, { get: (_, code) => t('status.leaveform_' + code, code) });
 
+// Gộp lại thành 1 trang duy nhất cho tất cả nhân sự (trước đây tách 2 trang
+// riêng theo nhóm gây ra lỗi thiếu đường dẫn menu cho tư vấn viên/quản lý
+// trung tâm) — form vẫn tự động lọc đúng 4 loại theo ĐÚNG nhóm của người
+// tạo đơn, không hiển thị nhầm loại của nhóm khác.
 const FORM_TYPES = {
   office: [
     { code: '06.Donxinhoandoingaynghi', label: 'Hoán đổi ngày nghỉ hàng tuần', balanceImpact: 'none' },
@@ -19,31 +23,30 @@ const FORM_TYPES = {
     { code: '13.Donxinnghikhongluonggiaovien', label: 'Nghỉ không lương', balanceImpact: 'unpaid' },
   ],
 };
+const ALL_FORMS = [...FORM_TYPES.office, ...FORM_TYPES.teacher];
 
-/**
- * Khởi tạo trang đơn nghỉ cho 1 nhóm nhân sự.
- * @param {'office'|'teacher'} staffGroup
- */
-export async function initLeaveFormFlow(staffGroup) {
+export async function initLeaveFormFlow() {
   let PROFILE = null;
+  let MY_GROUP = 'office'; // nhóm CỦA CHÍNH người đăng nhập — quyết định 4 loại đơn được tạo
   let ALL_ROWS = [];
-  let TEMPLATES = {}; // code -> document_templates row (null nếu chưa upload)
-  const forms = FORM_TYPES[staffGroup];
+  let TEMPLATES = {};
+  let IS_HR = false;
 
   function fmtDate(d) { return d ? new Date(d).toLocaleDateString('vi-VN') : '—'; }
-  function formLabel(code) { return forms.find((f) => f.code === code)?.label || code; }
+  function formLabel(code) { return ALL_FORMS.find((f) => f.code === code)?.label || code; }
+  function groupOf(formCode) { return formCode?.match(/^0[6-9]\./) ? 'office' : 'teacher'; }
 
-  // "Trưởng phòng" cấp 1: với văn phòng là DEPT_HEAD/DEPT_DEPUTY cùng phòng;
-  // với giáo viên là Quản lý trung tâm (CENTER_MANAGER) cùng trung tâm —
-  // đúng nguyên tắc "trưởng phòng tương đương quản lý trung tâm" cho khối
-  // học vụ/giáo viên (đã áp dụng nhất quán với module Đề xuất nội bộ).
+  // "Trưởng phòng" cấp 1: văn phòng dùng DEPT_HEAD/DEPT_DEPUTY cùng phòng;
+  // giáo viên/tư vấn dùng Quản lý trung tâm cùng trung tâm (đúng nguyên tắc
+  // "trưởng phòng tương đương quản lý trung tâm" cho khối học vụ).
   function canApproveLevel1(row) {
-    if (staffGroup === 'teacher') {
+    const rowGroup = groupOf(row.form_code);
+    if (rowGroup === 'teacher') {
       return PROFILE.roleCode === 'CENTER_MANAGER' && PROFILE.centerId === row.employee_center_id;
     }
     return PROFILE.departmentCode === row.employee_department_code && ['DEPT_HEAD', 'DEPT_DEPUTY'].includes(PROFILE.roleCode);
   }
-  function canApproveLevel2() { return PROFILE.departmentCode === 'HR' && ['DEPT_HEAD', 'DEPT_DEPUTY'].includes(PROFILE.roleCode); }
+  function canApproveLevel2() { return IS_HR; }
   function canApproveLevel3() { return ['EXECUTIVE', 'TECH'].includes(PROFILE.roleCode); }
 
   function actionFor(row) {
@@ -54,7 +57,7 @@ export async function initLeaveFormFlow(staffGroup) {
   }
 
   async function loadTemplates() {
-    const codes = forms.map((f) => f.code);
+    const codes = ALL_FORMS.map((f) => f.code);
     const { data } = await supabase.from('document_templates').select('*').in('code', codes);
     TEMPLATES = {};
     (data || []).forEach((tpl) => { TEMPLATES[tpl.code] = tpl; });
@@ -68,7 +71,6 @@ export async function initLeaveFormFlow(staffGroup) {
     let query = supabase
       .from('leave_requests')
       .select('id, code, form_code, start_date, days, return_date, reason_note, status, file_url, employee_id, employees!leave_requests_employee_id_fkey(full_name, employee_code, department_id, center_id, departments(code))')
-      .eq('staff_group', staffGroup)
       .order('created_at', { ascending: false });
     if (scope === 'mine') query = query.eq('employee_id', PROFILE.id);
 
@@ -84,16 +86,19 @@ export async function initLeaveFormFlow(staffGroup) {
   }
 
   function render() {
-    document.getElementById('resultCount').textContent = `${ALL_ROWS.length} đơn`;
-    const tbody = document.getElementById('tableBody');
-    if (ALL_ROWS.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="empty-cell">Chưa có đơn nào.</td></tr>'; return; }
+    const groupFilter = document.getElementById('filterGroup')?.value || '';
+    const rows = ALL_ROWS.filter((r) => !groupFilter || groupOf(r.form_code) === groupFilter);
 
-    tbody.innerHTML = ALL_ROWS.map((r) => {
+    document.getElementById('resultCount').textContent = `${rows.length} đơn`;
+    const tbody = document.getElementById('tableBody');
+    if (rows.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="empty-cell">Chưa có đơn nào.</td></tr>'; return; }
+
+    tbody.innerHTML = rows.map((r) => {
       const action = actionFor(r);
       return `
       <tr>
         <td class="cell-code">${esc(r.code)}</td>
-        <td>${esc(r.employees?.full_name || '—')}</td>
+        <td>${esc(r.employees?.full_name || '—')}<div class="cell-muted" style="font-weight:400;">${groupOf(r.form_code) === 'teacher' ? 'Giáo viên' : 'Cán bộ'}</div></td>
         <td class="cell-muted">${esc(formLabel(r.form_code))}</td>
         <td class="cell-muted">${fmtDate(r.start_date)} (${r.days} ngày)</td>
         <td><span class="badge badge-${r.status}">${esc(STATUS_LABEL[r.status] || r.status)}</span></td>
@@ -195,15 +200,16 @@ export async function initLeaveFormFlow(staffGroup) {
   }
 
   // ---------------------------------------------------------------------
-  // Tạo đơn mới — chọn đúng loại đơn sẽ nạp đúng biểu mẫu tương ứng
+  // Tạo đơn mới — CHỈ hiện đúng 4 loại thuộc nhóm của chính người tạo đơn
+  // (cán bộ hay giáo viên), không cho chọn nhầm loại của nhóm khác.
   // ---------------------------------------------------------------------
   const createModal = document.getElementById('createModal');
   const createError = document.getElementById('createError');
   const formCodeSelect = document.getElementById('formCode');
-  formCodeSelect.innerHTML = forms.map((f) => `<option value="${f.code}">${esc(f.label)}</option>`).join('');
 
   document.getElementById('btnAdd').addEventListener('click', () => {
     createError.classList.remove('show');
+    formCodeSelect.innerHTML = FORM_TYPES[MY_GROUP].map((f) => `<option value="${f.code}">${esc(f.label)}</option>`).join('');
     document.getElementById('startDate').value = '';
     document.getElementById('days').value = '';
     document.getElementById('returnDate').value = '';
@@ -240,7 +246,7 @@ export async function initLeaveFormFlow(staffGroup) {
       fieldMap: TEMPLATE.field_map || [],
       onSave: async (blob) => {
         const { data: inserted, error } = await supabase.from('leave_requests').insert({
-          employee_id: PROFILE.id, form_code: formCode, staff_group: staffGroup, template_id: TEMPLATE.id,
+          employee_id: PROFILE.id, form_code: formCode, staff_group: MY_GROUP, template_id: TEMPLATE.id,
           leave_type: formCode.includes('nghikhongluong') ? 'unpaid' : 'annual',
           start_date: startDate, days: Number(days),
           return_date: document.getElementById('returnDate').value || null,
@@ -252,7 +258,7 @@ export async function initLeaveFormFlow(staffGroup) {
         const fileUrl = await overwriteFile(inserted.id, blob);
         await supabase.from('leave_requests').update({ file_url: fileUrl }).eq('id', inserted.id);
 
-        const deptCode = staffGroup === 'teacher' ? 'EDU' : (PROFILE.departmentCode || 'HR');
+        const deptCode = MY_GROUP === 'teacher' ? 'EDU' : (PROFILE.departmentCode || 'HR');
         notifyDepartmentHeads(deptCode, `Có đơn "${formLabel(formCode)}" mới cần duyệt`,
           `${PROFILE.fullName} vừa gửi đơn ${formLabel(formCode)} — vào duyệt ngay.`, location.pathname);
 
@@ -262,6 +268,7 @@ export async function initLeaveFormFlow(staffGroup) {
   });
 
   document.getElementById('viewScope').addEventListener('change', loadRows);
+  document.getElementById('filterGroup')?.addEventListener('change', render);
 
   try {
     const { profile } = await bootShell();
@@ -270,6 +277,14 @@ export async function initLeaveFormFlow(staffGroup) {
       ...profile, signatureUrl: emp?.signature_url || null,
       departmentCode: emp?.departments?.code, centerId: emp?.center_id,
     };
+    MY_GROUP = profile.isTeacher ? 'teacher' : 'office';
+    IS_HR = PROFILE.departmentCode === 'HR' && ['DEPT_HEAD', 'DEPT_DEPUTY'].includes(profile.roleCode);
+
+    // Bộ lọc "Nhóm nhân sự" — CHỈ hiện ở giao diện Nhân sự (nơi cần rà soát
+    // đơn của cả 2 nhóm cùng lúc), theo đúng yêu cầu.
+    const groupFilterEl = document.getElementById('filterGroup');
+    if (groupFilterEl) groupFilterEl.style.display = (IS_HR || ['EXECUTIVE', 'TECH'].includes(profile.roleCode)) ? '' : 'none';
+
     await loadTemplates();
     await loadRows();
   } catch (e) { /* bootShell tự điều hướng */ }

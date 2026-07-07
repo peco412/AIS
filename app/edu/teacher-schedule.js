@@ -1,12 +1,12 @@
 import { bootShell } from '/js/shell.js';
 import { supabase, esc } from '/js/supabase.js';
 
-const DAY_LABEL = { 1: 'Thứ 2', 2: 'Thứ 3', 3: 'Thứ 4', 4: 'Thứ 5', 5: 'Thứ 6', 6: 'Thứ 7', 7: 'Chủ nhật' };
+const DAY_LABEL = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'];
 let PROFILE = null;
 let WORKING_CENTER_ID = null;
 let CAN_EDIT = false;
-let ALL_ROWS = [];
 let TEACHERS = [];
+let WEEK_ROWS = [];
 
 function fmtTime(t) { return t ? t.slice(0, 5) : ''; }
 function mondayOf(dateStr) {
@@ -15,6 +15,12 @@ function mondayOf(dateStr) {
   d.setDate(d.getDate() - day + 1);
   return d.toISOString().slice(0, 10);
 }
+function addDays(dateStr, n) {
+  const d = new Date(dateStr);
+  d.setDate(d.getDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+function fmtShort(d) { return new Date(d).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }); }
 
 async function initCenterPicker() {
   if (PROFILE.centerId) { WORKING_CENTER_ID = PROFILE.centerId; return; }
@@ -26,15 +32,14 @@ async function initCenterPicker() {
   sel.addEventListener('change', async () => {
     WORKING_CENTER_ID = sel.value;
     await loadLookups();
-    await loadRows();
+    await loadWeek();
   });
 }
 
 async function loadLookups() {
   const [{ data: classes }, { data: teachers }] = await Promise.all([
     supabase.from('classes').select('id, name').eq('center_id', WORKING_CENTER_ID).eq('status', 'active').order('name'),
-    supabase.from('employees').select('id, full_name, positions(name)').eq('center_id', WORKING_CENTER_ID)
-      .eq('positions.name', 'Giáo viên'),
+    supabase.from('employees').select('id, full_name, positions(name)').eq('center_id', WORKING_CENTER_ID).eq('positions.name', 'Giáo viên'),
   ]);
   TEACHERS = (teachers || []).filter((t) => t.positions?.name === 'Giáo viên');
 
@@ -45,15 +50,18 @@ async function loadLookups() {
     TEACHERS.map((t) => `<option value="${t.id}">${esc(t.full_name)}</option>`).join('');
   document.getElementById('teacherSelect').innerHTML = teacherOpts;
   document.getElementById('substituteFor').innerHTML = '<option value="">— Không —</option>' + teacherOpts;
-
-  document.getElementById('filterWeek').value = mondayOf();
 }
 
-async function loadRows() {
-  const tbody = document.getElementById('tableBody');
-  tbody.innerHTML = '<tr><td colspan="6" class="empty-cell">Đang tải dữ liệu...</td></tr>';
+function currentWeekStart() { return mondayOf(document.getElementById('filterWeek').value); }
 
-  const weekStart = mondayOf(document.getElementById('filterWeek').value);
+async function loadWeek() {
+  const tbody = document.getElementById('weekGridBody');
+  tbody.innerHTML = '<tr><td class="empty-cell">Đang tải dữ liệu...</td></tr>';
+
+  const weekStart = currentWeekStart();
+  const weekEnd = addDays(weekStart, 6);
+  document.getElementById('weekLabel').textContent = `Tuần ${fmtShort(weekStart)} – ${fmtShort(weekEnd)}`;
+
   const { data, error } = await supabase
     .from('teacher_weekly_schedules')
     .select(`
@@ -63,38 +71,65 @@ async function loadRows() {
       substitute_for_teacher_id, sub_for:employees!teacher_weekly_schedules_substitute_for_teacher_id_fkey(full_name)
     `)
     .eq('center_id', WORKING_CENTER_ID)
-    .eq('week_start_date', weekStart)
-    .order('day_of_week');
+    .eq('week_start_date', weekStart);
 
-  if (error) { tbody.innerHTML = `<tr><td colspan="6" class="empty-cell">Lỗi: ${esc(error.message)}</td></tr>`; return; }
-  ALL_ROWS = data || [];
-  render();
+  if (error) { tbody.innerHTML = `<tr><td class="empty-cell">Lỗi: ${esc(error.message)}</td></tr>`; return; }
+  WEEK_ROWS = data || [];
+
+  document.getElementById('resultCount').textContent = `${TEACHERS.length} giáo viên`;
+  renderHead(weekStart);
+  renderBody(weekStart);
 }
 
-function render() {
-  const search = document.getElementById('searchInput').value.trim().toLowerCase();
-  const rows = ALL_ROWS.filter((r) => !search || (r.teacher?.full_name || '').toLowerCase().includes(search));
-  document.getElementById('resultCount').textContent = `${rows.length} buổi dạy`;
+function renderHead(weekStart) {
+  const head = document.getElementById('weekGridHead');
+  head.innerHTML = '<th class="week-grid__name-col">Giáo viên</th>' +
+    DAY_LABEL.map((label, i) => `<th>${label}<span class="day-date">${fmtShort(addDays(weekStart, i))}</span></th>`).join('');
+}
 
-  const tbody = document.getElementById('tableBody');
-  if (rows.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="empty-cell">Chưa có lịch nào trong tuần này.</td></tr>'; return; }
+function renderBody(weekStart) {
+  const tbody = document.getElementById('weekGridBody');
+  if (TEACHERS.length === 0) { tbody.innerHTML = '<tr><td class="empty-cell">Trung tâm chưa có giáo viên nào.</td></tr>'; return; }
 
-  tbody.innerHTML = rows.map((r) => `
+  const byTeacherDay = {};
+  WEEK_ROWS.forEach((r) => { byTeacherDay[`${r.teacher_id}_${r.day_of_week}`] = r; });
+
+  tbody.innerHTML = TEACHERS.map((t) => `
     <tr>
-      <td>${DAY_LABEL[r.day_of_week]}</td>
-      <td class="cell-code">${fmtTime(r.start_time)}${r.end_time ? ' – ' + fmtTime(r.end_time) : ''}</td>
-      <td>${esc(r.classes?.name || '—')}</td>
-      <td>${esc(r.teacher?.full_name || '—')} ${r.is_substitute ? '<span class="badge badge-submitted">Dạy thay</span>' : ''}</td>
-      <td class="cell-muted">${r.is_substitute ? esc(r.sub_for?.full_name || '—') : '—'}</td>
-      <td>${CAN_EDIT ? `<button class="btn btn-outline btn-sm" data-edit="${r.id}">Sửa</button>` : ''}</td>
+      <td class="week-grid__name-col">${esc(t.full_name)}</td>
+      ${DAY_LABEL.map((_, i) => {
+        const dayOfWeek = i + 1;
+        const sched = byTeacherDay[`${t.id}_${dayOfWeek}`];
+        return `<td>
+          <div class="week-cell ${sched ? 'has-shift' : ''}" data-teacher="${t.id}" data-day="${dayOfWeek}" data-sched="${sched?.id || ''}">
+            ${sched
+              ? `<span class="shift-label">${esc(sched.classes?.name || '—')}${sched.start_time ? '<br>' + fmtTime(sched.start_time) : ''}${sched.is_substitute ? ' 🔁' : ''}</span>`
+              : (CAN_EDIT ? '<span class="shift-empty">+</span>' : '')}
+          </div>
+        </td>`;
+      }).join('')}
     </tr>
   `).join('');
 
-  tbody.querySelectorAll('[data-edit]').forEach((b) => b.addEventListener('click', () => openEdit(b.dataset.edit)));
+  if (!CAN_EDIT) return;
+  tbody.querySelectorAll('.week-cell').forEach((cell) => {
+    cell.addEventListener('click', () => {
+      const schedId = cell.dataset.sched;
+      if (schedId) openEdit(schedId);
+      else openAddForCell(cell.dataset.teacher, Number(cell.dataset.day));
+    });
+  });
 }
 
-document.getElementById('filterWeek').addEventListener('change', loadRows);
-document.getElementById('searchInput').addEventListener('input', render);
+document.getElementById('filterWeek').addEventListener('change', loadWeek);
+document.getElementById('btnPrevWeek').addEventListener('click', () => {
+  document.getElementById('filterWeek').value = addDays(currentWeekStart(), -7);
+  loadWeek();
+});
+document.getElementById('btnNextWeek').addEventListener('click', () => {
+  document.getElementById('filterWeek').value = addDays(currentWeekStart(), 7);
+  loadWeek();
+});
 
 document.getElementById('isSubstitute').addEventListener('change', (e) => {
   document.getElementById('substituteForField').style.display = e.target.checked ? '' : 'none';
@@ -105,21 +140,21 @@ const form = document.getElementById('schedForm');
 const formError = document.getElementById('formError');
 const deleteBtn = document.getElementById('deleteSched');
 
-document.getElementById('btnAdd').addEventListener('click', () => {
+function openAddForCell(teacherId, dayOfWeek) {
   form.reset();
   document.getElementById('schedId').value = '';
-  document.getElementById('weekStart').value = mondayOf(document.getElementById('filterWeek').value);
+  document.getElementById('teacherSelect').value = teacherId;
+  document.getElementById('dayOfWeek').value = dayOfWeek;
+  document.getElementById('weekStart').value = currentWeekStart();
   document.getElementById('substituteForField').style.display = 'none';
-  document.getElementById('modalTitle').textContent = 'Thêm buổi dạy';
+  document.getElementById('modalTitle').textContent = `Thêm buổi dạy — ${DAY_LABEL[dayOfWeek - 1]}`;
   deleteBtn.style.display = 'none';
   formError.classList.remove('show');
   modal.classList.add('show');
-});
-document.getElementById('closeModal').addEventListener('click', () => modal.classList.remove('show'));
-document.getElementById('cancelModal').addEventListener('click', () => modal.classList.remove('show'));
+}
 
 function openEdit(id) {
-  const row = ALL_ROWS.find((r) => r.id === id);
+  const row = WEEK_ROWS.find((r) => r.id === id);
   if (!row) return;
   document.getElementById('modalTitle').textContent = 'Sửa buổi dạy';
   document.getElementById('schedId').value = row.id;
@@ -138,13 +173,16 @@ function openEdit(id) {
   modal.classList.add('show');
 }
 
+document.getElementById('closeModal').addEventListener('click', () => modal.classList.remove('show'));
+document.getElementById('cancelModal').addEventListener('click', () => modal.classList.remove('show'));
+
 deleteBtn.addEventListener('click', async () => {
   const id = document.getElementById('schedId').value;
   if (!id || !confirm('Xoá buổi dạy này?')) return;
   const { error } = await supabase.from('teacher_weekly_schedules').delete().eq('id', id);
   if (error) { formError.textContent = error.message; formError.classList.add('show'); return; }
   modal.classList.remove('show');
-  await loadRows();
+  await loadWeek();
 });
 
 form.addEventListener('submit', async (e) => {
@@ -156,7 +194,7 @@ form.addEventListener('submit', async (e) => {
     class_id: document.getElementById('classSelect').value || null,
     teacher_id: document.getElementById('teacherSelect').value,
     center_id: WORKING_CENTER_ID,
-    week_start_date: mondayOf(document.getElementById('weekStart').value),
+    week_start_date: currentWeekStart(),
     day_of_week: Number(document.getElementById('dayOfWeek').value),
     start_time: document.getElementById('startTime').value || null,
     end_time: document.getElementById('endTime').value || null,
@@ -173,7 +211,7 @@ form.addEventListener('submit', async (e) => {
       : await supabase.from('teacher_weekly_schedules').insert(payload);
     if (error) throw error;
     modal.classList.remove('show');
-    await loadRows();
+    await loadWeek();
   } catch (err) {
     formError.textContent = err.message || 'Có lỗi xảy ra.';
     formError.classList.add('show');
@@ -187,9 +225,9 @@ form.addEventListener('submit', async (e) => {
     const { profile } = await bootShell();
     PROFILE = profile;
     CAN_EDIT = profile.isCenterManager;
-    document.getElementById('btnAdd').style.display = CAN_EDIT ? '' : 'none';
+    document.getElementById('filterWeek').value = mondayOf();
     await initCenterPicker();
     await loadLookups();
-    await loadRows();
+    await loadWeek();
   } catch (e) { /* bootShell tự điều hướng */ }
 })();

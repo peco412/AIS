@@ -20,6 +20,8 @@ supabase_migrations_10_additional_rls.sql
 supabase_migrations_11_security_fixes.sql
 supabase_migrations_12_spec_completion.sql
 supabase_migrations_13_private_storage.sql
+supabase_migrations_14_new_features.sql
+supabase_migrations_15_new_requests.sql
 ```
 
 **Trước khi chạy file 12**, cần set 1 config bí mật cho việc mã hoá tài khoản nội bộ:
@@ -29,6 +31,21 @@ alter database postgres set app.settings.mkt_secret_key = 'CHUOI-BI-MAT-DAI-NGAU
 (Trên Supabase Cloud: Dashboard → Database → Custom Postgres Config, hoặc dùng Supabase Vault nếu muốn quản lý khoá bài bản hơn.)
 
 Sau khi chạy file 13, kiểm tra lại trong Dashboard → Storage → bucket `attachments` phải hiện **Private**, không còn "Public".
+
+**Sau khi chạy file 14-15**, cấu hình Web Push cho tính năng thông báo đẩy:
+```bash
+supabase secrets set VAPID_PUBLIC_KEY=<khớp đúng với js/pushNotifications.js>
+supabase secrets set VAPID_PRIVATE_KEY=<giữ bí mật tuyệt đối>
+supabase secrets set VAPID_SUBJECT=mailto:admin@yourcompany.com
+supabase functions deploy send-push
+```
+
+## 1c. Nhớ tăng version cache mỗi lần deploy quan trọng
+
+`app/service-worker.js` dùng network-first cho HTML/JS/CSS nên hầu hết trường hợp tự cập nhật, nhưng để chắc chắn **xoá sạch cache cũ ngay lập tức** cho mọi người dùng, tăng số trong dòng:
+```js
+const CACHE_NAME = 'ais-shell-v5'; // -> v6, v7... mỗi lần deploy có thay đổi quan trọng
+```
 
 ---
 

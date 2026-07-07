@@ -202,6 +202,13 @@ table.data-table { width: 100%; min-width: 640px; border-collapse: collapse; fon
 .form-error.show { display: block; }
 
 @media (max-width: 640px) {
+  /* Topbar bên phải có tới 5 phần tử (ngôn ngữ, cài app, thông báo, user
+     chip, đăng xuất) — trên điện thoại hẹp dễ chật/tràn nếu giữ nguyên
+     khoảng cách như bản desktop. */
+  .topbar__right { gap: 6px; }
+  #langSwitcher button { padding: 4px 8px; font-size: 10.5px; }
+  .icon-btn { width: 32px; height: 32px; font-size: 15px; }
+
   .field-grid-2 { grid-template-columns: 1fr; gap: 0; } /* co về 1 cột, tránh ô nhập bị bóp chật trên điện thoại */
   .toolbar { flex-direction: column; align-items: stretch; }
   .toolbar__filters { flex-direction: column; }

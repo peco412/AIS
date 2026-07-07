@@ -75,7 +75,10 @@ function render() {
       <td class="mono">${r.student_count}</td>
       <td class="cell-muted">${fmtDate(r.start_date)}</td>
       <td><span class="badge badge-${r.status}">${esc(STATUS_LABEL[r.status] || r.status)}</span></td>
-      <td><button class="btn btn-outline btn-sm" data-edit="${r.id}">Sửa</button></td>
+      <td>
+        <button class="btn btn-outline btn-sm" data-edit="${r.id}">Sửa</button>
+        <a href="/edu/class-attendance-matrix.html?class=${r.id}" class="btn btn-outline btn-sm">📋 Điểm danh</a>
+      </td>
     </tr>
   `).join('');
 

@@ -24,7 +24,11 @@ async function loadRows() {
     .select('id, code, title, status, file_url, created_at, updated_at, employee_id, department_id, departments(name, code), employees!internal_proposals_employee_id_fkey(full_name, employee_code)')
     .order('updated_at', { ascending: false });
   if (scope === 'mine') query = query.eq('employee_id', PROFILE.id);
-  else if (PROFILE.departmentId) query = query.eq('department_id', PROFILE.departmentId);
+  else if (scope === 'dept' && PROFILE.departmentId) query = query.eq('department_id', PROFILE.departmentId);
+  // scope === 'all' -> không thêm điều kiện gì, để RLS tự giới hạn đúng quyền
+  // (BĐH/Kỹ thuật thấy hết — đây chính là lựa chọn cần dùng để duyệt đề
+  // xuất từ CÁC phòng ban khác, trước đây không có lựa chọn này nên đề
+  // xuất cần duyệt luôn bị ẩn mất khỏi danh sách).
 
   if (monthValue) {
     const [y, m] = monthValue.split('-').map(Number);
@@ -254,6 +258,13 @@ document.getElementById('btnClearMonth').addEventListener('click', () => {
     IS_EXEC = ['EXECUTIVE', 'TECH'].includes(profile.roleCode);
     if (['DEPT_HEAD', 'DEPT_DEPUTY', 'EXECUTIVE', 'TECH'].includes(profile.roleCode)) {
       document.getElementById('deptScopeOption').style.display = 'block';
+    }
+    if (IS_EXEC) {
+      document.getElementById('allScopeOption').style.display = 'block';
+      // Ban điều hành/Kỹ thuật cần duyệt đề xuất từ MỌI phòng ban, không
+      // chỉ đề xuất của chính mình — mặc định "Tất cả" để không bị ẩn mất
+      // đề xuất cần xử lý (đây chính là nguyên nhân bug "duyệt cấp 2 ẩn").
+      document.getElementById('viewScope').value = 'all';
     }
     await loadRows();
   } catch (e) { /* bootShell tự điều hướng */ }

@@ -38,15 +38,22 @@
 
   <main class="main">
     <div class="page-header">
-      <div><h1>Đơn nghỉ — Cán bộ khối văn phòng</h1><div class="sub">4 loại đơn: Hoán đổi ngày nghỉ / Nghỉ phép / Nghỉ bù / Nghỉ không lương — duyệt 3 cấp: Trưởng phòng → Nhân sự → Ban điều hành.</div></div>
+      <div><h1>Đơn nghỉ</h1><div class="sub">8 loại đơn (4 cho cán bộ khối văn phòng, 4 cho giáo viên) — duyệt 3 cấp: Trưởng phòng/Quản lý trung tâm → Nhân sự → Ban điều hành.</div></div>
       <button class="btn btn-accent" id="btnAdd">+ Tạo đơn mới</button>
     </div>
 
     <div class="toolbar">
-      <select class="select-input" id="viewScope">
-        <option value="mine">Đơn của tôi</option>
-        <option value="all">Tất cả (theo quyền)</option>
-      </select>
+      <div class="toolbar__filters">
+        <select class="select-input" id="viewScope">
+          <option value="mine">Đơn của tôi</option>
+          <option value="all">Tất cả (theo quyền)</option>
+        </select>
+        <select class="select-input" id="filterGroup" style="display:none;">
+          <option value="">Tất cả nhóm</option>
+          <option value="office">Cán bộ khối văn phòng</option>
+          <option value="teacher">Giáo viên</option>
+        </select>
+      </div>
       <div class="cell-muted" id="resultCount"></div>
     </div>
 
@@ -83,7 +90,7 @@
 <script src="/env.js"></script>
 <script type="module">
   import { initLeaveFormFlow } from '/js/leaveFormFlow.js';
-  initLeaveFormFlow('office');
+  initLeaveFormFlow();
 </script>
 <script src="/js/pwa.js"></script>
 </body>

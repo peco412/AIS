@@ -1,113 +1,75 @@
 # ERP AIS — Database Schema (Supabase / PostgreSQL)
 
-Thiết kế nền tảng dữ liệu cho toàn bộ hệ thống ERP AIS (2 phân hệ ALOHA/iLingo, 8 trung tâm, 8 phòng ban, workflow ký số nhiều cấp). Tài liệu này đã viết lại toàn bộ sau đợt rà soát bảo mật + hoàn thiện theo đề bài — phản ánh đúng cấu trúc **13 file migration** hiện tại.
+Đã viết lại để phản ánh đúng **15 file migration** hiện tại (từ 01 đến file 15).
 
 ---
 
-## 1. Thứ tự chạy migration (BẮT BUỘC đúng thứ tự)
+## 1. Thứ tự chạy migration
 
-| # | File | Nội dung |
+| # | File | Nội dung chính |
 |---|---|---|
-| 1 | `01_core_schema.sql` | Phân hệ, trung tâm, phòng ban, chức vụ, vai trò, nhân viên |
-| 2 | `02_academic_schema.sql` | Chương trình học, lớp, học viên, giáo viên, lịch trực/lịch tuần, CRM tư vấn |
-| 3 | `03_hr_schema.sql` | Biểu mẫu, hợp đồng lao động, ngày phép, đơn nghỉ phép, đơn công tác |
-| 4 | `04_accounting_schema.sql` | Thanh toán, tạm ứng, công nợ, dòng tiền, lương, phân việc |
-| 5 | `05_mkt_facilities_schema.sql` | Yêu cầu truyền thông, trình sự kiện, tài khoản nội bộ, yêu cầu CSVC, mua sắm, kiểm kê tài sản |
-| 6 | `06_common_modules_schema.sql` | Đề xuất nội bộ, kho lưu trữ, ký số (log), thông báo, lịch họp, log hoạt động |
-| 7 | `07_id_generation.sql` | Hàm sinh mã `AIS-0001` và `Mã-yyyy-mm-000001` + trigger tự gán |
-| 8 | `08_rls_policies.sql` | Hàm helper phân quyền + RLS bản đầu (nhiều lỗ hổng — đã vá ở file 11) |
-| 9 | `09_seed_data.sql` | Dữ liệu nền: phân hệ, trung tâm, phòng ban, chức vụ, vai trò, chương trình học, biểu mẫu |
-| 10 | `supabase_migrations_10_additional_rls.sql` | Bổ sung UPDATE cho các phiếu ký nhiều cấp, RLS cho `leave_balances`/`class_attendance`/`student_grades`/`employee_documents`/`meeting_participants`/`payroll`/`receivables`/`cash_flow_entries` |
-| 11 | `supabase_migrations_11_security_fixes.sql` | **Vá bảo mật** — xem mục 3 |
-| 12 | `supabase_migrations_12_spec_completion.sql` | **Hoàn thiện theo đề bài** — xem mục 4 |
-| 13 | `supabase_migrations_13_private_storage.sql` | Chuyển bucket `attachments` sang Private + RLS Storage |
+| 1-9 | `01_core_schema.sql` → `09_seed_data.sql` | Schema gốc + dữ liệu nền (phân hệ, trung tâm, phòng ban, chương trình học...) |
+| 10 | `supabase_migrations_10_additional_rls.sql` | Bổ sung UPDATE cho các phiếu ký nhiều cấp, RLS còn thiếu ở phase 1 |
+| 11 | `supabase_migrations_11_security_fixes.sql` | Vá lỗ hổng RLS nghiêm trọng (leo quyền, tự duyệt, lộ PII), state-machine duyệt phiếu, RPC trừ phép/atomic |
+| 12 | `supabase_migrations_12_spec_completion.sql` | Thu hẹp RLS đúng phạm vi đề bài, bảng `mkt_ad_expenses`, mã hoá tài khoản nội bộ |
+| 13 | `supabase_migrations_13_private_storage.sql` | Chuyển bucket `attachments` Public → Private + RLS Storage |
+| 14 | `supabase_migrations_14_new_features.sql` | Giờ làm việc cụ thể, Ban chuyên môn/giáo viên linh hoạt, **thu học phí** (`tuition_payments`, tự log vào `cash_flow_entries`), **xin thêm quyền hạn** (`permission_requests`, `granted_permissions`) |
+| 15 | `supabase_migrations_15_new_requests.sql` | Kế toán xem được nghỉ phép đã duyệt (tính lương tự động), bảng `push_subscriptions` cho Web Push |
+| 16 | `supabase_migrations_16_permission_enforcement.sql` | Nối "xin thêm quyền hạn" xuống RLS thật cho nhóm bảng báo cáo/quản trị từng phòng ban; **phát hiện và vá thêm**: bảng `positions` trước giờ không hề có RLS |
 
-**Trước khi chạy file 12**, phải set khoá mã hoá dùng cho tài khoản nội bộ (mục 5):
+**Trước khi chạy file 12**, set khoá mã hoá tài khoản nội bộ:
 ```sql
-alter database postgres set app.settings.mkt_secret_key = 'CHUOI-BI-MAT-DAI-NGAU-NHIEN-KHAC-NHAU-MOI-MOI-TRUONG';
+alter database postgres set app.settings.mkt_secret_key = 'CHUOI-BI-MAT-DAI-NGAU-NHIEN';
 ```
 
-Sau file 13, kiểm tra Dashboard → Storage → bucket `attachments` phải hiện **Private**.
+## 2. Điểm quan trọng cần nhớ khi viết thêm migration (rút ra từ các lỗi từng gặp)
 
-## 2. Logic sinh mã tự động
+1. **Trigger ghi vào bảng khác cần `SECURITY DEFINER`** nếu bảng đích có RLS — bài học từ lỗi khoá `document_code_counters` khiến toàn bộ sinh mã phiếu bị vỡ.
+2. **Kiểm tra đúng tên cột thật** trước khi viết policy — bài học từ `signature_logs.signed_by` (cột thật là `employee_id`).
+3. **Trigger chặn tự sửa hồ sơ cần xét đúng CHIỀU thay đổi** — bài học từ lỗi chặn cả `temp_password_flag: true→false` (thao tác hợp lệ khi đổi mật khẩu lần đầu) lẫn `false→true` (mới cần chặn), khiến hệ thống bắt đổi mật khẩu lặp vô hạn.
+4. **File đính kèm luôn lưu PATH, không lưu public URL** (bucket private từ file 13) — dùng `resolveFileUrl()`/`uploadPrivateFile()` có sẵn trong `app/js/supabase.js`.
+5. **Mở rộng quyền xem dữ liệu cho 1 phòng ban mới cần dùng tính năng liên phòng ban** phải kiểm tra kỹ RLS hiện tại — ví dụ ACC cần xem `leave_requests` để tính lương nhưng RLS gốc chỉ cho HR/chính chủ xem (đã vá ở file 15).
 
-- **Nhân viên**: sequence toàn cục `employee_code_seq` → `AIS-0001`, `AIS-0002`... (không reset).
-- **Phiếu**: bảng đếm `document_code_counters(prefix, year, month)` → `{Mã}-{yyyy}-{mm}-000001`, reset `000001` mỗi tháng theo từng prefix (`HR`, `ACC1`, `ACC2`, `MKT`, `FAC`, `DX`).
-- Cả 2 hàm `generate_employee_code()` và `generate_document_code()` đã được đổi sang **`SECURITY DEFINER`** ở file 11 — bắt buộc, vì bảng `document_code_counters` đã bị khoá RLS chỉ cho TECH ở cùng file; nếu không đổi, mọi nhân viên khác sẽ **không insert được bất kỳ phiếu nào** (trigger chạy với quyền người gọi, bị RLS chặn ngay bước sinh mã).
+## 3. Bảng mới thêm ở file 14-15
 
-## 3. `supabase_migrations_11_security_fixes.sql` — vá gì
-
-| Vấn đề gốc | Cách vá |
+| Bảng | Mục đích |
 |---|---|
-| `employees_select_all using (true)` — lộ PII (CCCD, SĐT, địa chỉ...) cho cả người chưa đăng nhập | Giới hạn `to authenticated` |
-| `employees_update_self` không giới hạn cột — tự nâng quyền lên EXECUTIVE/TECH | Trigger `prevent_self_privilege_escalation()` chặn tự đổi `role_id/department_id/center_id/status/employee_code/temp_password_flag` trừ khi là HR quản trị hoặc Executive/Tech |
-| `contracts_insert with check (true)` — ai cũng chèn được hợp đồng cho người khác | Giới hạn `employee_id = self` hoặc HR dept_head/deputy hoặc exec/tech |
-| Policy UPDATE của `contracts/payment_requests/advance_requests/event_proposals/purchase_requests` không có `with check` riêng — tự duyệt được phiếu của chính mình | Trigger `enforce_workflow_transition()` — state machine kiểm tra đúng người ở đúng bước mới được đổi `status` |
-| `leave_requests`/`business_trips` thiếu hẳn policy UPDATE — nút "Duyệt" không làm gì cả | Thêm `leave_update`/`trips_update` |
-| Trừ ngày phép không atomic (2 request rời rạc ở frontend) | RPC `approve_leave_request(p_leave_id)` — 1 transaction |
-| Đếm thông báo chưa đọc sai công thức (trừ 2 count rời rạc) | RPC `unread_notification_count()` |
-| `signature_logs`, `work_schedules`, `center_duty_schedules`, `teacher_weekly_schedules`, `facility_assets`, `document_templates`, `document_code_counters` — hoàn toàn chưa bật RLS (mở toang) | Bật RLS + policy đúng vai trò cho từng bảng |
-| `internal_accounts` — bật RLS nhưng 0 policy (bị chặn hoàn toàn) | Thêm policy select/write cho MKT + exec/tech |
-| Thiếu index trên các cột hay dùng để lọc/join trong RLS | Thêm ~15 index |
-| Cộng ngày phép hằng tháng — đề bài yêu cầu nhưng chưa có cơ chế | Hàm `accrue_monthly_leave()` — cần bật `pg_cron` và lên lịch `select cron.schedule(...)` |
+| `tuition_payments` | Thu học phí (tiền mặt/chuyển khoản), tự động tạo 1 dòng `cash_flow_entries` tương ứng qua trigger `log_tuition_to_cash_flow()` — mỗi giao dịch có log riêng, không cho sửa/xoá trực tiếp (chỉ TECH), muốn điều chỉnh phải tạo giao dịch mới |
+| `permission_requests` / `granted_permissions` | Xin thêm quyền hạn theo module (= href trang trong `navConfig.js`) — duyệt xong tự ghi vào `granted_permissions` qua trigger `apply_approved_permission()` |
+| `push_subscriptions` | Đăng ký nhận Web Push theo từng thiết bị (endpoint + khoá mã hoá), Edge Function `send-push` đọc bảng này bằng service_role (bỏ qua RLS) |
 
-## 4. `supabase_migrations_12_spec_completion.sql` — hoàn thiện gì
+Cột mới trên bảng cũ: `work_schedules.start_time/end_time` (thay `shift` text), `employees.is_academic_board`, `employees.can_teach`, `students.monthly_fee`, `document_templates.field_map` (giờ đã thực sự được dùng — xem mục 6 `APP_README.md`).
 
-- Thu hẹp lại RLS `center_duty_schedules`/`teacher_weekly_schedules`/`classes`/`students` cho đúng danh sách vai trò nêu trong đề bài (bản file 11 tạm thời cho phép rộng hơn cần thiết).
-- Bảng mới `mkt_ad_expenses` (báo cáo chi phí Digital Marketing — đề bài yêu cầu nhưng schema gốc chưa có).
-- RPC `set_internal_account_secret()` / `reveal_internal_account_secret()` — mã hoá `internal_accounts.secret_encrypted` bằng `pgcrypto` (`pgp_sym_encrypt`/`pgp_sym_decrypt`), không lưu plaintext.
+## 4. Workflow & phân quyền cốt lõi
 
-## 5. `supabase_migrations_13_private_storage.sql` — Storage
+Không đổi so với trước — enum `workflow_status` (draft→submitted→approved_1→approved_2→archived) dùng chung cho các phiếu ký nhiều cấp, chuyển trạng thái được `enforce_workflow_transition()` kiểm soát ở tầng DB (không chỉ dựa vào frontend). Ma trận vai trò (`TECH`/`EXECUTIVE`/`DEPT_HEAD`/`DEPT_DEPUTY`/`STAFF`/`CENTER_MANAGER`/`TEACHER`/`CONSULTANT`) giữ nguyên.
 
-Chuyển bucket `attachments` từ Public sang Private, thêm RLS cho `storage.objects`:
-- `to authenticated` mới được đọc/ghi (không phải public tuyệt đối).
-- Frontend từ nay lưu **path** vào các cột `*_url` (không lưu public URL), và xin **signed URL có hạn** ngay lúc cần xem (xem `resolveFileUrl()` trong `app/js/supabase.js`).
-- Có ghi chú sẵn trong file SQL cho phương án chặt hơn (giới hạn theo prefix path/phòng ban) nếu cần nâng cấp sau.
+**Lưu ý mới:** `employees.can_teach` là cờ độc lập cho phép nhân sự khối văn phòng (department khác EDU) vẫn được tính `isTeacher = true` ở `shell.js` mà không cần đổi `department_id`/`position_id` chính — tương tự `is_academic_board` chỉ là 1 tick thêm, không phải đổi phòng ban.
 
-## 6. Workflow chung: Draft → Submitted → Approved 1 → Approved 2 → Archived
+## 5. Thu học phí — luồng dữ liệu
 
-Enum `workflow_status` dùng chung cho: `contracts`, `leave_requests`, `business_trips`, `payment_requests`, `advance_requests`, `event_proposals`, `purchase_requests`, `internal_proposals`. Mỗi bảng có cột `*_signed_at`/`*_signed_by` riêng theo đúng thứ tự người ký.
+```
+edu/tuition.html (Quản lý trung tâm thu tiền)
+  → insert tuition_payments
+    → trigger log_tuition_to_cash_flow() TỰ ĐỘNG insert cash_flow_entries (category='tuition')
+      → acc/reports.html (Kế toán) thấy ngay trong biểu đồ dòng tiền, không cần thao tác gì thêm
+```
+Cố tình **không cho sửa/xoá** `tuition_payments` (RLS chỉ TECH mới update/delete) — thu nhầm phải tạo giao dịch điều chỉnh mới, đảm bảo luôn có đủ log cho kế toán đối chiếu, đúng yêu cầu "mỗi dòng tiền mới có 1 log cụ thể".
 
-**Quan trọng:** từ file 11, việc chuyển trạng thái **không còn chỉ dựa vào frontend** — trigger `enforce_workflow_transition()` (áp dụng cho 5 bảng phiếu chính) kiểm tra đúng người + đúng bước mới cho phép đổi `status`, kể cả khi ai đó gọi thẳng API bằng DevTools thay vì qua giao diện.
+## 6. Xin thêm quyền hạn — luồng dữ liệu
 
-## 7. Ma trận phân quyền cốt lõi (áp dụng qua RLS + trigger)
+```
+permission-requests.html (trưởng/phó phòng chọn nhân sự + chọn trang cần thêm quyền)
+  → insert permission_requests (status='pending')
+    → Ban điều hành duyệt (update status='approved')
+      → trigger apply_approved_permission() TỰ ĐỘNG insert granted_permissions
+        → shell.js nạp granted_permissions vào profile.grantedModules lúc đăng nhập
+          → navConfig.js mở đúng menu tương ứng (sidebar + App Hub)
+```
+**Cập nhật (file 16):** đã nối `granted_permissions` xuống RLS thật cho nhóm bảng: `payroll`, `receivables`, `cash_flow_entries`, `mkt_ad_expenses`, `internal_accounts` (+ 2 RPC mã hoá), `facility_assets`, `work_schedules`, `positions` — thông qua hàm dùng chung `has_module_permission(module_key)`. Cấp quyền cho các trang này giờ mở luôn dữ liệu thật, không chỉ menu.
 
-| Vai trò (`system_roles.code`) | Phạm vi |
-|---|---|
-| `TECH` | Toàn quyền hệ thống + duy nhất xem `activity_logs` |
-| `EXECUTIVE` | Xem/duyệt cấp 2 mọi phòng ban, mọi trung tâm |
-| `DEPT_HEAD` / `DEPT_DEPUTY` | Duyệt cấp 1, quản lý dữ liệu phòng ban mình, ký số hồ sơ phòng ban |
-| `STAFF` | Chỉ thấy/thao tác dữ liệu của chính mình (và không tự nâng quyền/tự duyệt — xem mục 3) |
-| `CENTER_MANAGER` | Dữ liệu học vụ trong phạm vi trung tâm mình quản lý |
-| `TEACHER` | Lớp phụ trách, điểm danh, bảng điểm của lớp mình |
-| `CONSULTANT` | Hồ sơ khách hàng do mình phụ trách + xem theo trung tâm |
-
-## 8. Kho lưu trữ hệ thống
-
-`archive_files` là metadata tập trung, phân loại bằng `category` (enum `doc_category`) + `department_id` + `year` + `month` + tuỳ chọn `center_id`. File PDF thật lưu ở Supabase Storage (path, không phải URL — xem mục 5), `file_url` trỏ tới path đó. Phòng ban khác truy cập bị RLS chặn ở tầng DB; tầng UI hiển thị "bạn không có quyền thực hiện thao tác".
-
-Cột `related_table = 'free_sign'` dùng để đánh dấu các file được lưu qua tính năng "Ký số hồ sơ tự do" (`app/js/freeSign.js`) — phân biệt với file gắn theo phiếu có sẵn (`related_table = 'contracts'`, `'payment_requests'`...).
-
-## 9. Ký số PDF (client-side, PDF.js + pdf-lib)
-
-- `employees.signature_url`: **path** (không phải public URL) trỏ tới ảnh chữ ký PNG trong bucket private, dùng lại cho mọi lần ký.
-- `document_templates.field_map` (jsonb): toạ độ/loại field trên từng trang PDF mẫu — hiện chưa được dùng để tự động định vị trường (người dùng tự đặt vị trí thủ công mỗi lần), có thể nâng cấp sau.
-- `signature_logs`: log từng lần ký (cột thật là `employee_id`, không phải `signed_by`) — bao gồm cả lượt "ký tự do". Chỉ INSERT được (append-only), không ai ngoài TECH được UPDATE/DELETE — bảo toàn giá trị truy vết.
-
-## 10. Lịch họp / Google Calendar
-
-Bảng `meetings` hỗ trợ `kind='offline'` (dùng `location`, nay có Google Places Autocomplete ở frontend) và `kind='online'` (lưu `google_meet_link` + `google_event_id`, tích hợp Google Calendar API thật).
-
-## 11. Đơn công tác / Google Maps
-
-`business_trips.distance_km` từ nay có thể tự tính qua Google Maps Distance Matrix (qua Maps JavaScript SDK ở frontend, xem `app/js/googleMaps.js`) thay vì chỉ nhập tay.
-
-## 12. Những điểm cần lưu ý khi tự viết thêm migration mới
-
-- Bất kỳ hàm nào được gọi từ **trigger** trên bảng có RLS mà cần ghi vào 1 bảng KHÁC (ví dụ bảng đếm mã, bảng tổng hợp...) đều phải cân nhắc `SECURITY DEFINER` — bài học từ lỗi `document_code_counters` ở mục 2.
-- Luôn đối chiếu **đúng tên cột thật** trong file schema gốc trước khi viết policy mới — bài học từ lỗi `signature_logs.signed_by` (cột thật là `employee_id`) từng lọt vào bản vá đầu tiên của file 11.
-- Khi thêm bảng lưu file mới, nhớ **lưu path, không lưu public URL** (bucket đã private từ file 13) và dùng `resolveFileUrl()`/`openFile()` có sẵn trong `app/js/supabase.js` để hiển thị.
+**Vẫn còn giới hạn:** danh sách trên KHÔNG bao phủ mọi trang trong hệ thống — chỉ nhóm "báo cáo/thống kê/quản trị riêng phòng ban" vì đây là nhóm hợp lý nhất để cấp quyền chéo trong thực tế. Muốn mở thêm cho 1 trang khác chưa có trong danh sách, lặp lại đúng mẫu `or has_module_permission('/duong-dan.html')` vào policy của (các) bảng mà trang đó dùng.
 
 ---
 
-Chi tiết đầy đủ từng lỗi phát hiện + lý do vá nằm trong `AUDIT_ERP_AIS.md` và `GAP_ANALYSIS.md` (ở thư mục gốc dự án khi bàn giao).
+Chi tiết lịch sử các lỗi đã phát hiện + cách vá nằm trong `AUDIT_ERP_AIS.md` và `GAP_ANALYSIS.md`.

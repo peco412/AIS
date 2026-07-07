@@ -30,12 +30,12 @@ begin
   else
     insert into auth.users (
       instance_id, id, aud, role, email, encrypted_password,
-      email_confirmed_at, confirmed_at, raw_app_meta_data, raw_user_meta_data,
+      email_confirmed_at, raw_app_meta_data, raw_user_meta_data,
       created_at, updated_at
     ) values (
       '00000000-0000-0000-0000-000000000000', v_user_id, 'authenticated', 'authenticated',
       v_email, crypt(v_password, gen_salt('bf')),
-      now(), now(),
+      now(),
       '{"provider":"email","providers":["email"]}'::jsonb,
       jsonb_build_object('username', 'VMTDTP'),
       now(), now()
