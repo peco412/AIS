@@ -6,8 +6,8 @@
 // =====================================================================
 const ENV = window.__ENV__ || {};
 const supabase = window.supabase.createClient(
-  ENV.SUPABASE_URL || 'https://your-project.supabase.co',
-  ENV.SUPABASE_ANON_KEY || 'your-anon-key'
+  ENV.SUPABASE_URL || 'https://iikflzntcpqliuxrzvdz.supabase.co',
+  ENV.SUPABASE_ANON_KEY || 'sb_publishable_LS0uVPYtiWQeS6o0HeaClA_ygGjI8oM'
 );
 
 const errorBox = document.getElementById('loginError');
