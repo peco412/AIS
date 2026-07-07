@@ -71,6 +71,7 @@ const DICT = {
   'nav.edu.tuition': { vi: 'Thu học phí', en: 'Tuition collection' },
   'nav.edu.debtOverview': { vi: 'Công nợ tổng hợp', en: 'Consolidated debt' },
   'nav.edu.parentLinks': { vi: 'Liên kết Phụ huynh', en: 'Parent-student links' },
+  'nav.edu.walletInvoices': { vi: 'Thu học phí qua Ví', en: 'Wallet tuition collection' },
   'nav.edu.dutySchedule': { vi: 'Phân lịch trực trung tâm', en: 'Center duty schedule' },
   'nav.edu.teacherSchedule': { vi: 'Phân lịch tuần giáo viên', en: 'Teacher weekly schedule' },
   'nav.edu.teachers': { vi: 'Danh sách giáo viên', en: 'Teacher directory' },
