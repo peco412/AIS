@@ -14,8 +14,8 @@
 // =====================================================================
 
 const ENV = window.__ENV__ || {};
-const SUPABASE_URL = ENV.SUPABASE_URL || 'https://iikflzntcpqliuxrzvdz.supabase.co';
-const SUPABASE_ANON_KEY = ENV.SUPABASE_ANON_KEY || 'sb_publishable_LS0uVPYtiWQeS6o0HeaClA_ygGjI8oM';
+const SUPABASE_URL = ENV.SUPABASE_URL || 'https://your-project.supabase.co';
+const SUPABASE_ANON_KEY = ENV.SUPABASE_ANON_KEY || 'your-anon-key';
 
 export const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 

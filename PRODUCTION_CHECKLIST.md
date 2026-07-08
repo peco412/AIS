@@ -58,8 +58,6 @@ const SUPABASE_URL = window.__ENV__?.SUPABASE_URL || '...';
 **Việc cần làm (không thể code thay được):**
 - Tạo **2 project Supabase riêng biệt**: 1 cho staging/thử nghiệm, 1 cho production thật. Không dùng chung 1 project — nếu không, mọi thao tác test (kể cả của chính bạn) đều ghi đè dữ liệu thật.
 - Ở Vercel, tạo file `app/env.js` (không commit lên git, thêm vào `.gitignore`) build lúc deploy, gán `window.__ENV__ = { SUPABASE_URL: '...', SUPABASE_ANON_KEY: '...', GOOGLE_CLIENT_ID: '...', GOOGLE_MAPS_API_KEY: '...' }`, và include script này trước `js/supabase.js` trong mọi trang HTML.
-- ⚠️ **`ais-center/` (App phụ huynh) là 1 thư mục/site TĨNH RIÊNG, cần `ais-center/env.js` CỦA RIÊNG NÓ** — không tự dùng chung với `app/env.js` dù cùng 1 Supabase project. Thiếu file này khiến `ais-center/js/parentSupabase.js` rơi về URL giả `your-project.supabase.co`, làm **mọi lượt đăng nhập/gửi OTP của phụ huynh đều lỗi** (đã từng xảy ra thật — nhớ tạo file này ở MỌI lần deploy lại `ais-center`).
-- ⚠️ **Đăng nhập OTP của `ais-center` còn cần 1 bước KHÁC ngoài env.js**: vào Supabase Dashboard → Authentication → Providers → Phone → bật + kết nối 1 nhà cung cấp SMS thật (Twilio/MessageBird/Vonage...). Không có bước này thì `supabase.auth.signInWithOtp({ phone })` luôn báo lỗi dù `env.js` đã đúng.
 - Google Maps API key và Google OAuth Client ID: nhớ giới hạn (restrict) theo đúng domain deploy thật trong Google Cloud Console, tránh bị người khác lấy dùng ké gây phát sinh phí.
 
 ---
