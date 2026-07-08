@@ -20,15 +20,12 @@ async function updatePreview() {
   document.getElementById('previewRate').textContent = fmtPercent(data.discount_rate);
   document.getElementById('previewVnd').textContent = `${fmtMoney(amount * data.conversion_rate)} VNĐ`;
 
-  // Gợi ý mốc bậc cao hơn (mục 5.1, tuỳ chọn không bắt buộc)
   const tiers = [10000000, 20000000, 30000000, 50000000];
   const nextTier = tiers.find((t) => t > amount);
   const hint = document.getElementById('previewHint');
-  if (nextTier && nextTier - amount <= 2000000) {
-    hint.textContent = `💡 Chỉ cần nạp thêm ${fmtMoney(nextTier - amount)} nữa là đạt mốc chiết khấu cao hơn.`;
-  } else {
-    hint.textContent = '';
-  }
+  hint.textContent = (nextTier && nextTier - amount <= 2000000)
+    ? `💡 Chỉ cần nạp thêm ${fmtMoney(nextTier - amount)} nữa là đạt mốc chiết khấu cao hơn.`
+    : '';
 }
 
 document.getElementById('coinAmount').addEventListener('input', () => {
@@ -36,42 +33,75 @@ document.getElementById('coinAmount').addEventListener('input', () => {
   debounceTimer = setTimeout(updatePreview, 250);
 });
 
-const confirmModal = document.getElementById('confirmModal');
 const errorBox = document.getElementById('topupError');
 
-document.getElementById('btnConfirmTopup').addEventListener('click', () => {
+// ---------------------------------------------------------------------
+// Tạo YÊU CẦU nạp ví (chưa cộng tiền ngay) — hiện QR chuyển khoản thật,
+// đợi Kế toán/Quản lý trung tâm xác nhận đã nhận được tiền mới thật sự
+// cộng vào ví (đúng góp ý: không cộng tiền chỉ vì phụ huynh bấm nút, phải
+// có bước xác minh dòng tiền thật).
+// ---------------------------------------------------------------------
+document.getElementById('btnConfirmTopup').addEventListener('click', async () => {
   errorBox.classList.remove('show');
   const amount = Number(document.getElementById('coinAmount').value);
   if (!amount || !latestCalc) { errorBox.textContent = 'Vui lòng nhập số tiền hợp lệ.'; errorBox.classList.add('show'); return; }
 
-  document.getElementById('confirmCoin').textContent = `${fmtMoney(amount)} AIScoins`;
-  document.getElementById('confirmVnd').textContent = `${fmtMoney(amount * latestCalc.conversion_rate)} VNĐ`;
-  document.getElementById('confirmProgram').textContent = latestCalc.program_id ? 'Có áp dụng ưu đãi đặc biệt' : 'Không có';
-  confirmModal.style.display = 'flex';
-});
-document.getElementById('btnCancelConfirm').addEventListener('click', () => { confirmModal.style.display = 'none'; });
-
-document.getElementById('btnFinalConfirm').addEventListener('click', async () => {
-  const amount = Number(document.getElementById('coinAmount').value);
-  const method = document.getElementById('method').value;
-
-  const btn = document.getElementById('btnFinalConfirm');
-  btn.disabled = true; btn.textContent = 'Đang xử lý...';
+  const btn = document.getElementById('btnConfirmTopup');
+  btn.disabled = true; btn.textContent = 'Đang tạo yêu cầu...';
   try {
-    const { error } = await supabase.rpc('topup_wallet', {
-      p_student_id: STUDENT_ID, p_coin_amount: amount, p_method: method, p_created_by: null,
-    });
+    const { data: request, error } = await supabase.rpc('create_topup_request', {
+      p_student_id: STUDENT_ID, p_coin_amount: amount,
+    }).single();
     if (error) throw error;
-    alert('Nạp ví thành công!');
-    window.location.href = 'wallet-detail.html';
+
+    const { data: bank } = await supabase.from('bank_settings').select('*').eq('id', request.bank_setting_id).single();
+    const vndAmount = Math.round(amount * latestCalc.conversion_rate);
+
+    document.getElementById('amountCard').style.display = 'none';
+    document.getElementById('btnConfirmTopup').style.display = 'none';
+    document.getElementById('qrCard').style.display = 'block';
+
+    document.getElementById('qrBankName').textContent = bank.bank_name;
+    document.getElementById('qrAccountNo').textContent = bank.account_no;
+    document.getElementById('qrAccountName').textContent = bank.account_name;
+    document.getElementById('qrAmount').textContent = `${fmtMoney(vndAmount)} VNĐ`;
+    document.getElementById('qrContent').textContent = request.transfer_content;
+
+    // Dùng dịch vụ tạo QR chuyển khoản công khai của VietQR (không cần API
+    // key riêng) — tự sinh QR đúng ngân hàng/số tài khoản/số tiền/nội dung.
+    const qrUrl = `https://img.vietqr.io/image/${bank.bank_bin}-${bank.account_no}-compact2.png` +
+      `?amount=${vndAmount}&addInfo=${encodeURIComponent(request.transfer_content)}&accountName=${encodeURIComponent(bank.account_name)}`;
+    document.getElementById('qrImage').src = qrUrl;
+
+    // Báo cho Kế toán + Quản lý trung tâm có yêu cầu mới cần đối chiếu sao
+    // kê — không đợi họ tự vào kiểm tra định kỳ.
+    await notifyStaffNewTopupRequest(request, vndAmount);
   } catch (err) {
-    confirmModal.style.display = 'none';
     errorBox.textContent = err.message || 'Có lỗi xảy ra.';
     errorBox.classList.add('show');
   } finally {
-    btn.disabled = false; btn.textContent = 'Xác nhận nạp';
+    btn.disabled = false; btn.textContent = 'Tạo yêu cầu nạp ví';
   }
 });
+
+async function notifyStaffNewTopupRequest(request, vndAmount) {
+  try {
+    const { data: staffRole } = await supabase.from('departments').select('id').eq('code', 'ACC').single();
+    const { data: staff } = await supabase.from('employees').select('id')
+      .or(`department_id.eq.${staffRole?.id},center_id.eq.${CENTER_ID}`);
+
+    const title = `💰 Yêu cầu nạp ví mới — ${request.transfer_content}`;
+    const content = `Cần đối chiếu chuyển khoản ${vndAmount.toLocaleString('vi-VN')} VNĐ, nội dung "${request.transfer_content}".`;
+
+    for (const s of staff || []) {
+      await supabase.from('notifications').insert({
+        scope: 'personal', target_employee_id: s.id, title, content, url: '/acc/wallet-topup-requests.html',
+      });
+    }
+  } catch (e) {
+    console.warn('Không gửi được thông báo cho nhân viên:', e.message);
+  }
+}
 
 (async () => {
   try {

@@ -61,6 +61,67 @@ async function toggleProgram(id, currentStatus) {
   await Promise.all([loadRows(), loadStats()]);
 }
 
+async function loadBankSettings() {
+  const tbody = document.getElementById('bankTableBody');
+  const { data, error } = await supabase.from('bank_settings').select('id, bank_name, account_no, account_name, status:is_active, centers(name)').order('created_at', { ascending: false });
+  if (error) { tbody.innerHTML = `<tr><td colspan="6" class="empty-cell">Lỗi: ${esc(error.message)}</td></tr>`; return; }
+  if (!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="empty-cell">Chưa có tài khoản nào — phụ huynh sẽ KHÔNG nạp ví được cho tới khi thêm ít nhất 1 tài khoản.</td></tr>'; return; }
+
+  tbody.innerHTML = data.map((b) => `
+    <tr>
+      <td>${esc(b.bank_name)}</td>
+      <td class="mono">${esc(b.account_no)}</td>
+      <td class="cell-muted">${esc(b.account_name)}</td>
+      <td class="cell-muted">${b.centers?.name || 'Toàn hệ thống'}</td>
+      <td><span class="badge badge-${b.status ? 'active' : 'inactive'}">${b.status ? 'Đang bật' : 'Đã tắt'}</span></td>
+      <td>${IS_HEAD ? `<button class="btn btn-outline btn-sm" data-toggle-bank="${b.id}" data-status="${b.status}">${b.status ? 'Tắt' : 'Bật lại'}</button>` : ''}</td>
+    </tr>
+  `).join('');
+
+  tbody.querySelectorAll('[data-toggle-bank]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const newStatus = btn.dataset.status !== 'true';
+      const { error: toggleErr } = await supabase.from('bank_settings').update({ is_active: newStatus }).eq('id', btn.dataset.toggleBank);
+      if (toggleErr) { alert('Lỗi: ' + toggleErr.message); return; }
+      await loadBankSettings();
+    });
+  });
+}
+
+const bankModal = document.getElementById('bankModal');
+document.getElementById('btnAddBank').addEventListener('click', async () => {
+  document.getElementById('bankFormError').classList.remove('show');
+  document.getElementById('bankBin').value = '';
+  document.getElementById('bankName').value = '';
+  document.getElementById('bankAccountNo').value = '';
+  document.getElementById('bankAccountName').value = '';
+  const { data: centers } = await supabase.from('centers').select('id, name').order('name');
+  document.getElementById('bankCenter').innerHTML = '<option value="">— Toàn hệ thống —</option>' + (centers || []).map((c) => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
+  bankModal.classList.add('show');
+});
+document.getElementById('closeBankModal').addEventListener('click', () => bankModal.classList.remove('show'));
+document.getElementById('cancelBankModal').addEventListener('click', () => bankModal.classList.remove('show'));
+
+document.getElementById('btnSubmitBank').addEventListener('click', async () => {
+  const errBox = document.getElementById('bankFormError');
+  errBox.classList.remove('show');
+  const payload = {
+    bank_bin: document.getElementById('bankBin').value.trim(),
+    bank_name: document.getElementById('bankName').value.trim(),
+    account_no: document.getElementById('bankAccountNo').value.trim(),
+    account_name: document.getElementById('bankAccountName').value.trim().toUpperCase(),
+    center_id: document.getElementById('bankCenter').value || null,
+  };
+  if (!payload.bank_bin || !payload.bank_name || !payload.account_no || !payload.account_name) {
+    errBox.textContent = 'Vui lòng nhập đầy đủ thông tin.'; errBox.classList.add('show'); return;
+  }
+
+  const { error } = await supabase.from('bank_settings').insert(payload);
+  if (error) { errBox.textContent = error.message; errBox.classList.add('show'); return; }
+  bankModal.classList.remove('show');
+  await loadBankSettings();
+});
+
 async function loadAudit() {
   const tbody = document.getElementById('auditBody');
   const { data, error } = await supabase
@@ -147,9 +208,10 @@ document.getElementById('programForm').addEventListener('submit', async (e) => {
 
     if (!IS_HEAD) {
       document.getElementById('btnAdd').style.display = 'none';
+      document.getElementById('btnAddBank').style.display = 'none';
     }
 
     await loadCenters();
-    await Promise.all([loadRows(), loadStats(), loadAudit()]);
+    await Promise.all([loadRows(), loadStats(), loadAudit(), loadBankSettings()]);
   } catch (e) { /* bootShell tự điều hướng */ }
 })();

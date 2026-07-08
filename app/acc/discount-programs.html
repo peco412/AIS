@@ -51,6 +51,17 @@
       </table>
     </div>
 
+    <div class="page-header" style="margin-top:8px;">
+      <div><h1 style="font-size:15px;">Tài khoản ngân hàng nhận nạp ví</h1><div class="sub" style="font-size:12.5px;">Dùng để tạo mã QR chuyển khoản cho phụ huynh khi nạp ví — cần ít nhất 1 tài khoản mới nạp ví qua QR được.</div></div>
+      <button class="btn btn-accent btn-sm" id="btnAddBank">+ Thêm tài khoản</button>
+    </div>
+    <div class="data-table-wrap" style="margin-bottom:24px;">
+      <table class="data-table">
+        <thead><tr><th>Ngân hàng</th><th>Số tài khoản</th><th>Chủ tài khoản</th><th>Phạm vi</th><th data-i18n="common.status">Trạng thái</th><th></th></tr></thead>
+        <tbody id="bankTableBody"><tr><td colspan="6" class="empty-cell">Đang tải dữ liệu...</td></tr></tbody>
+      </table>
+    </div>
+
     <div class="page-header" style="margin-top:8px;"><div><h1 style="font-size:15px;">Nhật ký thao tác (Audit log)</h1></div></div>
     <div class="data-table-wrap">
       <table class="data-table">
@@ -89,6 +100,26 @@
         <button type="submit" class="btn btn-accent" id="submitProgram">Tạo chương trình</button>
       </div>
     </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="bankModal">
+  <div class="modal-box">
+    <button class="modal-close" id="closeBankModal">✕</button>
+    <h3>Thêm tài khoản ngân hàng</h3>
+    <div class="form-error" id="bankFormError"></div>
+    <div class="field"><label for="bankBin">Mã ngân hàng (BIN theo chuẩn VietQR) *</label><input type="text" id="bankBin" placeholder="VD: 970436 (Vietcombank)" required /></div>
+    <div class="field"><label for="bankName">Tên ngân hàng *</label><input type="text" id="bankName" placeholder="VD: Vietcombank" required /></div>
+    <div class="field"><label for="bankAccountNo">Số tài khoản *</label><input type="text" id="bankAccountNo" required /></div>
+    <div class="field"><label for="bankAccountName">Tên chủ tài khoản (KHÔNG DẤU, in hoa) *</label><input type="text" id="bankAccountName" placeholder="VD: CONG TY TNHH ALOHA" required /></div>
+    <div class="field">
+      <label for="bankCenter">Phạm vi áp dụng</label>
+      <select id="bankCenter"><option value="">— Toàn hệ thống —</option></select>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-outline" id="cancelBankModal"><span data-i18n="common.cancel">Huỷ</span></button>
+      <button type="button" class="btn btn-accent" id="btnSubmitBank">Lưu</button>
+    </div>
   </div>
 </div>
 

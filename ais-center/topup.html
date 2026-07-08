@@ -19,7 +19,7 @@
 <main class="app-main">
   <div class="form-error" id="topupError"></div>
 
-  <div class="card">
+  <div class="card" id="amountCard">
     <h3>Số AIScoins muốn nạp</h3>
     <div class="field"><input type="number" id="coinAmount" placeholder="Nhập số tiền, VD: 15000000" min="1000000" step="100000" /></div>
 
@@ -30,29 +30,21 @@
     </div>
   </div>
 
-  <div class="card">
-    <h3>Hình thức thanh toán</h3>
-    <div class="field">
-      <select id="method">
-        <option value="bank_transfer">Chuyển khoản ngân hàng</option>
-        <option value="app">Ví điện tử liên kết (nếu có)</option>
-      </select>
-    </div>
-  </div>
+  <button class="btn-primary" id="btnConfirmTopup">Tạo yêu cầu nạp ví</button>
 
-  <button class="btn-primary" id="btnConfirmTopup">Tiếp tục</button>
+  <div class="card" id="qrCard" style="display:none; text-align:center;">
+    <h3>Chuyển khoản để hoàn tất nạp ví</h3>
+    <p class="cell-muted">Quét mã QR bằng App ngân hàng, hoặc chuyển khoản thủ công đúng thông tin bên dưới. Ví sẽ tự cộng tiền sau khi Kế toán xác nhận đã nhận được chuyển khoản.</p>
+    <img id="qrImage" src="" alt="QR chuyển khoản" style="width:220px; height:220px; border-radius:12px; margin:16px 0; border:1px solid var(--border);" />
+    <div class="batch-row"><span class="cell-muted">Ngân hàng</span><strong id="qrBankName"></strong></div>
+    <div class="batch-row"><span class="cell-muted">Số tài khoản</span><strong id="qrAccountNo"></strong></div>
+    <div class="batch-row"><span class="cell-muted">Chủ tài khoản</span><strong id="qrAccountName"></strong></div>
+    <div class="batch-row"><span class="cell-muted">Số tiền</span><strong id="qrAmount"></strong></div>
+    <div class="batch-row"><span class="cell-muted">Nội dung CK</span><strong id="qrContent" style="color:var(--accent-deep);"></strong></div>
+    <p class="cell-muted" style="margin-top:12px;">⚠️ Nhập <strong>đúng nội dung chuyển khoản</strong> ở trên để hệ thống đối chiếu chính xác.</p>
+    <button class="btn-link" onclick="location.href='home.html'">Xong, về trang chủ</button>
+  </div>
 </main>
-
-<div class="modal-overlay" id="confirmModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); align-items:center; justify-content:center; padding:20px;">
-  <div style="background:#fff; border-radius:20px; padding:24px; max-width:360px; width:100%;">
-    <h3 style="margin-bottom:14px;">Xác nhận nạp ví</h3>
-    <div class="batch-row"><span class="cell-muted">Số AIScoins nhận được</span><strong id="confirmCoin"></strong></div>
-    <div class="batch-row"><span class="cell-muted">Số tiền thanh toán</span><strong id="confirmVnd"></strong></div>
-    <div class="batch-row"><span class="cell-muted">Chương trình ưu đãi</span><span id="confirmProgram"></span></div>
-    <button class="btn-primary" id="btnFinalConfirm" style="margin-top:16px;">Xác nhận nạp</button>
-    <button class="btn-link" id="btnCancelConfirm">Huỷ</button>
-  </div>
-</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="env.js"></script>

@@ -113,7 +113,7 @@ async function lookupParentByPhone(phone) {
 
   if (!phone) { box.style.display = 'none'; nameFields.style.display = 'none'; LOOKED_UP_PARENT = null; return; }
 
-  const { data: parent } = await supabase.from('parent_accounts').select('*').eq('phone', phone).maybeSingle();
+  const { data: parent } = await supabase.rpc('search_parent_by_phone', { p_phone: phone }).maybeSingle();
   LOOKED_UP_PARENT = parent || null;
 
   box.style.display = 'block';

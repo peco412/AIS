@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="vi" data-division="aloha">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Xác nhận nạp ví — ERP AIS</title>
+<link rel="manifest" href="/manifest.json" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="ERP AIS" />
+<link rel="apple-touch-icon" href="/assets/icon-192.png" />
+<meta name="theme-color" content="#0094D9" />
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/css/tokens.css" />
+<link rel="stylesheet" href="/css/dashboard.css" />
+<link rel="stylesheet" href="/css/module.css" />
+</head>
+<body data-page="/acc/wallet-topup-requests.html">
+
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar__brand"><span class="dot"></span><div>ERP AIS<small data-i18n="brand.subtitle">Hệ thống quản trị nội bộ</small></div></div>
+    <nav id="sidebarNav"></nav>
+    <div class="sidebar__footer">© 2026 ERP AIS</div>
+  </aside>
+  <header class="topbar">
+    <div class="topbar__left"><button class="menu-toggle" id="menuToggle">☰</button></div>
+    <div class="topbar__right">
+      <button class="icon-btn" onclick="location.href='/notifications.html'">🔔<span class="badge" id="notifBadge" style="display:none;">0</span></button>
+      <div class="user-chip" onclick="location.href='/profile.html'">
+        <div class="user-chip__avatar" id="userChipAvatar">--</div>
+        <div class="user-chip__meta"><div class="name" id="userChipName">Đang tải...</div><div class="role" id="userChipRole">—</div></div>
+      </div>
+      <button class="icon-btn" id="logoutBtn">⎋</button>
+    </div>
+  </header>
+
+  <main class="main">
+    <div class="page-header">
+      <div><h1>Xác nhận nạp ví</h1><div class="sub">Đối chiếu đúng nội dung chuyển khoản với sao kê ngân hàng trước khi xác nhận — chỉ khi bấm "Xác nhận" mới thực sự cộng AIScoins vào ví.</div></div>
+    </div>
+
+    <div class="toolbar">
+      <select class="select-input" id="filterStatus">
+        <option value="pending">Đang chờ xác nhận</option>
+        <option value="confirmed">Đã xác nhận</option>
+        <option value="rejected">Đã từ chối</option>
+      </select>
+      <div class="cell-muted" id="resultCount"></div>
+    </div>
+
+    <div class="data-table-wrap">
+      <table class="data-table">
+        <thead><tr><th>Ngày tạo</th><th>Học sinh</th><th>Nội dung CK</th><th>Số AIScoins</th><th>Người yêu cầu</th><th></th></tr></thead>
+        <tbody id="tableBody"><tr><td colspan="6" class="empty-cell">Đang tải dữ liệu...</td></tr></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<div class="modal-overlay" id="rejectModal">
+  <div class="modal-box">
+    <button class="modal-close" id="closeRejectModal">✕</button>
+    <h3>Từ chối yêu cầu nạp ví</h3>
+    <div class="field"><label for="rejectReason">Lý do</label><textarea id="rejectReason" rows="3" placeholder="VD: Chưa thấy tiền về sau 24h, nội dung CK không khớp..."></textarea></div>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-outline" id="cancelRejectModal"><span data-i18n="common.cancel">Huỷ</span></button>
+      <button type="button" class="btn btn-accent" id="btnSubmitReject">Xác nhận từ chối</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="/env.js"></script>
+<script type="module" src="/acc/wallet-topup-requests.js"></script>
+<script src="/js/pwa.js"></script>
+</body>
+</html>
