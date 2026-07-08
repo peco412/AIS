@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Thu học phí qua Ví — ERP AIS</title>
+<title>Thu học phí — ERP AIS</title>
 <link rel="manifest" href="/manifest.json" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="mobile-web-app-capable" content="yes" />
@@ -15,6 +15,23 @@
 <link rel="stylesheet" href="/css/tokens.css" />
 <link rel="stylesheet" href="/css/dashboard.css" />
 <link rel="stylesheet" href="/css/module.css" />
+<style>
+  /* Gọn lại giao diện thu học phí — 1 khối thông tin học sinh rõ ràng, hết */
+  .tuition-student-card {
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;
+    background: var(--surface-card); border: 1px solid var(--border); border-radius: var(--radius-md);
+    padding: 16px 20px; margin-bottom: 18px;
+  }
+  .tuition-student-card__name { font-size: 16px; font-weight: 700; }
+  .tuition-student-card__wallet { font-family: var(--font-mono); font-size: 15px; color: var(--success); }
+  .plan-radio-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+  .plan-radio-option {
+    display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+    border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer;
+  }
+  .plan-radio-option:has(input:checked) { border-color: var(--accent); background: var(--accent-tint); }
+  .plan-radio-option input { margin: 0; }
+</style>
 </head>
 <body data-page="/edu/wallet-invoices.html">
 
@@ -38,7 +55,7 @@
 
   <main class="main">
     <div class="page-header">
-      <div><h1>Thu học phí qua Ví</h1><div class="sub">Tạo hoá đơn học phí, thu qua Ví AIScoins / Tiền mặt / Chuyển khoản — tự đồng bộ vào Nhật ký dòng tiền.</div></div>
+      <div><h1>Thu học phí</h1><div class="sub">Tìm học sinh → xem học phí → thu tiền qua Ví hoặc tại quầy.</div></div>
     </div>
 
     <div class="toolbar">
@@ -48,24 +65,22 @@
     </div>
 
     <div id="studentPanel" style="display:none;">
-      <div class="stat-grid" id="statCards"></div>
-
-      <div class="page-header" style="margin-top:8px;"><div><h1 style="font-size:15px;">Gói đã mua (Cấp độ / Chương trình)</h1></div></div>
-      <div class="data-table-wrap" style="margin-bottom:16px;">
-        <table class="data-table">
-          <thead><tr><th>Hình thức</th><th>Số khoá</th><th>Đã thu</th><th data-i18n="common.status">Trạng thái</th><th></th></tr></thead>
-          <tbody id="planBody"><tr><td colspan="5" class="empty-cell">—</td></tr></tbody>
-        </table>
+      <div class="tuition-student-card">
+        <div>
+          <div class="tuition-student-card__name" id="studentName"></div>
+          <div class="cell-muted" id="studentCenter"></div>
+        </div>
+        <div style="text-align:right;">
+          <div class="cell-muted" style="font-size:11.5px;">Số dư ví</div>
+          <div class="tuition-student-card__wallet" id="walletBalance">–</div>
+        </div>
+        <button class="btn btn-accent btn-sm" id="btnNewInvoice">+ Tạo khoản thu mới</button>
       </div>
 
-      <div class="page-header" style="margin-top:8px;">
-        <div><h1 style="font-size:15px;">Hoá đơn</h1></div>
-        <button class="btn btn-accent btn-sm" id="btnNewInvoice">+ Tạo hoá đơn mới</button>
-      </div>
       <div class="data-table-wrap">
         <table class="data-table">
-          <thead><tr><th>Kỳ</th><th>Số tiền</th><th>Đã đóng</th><th>Còn nợ</th><th data-i18n="common.status">Trạng thái</th><th></th><th></th></tr></thead>
-          <tbody id="invoiceBody"><tr><td colspan="7" class="empty-cell">Chọn học sinh để xem hoá đơn.</td></tr></tbody>
+          <thead><tr><th>Khoản thu</th><th>Số tiền</th><th>Đã đóng</th><th>Còn nợ</th><th data-i18n="common.status">Trạng thái</th><th></th></tr></thead>
+          <tbody id="invoiceBody"><tr><td colspan="6" class="empty-cell">Chọn học sinh để xem học phí.</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -75,37 +90,33 @@
 <div class="modal-overlay" id="createInvoiceModal">
   <div class="modal-box">
     <button class="modal-close" id="closeCreateModal">✕</button>
-    <h3>Tạo hoá đơn học phí</h3>
+    <h3>Tạo khoản thu mới</h3>
     <div class="form-error" id="createError"></div>
 
-    <div class="field">
-      <label for="planType">Hình thức đóng *</label>
-      <select id="planType">
-        <option value="manual">Nhập tay số tiền (tuỳ chỉnh tự do)</option>
-        <option value="sublevel">Đóng theo cấp độ con — học tới đâu đóng tới đó</option>
-        <option value="level">Đóng theo cấp độ — trọn 1 cấp độ</option>
-        <option value="program">Đóng theo chương trình — trọn cả chương trình</option>
-      </select>
+    <div class="plan-radio-group">
+      <label class="plan-radio-option"><input type="radio" name="planType" value="sublevel" checked /> <div><strong>Theo cấp độ con</strong><div class="cell-muted" style="font-size:11.5px;">Học tới đâu đóng tới đó</div></div></label>
+      <label class="plan-radio-option"><input type="radio" name="planType" value="level" /> <div><strong>Trọn 1 cấp độ</strong><div class="cell-muted" style="font-size:11.5px;">Đóng gộp cả cấp độ, có ưu đãi riêng</div></div></label>
+      <label class="plan-radio-option"><input type="radio" name="planType" value="program" /> <div><strong>Trọn chương trình</strong><div class="cell-muted" style="font-size:11.5px;">Đóng gộp cả chương trình, ưu đãi cao nhất</div></div></label>
+      <label class="plan-radio-option"><input type="radio" name="planType" value="manual" /> <div><strong>Nhập tay tự do</strong><div class="cell-muted" style="font-size:11.5px;">Số tiền/kỳ tuỳ chỉnh, không theo giá chuẩn</div></div></label>
     </div>
 
-    <div id="planScopeField" style="display:none;">
-      <div class="field"><label for="planScopeSelect" id="planScopeLabel">Chọn</label><select id="planScopeSelect"></select></div>
+    <div id="planScopeField">
+      <div class="field"><label for="planScopeSelect" id="planScopeLabel">Chọn cấp độ con</label><select id="planScopeSelect"></select></div>
       <p class="cell-muted" id="planPricePreview" style="margin-bottom:14px;"></p>
     </div>
 
-    <div id="manualFields">
+    <div id="manualFields" style="display:none;">
       <div class="field-grid-2">
         <div class="field"><label for="invYear">Năm</label><input type="number" id="invYear" /></div>
         <div class="field"><label for="invMonth">Tháng</label><input type="number" id="invMonth" min="1" max="12" /></div>
       </div>
       <div class="field"><label for="invAmountVnd">Số tiền (VNĐ) *</label><input type="number" id="invAmountVnd" min="0" /></div>
-      <div class="field"><label for="invAmountCoin">Số tiền quy đổi AIScoins *</label><input type="number" id="invAmountCoin" min="0" /></div>
       <div class="field"><label for="invDueDate">Hạn chót *</label><input type="date" id="invDueDate" /></div>
     </div>
 
     <div class="modal-actions">
       <button type="button" class="btn btn-outline" id="cancelCreateModal"><span data-i18n="common.cancel">Huỷ</span></button>
-      <button type="button" class="btn btn-accent" id="btnSubmitInvoice">Tạo hoá đơn</button>
+      <button type="button" class="btn btn-accent" id="btnSubmitInvoice">Tạo</button>
     </div>
   </div>
 </div>
@@ -113,17 +124,17 @@
 <div class="modal-overlay" id="collectModal">
   <div class="modal-box">
     <button class="modal-close" id="closeCollectModal">✕</button>
-    <h3>Thu học phí</h3>
+    <h3>Thu tiền</h3>
     <p class="modal-sub" id="collectInfo"></p>
     <div class="form-error" id="collectError"></div>
 
-    <div id="walletCollectBox" style="display:none;">
-      <div class="cell-muted" style="margin-bottom:10px;">Số dư ví hiện tại: <strong id="walletBalanceDisplay"></strong></div>
-      <div class="field"><label for="collectCoin">Số AIScoins cần trừ *</label><input type="number" id="collectCoin" min="0" /></div>
-      <button class="btn btn-accent" id="btnCollectWallet" style="width:100%;">💳 Thu qua Ví (trừ FIFO)</button>
+    <div id="walletCollectBox" style="display:none; margin-bottom:16px; padding-bottom:16px; border-bottom:1px solid var(--border);">
+      <div class="cell-muted" style="margin-bottom:8px;">Số dư ví: <strong id="walletBalanceDisplay"></strong></div>
+      <div class="field"><label for="collectCoin">Số AIScoins cần trừ</label><input type="number" id="collectCoin" min="0" /></div>
+      <button class="btn btn-accent" id="btnCollectWallet" style="width:100%;">💳 Thu qua Ví</button>
     </div>
 
-    <div style="margin-top:16px; border-top:1px solid var(--border); padding-top:16px;">
+    <div>
       <div class="field"><label for="collectVndCounter">Số tiền thu tại quầy (VNĐ)</label><input type="number" id="collectVndCounter" min="0" /></div>
       <div class="field"><label for="collectMethod">Hình thức</label>
         <select id="collectMethod"><option value="CASH">Tiền mặt</option><option value="BANK_TRANSFER">Chuyển khoản</option></select>
