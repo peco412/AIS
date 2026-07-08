@@ -25,7 +25,9 @@ import { supabase, esc, fmtMoney, fmtDate, bootParentShell, getSelectedStudentId
     if (error) { listEl.innerHTML = `<div class="empty-state">Lỗi: ${esc(error.message)}</div>`; return; }
 
     const total = (batches || []).reduce((s, b) => s + Number(b.coin_remaining), 0);
+    const totalVnd = (batches || []).reduce((s, b) => s + Number(b.coin_remaining) * Number(b.conversion_rate), 0);
     document.getElementById('totalBalance').textContent = `${fmtMoney(total)} AIScoins`;
+    document.getElementById('totalBalanceVnd').textContent = `≈ ${fmtMoney(totalVnd)} VNĐ nếu quy đổi`;
 
     if (!batches || batches.length === 0) {
       listEl.innerHTML = '<div class="empty-state">Không còn số dư nào.</div>';

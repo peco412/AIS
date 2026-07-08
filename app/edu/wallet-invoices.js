@@ -51,32 +51,39 @@ async function selectStudent(student) {
   `;
 
   await loadInvoices();
+  await loadPlanPurchases();
 }
 
 async function loadInvoices() {
   const tbody = document.getElementById('invoiceBody');
-  tbody.innerHTML = '<tr><td colspan="6" class="empty-cell">Đang tải...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="7" class="empty-cell">Đang tải...</td></tr>';
 
-  const { data: invoices, error } = await supabase.from('invoices').select('*').eq('student_id', ACTIVE_STUDENT.id).order('due_date', { ascending: false });
-  if (error) { tbody.innerHTML = `<tr><td colspan="6" class="empty-cell">Lỗi: ${esc(error.message)}</td></tr>`; return; }
-  if (!invoices || invoices.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="empty-cell">Chưa có hoá đơn nào — bấm "Tạo hoá đơn mới".</td></tr>'; return; }
+  const { data: invoices, error } = await supabase.from('invoices_health_view').select('*').eq('student_id', ACTIVE_STUDENT.id).order('due_date', { ascending: false });
+  if (error) { tbody.innerHTML = `<tr><td colspan="7" class="empty-cell">Lỗi: ${esc(error.message)}</td></tr>`; return; }
+  if (!invoices || invoices.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="empty-cell">Chưa có hoá đơn nào — bấm "Tạo hoá đơn mới".</td></tr>'; return; }
 
   const invoiceIds = invoices.map((i) => i.id);
   const { data: ledgerRows } = await supabase.from('debt_ledger').select('invoice_id, amount_vnd').in('invoice_id', invoiceIds);
 
+  const HEALTH_LABEL = { good: 'Tốt', fair: 'Trung bình', poor: 'Xấu' };
+  const HEALTH_BADGE = { good: 'active', fair: 'submitted', poor: 'rejected' };
+
   tbody.innerHTML = invoices.map((inv) => {
     const paid = (ledgerRows || []).filter((l) => l.invoice_id === inv.id).reduce((s, l) => s + Number(l.amount_vnd), 0);
-    const remaining = Number(inv.amount_vnd) - paid;
+    const netAmount = Number(inv.amount_vnd) - Number(inv.manual_discount_vnd || 0);
+    const remaining = netAmount - paid;
     const statusLabel = { unpaid: 'Chưa đóng', partially_paid: 'Một phần', paid: 'Đã đóng đủ' }[inv.status];
     const statusBadge = { unpaid: 'rejected', partially_paid: 'submitted', paid: 'active' }[inv.status];
+    const healthBadge = inv.health_status ? `<div style="margin-top:3px;"><span class="badge badge-${HEALTH_BADGE[inv.health_status]}" style="font-size:10px;">${HEALTH_LABEL[inv.health_status]}</span></div>` : '';
 
     return `
       <tr>
         <td>${inv.period_month}/${inv.period_year} <span class="cell-muted">(hạn ${fmtDate(inv.due_date)})</span></td>
-        <td class="mono">${fmtMoney(inv.amount_vnd)} đ</td>
+        <td class="mono">${fmtMoney(inv.amount_vnd)} đ${inv.manual_discount_vnd > 0 ? `<div class="cell-muted" style="font-size:11px;">- ${fmtMoney(inv.manual_discount_vnd)} đ (${inv.discount_type === 'program' ? 'ưu đãi chương trình' : 'theo trường hợp'})</div>` : ''}</td>
         <td class="mono" style="color:var(--success);">${fmtMoney(paid)} đ</td>
         <td class="mono" style="color:var(--danger); font-weight:600;">${fmtMoney(remaining)} đ</td>
-        <td><span class="badge badge-${statusBadge}">${statusLabel}</span></td>
+        <td><span class="badge badge-${statusBadge}">${statusLabel}</span>${healthBadge}</td>
+        <td>${inv.status !== 'paid' ? `<button class="btn btn-outline btn-sm" data-adjust="${inv.id}" data-current="${inv.manual_discount_vnd || 0}">Ưu đãi</button>` : ''}</td>
         <td>${inv.status !== 'paid' ? `<button class="btn btn-accent btn-sm" data-collect="${inv.id}" data-amount-coin="${inv.amount_aiscoin}" data-remaining="${remaining}">Thu tiền</button>` : ''}</td>
       </tr>
     `;
@@ -85,14 +92,123 @@ async function loadInvoices() {
   tbody.querySelectorAll('[data-collect]').forEach((btn) => {
     btn.addEventListener('click', () => openCollectModal(invoices.find((i) => i.id === btn.dataset.collect), Number(btn.dataset.remaining)));
   });
+  tbody.querySelectorAll('[data-adjust]').forEach((btn) => {
+    btn.addEventListener('click', () => openAdjustDiscount(btn.dataset.adjust, Number(btn.dataset.current)));
+  });
+}
+
+// Ưu đãi cho hoá đơn — CHỈ CHỌN 1 TRONG 2 (không cộng dồn): giảm theo
+// trường hợp (nhập tay + note bắt buộc) HOẶC áp dụng ưu đãi chương trình
+// đang có cho trung tâm này (nếu có).
+async function openAdjustDiscount(invoiceId, currentDiscount) {
+  const choice = prompt(
+    'Chọn loại ưu đãi cho hoá đơn này (chỉ được chọn 1):\n' +
+    '1 = Giảm giá theo trường hợp (nhập tay số tiền + lý do)\n' +
+    '2 = Áp dụng ưu đãi chương trình đang có cho trung tâm\n' +
+    '0 = Bỏ ưu đãi (về 0)\n\nNhập 0, 1 hoặc 2:'
+  );
+  if (choice === null) return;
+
+  try {
+    if (choice === '1') {
+      const amountStr = prompt('Số tiền ưu đãi (VNĐ):', currentDiscount || 0);
+      if (amountStr === null) return;
+      const amount = Number(amountStr);
+      if (isNaN(amount) || amount < 0) { alert('Số tiền không hợp lệ.'); return; }
+      const reason = prompt('Lý do (bắt buộc):');
+      if (!reason) { alert('Cần nhập lý do.'); return; }
+      const { error } = await supabase.rpc('apply_case_discount_to_invoice', { p_invoice_id: invoiceId, p_amount_vnd: amount, p_note: reason });
+      if (error) throw error;
+    } else if (choice === '2') {
+      const { error } = await supabase.rpc('apply_program_discount_to_invoice', { p_invoice_id: invoiceId, p_approver_id: PROFILE.id });
+      if (error) throw error;
+    } else if (choice === '0') {
+      const { error } = await supabase.rpc('apply_case_discount_to_invoice', { p_invoice_id: invoiceId, p_amount_vnd: 0, p_note: null });
+      if (error) throw error;
+    } else {
+      return;
+    }
+    await selectStudent(ACTIVE_STUDENT);
+  } catch (err) {
+    alert('Lỗi: ' + err.message);
+  }
 }
 
 // ---------------------------------------------------------------------
 // Tạo hoá đơn mới
 // ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
+// Tạo hoá đơn mới — 3 hình thức đóng + nhập tay tự do
+// ---------------------------------------------------------------------
 const createModal = document.getElementById('createInvoiceModal');
+
+document.getElementById('planType').addEventListener('change', async (e) => {
+  const type = e.target.value;
+  document.getElementById('manualFields').style.display = type === 'manual' ? 'block' : 'none';
+  const scopeField = document.getElementById('planScopeField');
+  scopeField.style.display = type === 'manual' ? 'none' : 'block';
+  document.getElementById('planPricePreview').textContent = '';
+  if (type === 'manual') return;
+
+  const label = document.getElementById('planScopeLabel');
+  const select = document.getElementById('planScopeSelect');
+  select.innerHTML = '<option value="">Đang tải...</option>';
+
+  if (type === 'sublevel') {
+    label.textContent = 'Chọn cấp độ con';
+    const { data } = await supabase.from('program_sublevels').select('id, name, price_vnd, program_levels(name, programs(name))').order('display_order');
+    select.innerHTML = (data || []).map((s) => `<option value="${s.id}" data-price="${s.price_vnd || 0}">${esc(s.program_levels?.programs?.name || '')} — ${esc(s.program_levels?.name || '')} — ${esc(s.name)}</option>`).join('');
+  } else if (type === 'level') {
+    label.textContent = 'Chọn cấp độ';
+    const { data } = await supabase.from('program_levels').select('id, name, programs(name)').order('display_order');
+    select.innerHTML = (data || []).map((l) => `<option value="${l.id}">${esc(l.programs?.name || '')} — ${esc(l.name)}</option>`).join('');
+  } else if (type === 'program') {
+    label.textContent = 'Chọn chương trình';
+    const { data } = await supabase.from('programs').select('id, name').order('display_order');
+    select.innerHTML = (data || []).map((p) => `<option value="${p.id}">${esc(p.name)}</option>`).join('');
+  }
+  updatePlanPricePreview();
+});
+
+document.getElementById('planScopeSelect').addEventListener('change', updatePlanPricePreview);
+
+async function updatePlanPricePreview() {
+  const type = document.getElementById('planType').value;
+  const scopeId = document.getElementById('planScopeSelect').value;
+  const previewEl = document.getElementById('planPricePreview');
+  if (type === 'manual' || !scopeId) { previewEl.textContent = ''; return; }
+
+  const { data: discountRow } = await supabase.from('payment_plan_discounts').select('discount_rate').eq('plan_type', type).single();
+  const discountRate = discountRow?.discount_rate || 0;
+
+  let basePrice = 0, courseCount = 0;
+  if (type === 'sublevel') {
+    const opt = document.getElementById('planScopeSelect').selectedOptions[0];
+    basePrice = Number(opt?.dataset.price || 0);
+    courseCount = 1;
+  } else if (type === 'level') {
+    const { data } = await supabase.from('program_sublevels').select('price_vnd').eq('level_id', scopeId);
+    basePrice = (data || []).reduce((s, x) => s + Number(x.price_vnd || 0), 0);
+    courseCount = (data || []).length;
+  } else if (type === 'program') {
+    const { data: levels } = await supabase.from('program_levels').select('id').eq('program_id', scopeId);
+    const levelIds = (levels || []).map((l) => l.id);
+    const { data } = await supabase.from('program_sublevels').select('price_vnd').in('level_id', levelIds.length ? levelIds : ['00000000-0000-0000-0000-000000000000']);
+    basePrice = (data || []).reduce((s, x) => s + Number(x.price_vnd || 0), 0);
+    courseCount = (data || []).length;
+  }
+
+  const finalPrice = basePrice * (1 - discountRate);
+  previewEl.innerHTML = basePrice > 0
+    ? `Gồm ${courseCount} cấp độ con — Giá gốc: ${fmtMoney(basePrice)} đ — Giảm ${(discountRate * 100).toFixed(0)}% — <strong>Thu: ${fmtMoney(finalPrice)} đ</strong>`
+    : `<span style="color:var(--danger);">Chưa cấu hình học phí cho các cấp độ con thuộc phạm vi này.</span>`;
+}
+
 document.getElementById('btnNewInvoice').addEventListener('click', () => {
   document.getElementById('createError').classList.remove('show');
+  document.getElementById('planType').value = 'manual';
+  document.getElementById('manualFields').style.display = 'block';
+  document.getElementById('planScopeField').style.display = 'none';
   const now = new Date();
   document.getElementById('invYear').value = now.getFullYear();
   document.getElementById('invMonth').value = now.getMonth() + 1;
@@ -113,22 +229,74 @@ document.getElementById('invAmountVnd').addEventListener('input', (e) => {
 document.getElementById('btnSubmitInvoice').addEventListener('click', async () => {
   const errBox = document.getElementById('createError');
   errBox.classList.remove('show');
-  const payload = {
-    student_id: ACTIVE_STUDENT.id,
-    period_year: Number(document.getElementById('invYear').value),
-    period_month: Number(document.getElementById('invMonth').value),
-    amount_vnd: Number(document.getElementById('invAmountVnd').value),
-    amount_aiscoin: Number(document.getElementById('invAmountCoin').value),
-    due_date: document.getElementById('invDueDate').value,
-    status: 'unpaid',
-  };
-  if (!payload.amount_vnd || !payload.due_date) { errBox.textContent = 'Vui lòng nhập đủ số tiền và hạn chót.'; errBox.classList.add('show'); return; }
+  const type = document.getElementById('planType').value;
 
-  const { error } = await supabase.from('invoices').insert(payload);
-  if (error) { errBox.textContent = error.message; errBox.classList.add('show'); return; }
-  createModal.classList.remove('show');
-  await selectStudent(ACTIVE_STUDENT);
+  try {
+    if (type === 'manual') {
+      const payload = {
+        student_id: ACTIVE_STUDENT.id,
+        period_year: Number(document.getElementById('invYear').value),
+        period_month: Number(document.getElementById('invMonth').value),
+        amount_vnd: Number(document.getElementById('invAmountVnd').value),
+        amount_aiscoin: Number(document.getElementById('invAmountCoin').value),
+        due_date: document.getElementById('invDueDate').value,
+        status: 'unpaid',
+      };
+      if (!payload.amount_vnd || !payload.due_date) { errBox.textContent = 'Vui lòng nhập đủ số tiền và hạn chót.'; errBox.classList.add('show'); return; }
+      const { error } = await supabase.from('invoices').insert(payload);
+      if (error) throw error;
+    } else {
+      const scopeId = document.getElementById('planScopeSelect').value;
+      if (!scopeId) { errBox.textContent = 'Vui lòng chọn phạm vi.'; errBox.classList.add('show'); return; }
+      const { error } = await supabase.rpc('create_payment_plan_invoice', { p_student_id: ACTIVE_STUDENT.id, p_plan_type: type, p_scope_id: scopeId });
+      if (error) throw error;
+    }
+    createModal.classList.remove('show');
+    await selectStudent(ACTIVE_STUDENT);
+  } catch (err) {
+    errBox.textContent = err.message || 'Có lỗi xảy ra.';
+    errBox.classList.add('show');
+  }
 });
+
+// ---------------------------------------------------------------------
+// Gói đã mua + Hoàn phí (công thức đã sửa — xem migration 32)
+// ---------------------------------------------------------------------
+async function loadPlanPurchases() {
+  const tbody = document.getElementById('planBody');
+  const { data, error } = await supabase.from('payment_plan_purchases').select('*').eq('student_id', ACTIVE_STUDENT.id).order('created_at', { ascending: false });
+  if (error || !data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="empty-cell">Chưa mua gói theo cấp độ/chương trình nào.</td></tr>'; return; }
+
+  tbody.innerHTML = data.map((p) => `
+    <tr>
+      <td>${p.plan_type === 'level' ? 'Trọn cấp độ' : 'Trọn chương trình'}</td>
+      <td class="mono">${p.total_courses} khoá</td>
+      <td class="mono">${fmtMoney(p.total_amount_vnd)} đ</td>
+      <td><span class="badge badge-${p.status === 'active' ? 'active' : 'inactive'}">${p.status === 'active' ? 'Đang hiệu lực' : 'Đã hoàn phí'}</span></td>
+      <td>${p.status === 'active' ? `<button class="btn btn-outline btn-sm" data-refund="${p.id}" data-total="${p.total_courses}" data-amount="${p.total_amount_vnd}">Hoàn phí</button>` : ''}</td>
+    </tr>
+  `).join('');
+
+  tbody.querySelectorAll('[data-refund]').forEach((btn) => {
+    btn.addEventListener('click', () => openPlanRefund(btn.dataset.refund, Number(btn.dataset.total), Number(btn.dataset.amount)));
+  });
+}
+
+async function openPlanRefund(purchaseId, totalCourses, totalAmount) {
+  const completedStr = prompt(`Gói này gồm ${totalCourses} khoá, đã thu ${fmtMoney(totalAmount)} đ.\nXác nhận học viên đã học xong bao nhiêu khoá (0-${totalCourses})?`, '0');
+  if (completedStr === null) return;
+  const completed = Number(completedStr);
+  if (isNaN(completed) || completed < 0 || completed > totalCourses) { alert('Số khoá không hợp lệ.'); return; }
+
+  const perCourse = totalAmount / totalCourses;
+  const refund = totalAmount - completed * perCourse;
+  if (!confirm(`Giá trị 1 khoá: ${fmtMoney(perCourse)} đ\nSố tiền hoàn: ${fmtMoney(refund)} đ\n\nXác nhận hoàn phí? Không hoàn tác được.`)) return;
+
+  const { error } = await supabase.rpc('process_plan_refund', { p_purchase_id: purchaseId, p_courses_completed: completed, p_approver_id: PROFILE.id });
+  if (error) { alert('Lỗi: ' + error.message); return; }
+  alert('Đã xử lý hoàn phí. Vui lòng thực hiện chuyển tiền hoàn thực tế cho phụ huynh theo đúng số tiền trên (hệ thống chỉ ghi sổ, không tự chuyển khoản).');
+  await selectStudent(ACTIVE_STUDENT);
+}
 
 // ---------------------------------------------------------------------
 // Thu tiền — qua Ví (FIFO thật) hoặc tại quầy
@@ -148,7 +316,7 @@ async function openCollectModal(invoice, remaining) {
   if (balance > 0) {
     walletBox.style.display = 'block';
     document.getElementById('walletBalanceDisplay').textContent = `${fmtMoney(balance)} AIScoins`;
-    document.getElementById('collectCoin').value = Math.min(balance, invoice.amount_aiscoin);
+    document.getElementById('collectCoin').value = Math.min(balance, remaining);
     document.getElementById('collectCoin').max = balance;
   } else {
     walletBox.style.display = 'none';

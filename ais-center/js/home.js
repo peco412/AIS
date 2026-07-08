@@ -19,13 +19,16 @@ async function loadBalanceAndDebt() {
 
   if (!wallet) {
     document.getElementById('balanceValue').textContent = '0 AIScoins';
+    document.getElementById('balanceValueVnd').textContent = '';
     document.getElementById('debtSummary').innerHTML = '<div class="empty-state">Chưa có ví.</div>';
     return;
   }
 
-  const { data: batches } = await supabase.from('wallet_topup_batches').select('coin_remaining').eq('wallet_id', wallet.id);
+  const { data: batches } = await supabase.from('wallet_topup_batches').select('coin_remaining, conversion_rate').eq('wallet_id', wallet.id);
   const total = (batches || []).reduce((s, b) => s + Number(b.coin_remaining), 0);
+  const totalVnd = (batches || []).reduce((s, b) => s + Number(b.coin_remaining) * Number(b.conversion_rate), 0);
   document.getElementById('balanceValue').textContent = `${fmtMoney(total)} AIScoins`;
+  document.getElementById('balanceValueVnd').textContent = `≈ ${fmtMoney(totalVnd)} VNĐ nếu quy đổi`;
 
   const { data: invoices } = await supabase.from('invoices').select('id, amount_vnd, period_month, period_year, status')
     .eq('student_id', SELECTED_ID).in('status', ['unpaid', 'partially_paid']).order('due_date', { ascending: true }).limit(3);

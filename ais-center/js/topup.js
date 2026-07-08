@@ -17,8 +17,19 @@ async function updatePreview() {
 
   latestCalc = data;
   previewBox.style.display = 'block';
-  document.getElementById('previewRate').textContent = fmtPercent(data.discount_rate);
+
+  document.getElementById('previewCoins').textContent = `${fmtMoney(amount)} AIScoins`;
+  document.getElementById('previewTierRate').textContent = fmtPercent(data.tier_rate);
+  document.getElementById('previewGross').textContent = `${fmtMoney(amount)} coin`;
   document.getElementById('previewVnd').textContent = `${fmtMoney(amount * data.conversion_rate)} VNĐ`;
+
+  const programRow = document.getElementById('previewProgramRow');
+  if (data.program_rate > 0) {
+    programRow.style.display = 'flex';
+    document.getElementById('previewProgramRate').textContent = `${fmtPercent(data.program_rate)}${data.program_name ? ' — ' + data.program_name : ''}`;
+  } else {
+    programRow.style.display = 'none';
+  }
 
   const tiers = [10000000, 20000000, 30000000, 50000000];
   const nextTier = tiers.find((t) => t > amount);

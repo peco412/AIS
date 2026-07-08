@@ -21,11 +21,14 @@
 
   <div class="card" id="amountCard">
     <h3>Số AIScoins muốn nạp</h3>
-    <div class="field"><input type="number" id="coinAmount" placeholder="Nhập số tiền, VD: 15000000" min="1000000" step="100000" /></div>
+    <div class="field"><input type="number" id="coinAmount" placeholder="Nhập số tiền, VD: 15000000" min="1" step="10000" /></div>
 
     <div class="topup-preview" id="previewBox" style="display:none;">
-      <div class="topup-preview__row"><span>Chiết khấu áp dụng</span><strong id="previewRate">–</strong></div>
-      <div class="topup-preview__row"><span>Số tiền cần thanh toán</span><strong id="previewVnd">–</strong></div>
+      <div class="topup-preview__row"><span>Số coins nhận được</span><strong id="previewCoins">–</strong></div>
+      <div class="topup-preview__row"><span>Chiết khấu theo mức nạp</span><strong id="previewTierRate">–</strong></div>
+      <div class="topup-preview__row" id="previewProgramRow" style="display:none;"><span>Ưu đãi chương trình đang có</span><strong id="previewProgramRate">–</strong></div>
+      <div class="topup-preview__row"><span>Thu vào (mệnh giá coin)</span><strong id="previewGross">–</strong></div>
+      <div class="topup-preview__row" style="border-top:1px dashed rgba(0,148,217,0.3); margin-top:6px; padding-top:10px;"><span>Thực thu (VNĐ cần thanh toán)</span><strong id="previewVnd" style="font-size:16px;">–</strong></div>
       <div class="topup-preview__hint" id="previewHint"></div>
     </div>
   </div>

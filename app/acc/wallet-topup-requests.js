@@ -44,9 +44,21 @@ async function loadRows() {
 }
 
 async function confirmRequest(id) {
+  const wantsCaseDiscount = confirm('Bạn có muốn áp dụng thêm "Giảm giá theo trường hợp" (cộng dồn thêm ngoài chiết khấu mặc định) cho lần nạp này không?');
+  let caseRate = 0, caseNote = null;
+  if (wantsCaseDiscount) {
+    const rateStr = prompt('Nhập % giảm giá theo trường hợp (VD: 5 = 5%):', '0');
+    caseRate = Number(rateStr) / 100;
+    if (isNaN(caseRate) || caseRate < 0) { alert('% không hợp lệ.'); return; }
+    caseNote = prompt('Ghi chú lý do (bắt buộc):', '');
+    if (!caseNote) { alert('Cần nhập lý do khi áp dụng giảm giá theo trường hợp.'); return; }
+  }
+
   if (!confirm('Xác nhận đã thấy đúng khoản chuyển khoản này trong sao kê ngân hàng? Sau khi xác nhận sẽ CỘNG NGAY AIScoins vào ví, không hoàn tác được.')) return;
 
-  const { error } = await supabase.rpc('confirm_topup_request', { p_request_id: id, p_approver_id: PROFILE.id });
+  const { error } = await supabase.rpc('confirm_topup_request', {
+    p_request_id: id, p_approver_id: PROFILE.id, p_case_discount_rate: caseRate, p_case_discount_note: caseNote,
+  });
   if (error) { alert('Lỗi: ' + error.message); return; }
   await loadRows();
 }

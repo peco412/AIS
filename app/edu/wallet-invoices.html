@@ -50,14 +50,22 @@
     <div id="studentPanel" style="display:none;">
       <div class="stat-grid" id="statCards"></div>
 
+      <div class="page-header" style="margin-top:8px;"><div><h1 style="font-size:15px;">Gói đã mua (Cấp độ / Chương trình)</h1></div></div>
+      <div class="data-table-wrap" style="margin-bottom:16px;">
+        <table class="data-table">
+          <thead><tr><th>Hình thức</th><th>Số khoá</th><th>Đã thu</th><th data-i18n="common.status">Trạng thái</th><th></th></tr></thead>
+          <tbody id="planBody"><tr><td colspan="5" class="empty-cell">—</td></tr></tbody>
+        </table>
+      </div>
+
       <div class="page-header" style="margin-top:8px;">
         <div><h1 style="font-size:15px;">Hoá đơn</h1></div>
         <button class="btn btn-accent btn-sm" id="btnNewInvoice">+ Tạo hoá đơn mới</button>
       </div>
       <div class="data-table-wrap">
         <table class="data-table">
-          <thead><tr><th>Kỳ</th><th>Số tiền</th><th>Đã đóng</th><th>Còn nợ</th><th data-i18n="common.status">Trạng thái</th><th></th></tr></thead>
-          <tbody id="invoiceBody"><tr><td colspan="6" class="empty-cell">Chọn học sinh để xem hoá đơn.</td></tr></tbody>
+          <thead><tr><th>Kỳ</th><th>Số tiền</th><th>Đã đóng</th><th>Còn nợ</th><th data-i18n="common.status">Trạng thái</th><th></th><th></th></tr></thead>
+          <tbody id="invoiceBody"><tr><td colspan="7" class="empty-cell">Chọn học sinh để xem hoá đơn.</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -69,13 +77,32 @@
     <button class="modal-close" id="closeCreateModal">✕</button>
     <h3>Tạo hoá đơn học phí</h3>
     <div class="form-error" id="createError"></div>
-    <div class="field-grid-2">
-      <div class="field"><label for="invYear">Năm</label><input type="number" id="invYear" /></div>
-      <div class="field"><label for="invMonth">Tháng</label><input type="number" id="invMonth" min="1" max="12" /></div>
+
+    <div class="field">
+      <label for="planType">Hình thức đóng *</label>
+      <select id="planType">
+        <option value="manual">Nhập tay số tiền (tuỳ chỉnh tự do)</option>
+        <option value="sublevel">Đóng theo cấp độ con — học tới đâu đóng tới đó</option>
+        <option value="level">Đóng theo cấp độ — trọn 1 cấp độ</option>
+        <option value="program">Đóng theo chương trình — trọn cả chương trình</option>
+      </select>
     </div>
-    <div class="field"><label for="invAmountVnd">Số tiền (VNĐ) *</label><input type="number" id="invAmountVnd" min="0" required /></div>
-    <div class="field"><label for="invAmountCoin">Số tiền quy đổi AIScoins *</label><input type="number" id="invAmountCoin" min="0" required /></div>
-    <div class="field"><label for="invDueDate">Hạn chót *</label><input type="date" id="invDueDate" required /></div>
+
+    <div id="planScopeField" style="display:none;">
+      <div class="field"><label for="planScopeSelect" id="planScopeLabel">Chọn</label><select id="planScopeSelect"></select></div>
+      <p class="cell-muted" id="planPricePreview" style="margin-bottom:14px;"></p>
+    </div>
+
+    <div id="manualFields">
+      <div class="field-grid-2">
+        <div class="field"><label for="invYear">Năm</label><input type="number" id="invYear" /></div>
+        <div class="field"><label for="invMonth">Tháng</label><input type="number" id="invMonth" min="1" max="12" /></div>
+      </div>
+      <div class="field"><label for="invAmountVnd">Số tiền (VNĐ) *</label><input type="number" id="invAmountVnd" min="0" /></div>
+      <div class="field"><label for="invAmountCoin">Số tiền quy đổi AIScoins *</label><input type="number" id="invAmountCoin" min="0" /></div>
+      <div class="field"><label for="invDueDate">Hạn chót *</label><input type="date" id="invDueDate" /></div>
+    </div>
+
     <div class="modal-actions">
       <button type="button" class="btn btn-outline" id="cancelCreateModal"><span data-i18n="common.cancel">Huỷ</span></button>
       <button type="button" class="btn btn-accent" id="btnSubmitInvoice">Tạo hoá đơn</button>

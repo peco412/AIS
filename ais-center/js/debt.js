@@ -41,5 +41,65 @@ import { supabase, esc, fmtMoney, fmtDate, bootParentShell, getSelectedStudentId
         </div>
       `;
     }).join('');
+
+    // ---------------------------------------------------------------
+    // Lịch sử đóng học phí — TOÀN BỘ hoá đơn (kể cả đã đóng đủ), để phụ
+    // huynh theo dõi lâu dài, không chỉ khoản đang nợ.
+    // ---------------------------------------------------------------
+    const { data: allInvoices } = await supabase.from('invoices').select('id, period_year, period_month, amount_vnd, status').eq('student_id', studentId).order('period_year', { ascending: false }).order('period_month', { ascending: false });
+    const historyEl = document.getElementById('paymentHistory');
+    if (!allInvoices || allInvoices.length === 0) {
+      historyEl.innerHTML = '<div class="empty-state">Chưa có lịch sử nào.</div>';
+    } else {
+      const allInvoiceIds = allInvoices.map((i) => i.id);
+      const { data: allLedger } = await supabase.from('debt_ledger').select('invoice_id, source, amount_vnd, created_at').in('invoice_id', allInvoiceIds).order('created_at', { ascending: false });
+      const SOURCE_LABEL = { WALLET: 'Ví AIScoins', CASH: 'Tiền mặt', BANK_TRANSFER: 'Chuyển khoản' };
+
+      historyEl.innerHTML = (allLedger || []).length === 0
+        ? '<div class="empty-state">Chưa có giao dịch đóng học phí nào.</div>'
+        : allLedger.map((l) => {
+          const inv = allInvoices.find((i) => i.id === l.invoice_id);
+          return `
+            <div class="invoice-row">
+              <div class="invoice-row__top">
+                <span>Học phí ${inv ? `${inv.period_month}/${inv.period_year}` : ''}</span>
+                <span>${fmtMoney(l.amount_vnd)} đ</span>
+              </div>
+              <div class="invoice-row__sub">${fmtDate(l.created_at)} · ${SOURCE_LABEL[l.source] || l.source}</div>
+            </div>
+          `;
+        }).join('');
+    }
+
+    // ---------------------------------------------------------------
+    // Lịch học — theo đúng lớp đang học hiện tại
+    // ---------------------------------------------------------------
+    const { data: student } = await supabase.from('students').select('class_id, classes(name, schedule_note, teacher_id, employees:teacher_id(full_name))').eq('id', studentId).single();
+    const scheduleEl = document.getElementById('scheduleList');
+    if (!student?.class_id) {
+      scheduleEl.innerHTML = '<div class="empty-state">Chưa được xếp lớp.</div>';
+    } else {
+      scheduleEl.innerHTML = `
+        <div class="invoice-row">
+          <div class="invoice-row__top"><span>${esc(student.classes?.name || '—')}</span></div>
+          <div class="invoice-row__sub">${esc(student.classes?.schedule_note || 'Chưa có lịch cụ thể')} · GV: ${esc(student.classes?.employees?.full_name || '—')}</div>
+        </div>
+      `;
+    }
+
+    // ---------------------------------------------------------------
+    // Bảng điểm
+    // ---------------------------------------------------------------
+    const { data: grades } = await supabase.from('student_grades').select('term, score, ranking, final_status').eq('student_id', studentId).order('created_at', { ascending: false });
+    const gradesEl = document.getElementById('gradesList');
+    const FINAL_LABEL = { graduated: 'Tốt nghiệp', not_passed: 'Chưa đạt' };
+    gradesEl.innerHTML = (!grades || grades.length === 0)
+      ? '<div class="empty-state">Chưa có điểm nào.</div>'
+      : grades.map((g) => `
+        <div class="invoice-row">
+          <div class="invoice-row__top"><span>${esc(g.term || 'Kỳ học')}</span><span>${g.score ?? '—'} điểm</span></div>
+          <div class="invoice-row__sub">${esc(g.ranking || '')}${g.final_status ? ' · ' + (FINAL_LABEL[g.final_status] || g.final_status) : ''}</div>
+        </div>
+      `).join('');
   } catch (e) { /* bootParentShell tự điều hướng */ }
 })();

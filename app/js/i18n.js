@@ -50,6 +50,7 @@ const DICT = {
   'nav.acc.reports': { vi: 'Báo cáo tài chính', en: 'Financial reports' },
   'nav.acc.discountPrograms': { vi: 'Chương trình ưu đãi nạp ví', en: 'Wallet discount programs' },
   'nav.acc.walletTopupRequests': { vi: 'Xác nhận nạp ví', en: 'Confirm wallet top-ups' },
+  'nav.acc.attendancePayroll': { vi: 'Bảng kê chấm công', en: 'Attendance payroll report' },
   'nav.acc.payroll': { vi: 'Bảng lương', en: 'Payroll' },
 
   'nav.section.mkt': { vi: 'Phòng truyền thông', en: 'Marketing & Communications' },
