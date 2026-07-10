@@ -64,8 +64,8 @@
 
     <div class="data-table-wrap">
       <table class="data-table">
-        <thead><tr><th>Người yêu cầu</th><th>Loại</th><th>Tiêu đề</th><th>Ưu tiên</th><th>Hạn xử lý</th><th data-i18n="common.status">Trạng thái</th><th></th></tr></thead>
-        <tbody id="tableBody"><tr><td colspan="7" class="empty-cell">Đang tải dữ liệu...</td></tr></tbody>
+        <thead><tr><th>Người yêu cầu</th><th>Trung tâm</th><th>Loại</th><th>Tiêu đề</th><th>Ưu tiên</th><th>Hạn xử lý</th><th data-i18n="common.status">Trạng thái</th><th></th></tr></thead>
+        <tbody id="tableBody"><tr><td colspan="8" class="empty-cell">Đang tải dữ liệu...</td></tr></tbody>
       </table>
     </div>
   </main>
@@ -83,9 +83,10 @@
         <select id="requestType" required>
           <option value="design">Thiết kế</option>
           <option value="print">In ấn</option>
-          <option value="ads">Quảng cáo</option>
-          <option value="event">Tổ chức sự kiện</option>
-          <option value="photo_video">Quay phim / chụp ảnh</option>
+          <option value="photo">Chụp ảnh</option>
+          <option value="video">Quay phim</option>
+          <option value="edit_video">Edit video</option>
+          <option value="support">Hỗ trợ truyền thông</option>
         </select>
       </div>
       <div class="field">
@@ -93,7 +94,10 @@
         <select id="priority"><option value="normal">Bình thường</option><option value="low">Thấp</option><option value="high">Cao</option><option value="urgent">Khẩn cấp</option></select>
       </div>
     </div>
-    <div class="field"><label for="deadline">Thời hạn xử lý</label><input type="date" id="deadline" /></div>
+    <div class="field-grid-2">
+      <div class="field"><label for="deadlineTime">Thời gian cụ thể</label><input type="time" id="deadlineTime" /></div>
+      <div class="field"><label for="deadline">Ngày cụ thể</label><input type="date" id="deadline" /></div>
+    </div>
     <div class="field"><label for="briefFile">Đính kèm brief (PDF)</label><input type="file" id="briefFile" accept="application/pdf" /></div>
     <div class="modal-actions">
       <button type="button" class="btn btn-outline" id="cancelCreate"><span data-i18n="common.cancel">Huỷ</span></button>

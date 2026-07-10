@@ -30,15 +30,20 @@ async function loadRows() {
 
   const { data, error } = await supabase
     .from('discount_programs_view')
-    .select('id, name, scope, discount_rate, valid_from, valid_to, status, centers(name)')
+    .select('id, code, name, scope, discount_rate, valid_from, valid_to, status, applies_to, centers(name), programs(name), program_sublevels(name), program_courses(name)')
     .order('created_at', { ascending: false });
 
-  if (error) { tbody.innerHTML = `<tr><td colspan="6" class="empty-cell">Lỗi: ${esc(error.message)}</td></tr>`; return; }
-  if (!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="empty-cell">Chưa có chương trình ưu đãi nào.</td></tr>'; return; }
+  if (error) { tbody.innerHTML = `<tr><td colspan="8" class="empty-cell">Lỗi: ${esc(error.message)}</td></tr>`; return; }
+  if (!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="8" class="empty-cell">Chưa có chương trình ưu đãi nào.</td></tr>'; return; }
+
+  const APPLIES_LABEL = { all: 'Tất cả', program: 'Theo chương trình', sublevel: 'Theo cấp độ', course: 'Theo khoá' };
+  const scopeRefName = (r) => r.programs?.name || r.program_sublevels?.name || r.program_courses?.name || '';
 
   tbody.innerHTML = data.map((r) => `
     <tr>
+      <td class="cell-code mono">${esc(r.code || '—')}</td>
       <td>${esc(r.name)}</td>
+      <td class="cell-muted">${esc(APPLIES_LABEL[r.applies_to] || r.applies_to)}${scopeRefName(r) ? ` — ${esc(scopeRefName(r))}` : ''}</td>
       <td class="cell-muted">${r.scope === 'system' ? 'Toàn hệ thống' : esc(r.centers?.name || '—')}</td>
       <td class="mono">${fmtPercent(r.discount_rate)}</td>
       <td class="cell-muted" style="font-size:12px;">${fmtDateTime(r.valid_from)} → ${fmtDateTime(r.valid_to)}</td>
@@ -150,12 +155,33 @@ document.getElementById('btnAdd').addEventListener('click', () => {
   document.getElementById('programForm').reset();
   formError.classList.remove('show');
   document.getElementById('centerFieldWrap').style.display = 'none';
+  document.getElementById('appliesToScopeWrap').style.display = 'none';
   modal.classList.add('show');
 });
 document.getElementById('closeModal').addEventListener('click', () => modal.classList.remove('show'));
 document.getElementById('cancelModal').addEventListener('click', () => modal.classList.remove('show'));
 document.getElementById('progScope').addEventListener('change', (e) => {
   document.getElementById('centerFieldWrap').style.display = e.target.value === 'center' ? 'block' : 'none';
+});
+
+document.getElementById('progAppliesTo').addEventListener('change', async (e) => {
+  const wrap = document.getElementById('appliesToScopeWrap');
+  const sel = document.getElementById('appliesToScopeSelect');
+  const type = e.target.value;
+  if (type === 'all') { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+  sel.innerHTML = '<option value="">Đang tải...</option>';
+
+  if (type === 'program') {
+    const { data } = await supabase.from('programs').select('id, name').order('display_order');
+    sel.innerHTML = (data || []).map((p) => `<option value="${p.id}">${esc(p.name)}</option>`).join('');
+  } else if (type === 'sublevel') {
+    const { data } = await supabase.from('program_sublevels').select('id, name, program_levels(name, programs(name))').order('display_order');
+    sel.innerHTML = (data || []).map((s) => `<option value="${s.id}">${esc(s.program_levels?.programs?.name || '')} — ${esc(s.program_levels?.name || '')} — ${esc(s.name)}</option>`).join('');
+  } else if (type === 'course') {
+    const { data } = await supabase.from('program_courses').select('id, name, program_sublevels(name, program_levels(name, programs(name)))').order('display_order');
+    sel.innerHTML = (data || []).map((c) => `<option value="${c.id}">${esc(c.program_sublevels?.program_levels?.programs?.name || '')} — ${esc(c.name)}</option>`).join('');
+  }
 });
 
 document.getElementById('programForm').addEventListener('submit', async (e) => {
@@ -173,6 +199,9 @@ document.getElementById('programForm').addEventListener('submit', async (e) => {
     return;
   }
 
+  const appliesTo = document.getElementById('progAppliesTo').value;
+  const scopeRefId = document.getElementById('appliesToScopeSelect').value;
+
   const payload = {
     name: document.getElementById('progName').value.trim(),
     scope,
@@ -181,6 +210,10 @@ document.getElementById('programForm').addEventListener('submit', async (e) => {
     valid_range: `[${new Date(from).toISOString()},${new Date(to).toISOString()})`,
     status: 'active',
     created_by: PROFILE.id,
+    applies_to: appliesTo,
+    program_id: appliesTo === 'program' ? scopeRefId : null,
+    sublevel_id: appliesTo === 'sublevel' ? scopeRefId : null,
+    course_id: appliesTo === 'course' ? scopeRefId : null,
   };
 
   const btn = document.getElementById('submitProgram');

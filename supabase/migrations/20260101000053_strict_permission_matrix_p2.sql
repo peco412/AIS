@@ -73,7 +73,7 @@ create policy purchase_requests_update on purchase_requests for update
 drop policy if exists event_proposals_update on event_proposals;
 create policy event_proposals_update on event_proposals for update
   using (
-    (created_by = current_employee_id() and status = 'draft')
+    (center_manager_id = current_employee_id() and status = 'draft')
     or (current_department_id() = (select id from departments where code='MKT') and current_role_code() = 'DEPT_HEAD')
     or is_executive_strict()
   );

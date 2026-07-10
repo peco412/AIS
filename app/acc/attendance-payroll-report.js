@@ -29,6 +29,14 @@ async function loadReport() {
   if (error) { tbody.innerHTML = `<tr><td colspan="5" class="empty-cell">Lỗi: ${esc(error.message)}</td></tr>`; return; }
   if (!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="empty-cell">Không có dữ liệu chấm công trong tháng này.</td></tr>'; return; }
 
+  // Đơn xin chấm công trễ ĐÃ ĐƯỢC PHÓ PHÒNG NS DUYỆT trong tháng này —
+  // dùng để tự động đánh dấu "Đúng giờ" cho đúng ngày đó, khớp đúng logic
+  // "Hệ thống tự động sửa đổi dữ liệu thành Chấm công đúng giờ".
+  const { data: lateApprovals } = await supabase.from('late_clockin_requests')
+    .select('employee_id, late_date').eq('status', 'approved')
+    .gte('late_date', monthStart.slice(0, 10)).lt('late_date', monthEnd.slice(0, 10));
+  const onTimeOverrides = new Set((lateApprovals || []).map((l) => `${l.employee_id}:${l.late_date}`));
+
   // Gom theo nhân viên -> theo ngày -> {in, out}
   const byEmployee = {};
   data.forEach((r) => {
@@ -47,10 +55,12 @@ async function loadReport() {
 
   document.getElementById('resultCount').textContent = `${rows.length} nhân viên`;
 
-  function fmtInOut(day) {
+  function fmtInOut(day, empId, dateKey) {
     const inTime = day.in ? fmtTime(day.in) : '—';
     const outTime = day.out ? fmtTime(day.out) : '<span style="color:var(--danger);">chưa ra</span>';
-    return `vào ${inTime} → ra ${outTime}`;
+    const isExcused = onTimeOverrides.has(`${empId}:${dateKey}`);
+    const badge = isExcused ? ' <span class="badge badge-active" style="font-size:9px;">✓ Đúng giờ (đã duyệt)</span>' : '';
+    return `vào ${inTime} → ra ${outTime}${badge}`;
   }
 
   tbody.innerHTML = rows.map((r) => `
@@ -64,7 +74,7 @@ async function loadReport() {
           <summary class="cell-muted" style="cursor:pointer;">Xem ${r.dateKeys.length} ngày</summary>
           <div style="font-size:11.5px; margin-top:6px; line-height:1.8;">
             ${r.dateKeys.map((d) => `
-              <div>${fmtDate(d)}: ${fmtInOut(r.info.days[d])}</div>
+              <div>${fmtDate(d)}: ${fmtInOut(r.info.days[d], r.empId, d)}</div>
             `).join('')}
           </div>
         </details>

@@ -2,7 +2,7 @@ import { bootShell } from '/js/shell.js';
 import { supabase, esc, uploadPrivateFile, openFile, triggerPush, notifyDepartmentHeads } from '/js/supabase.js';
 import { t } from '/js/i18n.js';
 
-const TYPE_LABEL = { design: 'Thiết kế', print: 'In ấn', ads: 'Quảng cáo', event: 'Tổ chức sự kiện', photo_video: 'Quay phim/chụp ảnh' };
+const TYPE_LABEL = { design: 'Thiết kế', print: 'In ấn', photo: 'Chụp ảnh', video: 'Quay phim', edit_video: 'Edit video', support: 'Hỗ trợ truyền thông' };
 const PRIORITY_LABEL = { low: 'Thấp', normal: 'Bình thường', high: 'Cao', urgent: 'Khẩn cấp' };
 const STATUS_LABEL = new Proxy({}, { get: (_, code) => t('status.request_' + code, code) });
 const STATUS_BADGE = { pending: 'draft', center_approved: 'submitted', in_progress: 'approved_1', done: 'active', rejected: 'rejected' };
@@ -17,17 +17,17 @@ function fmtDate(d) { return d ? new Date(d).toLocaleDateString('vi-VN') : '—'
 
 async function loadRows() {
   const tbody = document.getElementById('tableBody');
-  tbody.innerHTML = '<tr><td colspan="7" class="empty-cell">Đang tải dữ liệu...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="8" class="empty-cell">Đang tải dữ liệu...</td></tr>';
   const scope = document.getElementById('viewScope').value;
 
   let query = supabase
     .from('communication_requests')
-    .select('id, title, request_type, priority, deadline, status, brief_file_url, result_drive_link, requester_id, center_id, employees!communication_requests_requester_id_fkey(full_name)')
+    .select('id, title, request_type, priority, deadline, deadline_time, status, brief_file_url, result_drive_link, requester_id, center_id, centers(name), employees!communication_requests_requester_id_fkey(full_name)')
     .order('created_at', { ascending: false });
   if (scope === 'mine') query = query.eq('requester_id', PROFILE.id);
 
   const { data, error } = await query;
-  if (error) { tbody.innerHTML = `<tr><td colspan="7" class="empty-cell">Lỗi: ${esc(error.message)}</td></tr>`; return; }
+  if (error) { tbody.innerHTML = `<tr><td colspan="8" class="empty-cell">Lỗi: ${esc(error.message)}</td></tr>`; return; }
   ALL_ROWS = data || [];
   render();
 }
@@ -38,7 +38,7 @@ function render() {
   document.getElementById('resultCount').textContent = `${rows.length} yêu cầu`;
 
   const tbody = document.getElementById('tableBody');
-  if (rows.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="empty-cell">Chưa có yêu cầu nào.</td></tr>'; return; }
+  if (rows.length === 0) { tbody.innerHTML = '<tr><td colspan="8" class="empty-cell">Chưa có yêu cầu nào.</td></tr>'; return; }
 
   tbody.innerHTML = rows.map((r) => {
     // Quản lý trung tâm duyệt bước đầu (đúng trung tâm của họ); Phòng
@@ -49,6 +49,7 @@ function render() {
     return `
     <tr>
       <td>${esc(r.employees?.full_name || '—')}</td>
+      <td class="cell-muted">${esc(r.centers?.name || '—')}</td>
       <td class="cell-muted">${esc(TYPE_LABEL[r.request_type] || r.request_type)}</td>
       <td>
         ${esc(r.title)}
@@ -56,7 +57,7 @@ function render() {
         ${r.result_drive_link ? `<a href="${esc(r.result_drive_link)}" target="_blank" rel="noopener" class="cell-muted" style="text-decoration:underline;">(kết quả — Drive)</a>` : ''}
       </td>
       <td class="cell-muted">${esc(PRIORITY_LABEL[r.priority] || r.priority)}</td>
-      <td class="cell-muted">${fmtDate(r.deadline)}</td>
+      <td class="cell-muted">${fmtDate(r.deadline)}${r.deadline_time ? ' ' + r.deadline_time.slice(0,5) : ''}</td>
       <td><span class="badge badge-${STATUS_BADGE[r.status]}">${esc(STATUS_LABEL[r.status])}</span></td>
       <td>
         ${canCenterApprove ? `
@@ -112,6 +113,7 @@ document.getElementById('btnAdd').addEventListener('click', () => {
   createError.classList.remove('show');
   document.getElementById('title').value = '';
   document.getElementById('deadline').value = '';
+  document.getElementById('deadlineTime').value = '';
   document.getElementById('briefFile').value = '';
   createModal.classList.add('show');
 });
@@ -138,6 +140,7 @@ document.getElementById('submitCreate').addEventListener('click', async () => {
       request_type: document.getElementById('requestType').value,
       title, priority: document.getElementById('priority').value,
       deadline: document.getElementById('deadline').value || null,
+      deadline_time: document.getElementById('deadlineTime').value || null,
       brief_file_url: briefUrl, status: 'pending',
     });
     if (error) throw error;

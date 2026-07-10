@@ -18,6 +18,32 @@ function last6Months() {
   return months;
 }
 
+// "Thong ke thu hoc phi": phan loai dung 3 nguon theo dac ta (Tien mat,
+// Chuyen khoan, Vi) - truoc day chi co Tong thu/chi chung chung, khong
+// tach duoc theo tung nguon.
+async function loadTuitionBySource() {
+  const now = new Date();
+  const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+  const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString().slice(0, 10);
+
+  const { data } = await supabase.from('cash_flow_entries')
+    .select('category, amount')
+    .in('category', ['tuition_cash', 'tuition_transfer', 'tuition_wallet'])
+    .eq('entry_type', 'inflow')
+    .gte('entry_date', monthStart).lt('entry_date', nextMonth);
+
+  const totals = { tuition_cash: 0, tuition_transfer: 0, tuition_wallet: 0 };
+  (data || []).forEach((r) => { totals[r.category] = (totals[r.category] || 0) + Number(r.amount); });
+  const grandTotal = totals.tuition_cash + totals.tuition_transfer + totals.tuition_wallet;
+
+  document.getElementById('tuitionSourceCards').innerHTML = `
+    <div class="stat-card"><div class="label">💵 Tiền mặt</div><div class="value mono" style="font-size:18px;">${fmtMoney(totals.tuition_cash)} đ</div></div>
+    <div class="stat-card"><div class="label">🏦 Chuyển khoản</div><div class="value mono" style="font-size:18px;">${fmtMoney(totals.tuition_transfer)} đ</div></div>
+    <div class="stat-card"><div class="label">💳 Ví AIScoins</div><div class="value mono" style="font-size:18px;">${fmtMoney(totals.tuition_wallet)} đ</div></div>
+    <div class="stat-card"><div class="label">Tổng thu học phí tháng này</div><div class="value mono" style="font-size:18px; font-weight:700;">${fmtMoney(grandTotal)} đ</div></div>
+  `;
+}
+
 async function loadChart() {
   const months = last6Months();
   const startDate = `${months[0].year}-${String(months[0].month).padStart(2, '0')}-01`;
@@ -186,7 +212,7 @@ document.getElementById('submitEntry').addEventListener('click', async () => {
       document.querySelector('.main').innerHTML = '<div class="empty-cell">Bạn không có quyền thực hiện thao tác.</div>';
       return;
     }
-    await loadChart();
+    await Promise.all([loadChart(), loadTuitionBySource()]);
     await loadCashLog();
     await loadReceivables();
   } catch (e) { /* bootShell tự điều hướng */ }

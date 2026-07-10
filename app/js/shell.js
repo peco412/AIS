@@ -56,7 +56,7 @@ function renderNav(profile, currentPage) {
     if (items.length > 0) {
       const heading = document.createElement('div');
       heading.className = 'sidebar__section';
-      heading.textContent = t('nav.layer.overview', 'Tầng Thông báo, Tổng quan công việc');
+      heading.textContent = t('nav.layer.overview', 'Thông Báo & Tổng Quan');
       sidebarNav.appendChild(heading);
 
       const ul = document.createElement('ul');
@@ -75,7 +75,7 @@ function renderNav(profile, currentPage) {
     if (items.length > 0) {
       const parentLabel = document.createElement('div');
       parentLabel.className = 'sidebar__section sidebar__section--parent';
-      parentLabel.textContent = t('nav.layer.personal', 'Tầng Cá nhân');
+      parentLabel.textContent = t('nav.layer.personal', 'Tiện Ích Cá Nhân');
       sidebarNav.appendChild(parentLabel);
 
       const heading = document.createElement('div');
@@ -101,8 +101,10 @@ function renderNav(profile, currentPage) {
   if (visibleItems.length === 0) return;
 
   const LAYER_LABEL = {
-    operations: { key: 'nav.layer.operations', fallback: 'Tầng Phòng ban điều hành' },
-    centers: { key: 'nav.layer.centers', fallback: 'Tầng Hệ thống trung tâm' },
+    executive: { key: 'nav.layer.executive', fallback: 'Ban Điều Hành' },
+    office: { key: 'nav.layer.office', fallback: 'Khối Văn Phòng' },
+    centers: { key: 'nav.layer.centers', fallback: 'Khối Trung Tâm' },
+    masterdata: { key: 'nav.layer.masterdata', fallback: 'Cấu Hình Dữ Liệu Gốc' },
   };
   const layerInfo = LAYER_LABEL[activeGroup.layer];
 
@@ -113,10 +115,16 @@ function renderNav(profile, currentPage) {
     sidebarNav.appendChild(parentLabel);
   }
 
-  const heading = document.createElement('div');
-  heading.className = 'sidebar__section sidebar__section--child';
-  heading.textContent = t(activeGroup.sectionKey, activeGroup.section || '');
-  sidebarNav.appendChild(heading);
+  // "Ban điều hành" chỉ có đúng 1 nhóm bên trong — nhãn cha và nhãn con sẽ
+  // trùng chữ nhau ("Ban Điều Hành" / "Ban điều hành"), bỏ nhãn con cho
+  // gọn, khác với Khối Văn Phòng/Khối Trung Tâm có nhiều phòng ban con
+  // thật sự cần phân biệt.
+  if (activeGroup.layer !== 'executive' && activeGroup.layer !== 'masterdata') {
+    const heading = document.createElement('div');
+    heading.className = 'sidebar__section sidebar__section--child';
+    heading.textContent = t(activeGroup.sectionKey, activeGroup.section || '');
+    sidebarNav.appendChild(heading);
+  }
 
   const ul = document.createElement('ul');
   ul.className = 'sidebar__nav';

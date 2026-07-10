@@ -21,17 +21,17 @@ async function loadTemplate() {
 
 async function loadRows() {
   const tbody = document.getElementById('tableBody');
-  tbody.innerHTML = '<tr><td colspan="6" class="empty-cell">Đang tải dữ liệu...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="7" class="empty-cell">Đang tải dữ liệu...</td></tr>';
   const scope = document.getElementById('viewScope').value;
 
   let query = supabase
     .from('purchase_requests')
-    .select('id, code, status, draft_file_url, final_file_url, updated_at, requester_id, center_id, centers(name), employees!purchase_requests_requester_id_fkey(full_name, employee_code)')
+    .select('id, code, status, request_type, draft_file_url, final_file_url, updated_at, requester_id, center_id, centers(name), employees!purchase_requests_requester_id_fkey(full_name, employee_code)')
     .order('updated_at', { ascending: false });
   if (scope === 'mine') query = query.eq('requester_id', PROFILE.id);
 
   const { data, error } = await query;
-  if (error) { tbody.innerHTML = `<tr><td colspan="6" class="empty-cell">Lỗi: ${error.message}</td></tr>`; return; }
+  if (error) { tbody.innerHTML = `<tr><td colspan="7" class="empty-cell">Lỗi: ${error.message}</td></tr>`; return; }
   ALL_ROWS = data || [];
   render();
 }
@@ -45,13 +45,14 @@ function actionFor(row) {
 function render() {
   document.getElementById('resultCount').textContent = `${ALL_ROWS.length} phiếu`;
   const tbody = document.getElementById('tableBody');
-  if (ALL_ROWS.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="empty-cell">Chưa có phiếu nào.</td></tr>'; return; }
+  if (ALL_ROWS.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="empty-cell">Chưa có phiếu nào.</td></tr>'; return; }
 
   tbody.innerHTML = ALL_ROWS.map((r) => {
     const action = actionFor(r);
     return `
     <tr>
       <td class="cell-code">${esc(r.code)}</td>
+      <td>${r.request_type === 'repair' ? '<span class="badge badge-submitted">Sửa chữa</span>' : '<span class="badge badge-active">Mua sắm</span>'}</td>
       <td>${esc(r.employees?.full_name || '—')}</td>
       <td class="cell-muted">${esc(r.centers?.name || '—')}</td>
       <td><span class="badge badge-${r.status}">${esc(STATUS_LABEL[r.status] || r.status)}</span></td>
@@ -143,6 +144,9 @@ document.getElementById('closeCreateModal').addEventListener('click', () => crea
 document.getElementById('cancelCreate').addEventListener('click', () => createModal.classList.remove('show'));
 
 document.getElementById('openFillEditor').addEventListener('click', async () => {
+  const reqType = document.querySelector('input[name="reqType"]:checked').value;
+  const typeLabel = reqType === 'repair' ? 'sửa chữa' : 'mua sắm';
+
   if (!TEMPLATE) { createError.textContent = 'Chưa cấu hình biểu mẫu 05.Phieudenghimuasam trong Kho lưu trữ > Biểu mẫu.'; createError.classList.add('show'); return; }
   if (!PROFILE.signatureUrl) { createError.textContent = 'Bạn chưa có chữ ký cá nhân. Vào Hồ sơ cá nhân để tải lên trước.'; createError.classList.add('show'); return; }
 
@@ -160,17 +164,18 @@ document.getElementById('openFillEditor').addEventListener('click', async () => 
   await openPdfEditor({
     pdfUrl,
     signatureUrl,
-    title: 'Điền & ký Phiếu đề nghị mua sắm',
+    title: `Điền & ký Phiếu đề nghị ${typeLabel}`,
     fieldMap: TEMPLATE.field_map || [],
     onSave: async (blob) => {
       const fileUrl = await uploadFile(blob, PROFILE.id, 'draft');
       const { error } = await supabase.from('purchase_requests').insert({
         requester_id: PROFILE.id, center_id: PROFILE.centerId, template_id: TEMPLATE.id,
+        request_type: reqType,
         draft_file_url: fileUrl, requester_signed_at: new Date().toISOString(), status: 'draft',
       });
       if (error) throw error;
-      notifyDepartmentHeads('FAC', 'Có phiếu đề nghị mua sắm mới cần phân việc',
-        `${PROFILE.fullName} vừa gửi 1 phiếu đề nghị mua sắm — vào Phân việc để giao cho nhân sự xử lý.`, '/fac/tasks.html');
+      notifyDepartmentHeads('FAC', `Có phiếu đề nghị ${typeLabel} mới cần phân việc`,
+        `${PROFILE.fullName} vừa gửi 1 phiếu đề nghị ${typeLabel} — vào Phân việc để giao cho nhân sự xử lý.`, '/fac/tasks.html');
       await loadRows();
     },
   });

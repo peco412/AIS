@@ -86,7 +86,7 @@ async function loadAdvanceTotals(year, month) {
 async function loadTable() {
   const [year, month] = document.getElementById('filterMonth').value.split('-').map(Number);
   const tbody = document.getElementById('tableBody');
-  tbody.innerHTML = '<tr><td colspan="14" class="empty-cell">Đang tải dữ liệu...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="16" class="empty-cell">Đang tải dữ liệu...</td></tr>';
 
   const [{ data: configs }, { data: payrolls }, leaveDaysMap, absentDaysMap, advanceMap] = await Promise.all([
     supabase.from('employee_base_salary').select('*'),
@@ -112,6 +112,8 @@ async function loadTable() {
       performance_bonus: existing?.performance_bonus || 0,
       urgent_bonus: existing?.urgent_bonus || 0,
       penalty_amount: existing?.penalty_amount || 0,
+      insurance_deduction: existing?.insurance_deduction ?? 557550,
+      tax_deduction: existing?.tax_deduction || 0,
     };
   });
 
@@ -123,7 +125,8 @@ function computeNet(row) {
   const allowances = Number(row.config.housing_allowance || 0) + Number(row.config.transport_allowance || 0) + Number(row.config.other_allowance || 0);
   const bonuses = Number(row.performance_bonus || 0) + Number(row.urgent_bonus || 0);
   const leaveDeduction = (Number(row.leaveDays || 0) + Number(row.absentDays || 0)) * (base / STANDARD_WORKING_DAYS);
-  return base + bonuses + allowances - leaveDeduction - Number(row.penalty_amount || 0) - Number(row.advanceTotal || 0);
+  return base + bonuses + allowances - leaveDeduction - Number(row.penalty_amount || 0) - Number(row.advanceTotal || 0)
+    - Number(row.insurance_deduction || 0) - Number(row.tax_deduction || 0);
 }
 
 function render() {
@@ -131,7 +134,7 @@ function render() {
   const rows = Object.values(ROW_DATA);
   renderStats(rows);
 
-  tbody.innerHTML = rows.map(({ employee, config, leaveDays, absentDays, advanceTotal, performance_bonus, urgent_bonus, penalty_amount }) => {
+  tbody.innerHTML = rows.map(({ employee, config, leaveDays, absentDays, advanceTotal, performance_bonus, urgent_bonus, penalty_amount, insurance_deduction, tax_deduction }) => {
     const net = computeNet(ROW_DATA[employee.id]);
     return `
     <tr data-employee="${employee.id}">
@@ -147,18 +150,22 @@ function render() {
       <td class="mono" style="text-align:center;">${absentDays > 0 ? `<span class="badge badge-rejected">${absentDays}</span>` : '0'}</td>
       <td><input type="number" class="penalty-input" value="${penalty_amount}" ${CAN_EDIT ? '' : 'disabled'} style="width:90px;" /></td>
       <td class="mono cell-muted">${fmtMoney(advanceTotal)} đ</td>
+      <td><input type="number" class="insurance-input" value="${insurance_deduction}" ${CAN_EDIT ? '' : 'disabled'} style="width:100px;" title="Mặc định 10.5% x 5.310.000, sửa được nếu mức tham chiếu thay đổi" /></td>
+      <td><input type="number" class="tax-input" value="${tax_deduction}" ${CAN_EDIT ? '' : 'disabled'} style="width:90px;" placeholder="Nhập tay" /></td>
       <td class="mono net-display" style="font-weight:700;">${fmtMoney(net)} đ</td>
       <td>${CAN_EDIT ? `<button class="btn btn-accent btn-sm" data-save="${employee.id}">Lưu</button>` : ''}</td>
     </tr>`;
   }).join('');
 
-  tbody.querySelectorAll('.perf-input, .urgent-input, .penalty-input').forEach((input) => {
+  tbody.querySelectorAll('.perf-input, .urgent-input, .penalty-input, .insurance-input, .tax-input').forEach((input) => {
     input.addEventListener('input', () => {
       const tr = input.closest('tr');
       const empId = tr.dataset.employee;
       ROW_DATA[empId].performance_bonus = Number(tr.querySelector('.perf-input').value) || 0;
       ROW_DATA[empId].urgent_bonus = Number(tr.querySelector('.urgent-input').value) || 0;
       ROW_DATA[empId].penalty_amount = Number(tr.querySelector('.penalty-input').value) || 0;
+      ROW_DATA[empId].insurance_deduction = Number(tr.querySelector('.insurance-input').value) || 0;
+      ROW_DATA[empId].tax_deduction = Number(tr.querySelector('.tax-input').value) || 0;
       tr.querySelector('.net-display').textContent = fmtMoney(computeNet(ROW_DATA[empId])) + ' đ';
     });
   });
@@ -177,6 +184,8 @@ function render() {
         performance_bonus: row.performance_bonus || 0,
         urgent_bonus: row.urgent_bonus || 0,
         penalty_amount: row.penalty_amount || 0,
+        insurance_deduction: row.insurance_deduction ?? 557550,
+        tax_deduction: row.tax_deduction || 0,
         advance_deduction: row.advanceTotal || 0,
         leave_days: row.leaveDays || 0,
         absent_days: row.absentDays || 0,

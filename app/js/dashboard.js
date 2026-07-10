@@ -10,6 +10,7 @@ const notifBadge = document.getElementById('notifBadge');
 // Icon + màu riêng cho từng nhóm phòng ban trên lưới App Hub — mỗi phòng
 // ban 1 màu gradient khác nhau, giống mẫu ứng dụng di động.
 const HUB_ICON = {
+  'nav.section.masterdata': '🗄️',
   'nav.section.personal': '👤',
   'nav.section.hr': '🧑‍💼',
   'nav.section.acc': '💰',
@@ -21,6 +22,7 @@ const HUB_ICON = {
   'nav.section.exec': '🏛',
 };
 const HUB_COLOR_CLASS = {
+  'nav.section.masterdata': 'tile-masterdata',
   'nav.section.personal': 'tile-personal',
   'nav.section.hr': 'tile-hr',
   'nav.section.acc': 'tile-acc',
@@ -48,9 +50,11 @@ function renderHub(profile) {
   };
 
   const LAYER_LABEL = {
-    operations: 'Tầng Phòng ban điều hành',
-    centers: 'Tầng Hệ thống trung tâm',
-    personal: 'Tầng Cá nhân',
+    executive: 'Ban Điều Hành',
+    office: 'Khối Văn Phòng',
+    centers: 'Khối Trung Tâm',
+    personal: 'Tiện Ích Cá Nhân',
+    masterdata: 'Cấu Hình Dữ Liệu Gốc',
   };
   let lastLayer = null;
 

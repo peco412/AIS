@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="vi" data-division="aloha">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Phân việc — Nhân sự — ERP AIS</title>
+<link rel="manifest" href="/manifest.json" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="ERP AIS" />
+<link rel="apple-touch-icon" href="/assets/icon-192.png" />
+<meta name="theme-color" content="#0094D9" />
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/css/tokens.css" />
+<link rel="stylesheet" href="/css/dashboard.css" />
+<link rel="stylesheet" href="/css/module.css" />
+</head>
+<body data-page="/hr/tasks.html">
+
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar__brand"><span class="dot"></span><div>ERP AIS<small data-i18n="brand.subtitle">Hệ thống quản trị nội bộ</small></div></div>
+    <nav id="sidebarNav"></nav>
+    <div class="sidebar__footer">© 2026 ERP AIS</div>
+  </aside>
+  <header class="topbar">
+    <div class="topbar__left">
+      <button class="menu-toggle" id="menuToggle">☰</button>
+      <div class="search-box"><span>🔎</span><input type="text" placeholder="Tìm kiếm..." /></div>
+    </div>
+    <div class="topbar__right">
+      <button class="icon-btn" onclick="location.href='/notifications.html'">🔔<span class="badge" id="notifBadge" style="display:none;">0</span></button>
+      <div class="user-chip" onclick="location.href='/profile.html'">
+        <div class="user-chip__avatar" id="userChipAvatar">--</div>
+        <div class="user-chip__meta"><div class="name" id="userChipName">Đang tải...</div><div class="role" id="userChipRole">—</div></div>
+      </div>
+      <button class="icon-btn" id="logoutBtn">⎋</button>
+    </div>
+  </header>
+
+  <main class="main">
+    <div class="page-header">
+      <div><h1>Phân việc xử lý yêu cầu</h1><div class="sub">Phòng Nhân sự — trưởng phòng giao việc cho nhân viên hoặc chính mình.</div></div>
+      <button class="btn btn-accent" id="btnAdd" style="display:none;">+ Giao việc ngoài luồng</button>
+    </div>
+
+    <div class="page-header" style="margin-top:0;">
+      <div><h1 style="font-size:16px;">🔔 Yêu cầu chưa phân công</h1><div class="sub" style="font-size:12.5px;">Lấy trực tiếp từ các module yêu cầu — bấm "Giao việc" để phân công ngay, không cần tìm trong danh sách thả xuống.</div></div>
+    </div>
+    <div class="data-table-wrap" style="margin-bottom:22px;">
+      <table class="data-table">
+        <thead><tr><th>Loại yêu cầu</th><th>Nội dung</th><th></th></tr></thead>
+        <tbody id="pendingTableBody"><tr><td colspan="3" class="empty-cell">Đang tải dữ liệu...</td></tr></tbody>
+      </table>
+    </div>
+
+    <div class="page-header" style="margin-top:0;">
+      <div><h1 style="font-size:16px;">Công việc đã phân công</h1></div>
+    </div>
+    <div class="toolbar">
+      <select class="select-input" id="viewScope">
+        <option value="mine">Việc của tôi</option>
+        <option value="dept" id="deptScopeOption" style="display:none;">Toàn phòng</option>
+      </select>
+      <div class="cell-muted" id="resultCount"></div>
+    </div>
+
+    <div class="data-table-wrap">
+      <table class="data-table">
+        <thead><tr><th>Công việc</th><th>Người nhận</th><th>Người giao</th><th>Hạn xử lý</th><th data-i18n="common.status">Trạng thái</th><th></th></tr></thead>
+        <tbody id="tableBody"><tr><td colspan="6" class="empty-cell">Đang tải dữ liệu...</td></tr></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<div class="modal-overlay" id="taskModal">
+  <div class="modal-box">
+    <button class="modal-close" id="closeModal">✕</button>
+    <h3 id="taskModalTitle">Giao việc ngoài luồng</h3>
+    <p class="modal-sub" id="taskModalSub" style="display:none;"></p>
+    <div class="form-error" id="formError"></div>
+    <select id="linkedRequest" style="display:none;"></select>
+    <div class="field"><label for="assignTo">Giao cho *</label><select id="assignTo"></select></div>
+    <div class="field"><label for="taskTitle">Tiêu đề công việc *</label><input type="text" id="taskTitle" /></div>
+    <div class="field"><label for="taskDesc">Mô tả</label><textarea id="taskDesc" rows="2"></textarea></div>
+    <div class="field"><label for="dueDate">Hạn xử lý</label><input type="date" id="dueDate" /></div>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-outline" id="cancelModal"><span data-i18n="common.cancel">Huỷ</span></button>
+      <button type="button" class="btn btn-accent" id="submitTask">Giao việc</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="/env.js"></script>
+<script type="module">
+  import { initTaskAssignments } from '/js/taskAssignments.js';
+  initTaskAssignments('HR');
+</script>
+<script src="/js/pwa.js"></script>
+</body>
+</html>

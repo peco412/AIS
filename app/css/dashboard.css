@@ -102,28 +102,36 @@
 }
 
 .sidebar__section {
-  padding: 18px 16px 6px;
-  font-size: 11px;
+  padding: 16px 16px 6px;
+  font-size: 10.5px;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--muted);
 }
-/* Nhãn cha "CÁC PHÒNG BAN" bọc ngoài — nổi bật hơn, có viền phân cách ở
-   trên để tách rõ khỏi nhóm "Chức năng cá nhân" phía trên nó. */
+/* Nhãn tầng lớn (Ban Điều Hành / Khối Văn Phòng / Khối Trung Tâm / Tiện
+   Ích Cá Nhân) — có vạch màu bên trái + nền nhạt riêng cho từng tầng để
+   nhận diện nhanh đang ở khu vực nào, tránh cảm giác phẳng đều như trước. */
 .sidebar__section--parent {
-  padding-top: 22px; padding-bottom: 2px; margin-top: 6px;
-  border-top: 1px solid var(--border); color: var(--accent);
-  font-size: 11.5px;
+  margin: 10px 10px 4px; padding: 10px 12px 10px 14px;
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--accent);
+  background: rgba(var(--accent-rgb), 0.06);
+  color: var(--accent-deep);
+  font-size: 11px;
+  display: flex; align-items: center; gap: 6px;
 }
-/* Nhãn con (tên phòng ban cụ thể) — nhỏ hơn, thụt vào 1 chút để rõ là
-   con của "Các phòng ban" ngay phía trên. */
+.sidebar__section--parent::before { content: '●'; font-size: 6px; opacity: 0.7; }
+
+/* Nhãn con (tên phòng ban cụ thể trong tầng) — thụt vào rõ, chữ thường
+   không viết hoa toàn bộ để đỡ "gào" hơn, phân cấp rõ với nhãn tầng. */
 .sidebar__section--child {
-  padding-top: 2px; padding-left: 22px; font-size: 10.5px; opacity: 0.85;
+  padding: 8px 16px 4px 22px; font-size: 12px; font-weight: 600;
+  text-transform: none; letter-spacing: 0; color: var(--ink-soft); opacity: 1;
 }
 
 .sidebar__nav { list-style: none; margin: 0; padding: 0 10px; }
-.sidebar__nav li { margin-bottom: 1px; }
+.sidebar__nav li { margin-bottom: 2px; }
 .sidebar__nav a {
   display: flex;
   align-items: center;
@@ -133,14 +141,19 @@
   color: var(--ink-soft);
   font-size: 13.5px;
   font-weight: 500;
-  transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+  position: relative;
+  transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease), padding-left var(--dur-fast) var(--ease);
 }
-.sidebar__nav a:hover { background: rgba(0, 0, 0, 0.05); color: var(--ink); }
+.sidebar__nav a:hover { background: rgba(0, 0, 0, 0.045); color: var(--ink); padding-left: 15px; }
 .sidebar__nav a.active {
   background: var(--accent);
   color: #fff;
   font-weight: 600;
-  box-shadow: 0 1px 3px rgba(var(--accent-rgb), 0.4);
+  box-shadow: 0 2px 6px rgba(var(--accent-rgb), 0.35);
+}
+.sidebar__nav a.active::before {
+  content: ''; position: absolute; left: -10px; top: 50%; transform: translateY(-50%);
+  width: 3px; height: 60%; border-radius: 2px; background: var(--accent-deep);
 }
 .sidebar__nav .icon { width: 18px; text-align: center; opacity: 0.9; font-size: 14px; }
 
@@ -477,6 +490,7 @@ body.hub-body { background: var(--surface); }
 
 /* Bảng màu icon riêng từng phòng ban — vibrant, phân biệt rõ, giống mẫu ứng
    dụng di động thay vì tất cả cùng 1 màu nhạt như trước. */
+.tile-masterdata { --tile-bg: linear-gradient(150deg, #6c5ce7, #4834b0); }
 .tile-personal { --tile-bg: linear-gradient(150deg, #8a8f98, #4a4f58); }
 .tile-hr     { --tile-bg: linear-gradient(150deg, #ffb238, #ff8a00); }
 .tile-acc    { --tile-bg: linear-gradient(150deg, #34d399, #059669); }

@@ -31,7 +31,7 @@ async function searchAndPick() {
   const q = document.getElementById('searchStudent').value.trim();
   if (!q) return;
 
-  let query = supabase.from('students').select('id, full_name, center_id, centers(name)').ilike('full_name', `%${q}%`).limit(5);
+  let query = supabase.from('students').select('id, full_name, center_id, class_id, centers(name)').ilike('full_name', `%${q}%`).limit(5);
   if (PROFILE.centerId && !['EXECUTIVE', 'TECH'].includes(PROFILE.roleCode) && PROFILE.departmentCode !== 'ACC') {
     query = query.eq('center_id', PROFILE.centerId);
   }
@@ -201,7 +201,9 @@ async function updatePlanPricePreview() {
     : `<span style="color:var(--danger);">Chưa cấu hình học phí cho khoá nào thuộc phạm vi này.</span>`;
 }
 
-document.getElementById('btnNewInvoice').addEventListener('click', () => {
+let AUTO_DISCOUNT_RATE = 0;
+
+document.getElementById('btnNewInvoice').addEventListener('click', async () => {
   document.getElementById('createError').classList.remove('show');
   document.querySelector('input[name="planType"][value="sublevel"]').checked = true;
   document.getElementById('manualFields').style.display = 'none';
@@ -212,8 +214,44 @@ document.getElementById('btnNewInvoice').addEventListener('click', () => {
   document.getElementById('invMonth').value = now.getMonth() + 1;
   document.getElementById('invAmountVnd').value = '';
   document.getElementById('invDueDate').value = '';
+  document.getElementById('manualDiscountRate').value = 0;
+  document.getElementById('specialCategory').value = '';
+
+  // "Han dong phi" mac dinh = ngay ket khoa cua lop hoc sinh dang hoc.
+  if (ACTIVE_STUDENT?.class_id) {
+    const { data: cls } = await supabase.from('classes').select('end_date').eq('id', ACTIVE_STUDENT.class_id).single();
+    if (cls?.end_date) document.getElementById('invDueDate').value = cls.end_date;
+  }
+
+  // "Ưu đãi tự động điền" — quét cấu hình Hệ thống ưu đãi của Kế toán
+  // đang áp dụng đúng lớp/trung tâm của học sinh này ngay lúc mở form.
+  AUTO_DISCOUNT_RATE = 0;
+  document.getElementById('autoDiscountField').style.display = 'none';
+  if (ACTIVE_STUDENT?.class_id && ACTIVE_STUDENT?.center_id) {
+    const { data } = await supabase.rpc('get_auto_discount_for_class', {
+      p_class_id: ACTIVE_STUDENT.class_id, p_center_id: ACTIVE_STUDENT.center_id,
+    });
+    AUTO_DISCOUNT_RATE = Number(data) || 0;
+    if (AUTO_DISCOUNT_RATE > 0) {
+      document.getElementById('autoDiscountField').style.display = 'block';
+      document.getElementById('autoDiscountDisplay').textContent = `Tự động áp dụng: -${(AUTO_DISCOUNT_RATE * 100).toFixed(1)}%`;
+    }
+  }
+  updateNetAmountPreview();
   createModal.classList.add('show');
 });
+
+function updateNetAmountPreview() {
+  const total = Number(document.getElementById('invAmountVnd').value) || 0;
+  const manualRate = Number(document.getElementById('manualDiscountRate').value) / 100 || 0;
+  // Ưu đãi tự động + ưu đãi tay CỘNG DỒN (khác quy tắc top-up ví vốn giới
+  // hạn 40% — ở đây la giam gia hoc phi tai cho, khong ap tran nhu vi).
+  const totalRate = Math.min(AUTO_DISCOUNT_RATE + manualRate, 1);
+  const net = total * (1 - totalRate);
+  document.getElementById('netAmountPreview').textContent = `${net.toLocaleString('vi-VN')} đ`;
+}
+document.getElementById('invAmountVnd').addEventListener('input', updateNetAmountPreview);
+document.getElementById('manualDiscountRate').addEventListener('input', updateNetAmountPreview);
 document.getElementById('closeCreateModal').addEventListener('click', () => createModal.classList.remove('show'));
 document.getElementById('cancelCreateModal').addEventListener('click', () => createModal.classList.remove('show'));
 
@@ -224,12 +262,24 @@ document.getElementById('btnSubmitInvoice').addEventListener('click', async () =
 
   try {
     if (type === 'manual') {
+      const totalAmount = Number(document.getElementById('invAmountVnd').value);
+      const manualRate = Number(document.getElementById('manualDiscountRate').value) / 100 || 0;
+      const totalRate = Math.min(AUTO_DISCOUNT_RATE + manualRate, 1);
+      const discountVnd = Math.round(totalAmount * totalRate);
+      const specialCategory = document.getElementById('specialCategory').value || null;
+
       const payload = {
         student_id: ACTIVE_STUDENT.id,
         period_year: Number(document.getElementById('invYear').value),
         period_month: Number(document.getElementById('invMonth').value),
-        amount_vnd: Number(document.getElementById('invAmountVnd').value),
-        amount_aiscoin: Number(document.getElementById('invAmountVnd').value),
+        amount_vnd: totalAmount,
+        amount_aiscoin: totalAmount,
+        manual_discount_vnd: discountVnd,
+        discount_type: specialCategory ? 'special' : (totalRate > 0 ? 'case' : 'none'),
+        special_category: specialCategory,
+        manual_discount_reason: totalRate > 0
+          ? `Ưu đãi tự động ${(AUTO_DISCOUNT_RATE * 100).toFixed(1)}% + tay ${(manualRate * 100).toFixed(1)}%${specialCategory ? ` (${specialCategory})` : ''}`
+          : null,
         due_date: document.getElementById('invDueDate').value,
         status: 'unpaid',
       };

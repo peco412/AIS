@@ -12,16 +12,27 @@ const STATUS_BADGE = { pending: 'draft', in_progress: 'approved_1', done: 'activ
 // nghĩ ra. "Giao việc ngoài luồng" chỉ dùng cho việc phát sinh KHÁC hẳn,
 // không nằm trong các module yêu cầu này.
 const REQUEST_SOURCES = {
+  HR: [
+    { table: 'leave_requests', label: 'Đơn xin nghỉ', statuses: ['approved_1'], titleFn: (r) => `Xử lý đơn nghỉ ${r.code || ''}${r.reason_note ? ' — ' + r.reason_note : ''}`, href: '/hr/leave-requests.html' },
+    { table: 'business_trips', label: 'Đơn công tác', statuses: ['approved_1'], titleFn: (r) => `Xử lý đơn công tác ${r.code} — ${r.title || ''}`, href: '/hr/business-trips.html' },
+  ],
   ACC: [
-    { table: 'payment_requests', label: 'Phiếu đề nghị thanh toán', statuses: ['submitted', 'approved_1'], titleFn: (r) => `Xử lý phiếu thanh toán ${r.code}`, href: '/acc/payment-requests.html' },
-    { table: 'advance_requests', label: 'Phiếu đề nghị tạm ứng', statuses: ['draft', 'approved_1'], titleFn: (r) => `Xử lý phiếu tạm ứng ${r.code}`, href: '/acc/advance-requests.html' },
+    // SUA LOI: truoc day dung ['submitted','approved_1'] tu luc chua co
+    // cap "Quan ly truc tiep" (migration 39) - 'submitted'/'draft' luc do
+    // dang cho QUAN LY TRUC TIEP duyet, CHUA toi luot Ke toan, hien nham
+    // vao day khien Ke toan thay ca viec chua den luot minh xu ly.
+    { table: 'payment_requests', label: 'Phiếu đề nghị thanh toán', statuses: ['approved_1'], titleFn: (r) => `Xử lý phiếu thanh toán ${r.code}`, href: '/acc/payment-requests.html' },
+    { table: 'advance_requests', label: 'Phiếu đề nghị tạm ứng', statuses: ['approved_1'], titleFn: (r) => `Xử lý phiếu tạm ứng ${r.code}`, href: '/acc/advance-requests.html' },
   ],
   MKT: [
     { table: 'communication_requests', label: 'Yêu cầu truyền thông', statuses: ['center_approved', 'in_progress'], titleFn: (r) => `Xử lý yêu cầu: ${r.title}`, href: '/mkt/requests.html' },
   ],
   FAC: [
     { table: 'facility_requests', label: 'Yêu cầu CSVC', statuses: ['center_approved', 'in_progress'], titleFn: (r) => `Xử lý yêu cầu: ${r.title}`, href: '/fac/requests.html' },
-    { table: 'purchase_requests', label: 'Phiếu đề nghị mua sắm', statuses: ['draft', 'approved_1'], titleFn: (r) => `Xử lý phiếu mua sắm ${r.code}`, href: '/fac/purchase-requests.html' },
+    // SUA LOI TUONG TU: purchase_requests gio la draft(chu ky)->submitted
+    // (cho QL truc tiep)->approved_1(cho CSVC)->approved_2(cho BDH), 'draft'
+    // khong con dung nghia "cho CSVC" nua.
+    { table: 'purchase_requests', label: 'Phiếu đề nghị mua sắm/sửa chữa', statuses: ['draft'], titleFn: (r) => `Xử lý phiếu ${r.request_type === 'repair' ? 'sửa chữa' : 'mua sắm'} ${r.code}`, href: '/fac/purchase-requests.html' },
   ],
 };
 
@@ -61,7 +72,7 @@ export async function initTaskAssignments(deptCode) {
     const alreadyAssigned = new Set((existing.data || []).map((t) => `${t.related_table}:${t.related_id}`));
 
     const results = await Promise.all(sources.map((src) =>
-      supabase.from(src.table).select('id, code, title, created_at').in('status', src.statuses).then((r) => (r.data || []).map((row) => ({ ...row, src })))
+      supabase.from(src.table).select('*').in('status', src.statuses).then((r) => (r.data || []).map((row) => ({ ...row, src })))
     ));
 
     PENDING_REQUESTS = results.flat()
