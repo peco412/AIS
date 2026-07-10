@@ -5,10 +5,23 @@ import { attachPlaceAutocomplete, computeDrivingDistanceKm } from '/js/googleMap
 
 const STATUS_LABEL = new Proxy({}, { get: (_, code) => t('status.' + code, code) });
 let PROFILE = null;
-let CAN_APPROVE = false;
+let IS_DIRECT_MANAGER_MAP = {}; // employee_id -> có phải quản lý trực tiếp của người này không (tính theo từng dòng)
+let IS_HR = false;
+let IS_EXEC = false;
 let ALL_ROWS = [];
 
 function fmtDate(d) { return d ? new Date(d).toLocaleDateString('vi-VN') : '—'; }
+
+// Xác định "quản lý trực tiếp" của TỪNG người gửi đơn — không cố định 1
+// giá trị chung, vì mỗi đơn có thể do người ở phòng ban/trung tâm khác
+// nhau gửi, "quản lý trực tiếp" là Trưởng/Phó phòng CÙNG phòng ban đó
+// (hoặc Quản lý trung tâm nếu người gửi thuộc trung tâm, không phòng ban).
+function computeActionLabel(row) {
+  if (row.status === 'submitted' && IS_DIRECT_MANAGER_MAP[row.employee_id]) return { label: 'Quản lý trực tiếp duyệt', next: 'approved_1', field: 'manager' };
+  if (row.status === 'approved_1' && IS_HR) return { label: 'Phòng Nhân sự duyệt', next: 'approved_2', field: 'hr' };
+  if (row.status === 'approved_2' && IS_EXEC) return { label: 'Ban điều hành duyệt', next: 'approved_3', field: 'executive' };
+  return null;
+}
 
 async function loadRows() {
   const tbody = document.getElementById('tableBody');
@@ -17,13 +30,26 @@ async function loadRows() {
 
   let query = supabase
     .from('business_trips')
-    .select('id, code, title, destination_address, distance_km, trip_date, days, status, employee_id, attachment_url, employees!business_trips_employee_id_fkey(full_name, employee_code)')
+    .select('id, code, title, destination_address, distance_km, trip_date, days, status, employee_id, attachment_url, employees!business_trips_employee_id_fkey(full_name, employee_code, department_id, center_id)')
     .order('created_at', { ascending: false });
   if (scope === 'mine') query = query.eq('employee_id', PROFILE.id);
 
   const { data, error } = await query;
   if (error) { tbody.innerHTML = `<tr><td colspan="8" class="empty-cell">Lỗi: ${esc(error.message)}</td></tr>`; return; }
   ALL_ROWS = data || [];
+
+  // Tính trước xem PROFILE hiện tại có phải "quản lý trực tiếp" của từng
+  // người gửi đơn hay không (so department_id/center_id với hồ sơ mình).
+  IS_DIRECT_MANAGER_MAP = {};
+  (data || []).forEach((r) => {
+    const emp = r.employees;
+    if (!emp) return;
+    const isManager = emp.department_id
+      ? (emp.department_id === PROFILE.departmentId && ['DEPT_HEAD', 'DEPT_DEPUTY'].includes(PROFILE.roleCode))
+      : (emp.center_id === PROFILE.centerId && PROFILE.roleCode === 'CENTER_MANAGER');
+    IS_DIRECT_MANAGER_MAP[r.employee_id] = isManager;
+  });
+
   render();
 }
 
@@ -32,7 +58,9 @@ function render() {
   const tbody = document.getElementById('tableBody');
   if (ALL_ROWS.length === 0) { tbody.innerHTML = '<tr><td colspan="8" class="empty-cell">Chưa có đơn nào.</td></tr>'; return; }
 
-  tbody.innerHTML = ALL_ROWS.map((r) => `
+  tbody.innerHTML = ALL_ROWS.map((r) => {
+    const action = computeActionLabel(r);
+    return `
     <tr>
       <td class="cell-code">${esc(r.code)}</td>
       <td>${esc(r.employees?.full_name || '—')}</td>
@@ -43,21 +71,26 @@ function render() {
       <td><span class="badge badge-${r.status}">${esc(STATUS_LABEL[r.status] || r.status)}</span></td>
       <td>
         ${r.attachment_url ? `<button class="btn btn-outline btn-sm" data-open="${esc(r.attachment_url)}">Xem đính kèm</button>` : ''}
-        ${CAN_APPROVE && r.status === 'submitted'
-          ? `<button class="btn btn-accent btn-sm" data-approve="${r.id}">Duyệt</button>
-             <button class="btn btn-outline btn-sm" data-reject="${r.id}">Từ chối</button>` : ''}
+        ${action ? `
+          <button class="btn btn-accent btn-sm" data-approve="${r.id}" data-next="${action.next}" data-field="${action.field}">${action.label}</button>
+          <button class="btn btn-outline btn-sm" data-reject="${r.id}">Từ chối</button>` : ''}
       </td>
     </tr>
-  `).join('');
+  `;
+  }).join('');
 
   tbody.querySelectorAll('[data-open]').forEach((b) => b.addEventListener('click', () => openFile(b.dataset.open)));
-  tbody.querySelectorAll('[data-approve]').forEach((b) => b.addEventListener('click', () => decide(b.dataset.approve, 'approved_2')));
-  tbody.querySelectorAll('[data-reject]').forEach((b) => b.addEventListener('click', () => decide(b.dataset.reject, 'rejected')));
+  tbody.querySelectorAll('[data-approve]').forEach((b) => b.addEventListener('click', () => decide(b.dataset.approve, b.dataset.next, b.dataset.field)));
+  tbody.querySelectorAll('[data-reject]').forEach((b) => b.addEventListener('click', () => decide(b.dataset.reject, 'rejected', null)));
 }
 
-async function decide(id, status) {
-  const { error } = await supabase.from('business_trips')
-    .update({ status, approved_by: PROFILE.id, approved_at: new Date().toISOString() }).eq('id', id);
+async function decide(id, status, field) {
+  const payload = { status };
+  if (field === 'manager') { payload.manager_signed_by = PROFILE.id; payload.manager_signed_at = new Date().toISOString(); }
+  if (field === 'hr') { payload.hr_signed_by = PROFILE.id; payload.hr_signed_at = new Date().toISOString(); }
+  if (field === 'executive') { payload.approved_by = PROFILE.id; payload.approved_at = new Date().toISOString(); }
+
+  const { error } = await supabase.from('business_trips').update(payload).eq('id', id);
   if (error) { alert('Không thể cập nhật: ' + error.message); return; }
   await loadRows();
 }
@@ -130,10 +163,13 @@ form.addEventListener('submit', async (e) => {
 (async () => {
   try {
     const { profile } = await bootShell();
-    PROFILE = profile;
-    CAN_APPROVE = (profile.departmentCode === 'HR' && ['DEPT_HEAD', 'DEPT_DEPUTY'].includes(profile.roleCode))
-      || ['EXECUTIVE', 'TECH'].includes(profile.roleCode);
-    if (CAN_APPROVE) document.getElementById('deptScopeOption').style.display = 'block';
+    const { data: emp } = await supabase.from('employees').select('department_id, center_id, departments(code)').eq('id', profile.id).single();
+    PROFILE = { ...profile, departmentId: emp?.department_id, centerId: emp?.center_id, departmentCode: emp?.departments?.code };
+    IS_HR = (PROFILE.departmentCode === 'HR' && ['DEPT_HEAD', 'DEPT_DEPUTY'].includes(profile.roleCode));
+    IS_EXEC = ['EXECUTIVE', 'TECH'].includes(profile.roleCode);
+    if (IS_HR || IS_EXEC || ['DEPT_HEAD', 'DEPT_DEPUTY', 'CENTER_MANAGER'].includes(profile.roleCode)) {
+      document.getElementById('deptScopeOption').style.display = 'block';
+    }
     await loadRows();
   } catch (e) { /* bootShell tự điều hướng */ }
 })();

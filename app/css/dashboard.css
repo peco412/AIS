@@ -109,6 +109,18 @@
   text-transform: uppercase;
   color: var(--muted);
 }
+/* Nhãn cha "CÁC PHÒNG BAN" bọc ngoài — nổi bật hơn, có viền phân cách ở
+   trên để tách rõ khỏi nhóm "Chức năng cá nhân" phía trên nó. */
+.sidebar__section--parent {
+  padding-top: 22px; padding-bottom: 2px; margin-top: 6px;
+  border-top: 1px solid var(--border); color: var(--accent);
+  font-size: 11.5px;
+}
+/* Nhãn con (tên phòng ban cụ thể) — nhỏ hơn, thụt vào 1 chút để rõ là
+   con của "Các phòng ban" ngay phía trên. */
+.sidebar__section--child {
+  padding-top: 2px; padding-left: 22px; font-size: 10.5px; opacity: 0.85;
+}
 
 .sidebar__nav { list-style: none; margin: 0; padding: 0 10px; }
 .sidebar__nav li { margin-bottom: 1px; }
@@ -459,6 +471,7 @@ body.hub-body { background: var(--surface); }
 
 /* Bảng màu icon riêng từng phòng ban — vibrant, phân biệt rõ, giống mẫu ứng
    dụng di động thay vì tất cả cùng 1 màu nhạt như trước. */
+.tile-personal { --tile-bg: linear-gradient(150deg, #8a8f98, #4a4f58); }
 .tile-hr     { --tile-bg: linear-gradient(150deg, #ffb238, #ff8a00); }
 .tile-acc    { --tile-bg: linear-gradient(150deg, #34d399, #059669); }
 .tile-mkt    { --tile-bg: linear-gradient(150deg, #60a5fa, #2563eb); }

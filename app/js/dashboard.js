@@ -1,4 +1,4 @@
-import { bootShell } from './shell.js';
+import { bootShell, MOBILE_ALLOWED_HREFS, isMobileViewport } from './shell.js';
 import { supabase } from './supabase.js';
 import { NAV_CONFIG } from './navConfig.js';
 import { t } from './i18n.js';
@@ -10,6 +10,7 @@ const notifBadge = document.getElementById('notifBadge');
 // Icon + màu riêng cho từng nhóm phòng ban trên lưới App Hub — mỗi phòng
 // ban 1 màu gradient khác nhau, giống mẫu ứng dụng di động.
 const HUB_ICON = {
+  'nav.section.personal': '👤',
   'nav.section.hr': '🧑‍💼',
   'nav.section.acc': '💰',
   'nav.section.mkt': '📣',
@@ -20,6 +21,7 @@ const HUB_ICON = {
   'nav.section.exec': '🏛',
 };
 const HUB_COLOR_CLASS = {
+  'nav.section.personal': 'tile-personal',
   'nav.section.hr': 'tile-hr',
   'nav.section.acc': 'tile-acc',
   'nav.section.mkt': 'tile-mkt',
@@ -39,7 +41,11 @@ function renderHub(profile) {
   appHub.innerHTML = '';
   quickHub.innerHTML = '';
 
-  const canAccess = (item) => item.visible(profile) || !!profile.grantedModules?.has(item.href);
+  const isMobile = isMobileViewport();
+  const canAccess = (item) => {
+    if (isMobile && !MOBILE_ALLOWED_HREFS.has(item.href)) return false;
+    return item.visible(profile) || !!profile.grantedModules?.has(item.href);
+  };
 
   NAV_CONFIG.forEach((group) => {
     const visibleItems = group.items.filter((item) => canAccess(item));

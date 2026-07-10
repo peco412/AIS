@@ -11,12 +11,29 @@ function initials(name) {
 
 // Các mục dùng chung luôn hiển thị dù đang ở phòng ban nào (điều hướng
 // nhanh) — không tính là "1 phòng ban" nên không bị lọc theo ngữ cảnh.
-const ALWAYS_VISIBLE_HREFS = new Set(['/dashboard.html', '/notifications.html', '/profile.html', '/attendance-checkin.html']);
+// (Đã bỏ ALWAYS_VISIBLE_HREFS — không còn cần thiết sau khi tách "Chức
+// năng cá nhân" thành nhóm alwaysShow riêng, xem NAV_CONFIG.)
 
 // Kiểm tra quyền hiển thị mặc định THEO đúng vai trò/phòng ban, HOẶC đã
 // được cấp thêm riêng qua module "Xin thêm quyền hạn" (granted_permissions,
 // nạp sẵn vào profile.grantedModules ở trên).
+// Giao diện điện thoại CHỈ hiện các tác vụ cơ bản theo đúng yêu cầu BGD:
+// thông báo, đơn xin nghỉ, đơn công tác, yêu cầu truyền thông, yêu cầu
+// CSVC, và toàn bộ nhóm "chức năng cá nhân" — các module nghiệp vụ theo
+// phòng ban (nhân sự/kế toán/CSVC quản trị...) chỉ dùng trên web/máy tính.
+export const MOBILE_ALLOWED_HREFS = new Set([
+  '/dashboard.html', '/notifications.html', '/profile.html', '/directory.html',
+  '/meetings.html', '/attendance-checkin.html', '/hr/late-clockin-requests.html',
+  '/proposals.html', '/archive.html', '/permission-requests.html',
+  '/hr/leave-requests.html', '/hr/business-trips.html', '/hr/contracts.html',
+  '/mkt/requests.html', '/fac/requests.html', '/exec/broadcast.html',
+]);
+export function isMobileViewport() {
+  return window.matchMedia('(max-width: 960px)').matches;
+}
+
 function canAccess(item, profile) {
+  if (isMobileViewport() && !MOBILE_ALLOWED_HREFS.has(item.href)) return false;
   return item.visible(profile) || !!profile.grantedModules?.has(item.href);
 }
 
@@ -32,30 +49,54 @@ function renderNav(profile, currentPage) {
   if (!sidebarNav) return;
   sidebarNav.innerHTML = '';
 
-  // 1) Mục dùng chung + "Trang chủ" để quay lại màn hình chọn phòng ban
-  const commonGroup = NAV_CONFIG.find((g) => !g.sectionKey);
-  if (commonGroup) {
-    const commonItems = commonGroup.items.filter(
-      (item) => canAccess(item, profile) && ALWAYS_VISIBLE_HREFS.has(item.href)
-    );
-    if (commonItems.length > 0) {
+  // 1) "Bảng tổng quan" + "Thông báo" — luôn hiện đầu tiên, không tiêu đề nhóm
+  const topGroup = NAV_CONFIG.find((g) => !g.sectionKey && !g.section);
+  if (topGroup) {
+    const items = topGroup.items.filter((item) => canAccess(item, profile));
+    if (items.length > 0) {
       const ul = document.createElement('ul');
       ul.className = 'sidebar__nav';
-      commonItems.forEach((item) => ul.appendChild(buildNavLi(item, profile, currentPage)));
+      items.forEach((item) => ul.appendChild(buildNavLi(item, profile, currentPage)));
       sidebarNav.appendChild(ul);
     }
   }
 
-  // 2) CHỈ hiển thị đúng 1 nhóm phòng ban tương ứng với trang đang mở —
-  // trước đây liệt kê hết mọi phòng ban cùng lúc gây rối mắt.
+  // 2) "Chức năng cá nhân" — LUÔN hiện đủ (alwaysShow: true), không chỉ khi
+  // đang đứng đúng trang trong nhóm này như trước, để đúng ý "1 trong 4
+  // phần chính luôn thấy được, không ẩn hiện tuỳ ngữ cảnh".
+  const personalGroup = NAV_CONFIG.find((g) => g.alwaysShow);
+  if (personalGroup) {
+    const items = personalGroup.items.filter((item) => canAccess(item, profile));
+    if (items.length > 0) {
+      const heading = document.createElement('div');
+      heading.className = 'sidebar__section';
+      heading.textContent = t(personalGroup.sectionKey, personalGroup.section);
+      sidebarNav.appendChild(heading);
+
+      const ul = document.createElement('ul');
+      ul.className = 'sidebar__nav';
+      items.forEach((item) => ul.appendChild(buildNavLi(item, profile, currentPage)));
+      sidebarNav.appendChild(ul);
+    }
+  }
+
+  // 3) "Các phòng ban" — CHỈ hiện đúng 1 nhóm phòng ban tương ứng với trang
+  // đang mở (giữ nguyên nguyên tắc chống rối mắt đã áp dụng trước đây —
+  // liệt kê hết mọi phòng ban cùng lúc sẽ rất dài và khó dùng), nhưng bọc
+  // trong 1 nhãn cha "CÁC PHÒNG BAN" để rõ đây là 1 trong 4 phần chính.
   const activeGroup = findActiveGroup(currentPage);
-  if (!activeGroup) return;
+  if (!activeGroup || activeGroup.alwaysShow || !activeGroup.sectionKey) return;
 
   const visibleItems = activeGroup.items.filter((item) => canAccess(item, profile));
   if (visibleItems.length === 0) return;
 
+  const parentLabel = document.createElement('div');
+  parentLabel.className = 'sidebar__section sidebar__section--parent';
+  parentLabel.textContent = t('nav.section.departments', 'Các phòng ban');
+  sidebarNav.appendChild(parentLabel);
+
   const heading = document.createElement('div');
-  heading.className = 'sidebar__section';
+  heading.className = 'sidebar__section sidebar__section--child';
   heading.textContent = t(activeGroup.sectionKey, activeGroup.section || '');
   sidebarNav.appendChild(heading);
 
@@ -220,6 +261,17 @@ export async function bootShell() {
   applyTranslations();
   injectLangSwitcher(profile.id);
   injectInstallButton();
+
+  // Xoay ngang/dọc hoặc đổi kích thước cửa sổ qua đúng mốc di động/desktop
+  // (960px) -> tự vẽ lại menu cho khớp đúng danh sách được phép xem.
+  let wasMobile = isMobileViewport();
+  window.addEventListener('resize', () => {
+    const nowMobile = isMobileViewport();
+    if (nowMobile !== wasMobile) {
+      wasMobile = nowMobile;
+      renderNav(profile, document.body.dataset.page || location.pathname);
+    }
+  });
 
   // Bấm logo để quay về màn hình chọn phòng ban (Trang chủ)
   const brand = document.querySelector('.sidebar__brand');

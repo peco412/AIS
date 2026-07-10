@@ -1,12 +1,11 @@
 import { bootShell } from '/js/shell.js';
 import { supabase, esc } from '/js/supabase.js';
 
-const STANDARD_WORKING_DAYS = 26; // quy ước phổ biến để tính lương/ngày công
-
+const STANDARD_WORKING_DAYS = 26;
 let PROFILE = null;
 let ALL_EMPLOYEES = [];
 let CAN_EDIT = false;
-let UNPAID_DAYS_MAP = {}; // employee_id -> số ngày nghỉ không lương trong tháng đang xem
+let ROW_DATA = {}; // employee_id -> { config, payroll, leaveDays, absentDays, advanceTotal }
 
 function monthOptions() {
   const sel = document.getElementById('filterMonth');
@@ -22,147 +21,202 @@ function monthOptions() {
 
 function fmtMoney(n) { return Number(n || 0).toLocaleString('vi-VN'); }
 
-// Lấy số ngày nghỉ KHÔNG LƯƠNG đã duyệt, có ngày bắt đầu rơi vào đúng tháng
-// đang xem — dùng để gợi ý khấu trừ tự động (kế toán vẫn có thể sửa tay).
-async function loadUnpaidLeaveDays(year, month) {
+// Số ngày nghỉ đã duyệt xong (approved_3) có ngày bắt đầu rơi vào tháng
+// đang xem, cho TỪNG nhân viên.
+async function loadLeaveDays(year, month) {
   const from = `${year}-${String(month).padStart(2, '0')}-01`;
   const to = new Date(year, month, 1).toISOString().slice(0, 10);
+  const { data } = await supabase.from('leave_requests').select('employee_id, days')
+    .eq('status', 'approved_3').gte('start_date', from).lt('start_date', to);
+  const map = {};
+  (data || []).forEach((r) => { map[r.employee_id] = (map[r.employee_id] || 0) + Number(r.days || 0); });
+  return map;
+}
 
-  const { data, error } = await supabase
-    .from('leave_requests')
-    .select('employee_id, days')
-    .eq('leave_type', 'unpaid')
-    .eq('status', 'approved_3')
-    .gte('start_date', from)
-    .lt('start_date', to);
+// Số ngày KHÔNG chấm công (không có GPS check-in "vào") trong các ngày
+// làm việc (loại Chủ nhật) của tháng, TRỪ những ngày đã có đơn xin chấm
+// công trễ được duyệt (được tính là đúng giờ, không bị trừ).
+async function loadAbsentDays(year, month) {
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const workDates = [];
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dt = new Date(year, month - 1, d);
+    if (dt.getDay() !== 0) workDates.push(dt.toISOString().slice(0, 10)); // bỏ Chủ nhật
+  }
+  const from = `${year}-${String(month).padStart(2, '0')}-01T00:00:00`;
+  const to = new Date(year, month, 1).toISOString();
 
-  UNPAID_DAYS_MAP = {};
-  if (error) { console.warn('Không tải được dữ liệu nghỉ không lương:', error.message); return; }
-  (data || []).forEach((r) => {
-    UNPAID_DAYS_MAP[r.employee_id] = (UNPAID_DAYS_MAP[r.employee_id] || 0) + Number(r.days || 0);
+  const [{ data: checkins }, { data: excused }] = await Promise.all([
+    supabase.from('attendance_checkins').select('employee_id, checked_at').eq('check_type', 'in').gte('checked_at', from).lt('checked_at', to),
+    supabase.from('late_clockin_requests').select('employee_id, late_date').eq('status', 'approved').gte('late_date', `${year}-${String(month).padStart(2, '0')}-01`).lt('late_date', to.slice(0, 10)),
+  ]);
+
+  const checkedByEmp = {}; // employee_id -> Set(dateStr)
+  (checkins || []).forEach((c) => {
+    checkedByEmp[c.employee_id] = checkedByEmp[c.employee_id] || new Set();
+    checkedByEmp[c.employee_id].add(c.checked_at.slice(0, 10));
   });
+  const excusedByEmp = {};
+  (excused || []).forEach((e) => {
+    excusedByEmp[e.employee_id] = excusedByEmp[e.employee_id] || new Set();
+    excusedByEmp[e.employee_id].add(e.late_date);
+  });
+
+  const result = {};
+  ALL_EMPLOYEES.forEach((emp) => {
+    const checkedDates = checkedByEmp[emp.id] || new Set();
+    const excusedDates = excusedByEmp[emp.id] || new Set();
+    result[emp.id] = workDates.filter((d) => !checkedDates.has(d) && !excusedDates.has(d)).length;
+  });
+  return result;
+}
+
+// Tổng tiền tạm ứng đã duyệt xong (approved_2 = duyệt cấp cuối của phiếu
+// tạm ứng), phát sinh trong đúng tháng đang tính lương.
+async function loadAdvanceTotals(year, month) {
+  const from = `${year}-${String(month).padStart(2, '0')}-01`;
+  const to = new Date(year, month, 1).toISOString().slice(0, 10);
+  const { data } = await supabase.from('advance_requests').select('requester_id, amount')
+    .eq('status', 'approved_3').gte('created_at', from).lt('created_at', to);
+  const map = {};
+  (data || []).forEach((r) => { map[r.requester_id] = (map[r.requester_id] || 0) + Number(r.amount || 0); });
+  return map;
 }
 
 async function loadTable() {
   const [year, month] = document.getElementById('filterMonth').value.split('-').map(Number);
   const tbody = document.getElementById('tableBody');
-  tbody.innerHTML = '<tr><td colspan="8" class="empty-cell">Đang tải dữ liệu...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="14" class="empty-cell">Đang tải dữ liệu...</td></tr>';
 
-  const [{ data: payrolls }] = await Promise.all([
+  const [{ data: configs }, { data: payrolls }, leaveDaysMap, absentDaysMap, advanceMap] = await Promise.all([
+    supabase.from('employee_base_salary').select('*'),
     supabase.from('payroll').select('*').eq('year', year).eq('month', month),
-    loadUnpaidLeaveDays(year, month),
+    loadLeaveDays(year, month),
+    loadAbsentDays(year, month),
+    loadAdvanceTotals(year, month),
   ]);
-  const payrollMap = {};
-  (payrolls || []).forEach((p) => { payrollMap[p.employee_id] = p; });
 
-  const rows = ALL_EMPLOYEES.map((e) => ({
-    employee: e,
-    payroll: payrollMap[e.id] || { base_salary: 0, bonus: 0, deduction: 0 },
-    unpaidDays: UNPAID_DAYS_MAP[e.id] || 0,
-  }));
+  const configMap = {}; (configs || []).forEach((c) => { configMap[c.employee_id] = c; });
+  const payrollMap = {}; (payrolls || []).forEach((p) => { payrollMap[p.employee_id] = p; });
 
+  ROW_DATA = {};
+  ALL_EMPLOYEES.forEach((emp) => {
+    const config = configMap[emp.id] || { base_salary: 0, housing_allowance: 0, transport_allowance: 0, other_allowance: 0 };
+    const existing = payrollMap[emp.id];
+    ROW_DATA[emp.id] = {
+      employee: emp,
+      config,
+      leaveDays: leaveDaysMap[emp.id] || 0,
+      absentDays: absentDaysMap[emp.id] || 0,
+      advanceTotal: advanceMap[emp.id] || 0,
+      performance_bonus: existing?.performance_bonus || 0,
+      urgent_bonus: existing?.urgent_bonus || 0,
+      penalty_amount: existing?.penalty_amount || 0,
+    };
+  });
+
+  render();
+}
+
+function computeNet(row) {
+  const base = Number(row.config.base_salary || 0);
+  const allowances = Number(row.config.housing_allowance || 0) + Number(row.config.transport_allowance || 0) + Number(row.config.other_allowance || 0);
+  const bonuses = Number(row.performance_bonus || 0) + Number(row.urgent_bonus || 0);
+  const leaveDeduction = (Number(row.leaveDays || 0) + Number(row.absentDays || 0)) * (base / STANDARD_WORKING_DAYS);
+  return base + bonuses + allowances - leaveDeduction - Number(row.penalty_amount || 0) - Number(row.advanceTotal || 0);
+}
+
+function render() {
+  const tbody = document.getElementById('tableBody');
+  const rows = Object.values(ROW_DATA);
   renderStats(rows);
 
-  tbody.innerHTML = rows.map(({ employee, payroll, unpaidDays }) => {
-    const net = Number(payroll.base_salary || 0) + Number(payroll.bonus || 0) - Number(payroll.deduction || 0);
+  tbody.innerHTML = rows.map(({ employee, config, leaveDays, absentDays, advanceTotal, performance_bonus, urgent_bonus, penalty_amount }) => {
+    const net = computeNet(ROW_DATA[employee.id]);
     return `
     <tr data-employee="${employee.id}">
       <td class="cell-code">${esc(employee.employee_code)}</td>
       <td>${esc(employee.full_name)}</td>
-      <td><input type="number" class="base-input" value="${payroll.base_salary || 0}" ${CAN_EDIT ? '' : 'disabled'} /></td>
-      <td class="cell-muted" style="text-align:center;">
-        ${unpaidDays > 0 ? `<span class="badge badge-rejected">${unpaidDays} ngày</span>` : '—'}
-      </td>
-      <td><input type="number" class="bonus-input" value="${payroll.bonus || 0}" ${CAN_EDIT ? '' : 'disabled'} /></td>
-      <td><input type="number" class="deduction-input" value="${payroll.deduction || 0}" data-unpaid-days="${unpaidDays}" data-base="${payroll.base_salary || 0}" ${CAN_EDIT ? '' : 'disabled'} /></td>
-      <td class="mono net-display">${fmtMoney(net)} đ</td>
+      <td class="mono cell-muted">${fmtMoney(config.base_salary)} đ</td>
+      <td><input type="number" class="perf-input" value="${performance_bonus}" ${CAN_EDIT ? '' : 'disabled'} style="width:90px;" /></td>
+      <td><input type="number" class="urgent-input" value="${urgent_bonus}" ${CAN_EDIT ? '' : 'disabled'} style="width:90px;" /></td>
+      <td class="mono cell-muted">${fmtMoney(config.housing_allowance)} đ</td>
+      <td class="mono cell-muted">${fmtMoney(config.transport_allowance)} đ</td>
+      <td class="mono cell-muted">${fmtMoney(config.other_allowance)} đ</td>
+      <td class="mono" style="text-align:center;">${leaveDays > 0 ? `<span class="badge badge-submitted">${leaveDays}</span>` : '0'}</td>
+      <td class="mono" style="text-align:center;">${absentDays > 0 ? `<span class="badge badge-rejected">${absentDays}</span>` : '0'}</td>
+      <td><input type="number" class="penalty-input" value="${penalty_amount}" ${CAN_EDIT ? '' : 'disabled'} style="width:90px;" /></td>
+      <td class="mono cell-muted">${fmtMoney(advanceTotal)} đ</td>
+      <td class="mono net-display" style="font-weight:700;">${fmtMoney(net)} đ</td>
       <td>${CAN_EDIT ? `<button class="btn btn-accent btn-sm" data-save="${employee.id}">Lưu</button>` : ''}</td>
     </tr>`;
   }).join('');
 
-  tbody.querySelectorAll('.base-input, .bonus-input, .deduction-input').forEach((input) => {
+  tbody.querySelectorAll('.perf-input, .urgent-input, .penalty-input').forEach((input) => {
     input.addEventListener('input', () => {
       const tr = input.closest('tr');
-      const base = Number(tr.querySelector('.base-input').value) || 0;
-      const bonus = Number(tr.querySelector('.bonus-input').value) || 0;
-      const deduction = Number(tr.querySelector('.deduction-input').value) || 0;
-      tr.querySelector('.net-display').textContent = fmtMoney(base + bonus - deduction) + ' đ';
-      tr.querySelector('.deduction-input').dataset.base = base;
+      const empId = tr.dataset.employee;
+      ROW_DATA[empId].performance_bonus = Number(tr.querySelector('.perf-input').value) || 0;
+      ROW_DATA[empId].urgent_bonus = Number(tr.querySelector('.urgent-input').value) || 0;
+      ROW_DATA[empId].penalty_amount = Number(tr.querySelector('.penalty-input').value) || 0;
+      tr.querySelector('.net-display').textContent = fmtMoney(computeNet(ROW_DATA[empId])) + ' đ';
     });
   });
 
   tbody.querySelectorAll('[data-save]').forEach((btn) => {
     btn.addEventListener('click', async () => {
-      const tr = btn.closest('tr');
-      const employeeId = btn.dataset.save;
+      const [year, month] = document.getElementById('filterMonth').value.split('-').map(Number);
+      const empId = btn.dataset.save;
+      const row = ROW_DATA[empId];
       const payload = {
-        employee_id: employeeId, year, month,
-        base_salary: Number(tr.querySelector('.base-input').value) || 0,
-        bonus: Number(tr.querySelector('.bonus-input').value) || 0,
-        deduction: Number(tr.querySelector('.deduction-input').value) || 0,
+        employee_id: empId, year, month,
+        base_salary: row.config.base_salary || 0,
+        housing_allowance: row.config.housing_allowance || 0,
+        transport_allowance: row.config.transport_allowance || 0,
+        other_allowance: row.config.other_allowance || 0,
+        performance_bonus: row.performance_bonus || 0,
+        urgent_bonus: row.urgent_bonus || 0,
+        penalty_amount: row.penalty_amount || 0,
+        advance_deduction: row.advanceTotal || 0,
+        leave_days: row.leaveDays || 0,
+        absent_days: row.absentDays || 0,
         finalized_by: PROFILE.id, finalized_at: new Date().toISOString(),
       };
+      btn.disabled = true; btn.textContent = 'Đang lưu...';
       const { error } = await supabase.from('payroll').upsert(payload, { onConflict: 'employee_id,year,month' });
+      btn.disabled = false; btn.textContent = 'Lưu';
       if (error) { alert('Lỗi lưu: ' + error.message); return; }
-      await loadTable();
+      btn.textContent = '✓ Đã lưu';
+      setTimeout(() => { btn.textContent = 'Lưu'; }, 1500);
     });
   });
 }
 
-// Tự tính khấu trừ theo số ngày nghỉ không lương trong tháng — công thức
-// phổ biến: khấu trừ = (lương cơ bản / 26 ngày công chuẩn) × số ngày nghỉ
-// không lương. Chỉ ĐIỀN GỢI Ý vào ô, kế toán vẫn xem lại và có thể sửa tay
-// trước khi bấm Lưu — không tự động ghi thẳng vào database.
-function applyAutoDeduction() {
-  document.querySelectorAll('#tableBody tr').forEach((tr) => {
-    const deductionInput = tr.querySelector('.deduction-input');
-    if (!deductionInput) return;
-    const unpaidDays = Number(deductionInput.dataset.unpaidDays || 0);
-    const base = Number(deductionInput.dataset.base || 0);
-    if (unpaidDays > 0 && base > 0) {
-      const suggested = Math.round((base / STANDARD_WORKING_DAYS) * unpaidDays);
-      deductionInput.value = suggested;
-      deductionInput.dispatchEvent(new Event('input'));
-    }
-  });
-}
-document.getElementById('btnAutoDeduction').addEventListener('click', applyAutoDeduction);
-
 function renderStats(rows) {
-  const total = rows.reduce((sum, r) => sum + Number(r.payroll.base_salary || 0) + Number(r.payroll.bonus || 0) - Number(r.payroll.deduction || 0), 0);
-  const totalBase = rows.reduce((sum, r) => sum + Number(r.payroll.base_salary || 0), 0);
-  const totalBonus = rows.reduce((sum, r) => sum + Number(r.payroll.bonus || 0), 0);
-
+  const totalNet = rows.reduce((s, r) => s + computeNet(ROW_DATA[r.employee.id]), 0);
+  const totalLeave = rows.reduce((s, r) => s + Number(r.leaveDays || 0), 0);
+  const totalAbsent = rows.reduce((s, r) => s + Number(r.absentDays || 0), 0);
   document.getElementById('statCards').innerHTML = `
-    <div class="stat-card"><div class="label">Tổng chi lương tháng</div><div class="value mono" style="font-size:20px;">${fmtMoney(total)} đ</div></div>
-    <div class="stat-card"><div class="label">Tổng lương cơ bản</div><div class="value mono" style="font-size:20px;">${fmtMoney(totalBase)} đ</div></div>
-    <div class="stat-card"><div class="label">Tổng thưởng</div><div class="value mono" style="font-size:20px;">${fmtMoney(totalBonus)} đ</div></div>
-    <div class="stat-card"><div class="label">Số nhân viên</div><div class="value mono" style="font-size:20px;">${rows.length}</div></div>
+    <div class="stat-card"><div class="label">Tổng quỹ lương tháng này</div><div class="value mono">${fmtMoney(totalNet)} đ</div></div>
+    <div class="stat-card"><div class="label">Tổng ngày nghỉ (toàn công ty)</div><div class="value mono">${totalLeave}</div></div>
+    <div class="stat-card"><div class="label">Tổng ngày không chấm công</div><div class="value mono" style="color:var(--danger);">${totalAbsent}</div></div>
   `;
 }
 
+document.getElementById('btnRecalc').addEventListener('click', loadTable);
 document.getElementById('filterMonth').addEventListener('change', loadTable);
-document.getElementById('searchInput').addEventListener('input', (e) => {
-  const q = e.target.value.trim().toLowerCase();
-  document.querySelectorAll('#tableBody tr').forEach((tr) => {
-    tr.style.display = tr.textContent.toLowerCase().includes(q) ? '' : 'none';
-  });
-});
 
 (async () => {
   try {
     const { profile } = await bootShell();
-    PROFILE = profile;
-    CAN_EDIT = profile.departmentCode === 'ACC' || ['EXECUTIVE', 'TECH'].includes(profile.roleCode);
+    const { data: emp } = await supabase.from('employees').select('department_id, departments(code)').eq('id', profile.id).single();
+    PROFILE = { ...profile, departmentCode: emp?.departments?.code };
+    CAN_EDIT = PROFILE.departmentCode === 'ACC' || ['EXECUTIVE', 'TECH'].includes(profile.roleCode);
 
-    if (!CAN_EDIT) {
-      document.querySelector('.main').innerHTML = '<div class="empty-cell">Bạn không có quyền thực hiện thao tác.</div>';
-      return;
-    }
-
-    const { data: employees } = await supabase.from('employees').select('id, employee_code, full_name').eq('status', 'active').order('employee_code');
-    ALL_EMPLOYEES = employees || [];
     monthOptions();
+    const { data: employees } = await supabase.from('employees').select('id, employee_code, full_name').eq('status', 'active').order('full_name');
+    ALL_EMPLOYEES = employees || [];
+
     await loadTable();
   } catch (e) { /* bootShell tự điều hướng */ }
 })();

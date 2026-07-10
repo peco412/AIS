@@ -17,10 +17,10 @@ const REQUEST_SOURCES = {
     { table: 'advance_requests', label: 'Phiếu đề nghị tạm ứng', statuses: ['draft', 'approved_1'], titleFn: (r) => `Xử lý phiếu tạm ứng ${r.code}`, href: '/acc/advance-requests.html' },
   ],
   MKT: [
-    { table: 'communication_requests', label: 'Yêu cầu truyền thông', statuses: ['pending', 'in_progress'], titleFn: (r) => `Xử lý yêu cầu: ${r.title}`, href: '/mkt/requests.html' },
+    { table: 'communication_requests', label: 'Yêu cầu truyền thông', statuses: ['center_approved', 'in_progress'], titleFn: (r) => `Xử lý yêu cầu: ${r.title}`, href: '/mkt/requests.html' },
   ],
   FAC: [
-    { table: 'facility_requests', label: 'Yêu cầu CSVC', statuses: ['pending', 'in_progress'], titleFn: (r) => `Xử lý yêu cầu: ${r.title}`, href: '/fac/requests.html' },
+    { table: 'facility_requests', label: 'Yêu cầu CSVC', statuses: ['center_approved', 'in_progress'], titleFn: (r) => `Xử lý yêu cầu: ${r.title}`, href: '/fac/requests.html' },
     { table: 'purchase_requests', label: 'Phiếu đề nghị mua sắm', statuses: ['draft', 'approved_1'], titleFn: (r) => `Xử lý phiếu mua sắm ${r.code}`, href: '/fac/purchase-requests.html' },
   ],
 };

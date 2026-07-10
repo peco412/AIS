@@ -11,6 +11,7 @@ let ACC_DEPT_ID = null;
 let ALL_ROWS = [];
 let IS_ACC_HEAD = false;
 let IS_EXEC = false;
+let DIRECT_MANAGER_MAP = {};
 
 function fmtMoney(n) { return n ? Number(n).toLocaleString('vi-VN') + ' đ' : '—'; }
 function fmtDate(d) { return d ? new Date(d).toLocaleString('vi-VN') : '—'; }
@@ -29,19 +30,33 @@ async function loadRows() {
   const scope = document.getElementById('viewScope').value;
   let query = supabase
     .from('payment_requests')
-    .select('id, code, amount, content, status, draft_file_url, final_file_url, original_document_urls, updated_at, requester_id, employees!payment_requests_requester_id_fkey(full_name, employee_code)')
+    .select('id, code, amount, content, status, draft_file_url, final_file_url, original_document_urls, updated_at, requester_id, employees!payment_requests_requester_id_fkey(full_name, employee_code, department_id, center_id)')
     .order('updated_at', { ascending: false });
   if (scope === 'mine') query = query.eq('requester_id', PROFILE.id);
   const { data, error } = await query;
-  if (error) { tbody.innerHTML = `<tr><td colspan="7" class="empty-cell">Lỗi: ${error.message}</td></tr>`; return; }
+  if (error) { tbody.innerHTML = `<tr><td colspan="7" class="empty-cell">Lỗi: ${esc(error.message)}</td></tr>`; return; }
   ALL_ROWS = data || [];
+
+  DIRECT_MANAGER_MAP = {};
+  (data || []).forEach((r) => {
+    const emp = r.employees;
+    if (!emp) return;
+    DIRECT_MANAGER_MAP[r.requester_id] = emp.department_id
+      ? (emp.department_id === PROFILE.departmentId && ['DEPT_HEAD', 'DEPT_DEPUTY'].includes(PROFILE.roleCode))
+      : (emp.center_id === PROFILE.centerId && PROFILE.roleCode === 'CENTER_MANAGER');
+  });
+
   render();
 }
 
+// Đã thêm cấp "Quản lý trực tiếp" theo đúng đặc tả "duyệt 3 cấp: quản lý
+// trực tiếp, phòng kế toán, ban điều hành" — trước đây thiếu hẳn, đi
+// thẳng từ người gửi sang Kế toán.
 function actionFor(row) {
   if (row.status === 'draft' && row.requester_id === PROFILE.id) return { label: 'Ký & đính kèm chứng từ', step: 'requester' };
-  if (row.status === 'submitted' && (IS_ACC_HEAD || IS_EXEC)) return { label: 'Kế toán ký', step: 'accountant', next: 'approved_1' };
-  if (row.status === 'approved_1' && IS_EXEC) return { label: 'Ban điều hành ký', step: 'executive', next: 'approved_2' };
+  if (row.status === 'submitted' && DIRECT_MANAGER_MAP[row.requester_id]) return { label: 'Quản lý trực tiếp ký', step: 'manager', next: 'approved_1' };
+  if (row.status === 'approved_1' && (IS_ACC_HEAD || IS_EXEC)) return { label: 'Kế toán ký', step: 'accountant', next: 'approved_2' };
+  if (row.status === 'approved_2' && IS_EXEC) return { label: 'Ban điều hành ký', step: 'executive', next: 'approved_3' };
   return null;
 }
 
@@ -156,6 +171,7 @@ async function runAction(id) {
       const newUrl = await uploadFile(blob, row.requester_id, action.step);
       const nowIso = new Date().toISOString();
       const updatePayload = { draft_file_url: newUrl, status: action.next };
+      if (action.step === 'manager') { updatePayload.manager_signed_at = nowIso; updatePayload.manager_signed_by = PROFILE.id; }
       if (action.step === 'accountant') { updatePayload.accountant_signed_at = nowIso; updatePayload.accountant_signed_by = PROFILE.id; }
       if (action.step === 'executive') {
         updatePayload.executive_signed_at = nowIso;
@@ -219,14 +235,72 @@ document.getElementById('submitDocs').addEventListener('click', async () => {
 // ---------------------------------------------------------------------
 const createModal = document.getElementById('createModal');
 const createError = document.getElementById('createError');
-document.getElementById('btnAdd').addEventListener('click', () => {
+document.getElementById('btnAdd').addEventListener('click', async () => {
   createError.classList.remove('show');
   document.getElementById('amount').value = '';
   document.getElementById('content').value = '';
+  document.getElementById('paymentType').value = 'regular';
+  await togglePoField();
   createModal.classList.add('show');
 });
+document.getElementById('paymentType').addEventListener('change', togglePoField);
 document.getElementById('closeCreateModal').addEventListener('click', () => createModal.classList.remove('show'));
 document.getElementById('cancelCreate').addEventListener('click', () => createModal.classList.remove('show'));
+
+document.getElementById('isPrepaid').addEventListener('change', (e) => {
+  document.getElementById('prepaidMonthsWrap').style.display = e.target.checked ? 'block' : 'none';
+});
+
+// "Chi tieu phai co goc" — CHỈ áp dụng cho loại "thông thường" (mua sắm
+// hàng hoá/dịch vụ); loại "công tác phí" vẫn nhập tay tự do vì bản chất
+// là hoàn ứng đi lại, không có phiếu mua hàng tương ứng.
+async function togglePoField() {
+  const isRegular = document.getElementById('paymentType').value === 'regular';
+  document.getElementById('poField').style.display = isRegular ? 'block' : 'none';
+  document.getElementById('prepaidField').style.display = isRegular ? 'block' : 'none';
+  document.getElementById('amount').readOnly = isRegular;
+  if (isRegular) await loadApprovedPurchaseOrders();
+}
+
+async function loadApprovedPurchaseOrders() {
+  const { data } = await supabase.from('purchase_orders')
+    .select('id, code, total_amount, center_id, expense_category_id, suppliers(name)')
+    .eq('status', 'approved_3')
+    .eq('requester_id', PROFILE.id);
+  // Loại bỏ phiếu mua hàng đã được dùng làm gốc cho 1 phiếu thanh toán khác rồi
+  const { data: used } = await supabase.from('payment_requests').select('purchase_order_id').not('purchase_order_id', 'is', null);
+  const usedIds = new Set((used || []).map((u) => u.purchase_order_id));
+
+  const available = (data || []).filter((po) => !usedIds.has(po.id));
+  const sel = document.getElementById('purchaseOrderSelect');
+  sel.innerHTML = available.length === 0
+    ? '<option value="">— Chưa có phiếu mua hàng nào đã duyệt xong —</option>'
+    : available.map((po) => `<option value="${po.id}" data-amount="${po.total_amount}" data-center="${po.center_id || ''}" data-category="${po.expense_category_id || ''}">${esc(po.code)} — ${esc(po.suppliers?.name || '')} — ${Number(po.total_amount).toLocaleString('vi-VN')} đ</option>`).join('');
+
+  sel.onchange = async () => {
+    const opt = sel.selectedOptions[0];
+    document.getElementById('amount').value = opt?.dataset.amount || '';
+    await checkBudgetWarning(opt?.dataset.center, opt?.dataset.category, Number(opt?.dataset.amount || 0));
+  };
+  sel.dispatchEvent(new Event('change'));
+}
+
+// Doi chieu dinh muc tran chi phi van hanh cua Trung tam+Hang muc —
+// CANH BAO (khong chan) neu se vuot, dung dung tinh than "canh bao do"
+// trong dac ta.
+async function checkBudgetWarning(centerId, categoryId, amount) {
+  const warnBox = document.getElementById('budgetWarning');
+  warnBox.style.display = 'none';
+  if (!centerId || !categoryId || !amount) return;
+
+  const { data, error } = await supabase.rpc('check_budget_cap', {
+    p_center_id: centerId, p_expense_category_id: categoryId, p_new_amount: amount,
+  }).single();
+  if (error || !data || !data.would_exceed) return;
+
+  warnBox.style.display = 'block';
+  warnBox.textContent = `⚠️ CẢNH BÁO: đã chi ${Number(data.already_spent).toLocaleString('vi-VN')} đ / định mức ${Number(data.monthly_cap).toLocaleString('vi-VN')} đ trong tháng cho hạng mục này — phiếu này sẽ làm VƯỢT định mức trần.`;
+}
 
 document.getElementById('openFillEditor').addEventListener('click', async () => {
   const paymentType = document.getElementById('paymentType').value; // 'regular' | 'trip'
@@ -235,6 +309,8 @@ document.getElementById('openFillEditor').addEventListener('click', async () => 
   if (!TEMPLATE) { createError.textContent = `Chưa cấu hình biểu mẫu ${templateCode} trong Kho lưu trữ > Biểu mẫu.`; createError.classList.add('show'); return; }
   const amount = document.getElementById('amount').value;
   const content = document.getElementById('content').value.trim();
+  const purchaseOrderId = paymentType === 'regular' ? document.getElementById('purchaseOrderSelect').value : null;
+  if (paymentType === 'regular' && !purchaseOrderId) { createError.textContent = 'Vui lòng chọn phiếu mua hàng gốc đã duyệt xong.'; createError.classList.add('show'); return; }
   if (!amount || !content) { createError.textContent = 'Vui lòng nhập đầy đủ số tiền và nội dung.'; createError.classList.add('show'); return; }
 
   createModal.classList.remove('show');
@@ -255,12 +331,20 @@ document.getElementById('openFillEditor').addEventListener('click', async () => 
     fieldMap: TEMPLATE.field_map || [],
     onSave: async (blob) => {
       const fileUrl = await uploadFile(blob, PROFILE.id, 'draft');
-      const { error } = await supabase.from('payment_requests').insert({
+      const { data: created, error } = await supabase.from('payment_requests').insert({
         requester_id: PROFILE.id, department_id: PROFILE.departmentId, center_id: PROFILE.centerId,
         template_id: TEMPLATE.id, amount: Number(amount), content, draft_file_url: fileUrl,
+        purchase_order_id: purchaseOrderId,
         requester_signed_at: new Date().toISOString(), status: 'draft',
-      });
+      }).select('id').single();
       if (error) throw error;
+
+      const isPrepaid = document.getElementById('isPrepaid')?.checked;
+      if (isPrepaid) {
+        const months = Number(document.getElementById('prepaidMonths').value) || 12;
+        const { error: prepaidErr } = await supabase.rpc('create_prepaid_expense', { p_payment_request_id: created.id, p_months: months });
+        if (prepaidErr) console.warn('Không tạo được lịch phân bổ TK 242:', prepaidErr.message);
+      }
       await loadRows();
     },
   });

@@ -19,22 +19,19 @@
 
   <div class="form-error" id="loginError"></div>
 
-  <div id="phoneStep">
-    <div class="field">
-      <label for="phone">Số điện thoại</label>
-      <input type="tel" id="phone" placeholder="09xxxxxxxx" autocomplete="tel" />
-    </div>
-    <button class="btn-primary" id="btnSendOtp">Gửi mã OTP</button>
+  <div class="field">
+    <label for="phone">Số điện thoại</label>
+    <input type="tel" id="phone" placeholder="09xxxxxxxx" autocomplete="tel" />
   </div>
+  <div class="field">
+    <label for="password">Mật khẩu</label>
+    <input type="password" id="password" placeholder="••••••••" autocomplete="current-password" />
+  </div>
+  <button class="btn-primary" id="btnLogin">Đăng nhập</button>
 
-  <div id="otpStep" style="display:none;">
-    <p class="cell-muted">Mã OTP đã gửi tới <strong id="otpPhoneDisplay"></strong></p>
-    <div class="field">
-      <label for="otp">Nhập mã OTP</label>
-      <input type="text" id="otp" inputmode="numeric" maxlength="6" placeholder="------" />
-    </div>
-    <button class="btn-primary" id="btnVerifyOtp">Xác nhận</button>
-    <button class="btn-link" id="btnResendOtp">Gửi lại mã</button>
+  <div style="display:flex; justify-content:space-between; margin-top:6px;">
+    <button class="btn-link" id="btnForgot" style="width:auto; padding:8px 0;">Quên mật khẩu?</button>
+    <button class="btn-link" id="btnGoRegister" style="width:auto; padding:8px 0;">Chưa có tài khoản? Đăng ký</button>
   </div>
 </div>
 

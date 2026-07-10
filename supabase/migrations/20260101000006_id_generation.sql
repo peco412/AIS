@@ -12,7 +12,7 @@
 -- ---------------------------------------------------------------------
 -- Mã nhân viên: dùng 1 sequence toàn cục
 -- ---------------------------------------------------------------------
-create sequence employee_code_seq start 1;
+create sequence if not exists employee_code_seq start 1;
 
 create or replace function generate_employee_code() returns text as $$
 declare
@@ -40,7 +40,7 @@ for each row execute function trg_set_employee_code();
 -- Mã phiếu: bảng đếm riêng theo (prefix, năm, tháng) để đảm bảo reset
 -- đúng theo tháng và an toàn khi nhiều người tạo phiếu cùng lúc.
 -- ---------------------------------------------------------------------
-create table document_code_counters (
+create table if not exists document_code_counters (
   prefix text not null,
   year int not null,
   month int not null,

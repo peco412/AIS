@@ -2,6 +2,7 @@ import { bootShell } from '/js/shell.js';
 import { supabase, esc } from '/js/supabase.js';
 
 const CONDITION_LABEL = { good: 'Tốt', needs_repair: 'Cần sửa chữa', broken: 'Hỏng', disposed: 'Đã thanh lý' };
+const CATEGORY_LABEL = { electronics: 'Thiết bị điện tử', household: 'Thiết bị gia dụng', other: 'Khác' };
 let PROFILE = null;
 let ALL_ROWS = [];
 
@@ -11,18 +12,22 @@ async function loadLookups() {
     (data || []).map((c) => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
   document.getElementById('assetCenter').innerHTML = '<option value="">— Chọn trung tâm —</option>' +
     (data || []).map((c) => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
+
+  const { data: employees } = await supabase.from('employees').select('id, full_name, employee_code').eq('status', 'active').order('full_name');
+  document.getElementById('assignedEmployee').innerHTML = '<option value="">— Chưa cấp cho ai —</option>' +
+    (employees || []).map((e) => `<option value="${e.id}">${esc(e.full_name)} (${esc(e.employee_code)})</option>`).join('');
 }
 
 async function loadRows() {
   const tbody = document.getElementById('tableBody');
-  tbody.innerHTML = '<tr><td colspan="6" class="empty-cell">Đang tải dữ liệu...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="8" class="empty-cell">Đang tải dữ liệu...</td></tr>';
 
   const { data, error } = await supabase
     .from('facility_assets')
-    .select('id, asset_name, category, quantity, condition, purchased_date, note, center_id, centers(name)')
+    .select('id, asset_code, asset_name, category_code, quantity, condition, purchased_date, assigned_date, note, center_id, centers(name), assigned_employee_id, employees(full_name)')
     .order('updated_at', { ascending: false });
 
-  if (error) { tbody.innerHTML = `<tr><td colspan="6" class="empty-cell">Lỗi: ${esc(error.message)}</td></tr>`; return; }
+  if (error) { tbody.innerHTML = `<tr><td colspan="8" class="empty-cell">Lỗi: ${esc(error.message)}</td></tr>`; return; }
   ALL_ROWS = data || [];
   renderStats();
   render();
@@ -57,11 +62,13 @@ function render() {
 
   tbody.innerHTML = rows.map((r) => `
     <tr>
+      <td class="cell-code mono">${esc(r.asset_code || '—')}</td>
       <td>${esc(r.asset_name)}</td>
-      <td class="cell-muted">${esc(r.category || '—')}</td>
+      <td class="cell-muted">${esc(CATEGORY_LABEL[r.category_code] || r.category_code || '—')}</td>
       <td class="cell-muted">${esc(r.centers?.name || '—')}</td>
       <td class="cell-code">${r.quantity}</td>
       <td><span class="badge badge-${r.condition === 'good' ? 'active' : r.condition === 'disposed' ? 'archived' : 'rejected'}">${CONDITION_LABEL[r.condition] || r.condition}</span></td>
+      <td class="cell-muted">${esc(r.employees?.full_name || '—')}</td>
       <td><button class="btn btn-outline btn-sm" data-edit="${r.id}">Sửa</button></td>
     </tr>
   `).join('');
@@ -80,6 +87,7 @@ document.getElementById('btnAdd').addEventListener('click', () => {
   form.reset();
   document.getElementById('assetId').value = '';
   document.getElementById('modalTitle').textContent = 'Thêm tài sản';
+  document.getElementById('assetCodeField').style.display = 'none';
   formError.classList.remove('show');
   modal.classList.add('show');
 });
@@ -91,12 +99,16 @@ function openEdit(id) {
   if (!row) return;
   document.getElementById('modalTitle').textContent = 'Sửa tài sản';
   document.getElementById('assetId').value = row.id;
+  document.getElementById('assetCodeField').style.display = 'block';
+  document.getElementById('assetCodeDisplay').value = row.asset_code || '—';
   document.getElementById('assetName').value = row.asset_name;
-  document.getElementById('category').value = row.category || '';
+  document.getElementById('categoryCode').value = row.category_code || 'other';
   document.getElementById('quantity').value = row.quantity;
   document.getElementById('assetCenter').value = row.center_id;
   document.getElementById('condition').value = row.condition || 'good';
   document.getElementById('purchasedDate').value = row.purchased_date || '';
+  document.getElementById('assignedDate').value = row.assigned_date || '';
+  document.getElementById('assignedEmployee').value = row.assigned_employee_id || '';
   document.getElementById('note').value = row.note || '';
   formError.classList.remove('show');
   modal.classList.add('show');
@@ -108,11 +120,13 @@ form.addEventListener('submit', async (e) => {
   const id = document.getElementById('assetId').value;
   const payload = {
     asset_name: document.getElementById('assetName').value.trim(),
-    category: document.getElementById('category').value || null,
+    category_code: document.getElementById('categoryCode').value,
     quantity: Number(document.getElementById('quantity').value),
     center_id: document.getElementById('assetCenter').value,
     condition: document.getElementById('condition').value,
     purchased_date: document.getElementById('purchasedDate').value || null,
+    assigned_date: document.getElementById('assignedDate').value || null,
+    assigned_employee_id: document.getElementById('assignedEmployee').value || null,
     note: document.getElementById('note').value || null,
   };
   const btn = document.getElementById('submitAsset');

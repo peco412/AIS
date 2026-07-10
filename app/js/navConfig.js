@@ -22,14 +22,22 @@ function inDept(p, code) {
 
 export const NAV_CONFIG = [
   {
-    section: null, // luôn hiển thị, không tiêu đề nhóm
+    section: null, // luôn hiển thị, không tiêu đề nhóm — đúng 2 mục "Bảng tổng quan" + "Thông báo"
     items: [
       { labelKey: 'nav.dashboard', label: 'Trang chủ', href: '/dashboard.html', icon: '⌂', visible: () => true },
       { labelKey: 'nav.notifications', label: 'Thông báo', href: '/notifications.html', icon: '🔔', visible: () => true },
+    ],
+  },
+  {
+    sectionKey: 'nav.section.personal', section: 'Chức năng cá nhân',
+    alwaysShow: true, // LUÔN hiện đủ nhóm này ở mọi trang, không chỉ khi đang ở đúng trang trong nhóm
+    items: [
       { labelKey: 'nav.directory', label: 'Thông tin liên lạc', href: '/directory.html', icon: '📇', visible: () => true },
       { labelKey: 'nav.profile', label: 'Hồ sơ cá nhân', href: '/profile.html', icon: '👤', visible: () => true },
       { labelKey: 'nav.meetings', label: 'Lịch họp', href: '/meetings.html', icon: '📅', visible: () => true },
       { labelKey: 'nav.checkin', label: 'Chấm công vị trí', href: '/attendance-checkin.html', icon: '📍', visible: () => true },
+      { labelKey: 'nav.hr.lateClockin', label: 'Đơn xin chấm công trễ', href: '/hr/late-clockin-requests.html', icon: '⏰', visible: () => true },
+      { labelKey: 'nav.acc.purchaseOrders', label: 'Phiếu mua hàng', href: '/acc/purchase-orders.html', icon: '🧾', visible: () => true },
       { labelKey: 'nav.proposals', label: 'Đề xuất nội bộ', href: '/proposals.html', icon: '📝', visible: () => true },
       { labelKey: 'nav.archive', label: 'Kho lưu trữ hệ thống', href: '/archive.html', icon: '🗂', visible: () => true },
       { labelKey: 'nav.permissions', label: 'Xin thêm quyền hạn', href: '/permission-requests.html', icon: '🔐', visible: (p) => ['DEPT_HEAD', 'DEPT_DEPUTY', 'EXECUTIVE', 'TECH'].includes(p.roleCode) },
@@ -44,6 +52,7 @@ export const NAV_CONFIG = [
       { labelKey: 'nav.hr.workSchedule', label: 'Phân lịch làm việc', href: '/hr/work-schedule.html', icon: '📋', visible: (p) => inDept(p, 'HR') || p.isCenterManager },
       { labelKey: 'nav.hr.contracts', label: 'Hợp đồng lao động', href: '/hr/contracts.html', icon: '📄', visible: () => true },
       { labelKey: 'nav.hr.leaveRequests', label: 'Đơn nghỉ (Cán bộ)', href: '/hr/leave-requests.html', icon: '🌴', visible: (p) => !p.isTeacher },
+      { labelKey: 'nav.hr.baseSalary', label: 'Bảng lương cơ bản', href: '/hr/base-salary.html', icon: '💰', visible: (p) => inDept(p, 'HR') || inDept(p, 'ACC') },
       { labelKey: 'nav.hr.businessTrips', label: 'Đơn công tác', href: '/hr/business-trips.html', icon: '🧳', visible: () => true },
       { labelKey: 'nav.sign', label: 'Ký số hồ sơ', href: '/hr/sign.html', icon: '✍️', visible: (p) => (p.departmentCode === 'HR' && isDeptHeadOrAbove(p)) || isExecOrTech(p) },
     ],
@@ -56,6 +65,11 @@ export const NAV_CONFIG = [
       { labelKey: 'nav.acc.reports', label: 'Báo cáo tài chính', href: '/acc/reports.html', icon: '📊', visible: (p) => inDept(p, 'ACC') },
       { labelKey: 'nav.acc.discountPrograms', label: 'Chương trình ưu đãi nạp ví', href: '/acc/discount-programs.html', icon: '🎁', visible: (p) => inDept(p, 'ACC') },
       { labelKey: 'nav.acc.walletTopupRequests', label: 'Xác nhận nạp ví', href: '/acc/wallet-topup-requests.html', icon: '✅', visible: (p) => inDept(p, 'ACC') },
+      { labelKey: 'nav.edu.refundRequests', label: 'Yêu cầu hoàn phí', href: '/edu/refund-requests.html', icon: '↩️', visible: (p) => inDept(p, 'ACC') },
+      { labelKey: 'nav.acc.walletLinks', label: 'Danh sách liên kết Ví', href: '/acc/wallet-links.html', icon: '📋', visible: (p) => inDept(p, 'ACC') },
+      { labelKey: 'nav.acc.suppliers', label: 'Nhà cung cấp', href: '/acc/suppliers.html', icon: '🏭', visible: (p) => inDept(p, 'ACC') },
+      { labelKey: 'nav.acc.prepaidExpenses', label: 'Phân bổ TK 242', href: '/acc/prepaid-expenses.html', icon: '📆', visible: (p) => inDept(p, 'ACC') },
+      { labelKey: 'nav.acc.budgetCaps', label: 'Định mức chi phí', href: '/acc/budget-caps.html', icon: '🚦', visible: (p) => inDept(p, 'ACC') },
       { labelKey: 'nav.acc.attendancePayroll', label: 'Bảng kê chấm công', href: '/acc/attendance-payroll-report.html', icon: '🕒', visible: (p) => inDept(p, 'ACC') },
       { labelKey: 'nav.edu.parentLinks', label: 'Liên kết Phụ huynh', href: '/edu/parent-links.html', icon: '🔗', visible: (p) => inDept(p, 'ACC') },
       { labelKey: 'nav.edu.walletInvoices', label: 'Thu học phí qua Ví', href: '/edu/wallet-invoices.html', icon: '💳', visible: (p) => inDept(p, 'ACC') },
@@ -91,6 +105,9 @@ export const NAV_CONFIG = [
       { labelKey: 'nav.edu.overview', label: 'Tổng quan trung tâm', href: '/edu/center-overview.html', icon: '🏫', visible: (p) => p.isCenterManager || inDept(p, 'HR') || inDept(p, 'MKT') },
       { labelKey: 'nav.edu.attendance', label: 'Điểm danh & thống kê', href: '/edu/attendance-overview.html', icon: '✅', visible: (p) => p.isCenterManager },
       { labelKey: 'nav.edu.walletInvoices', label: 'Thu học phí', href: '/edu/wallet-invoices.html', icon: '💳', visible: (p) => p.isCenterManager || inDept(p, 'ACC') },
+      { labelKey: 'nav.edu.programPricing', label: 'Bảng giá chương trình học', href: '/edu/program-pricing.html', icon: '🏷️', visible: (p) => p.isCenterManager || inDept(p, 'ACC') },
+      { labelKey: 'nav.edu.inventory', label: 'Kho trung tâm', href: '/edu/inventory.html', icon: '📦', visible: (p) => true },
+      { labelKey: 'nav.edu.refundRequests', label: 'Yêu cầu hoàn phí', href: '/edu/refund-requests.html', icon: '↩️', visible: (p) => p.isCenterManager || inDept(p, 'ACC') },
       { labelKey: 'nav.edu.debtOverview', label: 'Công nợ tổng hợp', href: '/edu/debt-overview.html', icon: '📒', visible: (p) => p.isCenterManager || isExecOrTech(p) },
       { labelKey: 'nav.edu.parentLinks', label: 'Liên kết Phụ huynh', href: '/edu/parent-links.html', icon: '🔗', visible: (p) => p.isCenterManager || inDept(p, 'ACC') },
       { labelKey: 'nav.acc.walletTopupRequests', label: 'Xác nhận nạp ví', href: '/acc/wallet-topup-requests.html', icon: '✅', visible: (p) => p.isCenterManager },
@@ -112,6 +129,7 @@ export const NAV_CONFIG = [
       { labelKey: 'nav.teacher.classes', label: 'Lớp phụ trách', href: '/teacher/classes.html', icon: '🏷', visible: (p) => p.isTeacher },
       { labelKey: 'nav.teacher.attendance', label: 'Điểm danh', href: '/teacher/attendance.html', icon: '✔️', visible: (p) => p.isTeacher },
       { labelKey: 'nav.teacher.grades', label: 'Bảng điểm lớp học', href: '/teacher/grades.html', icon: '📝', visible: (p) => p.isTeacher },
+      { labelKey: 'nav.teacher.trialStudents', label: 'Danh sách học thử', href: '/teacher/trial-students.html', icon: '🎓', visible: (p) => p.isTeacher },
       { labelKey: 'nav.hr.leaveRequests', label: 'Đơn nghỉ', href: '/hr/leave-requests.html', icon: '🌴', visible: (p) => p.isTeacher },
     ],
   },
@@ -119,7 +137,10 @@ export const NAV_CONFIG = [
     sectionKey: 'nav.section.consultant', section: 'Nhân viên tư vấn',
     items: [
       { labelKey: 'nav.consultant.leads', label: 'Hồ sơ khách hàng', href: '/consultant/leads.html', icon: '📇', visible: (p) => p.roleCode === 'CONSULTANT' },
+      { labelKey: 'nav.consultant.trialRegistration', label: 'Đăng ký học thử', href: '/consultant/trial-registration.html', icon: '🎓', visible: (p) => p.roleCode === 'CONSULTANT' },
       { labelKey: 'nav.edu.walletInvoices', label: 'Thu học phí', href: '/edu/wallet-invoices.html', icon: '💳', visible: (p) => p.roleCode === 'CONSULTANT' },
+      { labelKey: 'nav.edu.programPricing', label: 'Bảng giá chương trình học', href: '/edu/program-pricing.html', icon: '🏷️', visible: (p) => p.roleCode === 'CONSULTANT' },
+      { labelKey: 'nav.edu.refundRequests', label: 'Yêu cầu hoàn phí', href: '/edu/refund-requests.html', icon: '↩️', visible: (p) => p.roleCode === 'CONSULTANT' },
       { labelKey: 'nav.consultant.stats', label: 'Thống kê hồ sơ', href: '/consultant/stats.html', icon: '📊', visible: (p) => p.roleCode === 'CONSULTANT' },
       { labelKey: 'nav.hr.leaveRequests', label: 'Đơn nghỉ (Cán bộ)', href: '/hr/leave-requests.html', icon: '🌴', visible: (p) => p.roleCode === 'CONSULTANT' },
     ],

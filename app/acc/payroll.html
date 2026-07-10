@@ -45,9 +45,9 @@
 
   <main class="main">
     <div class="page-header">
-      <div><h1>Bảng lương nhân viên</h1><div class="sub">Lương thực nhận tự tính = Lương cơ bản + Thưởng - Khấu trừ. Cột "Nghỉ không lương" lấy từ đơn nghỉ phép đã duyệt trong tháng.</div></div>
+      <div><h1>Bảng lương nhân viên</h1><div class="sub">Lương cơ bản/trợ cấp tự điền từ Bảng lương cơ bản. Ngày nghỉ/ngày không chấm công tự tính từ đơn nghỉ phép + GPS chấm công (đã trừ các đơn chấm công trễ được duyệt).</div></div>
       <div style="display:flex; gap:8px;">
-        <button class="btn btn-outline" id="btnAutoDeduction" title="Tự điền khấu trừ = (Lương cơ bản / 26) × số ngày nghỉ không lương — vẫn có thể sửa tay trước khi lưu">⚙️ Tự tính khấu trừ theo nghỉ phép</button>
+        <button class="btn btn-outline" id="btnRecalc" title="Tính lại toàn bộ số ngày nghỉ/không chấm công cho tháng đang chọn">🔄 Tính lại</button>
         <select class="select-input" id="filterMonth"></select>
       </div>
     </div>
@@ -56,8 +56,15 @@
 
     <div class="data-table-wrap">
       <table class="data-table">
-        <thead><tr><th>Mã NV</th><th>Nhân viên</th><th>Lương cơ bản</th><th>Nghỉ không lương</th><th>Thưởng</th><th>Khấu trừ</th><th>Thực nhận</th><th></th></tr></thead>
-        <tbody id="tableBody"><tr><td colspan="8" class="empty-cell">Đang tải dữ liệu...</td></tr></tbody>
+        <thead><tr>
+          <th>Mã NV</th><th>Nhân viên</th><th>Lương cơ bản</th>
+          <th>Thưởng HS</th><th>Thưởng ĐX</th>
+          <th>Trợ cấp NN</th><th>Trợ cấp XX</th><th>Trợ cấp khác</th>
+          <th>Ngày nghỉ</th><th>Ngày không CC</th>
+          <th>Tiền phạt</th><th>Tạm ứng</th>
+          <th>Thực nhận</th><th></th>
+        </tr></thead>
+        <tbody id="tableBody"><tr><td colspan="14" class="empty-cell">Đang tải dữ liệu...</td></tr></tbody>
       </table>
     </div>
   </main>

@@ -11,6 +11,7 @@ let ACC_DEPT_ID = null;
 let ALL_ROWS = [];
 let IS_ACC_HEAD = false;
 let IS_EXEC = false;
+let DIRECT_MANAGER_MAP = {}; // requester_id -> mình có phải quản lý trực tiếp người đó không
 
 function fmtMoney(n) { return n ? Number(n).toLocaleString('vi-VN') + ' đ' : '—'; }
 function fmtDate(d) { return d ? new Date(d).toLocaleString('vi-VN') : '—'; }
@@ -26,18 +27,32 @@ async function loadRows() {
   const scope = document.getElementById('viewScope').value;
   let query = supabase
     .from('advance_requests')
-    .select('id, code, amount, reason, status, draft_file_url, final_file_url, updated_at, requester_id, employees!advance_requests_requester_id_fkey(full_name, employee_code)')
+    .select('id, code, amount, reason, status, draft_file_url, final_file_url, updated_at, requester_id, employees!advance_requests_requester_id_fkey(full_name, employee_code, department_id, center_id)')
     .order('updated_at', { ascending: false });
   if (scope === 'mine') query = query.eq('requester_id', PROFILE.id);
   const { data, error } = await query;
-  if (error) { tbody.innerHTML = `<tr><td colspan="7" class="empty-cell">Lỗi: ${error.message}</td></tr>`; return; }
+  if (error) { tbody.innerHTML = `<tr><td colspan="7" class="empty-cell">Lỗi: ${esc(error.message)}</td></tr>`; return; }
   ALL_ROWS = data || [];
+
+  DIRECT_MANAGER_MAP = {};
+  (data || []).forEach((r) => {
+    const emp = r.employees;
+    if (!emp) return;
+    DIRECT_MANAGER_MAP[r.requester_id] = emp.department_id
+      ? (emp.department_id === PROFILE.departmentId && ['DEPT_HEAD', 'DEPT_DEPUTY'].includes(PROFILE.roleCode))
+      : (emp.center_id === PROFILE.centerId && PROFILE.roleCode === 'CENTER_MANAGER');
+  });
+
   render();
 }
 
+// Đã thêm cấp "Quản lý trực tiếp" làm bước ĐẦU TIÊN theo đúng đặc tả
+// "duyệt 3 cấp: quản lý trực tiếp, phòng kế toán, ban điều hành" — trước
+// đây chỉ có 2 cấp (Kế toán -> BĐH), bỏ sót hẳn cấp quản lý trực tiếp.
 function actionFor(row) {
-  if (row.status === 'draft' && (IS_ACC_HEAD || IS_EXEC)) return { label: 'Kế toán ký', step: 'accountant', next: 'approved_1' };
-  if (row.status === 'approved_1' && IS_EXEC) return { label: 'Ban điều hành ký', step: 'executive', next: 'approved_2' };
+  if (row.status === 'draft' && DIRECT_MANAGER_MAP[row.requester_id]) return { label: 'Quản lý trực tiếp ký', step: 'manager', next: 'approved_1' };
+  if (row.status === 'approved_1' && (IS_ACC_HEAD || IS_EXEC)) return { label: 'Kế toán ký', step: 'accountant', next: 'approved_2' };
+  if (row.status === 'approved_2' && IS_EXEC) return { label: 'Ban điều hành ký', step: 'executive', next: 'approved_3' };
   return null;
 }
 
@@ -113,6 +128,7 @@ async function runAction(id) {
       const newUrl = await uploadFile(blob, row.requester_id, action.step);
       const nowIso = new Date().toISOString();
       const updatePayload = { draft_file_url: newUrl, status: action.next };
+      if (action.step === 'manager') { updatePayload.manager_signed_at = nowIso; updatePayload.manager_signed_by = PROFILE.id; }
       if (action.step === 'accountant') { updatePayload.accountant_signed_at = nowIso; updatePayload.accountant_signed_by = PROFILE.id; }
       if (action.step === 'executive') {
         updatePayload.executive_signed_at = nowIso;

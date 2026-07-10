@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="vi" data-division="aloha">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Nhà cung cấp — ERP AIS</title>
+<link rel="manifest" href="/manifest.json" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="ERP AIS" />
+<link rel="apple-touch-icon" href="/assets/icon-192.png" />
+<meta name="theme-color" content="#0094D9" />
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/css/tokens.css" />
+<link rel="stylesheet" href="/css/dashboard.css" />
+<link rel="stylesheet" href="/css/module.css" />
+</head>
+<body data-page="/acc/suppliers.html">
+
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar__brand"><span class="dot"></span><div>ERP AIS<small data-i18n="brand.subtitle">Hệ thống quản trị nội bộ</small></div></div>
+    <nav id="sidebarNav"></nav>
+    <div class="sidebar__footer">© 2026 ERP AIS</div>
+  </aside>
+  <header class="topbar">
+    <div class="topbar__left"><button class="menu-toggle" id="menuToggle">☰</button></div>
+    <div class="topbar__right">
+      <button class="icon-btn" onclick="location.href='/notifications.html'">🔔<span class="badge" id="notifBadge" style="display:none;">0</span></button>
+      <div class="user-chip" onclick="location.href='/profile.html'">
+        <div class="user-chip__avatar" id="userChipAvatar">--</div>
+        <div class="user-chip__meta"><div class="name" id="userChipName">Đang tải...</div><div class="role" id="userChipRole">—</div></div>
+      </div>
+      <button class="icon-btn" id="logoutBtn">⎋</button>
+    </div>
+  </header>
+
+  <main class="main">
+    <div class="page-header">
+      <div><h1>Danh sách nhà cung cấp</h1><div class="sub">Dùng làm gốc khi tạo Phiếu mua hàng.</div></div>
+      <button class="btn btn-accent" id="btnAdd">+ Thêm nhà cung cấp</button>
+    </div>
+
+    <div class="toolbar">
+      <input class="text-input" type="text" id="searchInput" placeholder="Tìm theo tên..." style="min-width:260px;" />
+      <div class="cell-muted" id="resultCount"></div>
+    </div>
+
+    <div class="data-table-wrap">
+      <table class="data-table">
+        <thead><tr><th>Mã NCC</th><th>Tên</th><th>Hạng mục cung cấp</th><th>SĐT</th><th>Email</th><th>Người tạo</th><th></th></tr></thead>
+        <tbody id="tableBody"><tr><td colspan="7" class="empty-cell">Đang tải dữ liệu...</td></tr></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<div class="modal-overlay" id="createModal">
+  <div class="modal-box">
+    <button class="modal-close" id="closeModal">✕</button>
+    <h3 id="modalTitle">Thêm nhà cung cấp</h3>
+    <div class="form-error" id="formError"></div>
+    <input type="hidden" id="supplierId" />
+    <div class="field"><label for="supplierName">Tên nhà cung cấp *</label><input type="text" id="supplierName" required /></div>
+    <div class="field"><label for="supplierCategory">Hạng mục cung cấp</label><input type="text" id="supplierCategory" placeholder="VD: Văn phòng phẩm, Thiết bị điện tử..." /></div>
+    <div class="field-grid-2">
+      <div class="field"><label for="supplierPhone">Số điện thoại</label><input type="tel" id="supplierPhone" /></div>
+      <div class="field"><label for="supplierEmail">Email</label><input type="email" id="supplierEmail" /></div>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-outline" id="cancelModal"><span data-i18n="common.cancel">Huỷ</span></button>
+      <button type="button" class="btn btn-accent" id="submitBtn">Lưu</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="/env.js"></script>
+<script type="module" src="/acc/suppliers.js"></script>
+<script src="/js/pwa.js"></script>
+</body>
+</html>

@@ -18,21 +18,38 @@ async function fetchPending() {
     });
   }
 
-  // Phiếu đề nghị thanh toán
+  // Phiếu đề nghị thanh toán — ĐÃ THÊM cấp Quản lý trực tiếp (đặc tả yêu
+  // cầu 3 cấp: quản lý trực tiếp -> kế toán -> BĐH), luồng trạng thái đổi
+  // thành submitted(chờ QLTT) -> approved_1(chờ KT) -> approved_2(chờ BĐH)
+  // -> approved_3(xong). Sửa lại nhãn cho đúng, trước đây approved_1 bị
+  // hiểu nhầm là "chờ BĐH ký" (đúng ở luồng 2 cấp cũ, sai ở luồng mới).
   if (isHead('ACC') || isExec()) {
-    const { data } = await supabase.from('payment_requests').select('id, code, status, employees:requester_id(full_name)').in('status', ['submitted', 'approved_1']);
+    const { data } = await supabase.from('payment_requests').select('id, code, status, employees:requester_id(full_name)').in('status', ['approved_1', 'approved_2']);
     (data || []).forEach((r) => {
-      if (r.status === 'submitted' && (isHead('ACC') || isExec())) rows.push(row('Phiếu đề nghị thanh toán', r.code, r.employees?.full_name, 'Chờ kế toán ký', '/acc/payment-requests.html'));
-      if (r.status === 'approved_1' && isExec()) rows.push(row('Phiếu đề nghị thanh toán', r.code, r.employees?.full_name, 'Chờ ban điều hành ký', '/acc/payment-requests.html'));
+      if (r.status === 'approved_1' && (isHead('ACC') || isExec())) rows.push(row('Phiếu đề nghị thanh toán', r.code, r.employees?.full_name, 'Chờ kế toán ký', '/acc/payment-requests.html'));
+      if (r.status === 'approved_2' && isExec()) rows.push(row('Phiếu đề nghị thanh toán', r.code, r.employees?.full_name, 'Chờ ban điều hành ký', '/acc/payment-requests.html'));
     });
   }
 
-  // Phiếu đề nghị tạm ứng
-  if (isHead('ACC') || isExec()) {
-    const { data } = await supabase.from('advance_requests').select('id, code, status, employees:requester_id(full_name)').in('status', ['draft', 'approved_1']);
+  // Đơn công tác — trước đây CHƯA từng có trong trang tổng hợp ký số này,
+  // dù đã có luồng duyệt riêng ở /hr/business-trips.html (giờ đã đủ 3 cấp:
+  // quản lý trực tiếp -> nhân sự -> BĐH). Thêm vào cho đủ, đúng tinh thần
+  // "tổng hợp mọi thứ cần BĐH xử lý ở 1 nơi".
+  if (isHead('HR') || isExec()) {
+    const { data } = await supabase.from('business_trips').select('id, code, status, employees:employee_id(full_name)').in('status', ['approved_1', 'approved_2']);
     (data || []).forEach((r) => {
-      if (r.status === 'draft' && (isHead('ACC') || isExec())) rows.push(row('Phiếu đề nghị tạm ứng', r.code, r.employees?.full_name, 'Chờ kế toán ký', '/acc/advance-requests.html'));
-      if (r.status === 'approved_1' && isExec()) rows.push(row('Phiếu đề nghị tạm ứng', r.code, r.employees?.full_name, 'Chờ ban điều hành ký', '/acc/advance-requests.html'));
+      if (r.status === 'approved_1' && (isHead('HR') || isExec())) rows.push(row('Đơn công tác', r.code, r.employees?.full_name, 'Chờ Nhân sự duyệt', '/hr/business-trips.html'));
+      if (r.status === 'approved_2' && isExec()) rows.push(row('Đơn công tác', r.code, r.employees?.full_name, 'Chờ ban điều hành duyệt', '/hr/business-trips.html'));
+    });
+  }
+
+  // Phiếu đề nghị tạm ứng — cung da them cap Quan ly truc tiep, sua lai
+  // nhan cho dung (xem giai thich o khoi Phieu de nghi thanh toan phia tren).
+  if (isHead('ACC') || isExec()) {
+    const { data } = await supabase.from('advance_requests').select('id, code, status, employees:requester_id(full_name)').in('status', ['approved_1', 'approved_2']);
+    (data || []).forEach((r) => {
+      if (r.status === 'approved_1' && (isHead('ACC') || isExec())) rows.push(row('Phiếu đề nghị tạm ứng', r.code, r.employees?.full_name, 'Chờ kế toán ký', '/acc/advance-requests.html'));
+      if (r.status === 'approved_2' && isExec()) rows.push(row('Phiếu đề nghị tạm ứng', r.code, r.employees?.full_name, 'Chờ ban điều hành ký', '/acc/advance-requests.html'));
     });
   }
 

@@ -21,33 +21,35 @@
 </header>
 
 <main class="app-main">
-  <div id="noStudentNotice" class="empty-state" style="display:none;">Chưa có học sinh nào được liên kết với tài khoản này. Vui lòng liên hệ trung tâm để được hỗ trợ.</div>
+  <div id="noStudentNotice" class="empty-state" style="display:none;">
+    <p>Chưa có học sinh nào được liên kết với tài khoản này.</p>
+    <a href="link-student.html" class="btn-primary" style="display:inline-block; width:auto; padding:10px 24px; text-decoration:none; margin-top:10px;">🔗 Liên kết ngay</a>
+  </div>
 
   <div id="content" style="display:none;">
     <div class="student-switcher" id="studentSwitcher"></div>
 
-    <div class="balance-hero">
-      <div class="balance-hero__label">Số dư ví AIScoins</div>
-      <div class="balance-hero__value" id="balanceValue">–</div>
-      <div class="balance-hero__vnd" id="balanceValueVnd" style="font-size:12px; opacity:0.85; margin-top:4px;"></div>
-      <div class="balance-hero__actions">
-        <a href="topup.html">💰 Nạp ví</a>
-        <a href="wallet-detail.html">📋 Chi tiết</a>
-        <a href="withdraw.html">↩️ Rút ví</a>
-      </div>
+    <div class="card">
+      <h3>🎁 Chương trình ưu đãi</h3>
+      <div id="promoList"></div>
     </div>
 
-    <div class="card">
-      <h3>⚠️ Công nợ</h3>
-      <div id="debtSummary"></div>
+    <div class="card" style="opacity:0.6;">
+      <h3>📰 Mạng xã hội nội bộ</h3>
+      <div class="empty-state" style="padding:20px 0;">Tính năng sắp ra mắt</div>
+    </div>
+
+    <div class="card" style="opacity:0.6;">
+      <h3>📚 Thư viện số</h3>
+      <div class="empty-state" style="padding:20px 0;">Tính năng sắp ra mắt</div>
     </div>
   </div>
 </main>
 
 <nav class="bottom-nav">
   <a href="home.html" class="active"><span class="icon">🏠</span>Trang chủ</a>
-  <a href="wallet-detail.html"><span class="icon">💳</span>Ví</a>
-  <a href="debt.html"><span class="icon">🧾</span>Công nợ</a>
+  <a href="wallet.html"><span class="icon">💳</span>Ví AIScoins</a>
+  <a href="account.html"><span class="icon">👤</span>Tài khoản</a>
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>

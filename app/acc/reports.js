@@ -67,7 +67,8 @@ async function loadChart() {
 let ALL_CASH_ROWS = [];
 
 function sourceInfo(row) {
-  if (row.category === 'tuition') return { label: 'Thu học phí', key: 'tuition' };
+  if (row.category === 'tuition' || row.category === 'tuition_cash' || row.category === 'tuition_transfer') return { label: 'Thu học phí tại quầy', key: 'tuition' };
+  if (row.category === 'tuition_wallet') return { label: 'Thu học phí qua Ví', key: 'tuition_wallet', href: '/edu/wallet-invoices.html' };
   if (row.related_payment_request_id) return { label: 'Phiếu thanh toán', key: 'payment_request', href: '/acc/payment-requests.html' };
   if (row.related_advance_request_id) return { label: 'Phiếu tạm ứng', key: 'advance_request', href: '/acc/advance-requests.html' };
   return { label: 'Ghi tay', key: 'manual' };

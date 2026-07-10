@@ -51,7 +51,7 @@ document.getElementById('btnSubmitWithdraw').addEventListener('click', async () 
     });
     if (error) throw error;
     alert('Đã gửi yêu cầu rút ví. Vui lòng chờ Kế toán duyệt.');
-    window.location.href = 'home.html';
+    window.location.href = 'wallet.html';
   } catch (err) {
     errorBox.textContent = err.message || 'Có lỗi xảy ra.';
     errorBox.classList.add('show');

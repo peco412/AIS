@@ -187,7 +187,7 @@ document.getElementById('viewScope').addEventListener('change', loadRows);
     const { data: emp } = await supabase.from('employees').select('signature_url, center_id').eq('id', profile.id).single();
     PROFILE = { ...profile, signatureUrl: emp?.signature_url || null, centerId: emp?.center_id };
 
-    IS_FAC_HEAD = profile.departmentCode === 'FAC' && ['DEPT_HEAD', 'DEPT_DEPUTY'].includes(profile.roleCode);
+    IS_FAC_HEAD = profile.departmentCode === 'FAC' && profile.roleCode === 'DEPT_HEAD'; // đặc tả chỉ ghi Trưởng phòng, không có Phó phòng
     IS_EXEC = ['EXECUTIVE', 'TECH'].includes(profile.roleCode);
     if (IS_FAC_HEAD || IS_EXEC) document.getElementById('deptScopeOption').style.display = 'block';
 

@@ -33,6 +33,13 @@ export async function initFreeSign(deptCode) {
       // trung tâm (isCenterManager), theo đúng cơ cấu tổ chức trong đề bài.
       return profile.isCenterManager || ['EXECUTIVE', 'TECH'].includes(profile.roleCode);
     }
+    // Truyền thông + CSVC: đặc tả CHỈ ghi "Trưởng phòng" ký số, KHÔNG có
+    // Phó phòng (khác Nhân sự/Kế toán có cả 2) — phải tách riêng theo
+    // đúng văn bản, không dùng chung 1 quy tắc cho mọi phòng ban.
+    if (deptCode === 'MKT' || deptCode === 'FAC') {
+      return (profile.departmentCode === deptCode && profile.roleCode === 'DEPT_HEAD')
+        || ['EXECUTIVE', 'TECH'].includes(profile.roleCode);
+    }
     return (profile.departmentCode === deptCode && ['DEPT_HEAD', 'DEPT_DEPUTY'].includes(profile.roleCode))
       || ['EXECUTIVE', 'TECH'].includes(profile.roleCode);
   }

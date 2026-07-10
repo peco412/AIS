@@ -46,6 +46,12 @@ async function selectStudent(student) {
   document.getElementById('studentName').textContent = student.full_name;
   document.getElementById('studentCenter').textContent = student.centers?.name || '—';
 
+  const { data: links } = await supabase.from('parent_student_links').select('relationship, parent_accounts(full_name, phone)').eq('student_id', student.id);
+  const parentEl = document.getElementById('studentParent');
+  parentEl.textContent = (links || []).length > 0
+    ? links.map((l) => `${l.parent_accounts?.full_name || '—'} (${l.relationship || ''}) — ${l.parent_accounts?.phone || '—'}`).join(' · ')
+    : 'Chưa liên kết phụ huynh nào';
+
   let { data: wallet } = await supabase.from('wallets').select('id').eq('student_id', student.id).maybeSingle();
   if (!wallet) {
     const { data: created } = await supabase.from('wallets').insert({ student_id: student.id }).select('id').single();
@@ -87,7 +93,8 @@ async function loadInvoices() {
     const remaining = netAmount - paid;
     const plan = planByInvoice[inv.id];
     const healthBadge = inv.health_status ? `<div style="margin-top:3px;"><span class="badge badge-${HEALTH_BADGE[inv.health_status]}" style="font-size:10px;">${HEALTH_LABEL[inv.health_status]}</span></div>` : '';
-    const discountNote = inv.manual_discount_vnd > 0 ? `<div class="cell-muted" style="font-size:11px;">- ${fmtMoney(inv.manual_discount_vnd)} đ (${inv.discount_type === 'program' ? 'ưu đãi chương trình' : 'theo trường hợp'})</div>` : '';
+    const discountTypeLabel = { program: 'ưu đãi chương trình', special: 'diện đặc biệt', case: 'theo trường hợp' }[inv.discount_type] || 'theo trường hợp';
+    const discountNote = inv.manual_discount_vnd > 0 ? `<div class="cell-muted" style="font-size:11px;">- ${fmtMoney(inv.manual_discount_vnd)} đ (${discountTypeLabel})</div>` : '';
 
     let actions = '';
     if (plan && plan.status === 'active' && CAN_REFUND) {
@@ -244,7 +251,8 @@ async function openAdjustDiscount(invoiceId, currentDiscount) {
     'Chọn loại ưu đãi cho khoản thu này (chỉ được chọn 1):\n' +
     '1 = Giảm theo trường hợp (nhập tay số tiền + lý do)\n' +
     '2 = Áp dụng ưu đãi chương trình đang có cho trung tâm\n' +
-    '0 = Bỏ ưu đãi\n\nNhập 0, 1 hoặc 2:'
+    '3 = Diện ưu đãi đặc biệt (con/cháu HĐQT, con hiệu trưởng...)\n' +
+    '0 = Bỏ ưu đãi\n\nNhập 0, 1, 2 hoặc 3:'
   );
   if (choice === null) return;
 
@@ -260,6 +268,17 @@ async function openAdjustDiscount(invoiceId, currentDiscount) {
       if (error) throw error;
     } else if (choice === '2') {
       const { error } = await supabase.rpc('apply_program_discount_to_invoice', { p_invoice_id: invoiceId, p_approver_id: PROFILE.id });
+      if (error) throw error;
+    } else if (choice === '3') {
+      const catChoice = prompt('Chọn diện ưu đãi:\n1 = Con HĐQT\n2 = Cháu HĐQT\n3 = Con hiệu trưởng\n4 = Khác\n\nNhập 1-4:');
+      const catMap = { '1': 'child_of_board', '2': 'grandchild_of_board', '3': 'child_of_principal', '4': 'other' };
+      const category = catMap[catChoice];
+      if (!category) return;
+      const amountStr = prompt('Số tiền ưu đãi (VNĐ):', currentDiscount || 0);
+      if (amountStr === null) return;
+      const amount = Number(amountStr);
+      if (isNaN(amount) || amount < 0) { alert('Số tiền không hợp lệ.'); return; }
+      const { error } = await supabase.rpc('apply_case_discount_to_invoice', { p_invoice_id: invoiceId, p_amount_vnd: amount, p_note: 'Diện ưu đãi đặc biệt', p_special_category: category });
       if (error) throw error;
     } else if (choice === '0') {
       const { error } = await supabase.rpc('apply_case_discount_to_invoice', { p_invoice_id: invoiceId, p_amount_vnd: 0, p_note: null });

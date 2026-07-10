@@ -30,8 +30,8 @@ async function loadHR() {
 }
 
 async function loadACC(centerId) {
-  let payQuery = supabase.from('payment_requests').select('id', { count: 'exact', head: true }).in('status', ['submitted', 'approved_1']);
-  let advQuery = supabase.from('advance_requests').select('id', { count: 'exact', head: true }).in('status', ['draft', 'approved_1']);
+  let payQuery = supabase.from('payment_requests').select('id', { count: 'exact', head: true }).in('status', ['submitted', 'approved_1', 'approved_2']);
+  let advQuery = supabase.from('advance_requests').select('id', { count: 'exact', head: true }).in('status', ['draft', 'approved_1', 'approved_2']);
   let recvQuery = supabase.from('receivables').select('amount').in('status', ['open', 'partial', 'overdue']);
   let cashQuery = supabase.from('cash_flow_entries').select('entry_type, amount').gte('entry_date', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10));
   if (centerId) { payQuery = payQuery.eq('center_id', centerId); recvQuery = recvQuery.eq('center_id', centerId); cashQuery = cashQuery.eq('center_id', centerId); }
