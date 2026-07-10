@@ -49,11 +49,16 @@ function renderNav(profile, currentPage) {
   if (!sidebarNav) return;
   sidebarNav.innerHTML = '';
 
-  // 1) "Bảng tổng quan" + "Thông báo" — luôn hiện đầu tiên, không tiêu đề nhóm
+  // 1) "Tầng Thông báo, Tổng quan công việc" — luôn hiện đầu tiên
   const topGroup = NAV_CONFIG.find((g) => !g.sectionKey && !g.section);
   if (topGroup) {
     const items = topGroup.items.filter((item) => canAccess(item, profile));
     if (items.length > 0) {
+      const heading = document.createElement('div');
+      heading.className = 'sidebar__section';
+      heading.textContent = t('nav.layer.overview', 'Tầng Thông báo, Tổng quan công việc');
+      sidebarNav.appendChild(heading);
+
       const ul = document.createElement('ul');
       ul.className = 'sidebar__nav';
       items.forEach((item) => ul.appendChild(buildNavLi(item, profile, currentPage)));
@@ -68,8 +73,13 @@ function renderNav(profile, currentPage) {
   if (personalGroup) {
     const items = personalGroup.items.filter((item) => canAccess(item, profile));
     if (items.length > 0) {
+      const parentLabel = document.createElement('div');
+      parentLabel.className = 'sidebar__section sidebar__section--parent';
+      parentLabel.textContent = t('nav.layer.personal', 'Tầng Cá nhân');
+      sidebarNav.appendChild(parentLabel);
+
       const heading = document.createElement('div');
-      heading.className = 'sidebar__section';
+      heading.className = 'sidebar__section sidebar__section--child';
       heading.textContent = t(personalGroup.sectionKey, personalGroup.section);
       sidebarNav.appendChild(heading);
 
@@ -80,20 +90,28 @@ function renderNav(profile, currentPage) {
     }
   }
 
-  // 3) "Các phòng ban" — CHỈ hiện đúng 1 nhóm phòng ban tương ứng với trang
-  // đang mở (giữ nguyên nguyên tắc chống rối mắt đã áp dụng trước đây —
-  // liệt kê hết mọi phòng ban cùng lúc sẽ rất dài và khó dùng), nhưng bọc
-  // trong 1 nhãn cha "CÁC PHÒNG BAN" để rõ đây là 1 trong 4 phần chính.
+  // 3) "Tầng Phòng ban điều hành" HOẶC "Tầng Hệ thống trung tâm" — tuỳ
+  // nhóm đang active thuộc layer nào (2 tầng khác nhau theo đúng yêu cầu,
+  // KHÔNG gộp chung 1 nhãn "Các phòng ban" như trước nữa). Vẫn chỉ hiện
+  // đúng 1 nhóm con tại 1 thời điểm (giữ nguyên tắc chống rối mắt).
   const activeGroup = findActiveGroup(currentPage);
   if (!activeGroup || activeGroup.alwaysShow || !activeGroup.sectionKey) return;
 
   const visibleItems = activeGroup.items.filter((item) => canAccess(item, profile));
   if (visibleItems.length === 0) return;
 
-  const parentLabel = document.createElement('div');
-  parentLabel.className = 'sidebar__section sidebar__section--parent';
-  parentLabel.textContent = t('nav.section.departments', 'Các phòng ban');
-  sidebarNav.appendChild(parentLabel);
+  const LAYER_LABEL = {
+    operations: { key: 'nav.layer.operations', fallback: 'Tầng Phòng ban điều hành' },
+    centers: { key: 'nav.layer.centers', fallback: 'Tầng Hệ thống trung tâm' },
+  };
+  const layerInfo = LAYER_LABEL[activeGroup.layer];
+
+  if (layerInfo) {
+    const parentLabel = document.createElement('div');
+    parentLabel.className = 'sidebar__section sidebar__section--parent';
+    parentLabel.textContent = t(layerInfo.key, layerInfo.fallback);
+    sidebarNav.appendChild(parentLabel);
+  }
 
   const heading = document.createElement('div');
   heading.className = 'sidebar__section sidebar__section--child';

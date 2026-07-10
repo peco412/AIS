@@ -393,6 +393,12 @@ body.hub-body { background: var(--surface); }
   margin-bottom: 8px;
 }
 .app-hub--small { grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 16px 10px; }
+.app-hub__layer-heading {
+  grid-column: 1 / -1; /* chiếm trọn 1 hàng trong lưới, không bị ép vào 1 ô nhỏ */
+  font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--muted); padding: 14px 2px 2px; border-top: 1px solid var(--border);
+}
+.app-hub__layer-heading:first-child { border-top: none; padding-top: 0; }
 
 .app-tile {
   display: flex;

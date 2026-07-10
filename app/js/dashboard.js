@@ -47,6 +47,13 @@ function renderHub(profile) {
     return item.visible(profile) || !!profile.grantedModules?.has(item.href);
   };
 
+  const LAYER_LABEL = {
+    operations: 'Tầng Phòng ban điều hành',
+    centers: 'Tầng Hệ thống trung tâm',
+    personal: 'Tầng Cá nhân',
+  };
+  let lastLayer = null;
+
   NAV_CONFIG.forEach((group) => {
     const visibleItems = group.items.filter((item) => canAccess(item));
 
@@ -60,6 +67,17 @@ function renderHub(profile) {
         quickHub.appendChild(a);
       });
       return;
+    }
+
+    // Nhom tile theo dung tang (Phong ban dieu hanh / He thong trung tam /
+    // Ca nhan) - chen 1 nhan tieu de nho moi khi doi sang tang khac, tranh
+    // liet ke phang het tat ca tile lien tuc gay roi mat.
+    if (group.layer && group.layer !== lastLayer && LAYER_LABEL[group.layer]) {
+      lastLayer = group.layer;
+      const layerHeading = document.createElement('div');
+      layerHeading.className = 'app-hub__layer-heading';
+      layerHeading.textContent = LAYER_LABEL[group.layer];
+      appHub.appendChild(layerHeading);
     }
 
     const hasAccess = visibleItems.length > 0;

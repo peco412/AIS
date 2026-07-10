@@ -22,14 +22,14 @@ function inDept(p, code) {
 
 export const NAV_CONFIG = [
   {
-    section: null, // luôn hiển thị, không tiêu đề nhóm — đúng 2 mục "Bảng tổng quan" + "Thông báo"
+    section: null, layer: 'overview', // luôn hiển thị, không tiêu đề nhóm — đúng 2 mục "Bảng tổng quan" + "Thông báo"
     items: [
       { labelKey: 'nav.dashboard', label: 'Trang chủ', href: '/dashboard.html', icon: '⌂', visible: () => true },
       { labelKey: 'nav.notifications', label: 'Thông báo', href: '/notifications.html', icon: '🔔', visible: () => true },
     ],
   },
   {
-    sectionKey: 'nav.section.personal', section: 'Chức năng cá nhân',
+    sectionKey: 'nav.section.personal', section: 'Chức năng cá nhân', layer: 'personal',
     alwaysShow: true, // LUÔN hiện đủ nhóm này ở mọi trang, không chỉ khi đang ở đúng trang trong nhóm
     items: [
       { labelKey: 'nav.directory', label: 'Thông tin liên lạc', href: '/directory.html', icon: '📇', visible: () => true },
@@ -44,7 +44,7 @@ export const NAV_CONFIG = [
     ],
   },
   {
-    sectionKey: 'nav.section.hr', section: 'Phòng nhân sự',
+    sectionKey: 'nav.section.hr', section: 'Phòng nhân sự', layer: 'operations',
     items: [
       { labelKey: 'nav.hr.employees', label: 'Danh sách nhân viên', href: '/hr/employees.html', icon: '🧑‍💼', visible: (p) => inDept(p, 'HR') },
       { labelKey: 'nav.hr.positions', label: 'Quản lý chức vụ', href: '/hr/positions.html', icon: '🏷', visible: (p) => inDept(p, 'HR') },
@@ -58,7 +58,7 @@ export const NAV_CONFIG = [
     ],
   },
   {
-    sectionKey: 'nav.section.acc', section: 'Phòng kế toán',
+    sectionKey: 'nav.section.acc', section: 'Phòng kế toán', layer: 'operations',
     items: [
       { labelKey: 'nav.acc.paymentRequests', label: 'Phiếu đề nghị thanh toán', href: '/acc/payment-requests.html', icon: '💳', visible: () => true },
       { labelKey: 'nav.acc.advanceRequests', label: 'Phiếu tạm ứng', href: '/acc/advance-requests.html', icon: '💵', visible: () => true },
@@ -77,7 +77,7 @@ export const NAV_CONFIG = [
     ],
   },
   {
-    sectionKey: 'nav.section.mkt', section: 'Phòng truyền thông',
+    sectionKey: 'nav.section.mkt', section: 'Phòng truyền thông', layer: 'operations',
     items: [
       { labelKey: 'nav.mkt.requests', label: 'Yêu cầu truyền thông', href: '/mkt/requests.html', icon: '📣', visible: () => true },
       { labelKey: 'nav.mkt.eventProposals', label: 'Trình sự kiện', href: '/mkt/event-proposals.html', icon: '🎪', visible: (p) => inDept(p, 'MKT') || p.isCenterManager },
@@ -88,7 +88,7 @@ export const NAV_CONFIG = [
     ],
   },
   {
-    sectionKey: 'nav.section.fac', section: 'Phòng cơ sở vật chất',
+    sectionKey: 'nav.section.fac', section: 'Phòng cơ sở vật chất', layer: 'operations',
     items: [
       { labelKey: 'nav.fac.requests', label: 'Yêu cầu CSVC', href: '/fac/requests.html', icon: '🛠', visible: () => true },
       { labelKey: 'nav.fac.purchaseRequests', label: 'Phiếu đề nghị mua sắm', href: '/fac/purchase-requests.html', icon: '🧰', visible: () => true },
@@ -98,7 +98,7 @@ export const NAV_CONFIG = [
     ],
   },
   {
-    sectionKey: 'nav.section.center', section: 'Quản lý trung tâm',
+    sectionKey: 'nav.section.center', section: 'Quản lý trung tâm', layer: 'centers',
     items: [
       { labelKey: 'nav.edu.overview', label: 'Tổng quan trung tâm', href: '/edu/center-overview.html', icon: '🏫', visible: (p) => p.isCenterManager || inDept(p, 'HR') || inDept(p, 'MKT') },
       { labelKey: 'nav.edu.attendance', label: 'Điểm danh & thống kê', href: '/edu/attendance-overview.html', icon: '✅', visible: (p) => p.isCenterManager },
@@ -121,7 +121,7 @@ export const NAV_CONFIG = [
     ],
   },
   {
-    sectionKey: 'nav.section.teacher', section: 'Giáo viên',
+    sectionKey: 'nav.section.teacher', section: 'Giáo viên', layer: 'centers',
     items: [
       { labelKey: 'nav.teacher.schedule', label: 'Lịch giảng dạy', href: '/teacher/schedule.html', icon: '📆', visible: (p) => p.isTeacher },
       { labelKey: 'nav.teacher.classes', label: 'Lớp phụ trách', href: '/teacher/classes.html', icon: '🏷', visible: (p) => p.isTeacher },
@@ -132,7 +132,7 @@ export const NAV_CONFIG = [
     ],
   },
   {
-    sectionKey: 'nav.section.consultant', section: 'Nhân viên tư vấn',
+    sectionKey: 'nav.section.consultant', section: 'Nhân viên tư vấn', layer: 'centers',
     items: [
       { labelKey: 'nav.consultant.leads', label: 'Hồ sơ khách hàng', href: '/consultant/leads.html', icon: '📇', visible: (p) => p.roleCode === 'CONSULTANT' },
       { labelKey: 'nav.consultant.trialRegistration', label: 'Đăng ký học thử', href: '/consultant/trial-registration.html', icon: '🎓', visible: (p) => p.roleCode === 'CONSULTANT' },
@@ -144,7 +144,7 @@ export const NAV_CONFIG = [
     ],
   },
   {
-    sectionKey: 'nav.section.exec', section: 'Ban điều hành',
+    sectionKey: 'nav.section.exec', section: 'Ban điều hành', layer: 'operations',
     items: [
       { labelKey: 'nav.exec.reports', label: 'Báo cáo tổng hợp', href: '/exec/reports.html', icon: '📊', visible: (p) => isExecOrTech(p) },
       { labelKey: 'nav.sign', label: 'Ký số hồ sơ', href: '/exec/sign.html', icon: '✍️', visible: (p) => isExecOrTech(p) },
