@@ -145,8 +145,8 @@ document.querySelectorAll('input[name="planType"]').forEach((radio) => {
 
     if (type === 'sublevel') {
       label.textContent = 'Chọn cấp độ con';
-      const { data } = await supabase.from('program_sublevels').select('id, name, price_vnd, program_levels(name, programs(name))').order('display_order');
-      select.innerHTML = (data || []).map((s) => `<option value="${s.id}" data-price="${s.price_vnd || 0}">${esc(s.program_levels?.programs?.name || '')} — ${esc(s.program_levels?.name || '')} — ${esc(s.name)}</option>`).join('');
+      const { data } = await supabase.from('program_sublevels').select('id, name, program_levels(name, programs(name))').order('display_order');
+      select.innerHTML = (data || []).map((s) => `<option value="${s.id}">${esc(s.program_levels?.programs?.name || '')} — ${esc(s.program_levels?.name || '')} — ${esc(s.name)}</option>`).join('');
     } else if (type === 'level') {
       label.textContent = 'Chọn cấp độ';
       const { data } = await supabase.from('program_levels').select('id, name, programs(name)').order('display_order');
@@ -162,6 +162,9 @@ document.querySelectorAll('input[name="planType"]').forEach((radio) => {
 
 document.getElementById('planScopeSelect').addEventListener('change', updatePlanPricePreview);
 
+// Gia luon cong don tu tang thap nhat "Khoa" (program_courses) - dung
+// cho ca 3 hinh thuc, chi khac nhau o cach loc pham vi (qua 1/2/3 lop
+// join tuong ung voi sublevel/level/program).
 async function updatePlanPricePreview() {
   const type = selectedPlanType();
   const scopeId = document.getElementById('planScopeSelect').value;
@@ -173,25 +176,29 @@ async function updatePlanPricePreview() {
 
   let basePrice = 0, courseCount = 0;
   if (type === 'sublevel') {
-    const opt = document.getElementById('planScopeSelect').selectedOptions[0];
-    basePrice = Number(opt?.dataset.price || 0);
-    courseCount = 1;
+    const { data } = await supabase.from('program_courses').select('price_vnd').eq('sublevel_id', scopeId);
+    basePrice = (data || []).reduce((s, x) => s + Number(x.price_vnd || 0), 0);
+    courseCount = (data || []).length;
   } else if (type === 'level') {
-    const { data } = await supabase.from('program_sublevels').select('price_vnd').eq('level_id', scopeId);
+    const { data: sublevels } = await supabase.from('program_sublevels').select('id').eq('level_id', scopeId);
+    const sublevelIds = (sublevels || []).map((s) => s.id);
+    const { data } = await supabase.from('program_courses').select('price_vnd').in('sublevel_id', sublevelIds.length ? sublevelIds : ['00000000-0000-0000-0000-000000000000']);
     basePrice = (data || []).reduce((s, x) => s + Number(x.price_vnd || 0), 0);
     courseCount = (data || []).length;
   } else if (type === 'program') {
     const { data: levels } = await supabase.from('program_levels').select('id').eq('program_id', scopeId);
     const levelIds = (levels || []).map((l) => l.id);
-    const { data } = await supabase.from('program_sublevels').select('price_vnd').in('level_id', levelIds.length ? levelIds : ['00000000-0000-0000-0000-000000000000']);
+    const { data: sublevels } = await supabase.from('program_sublevels').select('id').in('level_id', levelIds.length ? levelIds : ['00000000-0000-0000-0000-000000000000']);
+    const sublevelIds = (sublevels || []).map((s) => s.id);
+    const { data } = await supabase.from('program_courses').select('price_vnd').in('sublevel_id', sublevelIds.length ? sublevelIds : ['00000000-0000-0000-0000-000000000000']);
     basePrice = (data || []).reduce((s, x) => s + Number(x.price_vnd || 0), 0);
     courseCount = (data || []).length;
   }
 
   const finalPrice = basePrice * (1 - discountRate);
   previewEl.innerHTML = basePrice > 0
-    ? `Gồm ${courseCount} cấp độ con — Giá gốc: ${fmtMoney(basePrice)} đ — Giảm ${(discountRate * 100).toFixed(0)}% — <strong>Thu: ${fmtMoney(finalPrice)} đ</strong>`
-    : `<span style="color:var(--danger);">Chưa cấu hình học phí cho cấp độ con thuộc phạm vi này.</span>`;
+    ? `Gồm ${courseCount} khoá — Giá gốc: ${fmtMoney(basePrice)} đ — Giảm ${(discountRate * 100).toFixed(0)}% — <strong>Thu: ${fmtMoney(finalPrice)} đ</strong>`
+    : `<span style="color:var(--danger);">Chưa cấu hình học phí cho khoá nào thuộc phạm vi này.</span>`;
 }
 
 document.getElementById('btnNewInvoice').addEventListener('click', () => {

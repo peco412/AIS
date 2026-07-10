@@ -202,6 +202,7 @@ async function openEditModal(employeeId) {
   document.getElementById('center').value = row.center_id || '';
 
   document.getElementById('role').value = row.role_id || '';
+  document.getElementById('status').value = row.status || 'active';
   document.getElementById('contractType').value = row.contract_type || 'full_time';
   document.getElementById('hireDate').value = row.hire_date || '';
   document.getElementById('isForeignTeacher').checked = !!row.is_foreign_teacher;
@@ -239,6 +240,7 @@ form.addEventListener('submit', async (e) => {
     position_id: document.getElementById('position').value || null,
     center_id: document.getElementById('center').value || null,
     role_id: document.getElementById('role').value || null,
+    status: document.getElementById('status').value,
     contract_type: document.getElementById('contractType').value,
     hire_date: document.getElementById('hireDate').value || null,
     is_foreign_teacher: document.getElementById('isForeignTeacher').checked,

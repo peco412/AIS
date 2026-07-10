@@ -19,22 +19,38 @@ async function loadEmployees() {
   renderPicker();
 }
 
+function initials(name) {
+  const parts = name.trim().split(/\s+/);
+  return (parts[parts.length - 1]?.[0] || '?').toUpperCase();
+}
+
 function renderPicker() {
   const filter = document.getElementById('participantFilter').value.trim().toLowerCase();
   const box = document.getElementById('participantPicker');
   const list = ALL_EMPLOYEES.filter((e) => !filter || e.full_name.toLowerCase().includes(filter));
+
   box.innerHTML = list.map((e) => `
-    <label>
+    <label class="participant-row ${SELECTED_PARTICIPANTS.has(e.id) ? 'is-selected' : ''}" data-row="${e.id}">
       <input type="checkbox" value="${e.id}" ${SELECTED_PARTICIPANTS.has(e.id) ? 'checked' : ''} />
-      ${esc(e.full_name)}
+      <span class="participant-row__avatar">${esc(initials(e.full_name))}</span>
+      <span class="participant-row__name">${esc(e.full_name)}</span>
+      <span class="participant-row__email">${esc(e.email || '')}</span>
     </label>
-  `).join('') || '<div class="cell-muted">Không tìm thấy.</div>';
+  `).join('') || '<div class="empty-cell">Không tìm thấy nhân viên nào.</div>';
 
   box.querySelectorAll('input[type=checkbox]').forEach((cb) => {
     cb.addEventListener('change', () => {
       if (cb.checked) SELECTED_PARTICIPANTS.add(cb.value); else SELECTED_PARTICIPANTS.delete(cb.value);
+      cb.closest('.participant-row').classList.toggle('is-selected', cb.checked);
+      updateSelectedCount();
     });
   });
+  updateSelectedCount();
+}
+
+function updateSelectedCount() {
+  const counter = document.getElementById('participantCount');
+  if (counter) counter.textContent = SELECTED_PARTICIPANTS.size > 0 ? `Đã chọn ${SELECTED_PARTICIPANTS.size} người` : '';
 }
 document.getElementById('participantFilter').addEventListener('input', renderPicker);
 

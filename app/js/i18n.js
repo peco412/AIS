@@ -57,8 +57,6 @@ const DICT = {
   'nav.edu.refundRequests': { vi: 'Yêu cầu hoàn phí', en: 'Refund requests' },
   'nav.acc.walletLinks': { vi: 'Danh sách liên kết Ví', en: 'Wallet links list' },
   'nav.acc.suppliers': { vi: 'Nhà cung cấp', en: 'Suppliers' },
-  'nav.acc.prepaidExpenses': { vi: 'Phân bổ TK 242', en: 'Prepaid expenses' },
-  'nav.acc.budgetCaps': { vi: 'Định mức chi phí', en: 'Budget caps' },
   'nav.acc.purchaseOrders': { vi: 'Phiếu mua hàng', en: 'Purchase orders' },
   'nav.edu.programPricing': { vi: 'Bảng giá chương trình học', en: 'Program pricing' },
   'nav.edu.inventory': { vi: 'Kho trung tâm', en: 'Center inventory' },

@@ -247,17 +247,12 @@ document.getElementById('paymentType').addEventListener('change', togglePoField)
 document.getElementById('closeCreateModal').addEventListener('click', () => createModal.classList.remove('show'));
 document.getElementById('cancelCreate').addEventListener('click', () => createModal.classList.remove('show'));
 
-document.getElementById('isPrepaid').addEventListener('change', (e) => {
-  document.getElementById('prepaidMonthsWrap').style.display = e.target.checked ? 'block' : 'none';
-});
-
 // "Chi tieu phai co goc" — CHỈ áp dụng cho loại "thông thường" (mua sắm
 // hàng hoá/dịch vụ); loại "công tác phí" vẫn nhập tay tự do vì bản chất
 // là hoàn ứng đi lại, không có phiếu mua hàng tương ứng.
 async function togglePoField() {
   const isRegular = document.getElementById('paymentType').value === 'regular';
   document.getElementById('poField').style.display = isRegular ? 'block' : 'none';
-  document.getElementById('prepaidField').style.display = isRegular ? 'block' : 'none';
   document.getElementById('amount').readOnly = isRegular;
   if (isRegular) await loadApprovedPurchaseOrders();
 }
@@ -277,29 +272,11 @@ async function loadApprovedPurchaseOrders() {
     ? '<option value="">— Chưa có phiếu mua hàng nào đã duyệt xong —</option>'
     : available.map((po) => `<option value="${po.id}" data-amount="${po.total_amount}" data-center="${po.center_id || ''}" data-category="${po.expense_category_id || ''}">${esc(po.code)} — ${esc(po.suppliers?.name || '')} — ${Number(po.total_amount).toLocaleString('vi-VN')} đ</option>`).join('');
 
-  sel.onchange = async () => {
+  sel.onchange = () => {
     const opt = sel.selectedOptions[0];
     document.getElementById('amount').value = opt?.dataset.amount || '';
-    await checkBudgetWarning(opt?.dataset.center, opt?.dataset.category, Number(opt?.dataset.amount || 0));
   };
   sel.dispatchEvent(new Event('change'));
-}
-
-// Doi chieu dinh muc tran chi phi van hanh cua Trung tam+Hang muc —
-// CANH BAO (khong chan) neu se vuot, dung dung tinh than "canh bao do"
-// trong dac ta.
-async function checkBudgetWarning(centerId, categoryId, amount) {
-  const warnBox = document.getElementById('budgetWarning');
-  warnBox.style.display = 'none';
-  if (!centerId || !categoryId || !amount) return;
-
-  const { data, error } = await supabase.rpc('check_budget_cap', {
-    p_center_id: centerId, p_expense_category_id: categoryId, p_new_amount: amount,
-  }).single();
-  if (error || !data || !data.would_exceed) return;
-
-  warnBox.style.display = 'block';
-  warnBox.textContent = `⚠️ CẢNH BÁO: đã chi ${Number(data.already_spent).toLocaleString('vi-VN')} đ / định mức ${Number(data.monthly_cap).toLocaleString('vi-VN')} đ trong tháng cho hạng mục này — phiếu này sẽ làm VƯỢT định mức trần.`;
 }
 
 document.getElementById('openFillEditor').addEventListener('click', async () => {
@@ -338,13 +315,6 @@ document.getElementById('openFillEditor').addEventListener('click', async () => 
         requester_signed_at: new Date().toISOString(), status: 'draft',
       }).select('id').single();
       if (error) throw error;
-
-      const isPrepaid = document.getElementById('isPrepaid')?.checked;
-      if (isPrepaid) {
-        const months = Number(document.getElementById('prepaidMonths').value) || 12;
-        const { error: prepaidErr } = await supabase.rpc('create_prepaid_expense', { p_payment_request_id: created.id, p_months: months });
-        if (prepaidErr) console.warn('Không tạo được lịch phân bổ TK 242:', prepaidErr.message);
-      }
       await loadRows();
     },
   });
