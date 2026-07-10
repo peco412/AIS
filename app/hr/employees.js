@@ -125,7 +125,7 @@ function applyFilters() {
       <td>${row.centers?.name ? esc(row.centers.name) : '<span class="cell-muted">Văn phòng</span>'}</td>
       <td class="cell-muted">${esc(row.phone || '—')}</td>
       <td><span class="badge badge-${row.status}">${esc(STATUS_LABEL[row.status] || row.status)}</span></td>
-      <td><button class="btn btn-outline btn-sm" data-edit="${row.id}">Sửa</button></td>
+      <td>${window.__EMP_CAN_EDIT__ ? `<button class="btn btn-outline btn-sm" data-edit="${row.id}">Sửa</button>` : ''}</td>
     </tr>
   `).join('');
 
@@ -297,7 +297,18 @@ form.addEventListener('submit', async (e) => {
 (async () => {
   try {
     const { profile } = await bootShell();
-    PROFILE = profile;
+    const { data: emp } = await supabase.from('employees').select('departments(code)').eq('id', profile.id).single();
+    PROFILE = { ...profile, departmentCode: emp?.departments?.code };
+
+    // Ma tran phan quyen: chi Truong/Pho phong Nhan su duoc GHI (them/sua),
+    // BDH va Ky thuat chi con quyen XEM (R) - an het nut Them/Sua thay vi
+    // de nguoi dung bam vao roi bao loi tu RLS.
+    const CAN_EDIT = PROFILE.departmentCode === 'HR' && ['DEPT_HEAD', 'DEPT_DEPUTY'].includes(profile.roleCode);
+    if (!CAN_EDIT) {
+      document.getElementById('btnAddEmployee').style.display = 'none';
+    }
+    window.__EMP_CAN_EDIT__ = CAN_EDIT;
+
     await loadLookups();
     await loadEmployees();
   } catch (e) {

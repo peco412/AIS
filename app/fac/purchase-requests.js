@@ -188,7 +188,7 @@ document.getElementById('viewScope').addEventListener('change', loadRows);
     PROFILE = { ...profile, signatureUrl: emp?.signature_url || null, centerId: emp?.center_id };
 
     IS_FAC_HEAD = profile.departmentCode === 'FAC' && profile.roleCode === 'DEPT_HEAD'; // đặc tả chỉ ghi Trưởng phòng, không có Phó phòng
-    IS_EXEC = ['EXECUTIVE', 'TECH'].includes(profile.roleCode);
+    IS_EXEC = profile.roleCode === 'EXECUTIVE'; // Ma tran: duyet cap cuoi chi EXECUTIVE, khong con TECH
     if (IS_FAC_HEAD || IS_EXEC) document.getElementById('deptScopeOption').style.display = 'block';
 
     await loadTemplate();

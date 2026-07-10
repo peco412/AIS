@@ -203,8 +203,9 @@ document.getElementById('programForm').addEventListener('submit', async (e) => {
     const { profile } = await bootShell();
     const { data: emp } = await supabase.from('employees').select('department_id, departments(code)').eq('id', profile.id).single();
     PROFILE = profile;
-    IS_HEAD = ['EXECUTIVE', 'TECH'].includes(profile.roleCode)
-      || (emp?.departments?.code === 'ACC' && profile.roleCode === 'DEPT_HEAD');
+    // Ma tran: He thong uu dai/Chiet khau vi chi Ke toan duoc ghi, BDH/Ky
+    // thuat chi xem.
+    IS_HEAD = (emp?.departments?.code === 'ACC' && profile.roleCode === 'DEPT_HEAD');
 
     if (!IS_HEAD) {
       document.getElementById('btnAdd').style.display = 'none';

@@ -166,8 +166,13 @@ form.addEventListener('submit', async (e) => {
     const { data: emp } = await supabase.from('employees').select('department_id, center_id, departments(code)').eq('id', profile.id).single();
     PROFILE = { ...profile, departmentId: emp?.department_id, centerId: emp?.center_id, departmentCode: emp?.departments?.code };
     IS_HR = (PROFILE.departmentCode === 'HR' && ['DEPT_HEAD', 'DEPT_DEPUTY'].includes(profile.roleCode));
-    IS_EXEC = ['EXECUTIVE', 'TECH'].includes(profile.roleCode);
-    if (IS_HR || IS_EXEC || ['DEPT_HEAD', 'DEPT_DEPUTY', 'CENTER_MANAGER'].includes(profile.roleCode)) {
+    // Ma tran moi: duyet CAP CUOI (Ban dieu hanh) chi tinh dung EXECUTIVE,
+    // KHONG con tinh TECH nhu truoc (TECH gio chi con quyen R o hau het
+    // luong duyet nghiep vu).
+    IS_EXEC = profile.roleCode === 'EXECUTIVE';
+    // TECH van duoc XEM tat ca (dung "R" trong ma tran), chi khong duoc
+    // DUYET (da tach rieng qua IS_EXEC o tren, khong lien quan gi scope xem).
+    if (IS_HR || IS_EXEC || profile.roleCode === 'TECH' || ['DEPT_HEAD', 'DEPT_DEPUTY', 'CENTER_MANAGER'].includes(profile.roleCode)) {
       document.getElementById('deptScopeOption').style.display = 'block';
     }
     await loadRows();

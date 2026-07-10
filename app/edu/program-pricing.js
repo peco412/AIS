@@ -92,7 +92,9 @@ function renderProgram(prog) {
   try {
     const { profile } = await bootShell();
     const { data: emp } = await supabase.from('employees').select('department_id, departments(code)').eq('id', profile.id).single();
-    CAN_EDIT = emp?.departments?.code === 'ACC' || ['EXECUTIVE', 'TECH'].includes(profile.roleCode);
+    // Ma tran: trang gia khoa hoc thuoc "Cau hinh Master Data" - Ky thuat
+    // duoc sua, rieng BDH (EXECUTIVE) chi con quyen xem (khong sua duoc).
+    CAN_EDIT = emp?.departments?.code === 'ACC' || profile.roleCode === 'TECH';
     await loadPricing();
   } catch (e) { /* bootShell tự điều hướng */ }
 })();

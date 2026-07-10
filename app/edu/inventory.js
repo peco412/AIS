@@ -357,6 +357,10 @@ document.getElementById('btnSubmitTx').addEventListener('click', async () => {
   try {
     const { profile } = await bootShell();
     PROFILE = profile;
+    // Ma tran: "San pham" thuoc Cau hinh Master Data - chi Ky thuat duoc
+    // tao moi danh muc san pham goc, Quan ly trung tam van nhap/xuat kho
+    // binh thuong (khac hoan toan voi VIEC TAO SAN PHAM MOI).
+    if (profile.roleCode !== 'TECH') document.getElementById('btnNewProduct').style.display = 'none';
     await initCenterPicker();
     await loadItems();
     await Promise.all([loadWalletPurchases(), loadStock(), loadTransactions()]);

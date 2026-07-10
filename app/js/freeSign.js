@@ -30,8 +30,9 @@ export async function initFreeSign(deptCode) {
   function canUse(profile) {
     if (deptCode === 'EDU') {
       // Học vụ không có "trưởng phòng" riêng — người tương đương là Quản lý
-      // trung tâm (isCenterManager), theo đúng cơ cấu tổ chức trong đề bài.
-      return profile.isCenterManager || ['EXECUTIVE', 'TECH'].includes(profile.roleCode);
+      // trung tâm (isCenterManager). Ma trận: BĐH=A (được ký), Kỹ thuật=X
+      // (KHÔNG được, khác các phòng ban khác nơi Kỹ thuật vẫn có quyền R).
+      return profile.isCenterManager || profile.roleCode === 'EXECUTIVE';
     }
     // Truyền thông + CSVC: đặc tả CHỈ ghi "Trưởng phòng" ký số, KHÔNG có
     // Phó phòng (khác Nhân sự/Kế toán có cả 2) — phải tách riêng theo

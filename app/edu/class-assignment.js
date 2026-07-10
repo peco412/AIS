@@ -113,8 +113,8 @@ function render() {
           : 'Học viên mới'}
       </td>
       <td class="cell-muted">${s.suggestedClass ? `<strong>${esc(s.suggestedClass.name)}</strong>` : (s.isReturning ? 'Cần xếp thủ công' : '—')}</td>
-      <td><select class="select-input" data-select="${s.id}">${classOptions(s.suggestedClass?.id)}</select></td>
-      <td><button class="btn btn-accent btn-sm" data-assign="${s.id}">Xếp lớp</button></td>
+      <td>${window.__CLASS_ASSIGN_CAN_EDIT__ ? `<select class="select-input" data-select="${s.id}">${classOptions(s.suggestedClass?.id)}</select>` : '<span class="cell-muted">Chỉ xem</span>'}</td>
+      <td>${window.__CLASS_ASSIGN_CAN_EDIT__ ? `<button class="btn btn-accent btn-sm" data-assign="${s.id}">Xếp lớp</button>` : ''}</td>
     </tr>
   `).join('');
 
@@ -140,6 +140,9 @@ document.getElementById('searchInput').addEventListener('input', render);
   try {
     const { profile } = await bootShell();
     PROFILE = profile;
+    // Ma tran: Phan lop hoc vien chi Quan ly trung tam duoc ghi, BDH/Ky
+    // thuat chi xem.
+    window.__CLASS_ASSIGN_CAN_EDIT__ = profile.isCenterManager;
     await initCenterPicker();
     await loadLookups();
     await loadRows();

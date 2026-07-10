@@ -211,7 +211,8 @@ document.getElementById('filterMonth').addEventListener('change', loadTable);
     const { profile } = await bootShell();
     const { data: emp } = await supabase.from('employees').select('department_id, departments(code)').eq('id', profile.id).single();
     PROFILE = { ...profile, departmentCode: emp?.departments?.code };
-    CAN_EDIT = PROFILE.departmentCode === 'ACC' || ['EXECUTIVE', 'TECH'].includes(profile.roleCode);
+    // Ma tran: Bang tinh luong chi Ke toan duoc ghi, BDH/Ky thuat/NS chi xem.
+    CAN_EDIT = PROFILE.departmentCode === 'ACC';
 
     monthOptions();
     const { data: employees } = await supabase.from('employees').select('id, employee_code, full_name').eq('status', 'active').order('full_name');

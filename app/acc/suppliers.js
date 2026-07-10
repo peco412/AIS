@@ -32,7 +32,7 @@ function render() {
         <td class="mono cell-muted">${esc(r.phone || '—')}</td>
         <td class="cell-muted">${esc(r.email || '—')}</td>
         <td class="cell-muted">${esc(r.employees?.full_name || '—')}</td>
-        <td><button class="btn btn-outline btn-sm" data-edit="${r.id}">Sửa</button></td>
+        <td>${window.__SUPPLIER_CAN_EDIT__ ? `<button class="btn btn-outline btn-sm" data-edit="${r.id}">Sửa</button>` : ''}</td>
       </tr>
     `).join('');
 
@@ -109,11 +109,18 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
     const { data: emp } = await supabase.from('employees').select('departments(code)').eq('id', profile.id).single();
     PROFILE = { ...profile, departmentCode: emp?.departments?.code };
 
-    const canUse = PROFILE.departmentCode === 'ACC' || ['EXECUTIVE', 'TECH'].includes(profile.roleCode);
-    if (!canUse) {
-      document.querySelector('.main').innerHTML = '<div class="empty-cell">Chỉ Kế toán/Ban điều hành mới dùng được trang này.</div>';
+    // Ma tran: BDH/Ky thuat deu duoc XEM (R) trang Master Data nay — chi
+    // rieng quyen GHI (W/A) moi dao nguoc: Ky thuat + Ke toan duoc sua,
+    // BDH (EXECUTIVE) thi CHI con xem, khong sua duoc.
+    const canView = PROFILE.departmentCode === 'ACC' || ['EXECUTIVE', 'TECH'].includes(profile.roleCode);
+    if (!canView) {
+      document.querySelector('.main').innerHTML = '<div class="empty-cell">Bạn không có quyền xem trang này.</div>';
       return;
     }
+    const canEdit = PROFILE.departmentCode === 'ACC' || profile.roleCode === 'TECH';
+    if (!canEdit) document.getElementById('btnAdd').style.display = 'none';
+    window.__SUPPLIER_CAN_EDIT__ = canEdit;
+
     await loadRows();
   } catch (e) { /* bootShell tự điều hướng */ }
 })();

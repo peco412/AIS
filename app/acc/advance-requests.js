@@ -215,8 +215,9 @@ document.getElementById('viewScope').addEventListener('change', loadRows);
     PROFILE = { ...profile, signatureUrl: emp?.signature_url || null, departmentId: emp?.department_id, centerId: emp?.center_id };
 
     IS_ACC_HEAD = profile.departmentCode === 'ACC' && ['DEPT_HEAD', 'DEPT_DEPUTY'].includes(profile.roleCode);
-    IS_EXEC = ['EXECUTIVE', 'TECH'].includes(profile.roleCode);
-    if (IS_ACC_HEAD || IS_EXEC) document.getElementById('deptScopeOption').style.display = 'block';
+    // Ma tran moi: duyet CAP CUOI (BDH) chi tinh EXECUTIVE, khong con TECH.
+    IS_EXEC = profile.roleCode === 'EXECUTIVE';
+    if (IS_ACC_HEAD || IS_EXEC || profile.roleCode === 'TECH') document.getElementById('deptScopeOption').style.display = 'block';
 
     await loadTemplate();
     await loadRows();

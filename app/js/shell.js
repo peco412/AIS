@@ -241,7 +241,13 @@ export async function bootShell() {
     roleName: employee.system_roles?.name || '',
     centerId: employee.centers?.id || null,
     centerName: employee.centers?.name || '',
-    isCenterManager: employee.positions?.name === 'Quản lý trung tâm',
+    // SỬA LỖI THẬT: truoc day so khop theo TEN CHUC VU ("Quản lý trung tâm"
+    // - chuoi text, de lech neu dat ten chuc vu khac di du chi 1 ky tu, hoac
+    // employee chua duoc gan dung position_id) - khien Quan ly trung tam chi
+    // vao duoc dung 1 trang duy nhat khong dieu kien (Kho trung tam), moi noi
+    // khac deu bi an vi dieu kien nay luon sai. Doi sang dung MA VAI TRO he
+    // thong (giong het cach RLS/backend dang dung o khap noi: 'CENTER_MANAGER').
+    isCenterManager: employee.system_roles?.code === 'CENTER_MANAGER',
     // Dùng cờ is_teacher_eligible (không phải so tên chức vụ) để đúng nghiệp vụ
     // "kiêm nhiệm": nhân viên khối văn phòng vẫn có thể dạy nếu chức vụ được
     // đánh dấu is_teacher_eligible = true (khớp với app/edu/teachers.js).

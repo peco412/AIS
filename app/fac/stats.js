@@ -69,7 +69,7 @@ function render() {
       <td class="cell-code">${r.quantity}</td>
       <td><span class="badge badge-${r.condition === 'good' ? 'active' : r.condition === 'disposed' ? 'archived' : 'rejected'}">${CONDITION_LABEL[r.condition] || r.condition}</span></td>
       <td class="cell-muted">${esc(r.employees?.full_name || '—')}</td>
-      <td><button class="btn btn-outline btn-sm" data-edit="${r.id}">Sửa</button></td>
+      <td>${window.__ASSET_CAN_EDIT__ ? `<button class="btn btn-outline btn-sm" data-edit="${r.id}">Sửa</button>` : ''}</td>
     </tr>
   `).join('');
 
@@ -149,7 +149,15 @@ form.addEventListener('submit', async (e) => {
 (async () => {
   try {
     const { profile } = await bootShell();
-    PROFILE = profile;
+    const { data: emp } = await supabase.from('employees').select('departments(code)').eq('id', profile.id).single();
+    PROFILE = { ...profile, departmentCode: emp?.departments?.code };
+
+    // Ma tran: CHI Truong phong CSVC duoc ghi (khong tinh Pho phong nhu
+    // cac phong khac), BDH/Ky thuat chi con quyen xem.
+    const CAN_EDIT = PROFILE.departmentCode === 'FAC' && profile.roleCode === 'DEPT_HEAD';
+    if (!CAN_EDIT) document.getElementById('btnAdd').style.display = 'none';
+    window.__ASSET_CAN_EDIT__ = CAN_EDIT;
+
     await loadLookups();
     await loadRows();
   } catch (e) { /* bootShell tự điều hướng */ }

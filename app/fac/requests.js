@@ -199,7 +199,9 @@ document.getElementById('submitResult').addEventListener('click', async () => {
     const { profile } = await bootShell();
     const { data: emp } = await supabase.from('employees').select('department_id, center_id').eq('id', profile.id).single();
     PROFILE = { ...profile, departmentId: emp?.department_id, centerId: emp?.center_id };
-    IS_FAC = profile.departmentCode === 'FAC' || ['EXECUTIVE', 'TECH'].includes(profile.roleCode);
+    // Ma tran moi: "Tiep nhan & Phan viec Yeu cau CSVC" ghi X cho ca BDH
+    // lan Ky thuat - chi dung phong CSVC moi thay/xu ly duoc.
+    IS_FAC = profile.departmentCode === 'FAC';
     IS_CENTER_MANAGER = profile.roleCode === 'CENTER_MANAGER' || ['EXECUTIVE', 'TECH'].includes(profile.roleCode);
     if (IS_FAC) document.getElementById('deptScopeOption').style.display = 'block';
     await loadRows();

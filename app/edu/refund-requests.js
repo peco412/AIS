@@ -192,8 +192,11 @@ document.getElementById('btnSubmitCounterRefund').addEventListener('click', asyn
     const { profile } = await bootShell();
     const { data: emp } = await supabase.from('employees').select('department_id, departments(code)').eq('id', profile.id).single();
     PROFILE = { ...profile, departmentCode: emp?.departments?.code };
-    IS_ACC = PROFILE.departmentCode === 'ACC' || ['EXECUTIVE', 'TECH'].includes(profile.roleCode);
-    IS_CENTER_STAFF = ['CENTER_MANAGER', 'CONSULTANT'].includes(profile.roleCode) || ['EXECUTIVE', 'TECH'].includes(profile.roleCode);
+    // Ma tran: Duyet hoan phi chi Ke toan, BDH/Ky thuat chi xem.
+    IS_ACC = PROFILE.departmentCode === 'ACC';
+    // Khoi tao yeu cau hoan phi: Quan ly trung tam + Tu van vien (BDH/Ky
+    // thuat van xem duoc toan trang, khong can rieng 1 co day).
+    IS_CENTER_STAFF = ['CENTER_MANAGER', 'CONSULTANT'].includes(profile.roleCode);
 
     if (!IS_CENTER_STAFF) document.getElementById('btnNewCounterRefund').style.display = 'none';
 

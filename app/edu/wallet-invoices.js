@@ -396,16 +396,22 @@ document.getElementById('btnCollectCounter').addEventListener('click', async () 
     const { data: emp } = await supabase.from('employees').select('department_id, center_id, departments(code)').eq('id', profile.id).single();
     PROFILE = { ...profile, centerId: emp?.center_id, departmentCode: emp?.departments?.code };
 
-    // Thêm Nhân viên tư vấn được thao tác (trước đây chỉ Kế toán/Quản lý
-    // trung tâm), vì tư vấn viên cũng cần thu học phí lúc ghi danh mới.
+    // Ma tran: Thu hoc phi tai cho la nghiep vu hang ngay cua Quan ly
+    // trung tam/Ke toan/Tu van vien - BDH/Ky thuat chi con quyen xem (R),
+    // khong tu thu ho duoc nua (khac voi truoc day duoc ghi de toan quyen).
     CAN_EDIT = PROFILE.isCenterManager || PROFILE.departmentCode === 'ACC'
-      || profile.roleCode === 'CONSULTANT' || ['EXECUTIVE', 'TECH'].includes(profile.roleCode);
+      || profile.roleCode === 'CONSULTANT';
     // Hoàn phí là nghiệp vụ hoàn tiền thật, cố tình KHÔNG mở cho Tư vấn viên
-    // (giống chốt quyền ở tầng database — process_plan_refund()).
-    CAN_REFUND = PROFILE.departmentCode === 'ACC' || ['EXECUTIVE', 'TECH'].includes(profile.roleCode);
+    // (giống chốt quyền ở tầng database — process_plan_refund()), và BDH/Ky
+    // thuat cung chi con quyen xem theo dung ma tran.
+    CAN_REFUND = PROFILE.departmentCode === 'ACC';
 
-    if (!CAN_EDIT) {
-      document.querySelector('.main').innerHTML = '<div class="empty-cell">Chỉ Quản lý trung tâm/Kế toán/Tư vấn viên/Ban điều hành mới dùng được trang này.</div>';
+    // BDH/Ky thuat van XEM duoc trang nay (R) - chi khong ghi (W) duoc,
+    // nen KHONG chan ca trang nhu truoc, chi an cac nut/thao tac ghi qua
+    // CAN_EDIT/CAN_REFUND o cac cho render tuong ung.
+    const canView = CAN_EDIT || CAN_REFUND || ['EXECUTIVE', 'TECH'].includes(profile.roleCode);
+    if (!canView) {
+      document.querySelector('.main').innerHTML = '<div class="empty-cell">Bạn không có quyền dùng trang này.</div>';
     }
   } catch (e) { /* bootShell tự điều hướng */ }
 })();

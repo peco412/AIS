@@ -94,7 +94,9 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
     const { profile } = await bootShell();
     const { data: emp } = await supabase.from('employees').select('department_id, departments(code)').eq('id', profile.id).single();
     PROFILE = { ...profile, departmentCode: emp?.departments?.code };
-    IS_HR_DEPUTY = (PROFILE.departmentCode === 'HR' && profile.roleCode === 'DEPT_DEPUTY') || ['EXECUTIVE', 'TECH'].includes(profile.roleCode);
+    // Ma tran phan quyen moi: DUY NHAT Pho phong Nhan su duoc duyet - kể
+    // cả BĐH/Kỹ thuật cũng KHÔNG được (đúng đặc tả X cho cả 2 ô này).
+    IS_HR_DEPUTY = (PROFILE.departmentCode === 'HR' && profile.roleCode === 'DEPT_DEPUTY');
     if (IS_HR_DEPUTY) document.getElementById('allScopeOption').style.display = 'block';
     await loadRows();
   } catch (e) { /* bootShell tự điều hướng */ }
