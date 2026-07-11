@@ -157,16 +157,25 @@ function renderGreeting(profile) {
   const hour = new Date().getHours();
   const timeGreeting = hour < 11 ? 'Chào buổi sáng' : hour < 14 ? 'Chào buổi trưa' : hour < 18 ? 'Chào buổi chiều' : 'Chào buổi tối';
   const firstName = profile.fullName?.split(' ').slice(-1)[0] || 'bạn';
-  document.querySelector('.hero-greeting__title').innerHTML = `${timeGreeting}, <span id="heroName">${esc(firstName)}</span> 👋`;
-  document.getElementById('heroDate').textContent = new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  // Kiem tra phan tu ton tai truoc khi dung — tranh truong hop HTML cache
+  // cu (PWA/CDN) chua kip cap nhat theo JS moi, lam vo cả doan sau (truoc
+  // day 1 loi o day se chan luon renderHub/loadStats/loadNoticeBoard,
+  // gay hien tuong "co thanh tren nhung noi dung trong").
+  const titleEl = document.querySelector('.hero-greeting__title');
+  if (titleEl) titleEl.innerHTML = `${timeGreeting}, <span id="heroName">${esc(firstName)}</span> 👋`;
+  const dateEl = document.getElementById('heroDate');
+  if (dateEl) dateEl.textContent = new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 }
 
 (async () => {
   try {
     const { profile } = await bootShell();
-    checkBirthday(profile.dob, profile.fullName.split(' ').slice(-1)[0]);
-    renderGreeting(profile);
-    renderHub(profile);
+    // Tach rieng tung buoc render — 1 buoc loi (vd do cache HTML cu lech
+    // voi JS moi) se KHONG con lam sap toan bo phan con lai nua, chi
+    // buoc do bi thieu thoi, cac phan khac van hien binh thuong.
+    try { checkBirthday(profile.dob, profile.fullName.split(' ').slice(-1)[0]); } catch (e) { console.warn('checkBirthday lỗi:', e); }
+    try { renderGreeting(profile); } catch (e) { console.warn('renderGreeting lỗi:', e); }
+    try { renderHub(profile); } catch (e) { console.warn('renderHub lỗi:', e); }
     document.addEventListener('ais:langchange', () => renderHub(profile));
 
     const installCard = document.getElementById('installBanner');
