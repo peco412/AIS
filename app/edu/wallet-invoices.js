@@ -29,15 +29,47 @@ document.getElementById('searchStudent').addEventListener('input', () => {
 async function searchAndPick() {
   if (!PROFILE) return; // chờ tải xong hồ sơ trước khi tìm, tránh lỗi
   const q = document.getElementById('searchStudent').value.trim();
-  if (!q) return;
+  const feedback = document.getElementById('searchFeedback');
+  const resultsList = document.getElementById('searchResultsList');
+  if (!q) { feedback.textContent = ''; resultsList.style.display = 'none'; return; }
 
-  let query = supabase.from('students').select('id, full_name, center_id, class_id, centers(name)').ilike('full_name', `%${q}%`).limit(5);
+  feedback.textContent = 'Đang tìm...';
+  resultsList.style.display = 'none';
+
+  let query = supabase.from('students').select('id, full_name, center_id, class_id, centers(name)').ilike('full_name', `%${q}%`).limit(8);
   if (PROFILE.centerId && !['EXECUTIVE', 'TECH'].includes(PROFILE.roleCode) && PROFILE.departmentCode !== 'ACC') {
     query = query.eq('center_id', PROFILE.centerId);
   }
-  const { data } = await query;
-  if (!data || data.length === 0) return;
-  await selectStudent(data[0]);
+  const { data, error } = await query;
+
+  if (error) { feedback.textContent = `Lỗi tìm kiếm: ${error.message}`; return; }
+  if (!data || data.length === 0) {
+    feedback.textContent = `Không tìm thấy học sinh nào tên "${q}". Kiểm tra lại chính tả hoặc học sinh có thuộc đúng trung tâm của bạn không.`;
+    return;
+  }
+  if (data.length === 1) {
+    feedback.textContent = '';
+    await selectStudent(data[0]);
+    return;
+  }
+
+  // Nhieu ket qua trung ten — de nhan vien tu chon dung nguoi, tranh chon
+  // NHAM hoc sinh do truoc day tu dong lay ket qua dau tien.
+  feedback.textContent = `Tìm thấy ${data.length} học sinh — chọn đúng người:`;
+  resultsList.style.display = 'block';
+  resultsList.innerHTML = data.map((s) => `
+    <button type="button" class="btn btn-outline btn-sm" data-pick="${s.id}" style="margin: 2px 6px 2px 0;">
+      ${esc(s.full_name)} — ${esc(s.centers?.name || 'chưa gắn trung tâm')}
+    </button>
+  `).join('');
+  resultsList.querySelectorAll('[data-pick]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const picked = data.find((s) => s.id === btn.dataset.pick);
+      resultsList.style.display = 'none';
+      feedback.textContent = '';
+      await selectStudent(picked);
+    });
+  });
 }
 
 async function selectStudent(student) {
