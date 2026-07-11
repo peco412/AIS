@@ -14,7 +14,7 @@
 // như dưới đây, không gọi fetch() trực tiếp tới maps.googleapis.com.
 // =====================================================================
 
-const GOOGLE_MAPS_API_KEY = window.__ENV__?.GOOGLE_MAPS_API_KEY || 'YOUR-GOOGLE-MAPS-API-KEY';
+const GOOGLE_MAPS_API_KEY = window.__ENV__?.GOOGLE_MAPS_API_KEY || 'AIzaSyDP_T7B8icwA_6Ys5xXnEBJDP7IsIAEgpU';
 
 let mapsLoaded = null;
 
