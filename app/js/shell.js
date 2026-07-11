@@ -215,8 +215,24 @@ function injectInstallButton() {
  * Nếu chưa đăng nhập -> tự chuyển hướng về trang login.
  */
 export async function bootShell() {
+  // Luoi an toan: neu sau 12 giay ma trang van dang "Dang tai..." (vi du
+  // do mang cham/DNS/Supabase tam ngung), hien banner ro rang thay vi de
+  // nguoi dung nhin man hinh trong mai khong biet dang xay ra chuyen gi.
+  const watchdog = setTimeout(() => {
+    const nameEl = document.getElementById('userChipName');
+    if (nameEl && nameEl.textContent === 'Đang tải...') {
+      const banner = document.createElement('div');
+      banner.style.cssText = 'position:fixed; top:0; left:0; right:0; z-index:9999; background:#d3352f; color:#fff; padding:10px 16px; font-size:13px; text-align:center; font-weight:600;';
+      banner.textContent = '⚠️ Tải trang lâu hơn bình thường — có thể do mất mạng. Bấm để tải lại trang.';
+      banner.style.cursor = 'pointer';
+      banner.addEventListener('click', () => window.location.reload());
+      document.body.prepend(banner);
+    }
+  }, 12000);
+
   const { data: sessionData } = await supabase.auth.getSession();
   if (!sessionData.session) {
+    clearTimeout(watchdog);
     window.location.href = '/index.html';
     throw new Error('NO_SESSION');
   }
@@ -239,6 +255,7 @@ export async function bootShell() {
     // bước tải hồ sơ nhân viên ngay sau đó bị lỗi (ví dụ thiếu cột DB do
     // chưa chạy đủ migration).
     console.error('bootShell: không tải được hồ sơ nhân viên.', error);
+    clearTimeout(watchdog);
     window.location.href = '/index.html';
     throw new Error('NO_EMPLOYEE');
   }
@@ -281,15 +298,23 @@ export async function bootShell() {
     isAcademicBoard: !!employee.is_academic_board,
   };
 
-  // Quyền hạn được cấp thêm riêng cho nhân sự này (đã được duyệt qua module
-  // "Xin thêm quyền hạn") — mở thêm đúng mục menu tương ứng ngoài quyền mặc
-  // định theo phòng ban/vai trò. module_key chính là href của mục menu đó
-  // (xem js/navConfig.js và permission-requests.js).
-  const { data: grants } = await supabase
-    .from('granted_permissions')
-    .select('module_key')
-    .eq('employee_id', profile.id);
-  profile.grantedModules = new Set((grants || []).map((g) => g.module_key));
+  // SUA LOI THAT: cau nay truoc day chay TRUOC buoc cap nhat "Dang tai..."
+  // -> ten that o goc tren. Neu cau nay bi treo/loi (mang chap chon, RLS
+  // sai...), CA HAM bootShell dung lai o day, khong bao gio chay toi doan
+  // cap nhat giao dien, gay hien tuong "Dang tai..." vinh vien ma khong
+  // co loi ro rang nao hien ra (nguoi goi bootShell chi bat loi im lang).
+  // Boc rieng try/catch de 1 truy van PHU khong lam sap ca trang.
+  let grantedModules = new Set();
+  try {
+    const { data: grants } = await supabase
+      .from('granted_permissions')
+      .select('module_key')
+      .eq('employee_id', employee.id);
+    grantedModules = new Set((grants || []).map((g) => g.module_key));
+  } catch (e) {
+    console.warn('bootShell: không tải được quyền mở rộng (granted_permissions), tiếp tục không có quyền này.', e);
+  }
+  profile.grantedModules = grantedModules;
 
   // Ngôn ngữ hiển thị theo đúng hồ sơ nhân viên (employees.language_preference),
   // để đăng nhập ở thiết bị khác vẫn giữ đúng lựa chọn đã lưu.
@@ -301,6 +326,7 @@ export async function bootShell() {
   const userChipRole = document.getElementById('userChipRole');
   const userChipAvatar = document.getElementById('userChipAvatar');
   if (userChipName) userChipName.textContent = profile.fullName;
+  clearTimeout(watchdog); // toi day la thanh cong hoan toan, khong con can canh bao "tai lau" nua
   if (userChipRole) userChipRole.textContent = profile.positionName || profile.roleName;
   if (userChipAvatar) userChipAvatar.textContent = initials(profile.fullName);
 
