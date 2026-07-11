@@ -144,7 +144,6 @@ export const NAV_CONFIG = [
     ],
   },
   {
-  {
     sectionKey: 'nav.section.exec', section: 'Ban điều hành', layer: 'executive',
     items: [
       { labelKey: 'nav.exec.reports', label: 'Báo cáo tổng hợp', href: '/exec/reports.html', icon: '📊', visible: (p) => isExecOrTech(p) },
