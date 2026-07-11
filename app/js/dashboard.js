@@ -1,4 +1,4 @@
-import { bootShell, MOBILE_ALLOWED_HREFS, isMobileViewport, WORLD_LAYERS, getSavedWorld, layerToWorld } from './shell.js';
+import { bootShell, MOBILE_ALLOWED_HREFS, isMobileViewport, WORLD_LAYERS, getSavedWorld, layerToWorld, openSectionHub, openItemsHub } from './shell.js';
 import { supabase } from './supabase.js';
 import { NAV_CONFIG } from './navConfig.js';
 import { t } from './i18n.js';
@@ -92,30 +92,45 @@ function renderHub(profile) {
         const sgVisible = sgItems.filter((item) => canAccess(item));
         const hasAccess = sgVisible.length > 0;
         const meta = SUBGROUP_META[sgKey];
-        const el = document.createElement(hasAccess ? 'a' : 'div');
+        const el = document.createElement(hasAccess ? 'button' : 'div');
+        if (hasAccess) el.type = 'button';
         el.className = 'app-tile' + (hasAccess ? '' : ' disabled');
-        if (hasAccess) el.href = sgVisible[0].href;
         el.innerHTML = `
           <div class="app-tile__icon ${hasAccess ? meta.color : ''}">${meta.icon}</div>
           <div class="app-tile__label">${esc(meta.label)}</div>
           ${!hasAccess ? `<div class="app-tile__lock">🔒 ${esc(t('dashboard.noAccess', 'Không có quyền'))}</div>` : ''}
         `;
-        if (!hasAccess) el.title = t('dashboard.noAccess', 'Bạn không có quyền truy cập mục này.');
+        if (!hasAccess) {
+          el.title = t('dashboard.noAccess', 'Bạn không có quyền truy cập mục này.');
+        } else {
+          // Bam icon nhom con -> mo tiep 1 lop hub RIENG cua nhom do (VD
+          // "Thu hoc phi") liet ke het cac trang con ben trong, thay vi
+          // nhay thang vao 1 trang dau tien nhu truoc.
+          el.addEventListener('click', () => openItemsHub(profile, { icon: meta.icon, color: 'var(--accent)', label: meta.label }, sgVisible, location.pathname));
+        }
         appHub.appendChild(el);
       });
       return;
     }
 
     const hasAccess = visibleItems.length > 0;
-    const el = document.createElement(hasAccess ? 'a' : 'div');
+    const el = document.createElement(hasAccess ? 'button' : 'div');
+    if (hasAccess) el.type = 'button';
     el.className = 'app-tile' + (hasAccess ? '' : ' disabled');
-    if (hasAccess) el.href = visibleItems[0].href;
     el.innerHTML = `
       <div class="app-tile__icon ${hasAccess ? (HUB_COLOR_CLASS[group.sectionKey] || '') : ''}">${HUB_ICON[group.sectionKey] || '📁'}</div>
       <div class="app-tile__label">${esc(t(group.sectionKey, group.section || ''))}</div>
       ${!hasAccess ? `<div class="app-tile__lock">🔒 ${esc(t('dashboard.noAccess', 'Không có quyền'))}</div>` : ''}
     `;
-    if (!hasAccess) el.title = t('dashboard.noAccess', 'Bạn không có quyền truy cập phòng ban này.');
+    if (!hasAccess) {
+      el.title = t('dashboard.noAccess', 'Bạn không có quyền truy cập phòng ban này.');
+    } else {
+      // Bam icon phong ban -> mo tiep hub RIENG cua phong do (liet ke het
+      // chuc nang/trang con ben trong), thay vi nhay thang vao 1 trang
+      // dau tien nhu truoc — dung yeu cau "bam icon phai hien tiep cac
+      // chuc nang cua phong do".
+      el.addEventListener('click', () => openSectionHub(profile, group, location.pathname));
+    }
     appHub.appendChild(el);
   });
 }

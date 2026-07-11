@@ -97,7 +97,7 @@ export const WORLD_LAYERS = {
   database: ['masterdata'],
   personal: ['personal'],
 };
-const WORLD_META = {
+export const WORLD_META = {
   erp: { label: 'ERP — Vận hành nội bộ', icon: '🏢', color: '#0094D9' },
   crm: { label: 'CRM — Khối trung tâm', icon: '🎓', color: '#22a06b' },
   database: { label: 'Database — Dữ liệu gốc', icon: '🗄️', color: '#6c5ce7' },
@@ -238,57 +238,47 @@ function injectHubLauncher(profile, currentWorld, currentPage) {
   menuToggle.onclick = () => openHubOverlay(profile, currentWorld, currentPage);
 }
 
-function openHubOverlay(profile, currentWorld, currentPage) {
-  document.getElementById('hubOverlay')?.remove();
+const SUBGROUP_LABEL = { tuition: 'Thu học phí', warehouse: 'Kho & Chi phí vận hành', role: 'Chức năng riêng' };
 
+function renderSectionHtml(group, profile, currentPage) {
+  const items = group.items.filter((item) => canAccess(item, profile));
+  if (items.length === 0) return '';
+  const hasSub = items.some((i) => i.subgroup);
+  let bodyHtml;
+  if (hasSub) {
+    bodyHtml = Object.keys(SUBGROUP_LABEL).map((sg) => {
+      const sgItems = items.filter((i) => i.subgroup === sg);
+      if (sgItems.length === 0) return '';
+      return `
+        <div class="hub-overlay__subgroup-label">${SUBGROUP_LABEL[sg]}</div>
+        <div class="hub-overlay__grid">${sgItems.map((item) => hubTileHtml(item, profile, currentPage)).join('')}</div>
+      `;
+    }).join('');
+  } else {
+    bodyHtml = `<div class="hub-overlay__grid">${items.map((item) => hubTileHtml(item, profile, currentPage)).join('')}</div>`;
+  }
+  return `
+    <div class="hub-overlay__section">
+      <h3 class="hub-overlay__section-title">${esc(t(group.sectionKey, group.section))}</h3>
+      ${bodyHtml}
+    </div>
+  `;
+}
+
+function openOverlayPanel({ icon, color, label, bodyHtml }) {
+  document.getElementById('hubOverlay')?.remove();
   const overlay = document.createElement('div');
   overlay.id = 'hubOverlay';
   overlay.className = 'hub-overlay';
-
-  const meta = WORLD_META[currentWorld];
-  const groups = NAV_CONFIG.filter((g) =>
-    g.sectionKey && !g.alwaysShow && WORLD_LAYERS[currentWorld].includes(g.layer)
-  );
-  // "Ca nhan" la 1 nhom rieng (alwaysShow), khong nam trong NAV_CONFIG
-  // theo dung pattern nhu cac the gioi khac — gom rieng khi world=personal.
-  const personalGroup = NAV_CONFIG.find((g) => g.alwaysShow);
-  const effectiveGroups = currentWorld === 'personal' && personalGroup ? [personalGroup] : groups;
-
-  const sectionsHtml = effectiveGroups.map((group) => {
-    const items = group.items.filter((item) => canAccess(item, profile));
-    if (items.length === 0) return '';
-    const SUBGROUP_LABEL = { tuition: 'Thu học phí', warehouse: 'Kho & Chi phí vận hành', role: 'Chức năng riêng' };
-    const hasSub = items.some((i) => i.subgroup);
-    let bodyHtml;
-    if (hasSub) {
-      bodyHtml = Object.keys(SUBGROUP_LABEL).map((sg) => {
-        const sgItems = items.filter((i) => i.subgroup === sg);
-        if (sgItems.length === 0) return '';
-        return `
-          <div class="hub-overlay__subgroup-label">${SUBGROUP_LABEL[sg]}</div>
-          <div class="hub-overlay__grid">${sgItems.map((item) => hubTileHtml(item, profile, currentPage)).join('')}</div>
-        `;
-      }).join('');
-    } else {
-      bodyHtml = `<div class="hub-overlay__grid">${items.map((item) => hubTileHtml(item, profile, currentPage)).join('')}</div>`;
-    }
-    return `
-      <div class="hub-overlay__section">
-        <h3 class="hub-overlay__section-title">${esc(t(group.sectionKey, group.section))}</h3>
-        ${bodyHtml}
-      </div>
-    `;
-  }).join('');
-
   overlay.innerHTML = `
     <div class="hub-overlay__backdrop" id="hubOverlayBackdrop"></div>
     <div class="hub-overlay__panel">
-      <div class="hub-overlay__header" style="--world-color:${meta.color};">
-        <div class="hub-overlay__header-title"><span>${meta.icon}</span> ${esc(meta.label)}</div>
+      <div class="hub-overlay__header" style="--world-color:${color};">
+        <div class="hub-overlay__header-title"><span>${icon}</span> ${esc(label)}</div>
         <button type="button" class="icon-btn" id="hubOverlayClose">✕</button>
       </div>
       <div class="hub-overlay__body">
-        ${sectionsHtml || '<div class="empty-cell">Không có mục nào khả dụng trong thế giới này.</div>'}
+        ${bodyHtml || '<div class="empty-cell">Không có mục nào khả dụng.</div>'}
       </div>
     </div>
   `;
@@ -298,6 +288,42 @@ function openHubOverlay(profile, currentWorld, currentPage) {
   const close = () => { overlay.classList.remove('show'); setTimeout(() => overlay.remove(), 200); };
   overlay.querySelector('#hubOverlayBackdrop').addEventListener('click', close);
   overlay.querySelector('#hubOverlayClose').addEventListener('click', close);
+}
+
+function openHubOverlay(profile, currentWorld, currentPage) {
+  const meta = WORLD_META[currentWorld];
+  const groups = NAV_CONFIG.filter((g) =>
+    g.sectionKey && !g.alwaysShow && WORLD_LAYERS[currentWorld].includes(g.layer)
+  );
+  // "Ca nhan" la 1 nhom rieng (alwaysShow), khong nam trong NAV_CONFIG
+  // theo dung pattern nhu cac the gioi khac — gom rieng khi world=personal.
+  const personalGroup = NAV_CONFIG.find((g) => g.alwaysShow);
+  const effectiveGroups = currentWorld === 'personal' && personalGroup ? [personalGroup] : groups;
+
+  const bodyHtml = effectiveGroups.map((group) => renderSectionHtml(group, profile, currentPage)).join('');
+  openOverlayPanel({ icon: meta.icon, color: meta.color, label: meta.label, bodyHtml });
+}
+
+/**
+ * Mo hub CHI 1 phong ban/section cu the (vd bam icon "Phong Nhan su" tren
+ * trang chu) — hien luoi icon cua RIENG phong do, dung theo yeu cau
+ * "bam icon phong ban phai hien tiep cac chuc nang cua phong do", thay vi
+ * nhay thang vao 1 trang dau tien nhu truoc.
+ */
+export function openSectionHub(profile, group, currentPage) {
+  const bodyHtml = renderSectionHtml(group, profile, currentPage);
+  const meta = WORLD_META[layerToWorld(group.layer)] || WORLD_META.erp;
+  openOverlayPanel({ icon: group.items[0]?.icon || meta.icon, color: meta.color, label: t(group.sectionKey, group.section), bodyHtml });
+}
+
+/**
+ * Ban tong quat hon — mo hub voi 1 danh sach item TU CHON san (dung cho
+ * icon nhom con nhu "Thu hoc phi"/"Kho & Van hanh"/"Chuc nang rieng" ben
+ * trong Khoi trung tam, khong phai ca 1 section day du).
+ */
+export function openItemsHub(profile, { icon, color, label }, items, currentPage) {
+  const bodyHtml = `<div class="hub-overlay__grid">${items.map((item) => hubTileHtml(item, profile, currentPage)).join('')}</div>`;
+  openOverlayPanel({ icon, color, label, bodyHtml });
 }
 
 function hubTileHtml(item, profile, currentPage) {
