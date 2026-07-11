@@ -234,6 +234,7 @@ document.getElementById('btnNewInvoice').addEventListener('click', async () => {
   document.getElementById('invReceivedVnd').value = '';
   document.getElementById('hinhThucThu').value = 'CASH';
   RECEIVED_TOUCHED = false;
+  NET_AMOUNT_TOUCHED = false;
 
   // "Han dong phi" mac dinh = ngay ket khoa cua lop hoc sinh dang hoc.
   if (ACTIVE_STUDENT?.class_id) {
@@ -263,14 +264,21 @@ function updateNetAmountPreview() {
   recomputeAmounts();
 }
 
+let NET_AMOUNT_TOUCHED = false;
+
 // Tong tien sau uu dai = Gia goc x (1 - Uu dai hinh thuc dong - Uu dai He
 // thong tu dong - Uu dai tay nhap them) — gop CA 3 nguon uu dai lam 1,
 // ap dung chung cho ca 3 hinh thuc thu (Theo khoa/Cap do/Chuong trinh).
+// Van la 1 O NHAP THUC SU (khong khoa cung) — tu dong goi y gia tinh san
+// nhung nhan vien van sua duoc, vi khong phai luc nao gia cau hinh san
+// cung dung 100% voi tinh huong thuc te (thoa thuan rieng, gia chua
+// duoc cau hinh du cho khoa do...).
 function recomputeAmounts() {
   const manualRate = Number(document.getElementById('manualDiscountRate').value) / 100 || 0;
   const totalRate = Math.min(PLAN_TYPE_DISCOUNT_RATE + AUTO_DISCOUNT_RATE + manualRate, 1);
-  const net = PLAN_BASE_PRICE * (1 - totalRate);
-  document.getElementById('netAmountPreview').textContent = `${net.toLocaleString('vi-VN')} đ`;
+  const suggested = PLAN_BASE_PRICE * (1 - totalRate);
+  if (!NET_AMOUNT_TOUCHED) document.getElementById('netAmountInput').value = suggested ? Math.round(suggested) : '';
+  const net = Number(document.getElementById('netAmountInput').value) || 0;
   // Mac dinh "Tien nhan" = du Tong tien (truong hop thuong gap nhat: dong
   // du 1 lan) — nhung neu nhan vien da tu tay sua o thi khong ghi de nua,
   // de ho tu do ghi dung so tien thuc nhan khi phu huynh dong 1 phan.
@@ -281,6 +289,7 @@ function recomputeAmounts() {
   document.getElementById('remainingPreview').style.color = remaining > 0 ? 'var(--danger)' : 'var(--success)';
 }
 document.getElementById('manualDiscountRate').addEventListener('input', recomputeAmounts);
+document.getElementById('netAmountInput').addEventListener('input', () => { NET_AMOUNT_TOUCHED = true; recomputeAmounts(); });
 document.getElementById('invReceivedVnd').addEventListener('input', () => { RECEIVED_TOUCHED = true; recomputeAmounts(); });
 document.getElementById('closeCreateModal').addEventListener('click', () => createModal.classList.remove('show'));
 document.getElementById('cancelCreateModal').addEventListener('click', () => createModal.classList.remove('show'));
@@ -300,6 +309,20 @@ document.getElementById('btnSubmitInvoice').addEventListener('click', async () =
       p_manual_discount_rate: manualRate, p_special_category: specialCategory,
     });
     if (error) throw error;
+
+    // Neu nhan vien tu sua "Tong tien" khac voi gia he thong tu tinh (vd
+    // gia chua cau hinh du, thoa thuan rieng...) — ghi de lai dung theo
+    // so ho go, giu nguyen gia goc de con audit, chi dieu chinh lai phan
+    // uu dai cho khop dung so cuoi cung ho muon thu.
+    const typedNet = Number(document.getElementById('netAmountInput').value) || 0;
+    if (newInvoice?.id && typedNet > 0) {
+      const computedNet = Number(newInvoice.amount_vnd) - Number(newInvoice.manual_discount_vnd || 0);
+      if (Math.round(typedNet) !== Math.round(computedNet)) {
+        const newDiscount = Number(newInvoice.amount_vnd) - typedNet;
+        const { error: adjErr } = await supabase.from('invoices').update({ manual_discount_vnd: newDiscount }).eq('id', newInvoice.id);
+        if (adjErr) throw adjErr;
+      }
+    }
 
     // "Tien nhan" — ghi nhan NGAY luon phan da thu duoc trong cung 1 thao
     // tac (truoc day form chi tao hoa don, khong ghi nhan thu tien gi ca,

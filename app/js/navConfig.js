@@ -107,10 +107,10 @@ export const NAV_CONFIG = [
       // ========== Phần 1: Thu học phí ==========
       { subgroup: 'tuition', labelKey: 'nav.edu.walletInvoices', label: 'Thu học phí', href: '/edu/wallet-invoices.html', icon: '💳', visible: (p) => p.isCenterManager || p.roleCode === 'CONSULTANT' || inDept(p, 'ACC') },
       { subgroup: 'tuition', labelKey: 'nav.acc.walletTopupRequests', label: 'Xác nhận nạp ví', href: '/acc/wallet-topup-requests.html', icon: '✅', visible: (p) => p.isCenterManager },
+      { subgroup: 'tuition', labelKey: 'nav.edu.walletPaymentLog', label: 'Thu học phí qua Ví (Log)', href: '/edu/wallet-payment-log.html', icon: '📜', visible: (p) => p.isCenterManager || p.roleCode === 'CONSULTANT' || inDept(p, 'ACC') },
       { subgroup: 'tuition', labelKey: 'nav.edu.debtOverview', label: 'Công nợ học phí', href: '/edu/debt-overview.html', icon: '📒', visible: (p) => p.isCenterManager || isExecOrTech(p) },
       { subgroup: 'tuition', labelKey: 'nav.edu.refundRequests', label: 'Yêu cầu hoàn phí', href: '/edu/refund-requests.html', icon: '↩️', visible: (p) => p.isCenterManager || p.roleCode === 'CONSULTANT' || inDept(p, 'ACC') },
       { subgroup: 'tuition', labelKey: 'nav.edu.programPricing', label: 'Bảng giá chương trình học', href: '/edu/program-pricing.html', icon: '🏷️', visible: (p) => p.isCenterManager || p.roleCode === 'CONSULTANT' || inDept(p, 'ACC') },
-      { subgroup: 'tuition', labelKey: 'nav.edu.parentLinks', label: 'Liên kết Phụ huynh', href: '/edu/parent-links.html', icon: '🔗', visible: (p) => p.isCenterManager || inDept(p, 'ACC') },
       // ========== Phần 2: Kho Trung tâm & Quản lý Chi phí vận hành ==========
       { subgroup: 'warehouse', labelKey: 'nav.edu.inventory', label: 'Kho trung tâm', href: '/edu/inventory.html', icon: '📦', visible: (p) => true },
       { subgroup: 'warehouse', labelKey: 'nav.acc.purchaseOrders', label: 'Phiếu thanh toán chi phí (mua hàng)', href: '/acc/purchase-orders.html', icon: '🧾', visible: (p) => p.isCenterManager },
