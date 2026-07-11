@@ -46,6 +46,16 @@ async function selectStudent(student) {
   document.getElementById('studentName').textContent = student.full_name;
   document.getElementById('studentCenter').textContent = student.centers?.name || '—';
 
+  // "Lop hien tai" — dung dac ta yeu cau hien ro lop hoc sinh dang hoc
+  // ngay tai day, truoc day thieu hoan toan truong nay.
+  const classEl = document.getElementById('studentClass');
+  if (student.class_id) {
+    const { data: cls } = await supabase.from('classes').select('name').eq('id', student.class_id).maybeSingle();
+    classEl.textContent = cls?.name ? `Lớp: ${cls.name}` : 'Chưa xếp lớp';
+  } else {
+    classEl.textContent = 'Chưa xếp lớp';
+  }
+
   const { data: links } = await supabase.from('parent_student_links').select('relationship, parent_accounts(full_name, phone)').eq('student_id', student.id);
   const parentEl = document.getElementById('studentParent');
   parentEl.textContent = (links || []).length > 0

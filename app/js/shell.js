@@ -221,6 +221,22 @@ function injectWorldSwitcher(profile, currentWorld, currentPage) {
  * dang chon, thay hoan toan cho viec di chuyen bang cay sidebar truoc day.
  */
 function injectHubLauncher(profile, currentWorld, currentPage) {
+  // Nut "Trang chu" — thoat nhanh ve dashboard tu bat ky trang nao, dung
+  // theo yeu cau "bam vao 1 chuc nang cu the khong co cach nao thoat ra
+  // nhanh" — truoc day chi co nut Hub (⊞) hoi nho, de bi bo qua.
+  if (!document.getElementById('homeBtn') && !currentPage?.endsWith('/dashboard.html')) {
+    const topbarRight = document.querySelector('.topbar__right, .hub-topbar__right');
+    if (topbarRight) {
+      const homeBtn = document.createElement('button');
+      homeBtn.id = 'homeBtn';
+      homeBtn.className = 'icon-btn';
+      homeBtn.title = t('common.backToHome', 'Về trang chủ');
+      homeBtn.textContent = '🏠';
+      homeBtn.onclick = () => { window.location.href = '/dashboard.html'; };
+      topbarRight.insertBefore(homeBtn, topbarRight.firstChild);
+    }
+  }
+
   let menuToggle = document.getElementById('menuToggle');
   if (!menuToggle) {
     // Trang khong san co nut hamburger (vd dashboard.html dung topbar
