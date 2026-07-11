@@ -37,11 +37,27 @@ function canAccess(item, profile) {
   return item.visible(profile) || !!profile.grantedModules?.has(item.href);
 }
 
-function findActiveGroup(currentPage) {
+function findActiveGroup(currentPage, profile) {
   if (!currentPage) return null;
-  return NAV_CONFIG.find((group) =>
+  // SUA LOI THAT: truoc day chi tim nhom DAU TIEN co chua href nay, KHONG
+  // quan tam nguoi dang xem co thuoc nhom do khong. Vi mot so trang dung
+  // chung o NHIEU nhom (vd "Don nghi" o ca Nhan su LAN Khoi trung tam,
+  // "Phieu mua hang" o ca Ke toan LAN Khoi trung tam), Quan ly trung
+  // tam/Giao vien/Tu van vien bi day nham vao nhom dung TRUOC trong mang
+  // (Nhan su/Ke toan) dù ho khong thuoc phong do. Gio uu tien nhom ma
+  // chinh nguoi dang xem CO QUYEN thay item do (canAccess), chi fallback
+  // ve khop href don thuan neu khong nhom nao khop dung quyen.
+  const groupsWithHref = NAV_CONFIG.filter((group) =>
     group.sectionKey && group.items.some((item) => currentPage.endsWith(item.href))
   );
+  if (groupsWithHref.length === 0) return null;
+  if (profile) {
+    const matchByRole = groupsWithHref.find((group) =>
+      group.items.some((item) => currentPage.endsWith(item.href) && canAccess(item, profile))
+    );
+    if (matchByRole) return matchByRole;
+  }
+  return groupsWithHref[0];
 }
 
 function renderNav(profile, currentPage) {
@@ -94,7 +110,7 @@ function renderNav(profile, currentPage) {
   // nhóm đang active thuộc layer nào (2 tầng khác nhau theo đúng yêu cầu,
   // KHÔNG gộp chung 1 nhãn "Các phòng ban" như trước nữa). Vẫn chỉ hiện
   // đúng 1 nhóm con tại 1 thời điểm (giữ nguyên tắc chống rối mắt).
-  const activeGroup = findActiveGroup(currentPage);
+  const activeGroup = findActiveGroup(currentPage, profile);
   if (!activeGroup || activeGroup.alwaysShow || !activeGroup.sectionKey) return;
 
   const visibleItems = activeGroup.items.filter((item) => canAccess(item, profile));

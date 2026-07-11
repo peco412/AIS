@@ -70,6 +70,35 @@ function renderHub(profile) {
       appHub.appendChild(layerHeading);
     }
 
+    // "Khoi trung tam" co 3 phan con (Thu hoc phi / Kho & Van hanh / Chuc
+    // nang rieng) — hien DUNG 3 icon rieng biet tren App Hub thay vi gop
+    // chung 1 icon nhu cac phong ban khac, dung yeu cau cua nguoi dung.
+    const hasSubgroups = group.items.some((item) => item.subgroup);
+    if (hasSubgroups) {
+      const SUBGROUP_META = {
+        tuition: { icon: '💳', label: 'Thu học phí', color: 'tile-center' },
+        warehouse: { icon: '📦', label: 'Kho Trung tâm & Vận hành', color: 'tile-fac' },
+        role: { icon: '🧑‍🏫', label: 'Chức năng riêng', color: 'tile-hr' },
+      };
+      Object.keys(SUBGROUP_META).forEach((sgKey) => {
+        const sgItems = group.items.filter((item) => item.subgroup === sgKey);
+        const sgVisible = sgItems.filter((item) => canAccess(item));
+        const hasAccess = sgVisible.length > 0;
+        const meta = SUBGROUP_META[sgKey];
+        const el = document.createElement(hasAccess ? 'a' : 'div');
+        el.className = 'app-tile' + (hasAccess ? '' : ' disabled');
+        if (hasAccess) el.href = sgVisible[0].href;
+        el.innerHTML = `
+          <div class="app-tile__icon ${hasAccess ? meta.color : ''}">${meta.icon}</div>
+          <div class="app-tile__label">${esc(meta.label)}</div>
+          ${!hasAccess ? `<div class="app-tile__lock">🔒 ${esc(t('dashboard.noAccess', 'Không có quyền'))}</div>` : ''}
+        `;
+        if (!hasAccess) el.title = t('dashboard.noAccess', 'Bạn không có quyền truy cập mục này.');
+        appHub.appendChild(el);
+      });
+      return;
+    }
+
     const hasAccess = visibleItems.length > 0;
     const el = document.createElement(hasAccess ? 'a' : 'div');
     el.className = 'app-tile' + (hasAccess ? '' : ' disabled');
