@@ -20,8 +20,14 @@ async function loadLookups() {
   SUPPLIERS = suppliers || [];
   document.getElementById('supplierSelect').innerHTML = SUPPLIERS.map((s) => `<option value="${s.id}">${esc(s.name)}</option>`).join('');
 
-  const { data: categories } = await supabase.from('expense_categories').select('id, name').order('display_order');
-  document.getElementById('expenseCategory').innerHTML = (categories || []).map((c) => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
+  const { data: categories } = await supabase.from('expense_categories').select('id, code, name, parent_code').order('display_order');
+  const ROOT_CODES = ['BOARD_OUTSIDE', 'CAT_A', 'CAT_B', 'CAT_C', 'CAT_D'];
+  const roots = (categories || []).filter((c) => ROOT_CODES.includes(c.code));
+  document.getElementById('expenseCategory').innerHTML = roots.map((root) => {
+    const children = (categories || []).filter((c) => c.parent_code === root.code);
+    const options = [`<option value="${root.id}">${esc(root.name)} (mục gốc)</option>`, ...children.map((c) => `<option value="${c.id}">${esc(c.name)}</option>`)];
+    return `<optgroup label="${esc(root.name)}">${options.join('')}</optgroup>`;
+  }).join('');
 }
 
 async function loadRows() {

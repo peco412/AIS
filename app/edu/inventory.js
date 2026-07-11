@@ -142,40 +142,9 @@ document.getElementById('closeTxModal').addEventListener('click', () => txModal.
 document.getElementById('cancelTxModal').addEventListener('click', () => txModal.classList.remove('show'));
 
 // ---------------------------------------------------------------------
-// Sản phẩm mới — tự do tạo thêm, không còn giới hạn 8 mặt hàng mặc định
-// ---------------------------------------------------------------------
-const productModal = document.getElementById('productModal');
-document.getElementById('btnNewProduct').addEventListener('click', () => {
-  document.getElementById('productFormError').classList.remove('show');
-  document.getElementById('productName').value = '';
-  document.getElementById('productUnit').value = '';
-  document.getElementById('productPrice').value = '';
-  document.getElementById('productHasSize').checked = false;
-  productModal.classList.add('show');
-});
-document.getElementById('closeProductModal').addEventListener('click', () => productModal.classList.remove('show'));
-document.getElementById('cancelProductModal').addEventListener('click', () => productModal.classList.remove('show'));
-
-document.getElementById('btnSubmitProduct').addEventListener('click', async () => {
-  const errBox = document.getElementById('productFormError');
-  errBox.classList.remove('show');
-  const name = document.getElementById('productName').value.trim();
-  const unit = document.getElementById('productUnit').value.trim();
-  const price = Number(document.getElementById('productPrice').value);
-  if (!name || !unit || !price) { errBox.textContent = 'Vui lòng nhập đầy đủ.'; errBox.classList.add('show'); return; }
-
-  const code = 'SP-' + Date.now().toString(36).toUpperCase();
-  const { error } = await supabase.from('inventory_items').insert({
-    code, name, unit, price_vnd: price,
-    has_size: document.getElementById('productHasSize').checked,
-    product_group: document.getElementById('productGroup').value,
-    is_custom: true,
-  });
-  if (error) { errBox.textContent = error.message; errBox.classList.add('show'); return; }
-
-  productModal.classList.remove('show');
-  await loadItems();
-});
+// Sản phẩm mới đã CHUYỂN HẲN sang trang riêng trong Cấu hình dữ liệu gốc
+// (master-data/inventory-items.html) — trang vận hành này chỉ còn tập
+// trung vào nhập/xuất/bán lẻ, không quản lý danh mục gốc nữa.
 
 // ---------------------------------------------------------------------
 // Phiếu bán lẻ tại quầy — nhiều dòng sản phẩm, tự trừ kho + hạch toán
@@ -360,7 +329,8 @@ document.getElementById('btnSubmitTx').addEventListener('click', async () => {
     // Ma tran: "San pham" thuoc Cau hinh Master Data - chi Ky thuat duoc
     // tao moi danh muc san pham goc, Quan ly trung tam van nhap/xuat kho
     // binh thuong (khac hoan toan voi VIEC TAO SAN PHAM MOI).
-    if (profile.roleCode !== 'TECH') document.getElementById('btnNewProduct').style.display = 'none';
+    // Quan ly danh muc san pham goc gio thuoc rieng trang Master Data,
+    // khong con o day nua.
     await initCenterPicker();
     await loadItems();
     await Promise.all([loadWalletPurchases(), loadStock(), loadTransactions()]);

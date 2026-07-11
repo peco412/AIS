@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Hạng mục chi — ERP AIS</title>
+<title>Danh mục sản phẩm kho — ERP AIS</title>
 <link rel="manifest" href="/manifest.json" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="mobile-web-app-capable" content="yes" />
@@ -16,7 +16,7 @@
 <link rel="stylesheet" href="/css/dashboard.css" />
 <link rel="stylesheet" href="/css/module.css" />
 </head>
-<body data-page="/master-data/expense-categories.html">
+<body data-page="/master-data/inventory-items.html">
 
 <div class="app-shell">
   <aside class="sidebar" id="sidebar">
@@ -38,41 +38,55 @@
 
   <main class="main">
     <div class="page-header">
-      <div><h1>Hạng mục chi</h1><div class="sub">4 mục lớn cố định (HĐQT/A/B/C/D) — có thể thêm tay phụ mục chi tiết nằm trong các mục này.</div></div>
-      <button class="btn btn-accent" id="btnAdd">+ Thêm phụ mục</button>
+      <div><h1>Danh mục sản phẩm kho</h1><div class="sub">Bảng kê gốc toàn hệ thống — Sản phẩm giáo dục & Sản phẩm truyền thông. Các trung tâm dùng chung đúng 1 danh mục này khi nhập/xuất kho.</div></div>
+      <button class="btn btn-accent" id="btnAdd">+ Sản phẩm mới</button>
     </div>
 
-    <div id="categoryGroups"><div class="empty-cell">Đang tải dữ liệu...</div></div>
+    <div class="toolbar">
+      <select class="select-input" id="filterGroup">
+        <option value="">Tất cả nhóm</option>
+        <option value="education">Sản phẩm giáo dục</option>
+        <option value="media">Sản phẩm truyền thông</option>
+      </select>
+      <div class="cell-muted" id="resultCount"></div>
+    </div>
 
-    <style>
-      .expense-group { background: var(--surface-card); border: 1px solid var(--border); border-radius: var(--radius-md); margin-bottom: 12px; overflow: hidden; }
-      .expense-group__header { padding: 14px 18px; font-weight: 700; font-size: 14px; border-bottom: 1px solid var(--separator); display: flex; justify-content: space-between; align-items: center; }
-      .expense-group__sub { display: flex; justify-content: space-between; align-items: center; padding: 10px 18px 10px 32px; font-size: 13px; border-bottom: 1px solid var(--separator); }
-      .expense-group__sub:last-child { border-bottom: none; }
-      .expense-group__empty { padding: 10px 18px 14px 32px; font-size: 12px; color: var(--muted); }
-    </style>
+    <div class="data-table-wrap">
+      <table class="data-table">
+        <thead><tr><th>Mã SP</th><th>Tên sản phẩm</th><th>Nhóm</th><th>Đơn vị tính</th><th>Có Size</th><th>Giá bán</th><th></th></tr></thead>
+        <tbody id="tableBody"><tr><td colspan="7" class="empty-cell">Đang tải dữ liệu...</td></tr></tbody>
+      </table>
+    </div>
   </main>
 </div>
 
-<div class="modal-overlay" id="createModal">
+<div class="modal-overlay" id="productModal">
   <div class="modal-box">
     <button class="modal-close" id="closeModal">✕</button>
-    <h3>Thêm phụ mục chi</h3>
+    <h3 id="modalTitle">Thêm sản phẩm mới</h3>
     <div class="form-error" id="formError"></div>
-    <div class="field"><label for="catParent">Thuộc mục gốc *</label><select id="catParent"></select></div>
-    <div class="field"><label for="catCode">Mã (viết liền, không dấu) *</label><input type="text" id="catCode" placeholder="VD: A_DIEN_NUOC" required /></div>
-    <div class="field"><label for="catName">Tên hạng mục *</label><input type="text" id="catName" placeholder="VD: Điện nước trung tâm Mỏ Cày" required /></div>
-    <p class="cell-muted" style="font-size:12px;">Phụ mục áp dụng chung cho toàn hệ thống (không tách riêng theo từng trung tâm) — sẽ hiện lồng ngay dưới đúng mục gốc đã chọn.</p>
+    <input type="hidden" id="itemId" />
+    <div class="field"><label for="productName">Tên sản phẩm *</label><input type="text" id="productName" required /></div>
+    <div class="field-grid-2">
+      <div class="field"><label for="productGroup">Nhóm *</label>
+        <select id="productGroup"><option value="media">Sản phẩm truyền thông</option><option value="education">Sản phẩm giáo dục</option></select>
+      </div>
+      <div class="field"><label for="productUnit">Đơn vị tính *</label><input type="text" id="productUnit" placeholder="cái, cuốn, bộ..." required /></div>
+    </div>
+    <div class="field-grid-2">
+      <div class="field"><label for="productHasSize"><input type="checkbox" id="productHasSize" /> Có phân loại Size</label></div>
+      <div class="field"><label for="productPrice">Giá bán (VNĐ) *</label><input type="number" id="productPrice" min="0" required /></div>
+    </div>
     <div class="modal-actions">
       <button type="button" class="btn btn-outline" id="cancelModal"><span data-i18n="common.cancel">Huỷ</span></button>
-      <button type="button" class="btn btn-accent" id="submitBtn">Thêm</button>
+      <button type="button" class="btn btn-accent" id="btnSubmitProduct">Lưu</button>
     </div>
   </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="/env.js"></script>
-<script type="module" src="/master-data/expense-categories.js"></script>
+<script type="module" src="/master-data/inventory-items.js"></script>
 <script src="/js/pwa.js"></script>
 </body>
 </html>

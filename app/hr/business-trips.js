@@ -116,10 +116,10 @@ document.getElementById('btnCalcDistance').addEventListener('click', async (e) =
   if (!origin || !destination) { alert('Vui lòng nhập cả nơi xuất phát và nơi đến trước.'); return; }
 
   btn.disabled = true; btn.textContent = 'Đang tính...';
-  const km = await computeDrivingDistanceKm(origin, destination);
+  const { km, error } = await computeDrivingDistanceKm(origin, destination);
   btn.disabled = false; btn.textContent = '📍 Tính tự động';
 
-  if (km == null) { alert('Không tính được quãng đường tự động, vui lòng nhập tay.'); return; }
+  if (km == null) { alert(`Không tính được quãng đường tự động:\n${error || 'không rõ lý do'}\n\nVui lòng nhập tay.`); return; }
   document.getElementById('distance').value = km;
 });
 

@@ -174,9 +174,9 @@ export const NAV_CONFIG = [
       { labelKey: 'nav.md.centers', label: 'Trung tâm', href: '/master-data/centers.html', icon: '🏫', visible: (p) => ['TECH', 'EXECUTIVE'].includes(p.roleCode) },
       { labelKey: 'nav.md.suppliers', label: 'Nhà cung cấp', href: '/acc/suppliers.html', icon: '🏭', visible: (p) => ['TECH', 'EXECUTIVE'].includes(p.roleCode) || inDept(p, 'ACC') },
       { labelKey: 'nav.md.expenseCategories', label: 'Hạng mục chi', href: '/master-data/expense-categories.html', icon: '🗂️', visible: (p) => ['TECH', 'EXECUTIVE'].includes(p.roleCode) },
-      { labelKey: 'nav.md.programPricing', label: 'Chương trình & Bảng giá khoá học', href: '/edu/program-pricing.html', icon: '🏷️', visible: (p) => ['TECH', 'EXECUTIVE'].includes(p.roleCode) || inDept(p, 'ACC') },
+      { labelKey: 'nav.md.programPricing', label: 'Chương trình & Bảng giá khoá học', href: '/master-data/program-pricing.html', icon: '🏷️', visible: (p) => ['TECH', 'EXECUTIVE'].includes(p.roleCode) || inDept(p, 'ACC') },
       { labelKey: 'nav.md.paymentPlanDiscounts', label: 'Chiết khấu hình thức đóng học phí', href: '/master-data/payment-plan-discounts.html', icon: '📉', visible: (p) => ['TECH', 'EXECUTIVE'].includes(p.roleCode) || inDept(p, 'ACC') },
-      { labelKey: 'nav.md.inventoryItems', label: 'Danh mục sản phẩm kho', href: '/edu/inventory.html', icon: '📦', visible: (p) => p.roleCode === 'TECH' },
+      { labelKey: 'nav.md.inventoryItems', label: 'Danh mục sản phẩm kho', href: '/master-data/inventory-items.html', icon: '📦', visible: (p) => ['TECH', 'EXECUTIVE'].includes(p.roleCode) },
     ],
   },
 ];

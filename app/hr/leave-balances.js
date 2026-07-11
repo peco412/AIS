@@ -40,10 +40,14 @@ async function loadTable() {
   const { data, error } = await supabase
     .from('leave_balances')
     .select('id, annual_leave_accrued, annual_leave_used, compensatory_leave, employee_id, employees!leave_balances_employee_id_fkey(employee_code, full_name)')
-    .eq('year', year).eq('month', month)
-    .order('employee_code', { foreignTable: 'employees!leave_balances_employee_id_fkey' });
+    .eq('year', year).eq('month', month);
 
   if (error) { tbody.innerHTML = `<tr><td colspan="7" class="empty-cell">Lỗi: ${error.message}</td></tr>`; return; }
+  // Sap xep phia client thay vi dung .order() qua bang lien ket - cu
+  // phap "foreignTable" cua PostgREST khong nhan dung ten bang khi dung
+  // kem cu phap "!fk_hint", gay loi "column leave_balances.employee_code
+  // does not exist" (PostgREST hieu nham la cot tren chinh bang goc).
+  data.sort((a, b) => (a.employees?.employee_code || '').localeCompare(b.employees?.employee_code || ''));
 
   tbody.innerHTML = data.map((r) => {
     const remain = (Number(r.annual_leave_accrued) - Number(r.annual_leave_used) + Number(r.compensatory_leave)).toFixed(1);

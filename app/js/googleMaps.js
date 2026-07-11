@@ -14,7 +14,7 @@
 // như dưới đây, không gọi fetch() trực tiếp tới maps.googleapis.com.
 // =====================================================================
 
-const GOOGLE_MAPS_API_KEY = window.__ENV__?.GOOGLE_MAPS_API_KEY || 'AIzaSyDP_T7B8icwA_6Ys5xXnEBJDP7IsIAEgpU';
+const GOOGLE_MAPS_API_KEY = window.__ENV__?.GOOGLE_MAPS_API_KEY || 'YOUR-GOOGLE-MAPS-API-KEY';
 
 let mapsLoaded = null;
 
@@ -51,10 +51,12 @@ export async function attachPlaceAutocomplete(inputEl) {
  * Trả về null nếu không tính được (API lỗi, thiếu key, không tìm thấy tuyến).
  */
 export async function computeDrivingDistanceKm(originText, destinationText) {
-  if (!originText || !destinationText) return null;
+  if (!originText || !destinationText) return { km: null, error: null };
   try {
     await loadMapsScript();
-    if (!window.google?.maps?.DistanceMatrixService) return null;
+    if (!window.google?.maps?.DistanceMatrixService) {
+      return { km: null, error: 'Google Maps chưa tải được (thiếu API key hoặc mạng chặn maps.googleapis.com).' };
+    }
 
     const service = new google.maps.DistanceMatrixService();
     const result = await new Promise((resolve, reject) => {
@@ -65,15 +67,25 @@ export async function computeDrivingDistanceKm(originText, destinationText) {
         unitSystem: google.maps.UnitSystem.METRIC,
       }, (response, status) => {
         if (status === 'OK') resolve(response);
-        else reject(new Error('Không tính được quãng đường (status: ' + status + ')'));
+        else reject(new Error(status));
       });
     });
 
     const element = result.rows?.[0]?.elements?.[0];
-    if (!element || element.status !== 'OK') return null;
-    return Math.round((element.distance.value / 1000) * 10) / 10; // mét -> km, làm tròn 1 số lẻ
+    if (!element || element.status !== 'OK') {
+      return { km: null, error: `Không tìm được tuyến đường (${element?.status || 'không rõ lý do'}).` };
+    }
+    return { km: Math.round((element.distance.value / 1000) * 10) / 10, error: null }; // mét -> km, làm tròn 1 số lẻ
   } catch (e) {
+    // Cac ma loi Google hay gap nhat, dich sang tieng Viet de nguoi dung
+    // (hoac IT) biet dung cho can sua: bat API nao tren Google Cloud.
+    const REASON = {
+      REQUEST_DENIED: 'API key chưa được cấp quyền dùng Distance Matrix API — vào Google Cloud Console bật "Distance Matrix API" cho đúng project chứa key này.',
+      OVER_QUERY_LIMIT: 'Đã vượt hạn mức gọi API trong ngày/phút — thử lại sau hoặc kiểm tra hạn mức trên Google Cloud Console.',
+      INVALID_REQUEST: 'Địa chỉ nhập không hợp lệ để Google Maps hiểu được.',
+    };
+    const reason = REASON[e.message] || `Lỗi Google Maps: ${e.message}`;
     console.warn('computeDrivingDistanceKm lỗi:', e.message);
-    return null;
+    return { km: null, error: reason };
   }
 }

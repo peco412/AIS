@@ -25,7 +25,7 @@ async function loadRows() {
 
   const { data, error } = await supabase
     .from('contracts')
-    .select('id, code, status, contract_type, draft_file_url, final_file_url, updated_at, employee_id, employees!contracts_employee_id_fkey(full_name, employee_code)')
+    .select('id, code, status, draft_file_url, final_file_url, updated_at, employee_id, employees!contracts_employee_id_fkey(full_name, employee_code, contract_type)')
     .order('updated_at', { ascending: false });
 
   if (error) { tbody.innerHTML = `<tr><td colspan="6" class="empty-cell">Lỗi: ${error.message}</td></tr>`; return; }
@@ -51,7 +51,7 @@ function render() {
     <tr>
       <td class="cell-code">${esc(r.code)}</td>
       <td>${esc(r.employees?.full_name || '—')} <span class="cell-muted">(${esc(r.employees?.employee_code || '')})</span></td>
-      <td>${esc(r.contract_type || '—')}</td>
+      <td>${esc(r.employees?.contract_type || '—')}</td>
       <td><span class="badge badge-${r.status}">${esc(STATUS_LABEL[r.status] || r.status)}</span></td>
       <td class="cell-muted">${fmtDate(r.updated_at)}</td>
       <td>
@@ -184,10 +184,14 @@ document.getElementById('openFillEditor').addEventListener('click', async () => 
     fieldMap: (TEMPLATE.field_map || []).filter((f) => f.type === 'text'), // chỉ đặt sẵn ô văn bản, chưa ký ở bước này
     onSave: async (blob) => {
       const fileUrl = await uploadContractFile(blob, employeeId, 'draft');
+      // "contract_type" nam o bang employees (phan loai chung cua nhan
+      // vien), KHONG phai 1 cot tren bang contracts (moi contracts la 1
+      // van ban ky so cu the) - cap nhat dung noi.
+      const { error: empErr } = await supabase.from('employees').update({ contract_type: contractType }).eq('id', employeeId);
+      if (empErr) throw empErr;
       const { error } = await supabase.from('contracts').insert({
         employee_id: employeeId,
         template_id: TEMPLATE.id,
-        contract_type: contractType,
         draft_file_url: fileUrl,
         status: 'draft',
       });
