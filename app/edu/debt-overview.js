@@ -8,14 +8,14 @@ function fmtMoney(n) { return Number(n || 0).toLocaleString('vi-VN'); }
 
 async function loadRows() {
   const tbody = document.getElementById('tableBody');
-  tbody.innerHTML = '<tr><td colspan="7" class="empty-cell">Đang tải dữ liệu...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="8" class="empty-cell">Đang tải dữ liệu...</td></tr>';
 
-  const { data: students } = await supabase.from('students').select('id, full_name').eq('center_id', PROFILE.centerId);
+  const { data: students } = await supabase.from('students').select('id, full_name, class_id, classes(program_id, level_id, course_id, programs(name), program_levels(name), program_courses(name))').eq('center_id', PROFILE.centerId);
   const studentIds = (students || []).map((s) => s.id);
   const studentMap = {};
-  (students || []).forEach((s) => { studentMap[s.id] = s.full_name; });
+  (students || []).forEach((s) => { studentMap[s.id] = s; });
 
-  if (studentIds.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="empty-cell">Trung tâm chưa có học viên.</td></tr>'; return; }
+  if (studentIds.length === 0) { tbody.innerHTML = '<tr><td colspan="8" class="empty-cell">Trung tâm chưa có học viên.</td></tr>'; return; }
 
   const { data: invoices, error } = await supabase
     .from('invoices')
@@ -24,7 +24,7 @@ async function loadRows() {
     .in('status', ['unpaid', 'partially_paid'])
     .order('due_date', { ascending: true });
 
-  if (error) { tbody.innerHTML = `<tr><td colspan="7" class="empty-cell">Lỗi: ${esc(error.message)}</td></tr>`; return; }
+  if (error) { tbody.innerHTML = `<tr><td colspan="8" class="empty-cell">Lỗi: ${esc(error.message)}</td></tr>`; return; }
   if (!invoices || invoices.length === 0) { ALL_ROWS = []; render(); return; }
 
   const invoiceIds = invoices.map((i) => i.id);
@@ -35,9 +35,17 @@ async function loadRows() {
     const paidTotal = paidRows.reduce((s, l) => s + Number(l.amount_vnd), 0);
     const bySource = {};
     paidRows.forEach((l) => { bySource[l.source] = (bySource[l.source] || 0) + Number(l.amount_vnd); });
+    const student = studentMap[inv.student_id];
+    const cls = student?.classes;
     return {
       ...inv,
-      studentName: studentMap[inv.student_id] || '—',
+      studentName: student?.full_name || '—',
+      programId: cls?.program_id || null,
+      levelId: cls?.level_id || null,
+      courseId: cls?.course_id || null,
+      programName: cls?.programs?.name || '—',
+      levelName: cls?.program_levels?.name || '—',
+      courseName: cls?.program_courses?.name || '—',
       paidTotal,
       remaining: Number(inv.amount_vnd) - paidTotal,
       bySource,
@@ -49,7 +57,15 @@ async function loadRows() {
 
 function render() {
   const statusFilter = document.getElementById('filterStatus').value;
-  const rows = ALL_ROWS.filter((r) => !statusFilter || r.status === statusFilter);
+  const programFilter = document.getElementById('filterProgram').value;
+  const levelFilter = document.getElementById('filterLevel').value;
+  const courseFilter = document.getElementById('filterCourse').value;
+  const rows = ALL_ROWS.filter((r) =>
+    (!statusFilter || r.status === statusFilter)
+    && (!programFilter || r.programId === programFilter)
+    && (!levelFilter || r.levelId === levelFilter)
+    && (!courseFilter || r.courseId === courseFilter)
+  );
 
   document.getElementById('resultCount').textContent = `${rows.length} hoá đơn`;
   const totalDebt = rows.reduce((s, r) => s + r.remaining, 0);
@@ -60,7 +76,7 @@ function render() {
   `;
 
   const tbody = document.getElementById('tableBody');
-  if (rows.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="empty-cell">🎉 Không có hoá đơn nào đang nợ.</td></tr>'; return; }
+  if (rows.length === 0) { tbody.innerHTML = '<tr><td colspan="8" class="empty-cell">🎉 Không có hoá đơn nào đang nợ.</td></tr>'; return; }
 
   tbody.innerHTML = rows.map((r) => {
     const debtBadges = [];
@@ -74,6 +90,7 @@ function render() {
     return `
     <tr>
       <td>${esc(r.studentName)}</td>
+      <td class="cell-muted" style="font-size:11.5px;">${esc(r.programName)} / ${esc(r.levelName)} / ${esc(r.courseName)}</td>
       <td class="cell-muted">${r.period_month}/${r.period_year}</td>
       <td class="mono">${fmtMoney(r.amount_vnd)} đ</td>
       <td class="mono" style="color:var(--success);">${fmtMoney(r.paidTotal)} đ</td>
@@ -86,6 +103,34 @@ function render() {
 }
 
 document.getElementById('filterStatus').addEventListener('change', render);
+document.getElementById('filterProgram').addEventListener('change', async (e) => {
+  await loadLevelsFor(e.target.value);
+  document.getElementById('filterCourse').innerHTML = '<option value="">Tất cả khoá</option>';
+  render();
+});
+document.getElementById('filterLevel').addEventListener('change', async (e) => {
+  await loadCoursesFor(e.target.value);
+  render();
+});
+document.getElementById('filterCourse').addEventListener('change', render);
+
+async function loadPrograms() {
+  const { data } = await supabase.from('programs').select('id, name').order('display_order');
+  document.getElementById('filterProgram').innerHTML = '<option value="">Tất cả chương trình</option>' +
+    (data || []).map((p) => `<option value="${p.id}">${esc(p.name)}</option>`).join('');
+}
+async function loadLevelsFor(programId) {
+  const sel = document.getElementById('filterLevel');
+  if (!programId) { sel.innerHTML = '<option value="">Tất cả cấp độ</option>'; return; }
+  const { data } = await supabase.from('program_levels').select('id, name').eq('program_id', programId).order('display_order');
+  sel.innerHTML = '<option value="">Tất cả cấp độ</option>' + (data || []).map((l) => `<option value="${l.id}">${esc(l.name)}</option>`).join('');
+}
+async function loadCoursesFor(levelId) {
+  const sel = document.getElementById('filterCourse');
+  if (!levelId) { sel.innerHTML = '<option value="">Tất cả khoá</option>'; return; }
+  const { data } = await supabase.from('program_courses').select('id, name, sublevel_id, program_sublevels!inner(level_id)').eq('program_sublevels.level_id', levelId).order('display_order');
+  sel.innerHTML = '<option value="">Tất cả khoá</option>' + (data || []).map((c) => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
+}
 
 (async () => {
   try {
@@ -95,6 +140,7 @@ document.getElementById('filterStatus').addEventListener('change', render);
       document.querySelector('.main').innerHTML = '<div class="empty-cell">Trang này dành cho Quản lý trung tâm — tài khoản của bạn chưa gắn với 1 trung tâm cụ thể.</div>';
       return;
     }
+    await loadPrograms();
     await loadRows();
   } catch (e) { /* bootShell tự điều hướng */ }
 })();

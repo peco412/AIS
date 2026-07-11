@@ -136,9 +136,24 @@ async function runAction(id) {
 // ---------------------------------------------------------------------
 const createModal = document.getElementById('createModal');
 const createError = document.getElementById('createError');
-document.getElementById('btnAdd').addEventListener('click', () => {
-  if (!IS_CENTER_MANAGER) { alert('Chỉ Quản lý trung tâm mới có thể trình sự kiện.'); return; }
+document.getElementById('btnAdd').addEventListener('click', async () => {
+  if (!IS_CENTER_MANAGER) { alert('Bạn không có quyền trình sự kiện.'); return; }
   createError.classList.remove('show');
+
+  const { data: centers } = await supabase.from('centers').select('id, name').order('name');
+  const sel = document.getElementById('proposalCenter');
+  sel.innerHTML = '<option value="">— Không gắn trung tâm cụ thể —</option>' + (centers || []).map((c) => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
+  // Quan ly trung tam: tu dien san dung trung tam cua minh, khoa lai
+  // (khong doi duoc sang trung tam khac). Nhan vien Truyen thong: tu do
+  // chon hoac de trong cho ke hoach chung.
+  if (PROFILE.isCenterManager && PROFILE.centerId) {
+    sel.value = PROFILE.centerId;
+    sel.disabled = true;
+  } else {
+    sel.value = '';
+    sel.disabled = false;
+  }
+
   createModal.classList.add('show');
 });
 document.getElementById('closeCreateModal').addEventListener('click', () => createModal.classList.remove('show'));
@@ -167,7 +182,7 @@ document.getElementById('openFillEditor').addEventListener('click', async () => 
     onSave: async (blob) => {
       const fileUrl = await uploadFile(blob, PROFILE.id, 'draft');
       const { error } = await supabase.from('event_proposals').insert({
-        center_manager_id: PROFILE.id, center_id: PROFILE.centerId, template_id: TEMPLATE.id,
+        center_manager_id: PROFILE.id, center_id: document.getElementById('proposalCenter').value || null, template_id: TEMPLATE.id,
         draft_file_url: fileUrl, manager_signed_at: new Date().toISOString(), status: 'draft',
       });
       if (error) throw error;
@@ -187,7 +202,10 @@ document.getElementById('viewScope').addEventListener('change', loadRows);
     const { data: emp } = await supabase.from('employees').select('signature_url, center_id').eq('id', profile.id).single();
     PROFILE = { ...profile, signatureUrl: emp?.signature_url || null, centerId: emp?.center_id };
 
-    IS_CENTER_MANAGER = profile.isCenterManager;
+    // Ma tran: BDH, Truong/Pho phong TT, Ky thuat, Quan ly trung tam deu
+    // trinh duoc - truoc day CHI Quan ly trung tam moi thay nut Tao moi,
+    // Truyen thong hoan toan khong tu trinh duoc ke hoach cua chinh minh.
+    IS_CENTER_MANAGER = profile.isCenterManager || profile.departmentCode === 'MKT' || ['EXECUTIVE', 'TECH'].includes(profile.roleCode);
     IS_MKT_HEAD = profile.departmentCode === 'MKT' && profile.roleCode === 'DEPT_HEAD'; // đặc tả chỉ ghi Trưởng phòng, không có Phó phòng
     IS_EXEC = profile.roleCode === 'EXECUTIVE'; // Ma tran: duyet cap cuoi chi EXECUTIVE, khong con TECH
     if (IS_MKT_HEAD || IS_EXEC) document.getElementById('deptScopeOption').style.display = 'block';

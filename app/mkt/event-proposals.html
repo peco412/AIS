@@ -70,7 +70,11 @@
   <div class="modal-box">
     <button class="modal-close" id="closeCreateModal">✕</button>
     <h3>Trình sự kiện mới</h3>
-    <p class="modal-sub">Chỉ Quản lý trung tâm mới có thể tạo Trình sự kiện.</p>
+    <p class="modal-sub">Điền nội dung trực tiếp lên biểu mẫu PDF rồi ký.</p>
+    <div class="field" id="proposalCenterField">
+      <label for="proposalCenter">Trung tâm áp dụng (bỏ trống nếu là kế hoạch chung toàn hệ thống)</label>
+      <select id="proposalCenter"><option value="">— Không gắn trung tâm cụ thể —</option></select>
+    </div>
     <div class="form-error" id="createError"></div>
     <div class="modal-actions">
       <button type="button" class="btn btn-outline" id="cancelCreate"><span data-i18n="common.cancel">Huỷ</span></button>

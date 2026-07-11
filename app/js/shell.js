@@ -25,7 +25,7 @@ export const MOBILE_ALLOWED_HREFS = new Set([
   '/dashboard.html', '/notifications.html', '/profile.html', '/directory.html',
   '/meetings.html', '/attendance-checkin.html', '/hr/late-clockin-requests.html',
   '/proposals.html', '/archive.html', '/permission-requests.html',
-  '/hr/leave-requests.html', '/hr/business-trips.html', '/hr/contracts.html',
+  '/hr/leave-requests.html', '/hr/business-trips.html', '/hr/contracts.html', '/my-payroll.html',
   '/mkt/requests.html', '/fac/requests.html', '/exec/broadcast.html',
 ]);
 export function isMobileViewport() {
@@ -128,7 +128,22 @@ function renderNav(profile, currentPage) {
 
   const ul = document.createElement('ul');
   ul.className = 'sidebar__nav';
-  visibleItems.forEach((item) => ul.appendChild(buildNavLi(item, profile, currentPage)));
+  const SUBGROUP_LABEL = {
+    tuition: 'Thu học phí',
+    warehouse: 'Kho & Chi phí vận hành',
+    role: 'Chức năng riêng (theo vai trò)',
+  };
+  let lastSubgroup = null;
+  visibleItems.forEach((item) => {
+    if (item.subgroup && item.subgroup !== lastSubgroup && SUBGROUP_LABEL[item.subgroup]) {
+      lastSubgroup = item.subgroup;
+      const subHeading = document.createElement('li');
+      subHeading.className = 'sidebar__subgroup';
+      subHeading.textContent = SUBGROUP_LABEL[item.subgroup];
+      ul.appendChild(subHeading);
+    }
+    ul.appendChild(buildNavLi(item, profile, currentPage));
+  });
   sidebarNav.appendChild(ul);
 }
 

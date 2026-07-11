@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Công nợ tổng hợp — ERP AIS</title>
+<title>Bảng lương của tôi — ERP AIS</title>
 <link rel="manifest" href="/manifest.json" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="mobile-web-app-capable" content="yes" />
@@ -16,7 +16,7 @@
 <link rel="stylesheet" href="/css/dashboard.css" />
 <link rel="stylesheet" href="/css/module.css" />
 </head>
-<body data-page="/edu/debt-overview.html">
+<body data-page="/my-payroll.html">
 
 <div class="app-shell">
   <aside class="sidebar" id="sidebar">
@@ -38,35 +38,17 @@
 
   <main class="main">
     <div class="page-header">
-      <div><h1>Công nợ tổng hợp</h1><div class="sub">Toàn bộ hoá đơn đóng thiếu từ cả 3 nguồn: Ví / Tiền mặt tại quầy / Chuyển khoản tại quầy.</div></div>
+      <div><h1>Bảng lương của tôi</h1><div class="sub">Chi tiết lương theo từng tháng, tính theo đúng dữ liệu chấm công.</div></div>
+      <select class="select-input" id="monthSelect"></select>
     </div>
 
-    <div class="stat-grid" id="statCards"></div>
-
-    <div class="toolbar">
-      <select class="select-input" id="filterStatus">
-        <option value="">Tất cả (Chưa/Một phần)</option>
-        <option value="unpaid">Chưa thanh toán</option>
-        <option value="partially_paid">Đã thanh toán một phần</option>
-      </select>
-      <select class="select-input" id="filterProgram"><option value="">Tất cả chương trình</option></select>
-      <select class="select-input" id="filterLevel"><option value="">Tất cả cấp độ</option></select>
-      <select class="select-input" id="filterCourse"><option value="">Tất cả khoá</option></select>
-      <div class="cell-muted" id="resultCount"></div>
-    </div>
-
-    <div class="data-table-wrap">
-      <table class="data-table">
-        <thead><tr><th>Học viên</th><th>Chương trình / Cấp độ / Khoá</th><th>Kỳ học phí</th><th>Số tiền gốc</th><th>Đã đóng</th><th>Còn nợ</th><th>Nợ theo nguồn</th><th data-i18n="common.status">Trạng thái</th></tr></thead>
-        <tbody id="tableBody"><tr><td colspan="8" class="empty-cell">Đang tải dữ liệu...</td></tr></tbody>
-      </table>
-    </div>
+    <div id="content"><div class="empty-cell">Đang tải dữ liệu...</div></div>
   </main>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="/env.js"></script>
-<script type="module" src="/edu/debt-overview.js"></script>
+<script type="module" src="/my-payroll.js"></script>
 <script src="/js/pwa.js"></script>
 </body>
 </html>

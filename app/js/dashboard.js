@@ -109,6 +109,25 @@ function checkBirthday(dob, fullName) {
   }
 }
 
+// "Bang trang thong bao day" — hien nhanh 6 thong bao gan nhat kieu ghi
+// chu dan bang, bam vao la sang thang trang Thong bao day du.
+async function loadNoticeBoard() {
+  const list = document.getElementById('noticeBoardList');
+  if (!list) return;
+  const { data, error } = await supabase.from('notifications').select('id, title, created_at').order('created_at', { ascending: false }).limit(6);
+  if (error || !data || data.length === 0) { list.innerHTML = '<div class="empty-cell">Chưa có thông báo nào.</div>'; return; }
+
+  list.innerHTML = data.map((n) => `
+    <div class="notice-board__item" data-id="${n.id}">
+      <div class="notice-board__item__title">${esc(n.title)}</div>
+      <div class="notice-board__item__meta">${new Date(n.created_at).toLocaleString('vi-VN')}</div>
+    </div>
+  `).join('');
+  list.querySelectorAll('[data-id]').forEach((el) => {
+    el.addEventListener('click', () => { window.location.href = '/notifications.html'; });
+  });
+}
+
 async function loadUnreadCount(profile) {
   // Dùng RPC tính đúng "chưa tồn tại bản ghi đã đọc" ở DB, 1 round-trip thay vì
   // 2 câu đếm rời rạc rồi trừ (cách cũ sai khi thông báo hết phạm vi/bị xoá).
@@ -158,6 +177,7 @@ async function loadStats(profile) {
     const installCard = document.getElementById('installBanner');
     registerInstallBanner(installCard, installCard);
     loadStats(profile).catch(console.warn);
+    loadNoticeBoard().catch(console.warn);
   } catch (e) {
     // bootShell đã tự điều hướng về login nếu cần
   }

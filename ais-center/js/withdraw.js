@@ -6,8 +6,11 @@ let WALLET_ID = null;
 async function loadPreview() {
   const { data: batches } = await supabase.from('wallet_topup_batches').select('coin_remaining, conversion_rate, created_at').eq('wallet_id', WALLET_ID).gt('coin_remaining', 0).order('created_at');
 
-  const total = (batches || []).reduce((s, b) => s + Number(b.coin_remaining) * Number(b.conversion_rate), 0);
-  document.getElementById('previewRefund').textContent = `${fmtMoney(total)} VNĐ`;
+  // Dùng ĐÚNG công thức chính thức (tính cả số khoá đã học) thay vì chỉ
+  // cộng số dư còn lại như trước — tránh phụ huynh thấy 1 số lúc gửi yêu
+  // cầu, rồi Kế toán duyệt ra số khác hẳn gây hiểu lầm.
+  const { data: total, error } = await supabase.rpc('calculate_wallet_refund', { p_wallet_id: WALLET_ID });
+  document.getElementById('previewRefund').textContent = error ? '—' : `${fmtMoney(Number(total) || 0)} VNĐ`;
 
   const el = document.getElementById('batchBreakdown');
   el.innerHTML = (batches || []).length === 0

@@ -42,47 +42,61 @@
 </header>
 
 <main class="hub-main">
-  <div class="birthday-banner" id="birthdayBanner">
-    <div class="birthday-banner__icon">🎂</div>
-    <div class="birthday-banner__text">
-      <strong data-i18n="dashboard.birthday">Chúc mừng sinh nhật!</strong>
-      <p id="birthdayText"></p>
+  <div class="hub-columns">
+    <!-- ================= CỘT TRÁI — PHẦN TỔNG QUAN ================= -->
+    <div class="hub-col hub-col--overview">
+      <h2 class="hub-section-title">Tổng quan</h2>
+
+      <div class="birthday-banner birthday-banner--marquee" id="birthdayBanner">
+        <div class="birthday-banner__icon">🎂</div>
+        <div class="birthday-banner__marquee-track">
+          <span id="birthdayText"></span>
+        </div>
+      </div>
+
+      <div class="install-guide-card" id="installBanner" style="display:none;">
+        <div class="install-guide-card__icon">📲</div>
+        <div class="install-guide-card__text">
+          <strong>Cài ứng dụng về máy để dùng nhanh hơn</strong>
+          <span>Xem hướng dẫn cho iPhone, Android, Windows, macOS</span>
+        </div>
+        <div class="install-guide-card__arrow">›</div>
+      </div>
+
+      <div class="stat-grid hub-stats">
+        <div class="stat-card">
+          <div class="label" data-i18n="dashboard.statUnread">Thông báo chưa đọc</div>
+          <div class="value mono" id="statUnread">–</div>
+        </div>
+        <div class="stat-card">
+          <div class="label" data-i18n="dashboard.statLeave">Ngày phép còn lại</div>
+          <div class="value mono" id="statLeave">–</div>
+        </div>
+        <div class="stat-card">
+          <div class="label" data-i18n="dashboard.statPending">Phiếu đang chờ duyệt</div>
+          <div class="value mono" id="statPending">–</div>
+        </div>
+        <div class="stat-card">
+          <div class="label" data-i18n="dashboard.statMeetings">Cuộc họp sắp tới</div>
+          <div class="value mono" id="statMeetings">–</div>
+        </div>
+      </div>
+
+      <div class="notice-board" id="noticeBoard">
+        <h3 class="notice-board__title">📌 Bảng thông báo đẩy</h3>
+        <div class="notice-board__list" id="noticeBoardList"><div class="empty-cell">Đang tải...</div></div>
+      </div>
+    </div>
+
+    <!-- ================= CỘT PHẢI — ĐIỀU HƯỚNG 5 PHẦN ================= -->
+    <div class="hub-col hub-col--nav">
+      <h2 class="hub-section-title" data-i18n="dashboard.apps">Phòng ban</h2>
+      <div class="app-hub" id="appHub"><!-- render bởi js/dashboard.js theo quyền --></div>
+
+      <h2 class="hub-section-title" data-i18n="dashboard.quickLinks">Truy cập nhanh</h2>
+      <div class="app-hub app-hub--small" id="quickHub"></div>
     </div>
   </div>
-
-  <div class="install-guide-card" id="installBanner" style="display:none;">
-    <div class="install-guide-card__icon">📲</div>
-    <div class="install-guide-card__text">
-      <strong>Cài ứng dụng về máy để dùng nhanh hơn</strong>
-      <span>Xem hướng dẫn cho iPhone, Android, Windows, macOS</span>
-    </div>
-    <div class="install-guide-card__arrow">›</div>
-  </div>
-
-  <div class="stat-grid hub-stats">
-    <div class="stat-card">
-      <div class="label" data-i18n="dashboard.statUnread">Thông báo chưa đọc</div>
-      <div class="value mono" id="statUnread">–</div>
-    </div>
-    <div class="stat-card">
-      <div class="label" data-i18n="dashboard.statLeave">Ngày phép còn lại</div>
-      <div class="value mono" id="statLeave">–</div>
-    </div>
-    <div class="stat-card">
-      <div class="label" data-i18n="dashboard.statPending">Phiếu đang chờ duyệt</div>
-      <div class="value mono" id="statPending">–</div>
-    </div>
-    <div class="stat-card">
-      <div class="label" data-i18n="dashboard.statMeetings">Cuộc họp sắp tới</div>
-      <div class="value mono" id="statMeetings">–</div>
-    </div>
-  </div>
-
-  <h2 class="hub-section-title" data-i18n="dashboard.apps">Phòng ban</h2>
-  <div class="app-hub" id="appHub"><!-- render bởi js/dashboard.js theo quyền --></div>
-
-  <h2 class="hub-section-title" data-i18n="dashboard.quickLinks">Truy cập nhanh</h2>
-  <div class="app-hub app-hub--small" id="quickHub"></div>
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>

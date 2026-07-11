@@ -14,17 +14,17 @@ let ACTIVE_ID = null;
 
 async function loadRows() {
   const tbody = document.getElementById('tableBody');
-  tbody.innerHTML = '<tr><td colspan="5" class="empty-cell">Đang tải dữ liệu...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="6" class="empty-cell">Đang tải dữ liệu...</td></tr>';
   const scope = document.getElementById('viewScope').value;
 
   let query = supabase
     .from('facility_requests')
-    .select('id, title, request_type, status, current_state_file_url, requester_id, center_id, employees!facility_requests_requester_id_fkey(full_name)')
+    .select('id, title, request_type, status, current_state_file_url, requester_id, center_id, centers(name), employees!facility_requests_requester_id_fkey(full_name)')
     .order('created_at', { ascending: false });
   if (scope === 'mine') query = query.eq('requester_id', PROFILE.id);
 
   const { data, error } = await query;
-  if (error) { tbody.innerHTML = `<tr><td colspan="5" class="empty-cell">Lỗi: ${esc(error.message)}</td></tr>`; return; }
+  if (error) { tbody.innerHTML = `<tr><td colspan="6" class="empty-cell">Lỗi: ${esc(error.message)}</td></tr>`; return; }
   ALL_ROWS = data || [];
   render();
 }
@@ -35,7 +35,7 @@ function render() {
   document.getElementById('resultCount').textContent = `${rows.length} yêu cầu`;
 
   const tbody = document.getElementById('tableBody');
-  if (rows.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="empty-cell">Chưa có yêu cầu nào.</td></tr>'; return; }
+  if (rows.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="empty-cell">Chưa có yêu cầu nào.</td></tr>'; return; }
 
   tbody.innerHTML = rows.map((r) => {
     const canCenterApprove = IS_CENTER_MANAGER && r.status === 'pending' && r.center_id === PROFILE.centerId;
@@ -44,6 +44,7 @@ function render() {
     return `
     <tr>
       <td>${esc(r.employees?.full_name || '—')}</td>
+      <td class="cell-muted">${esc(r.centers?.name || '—')}</td>
       <td class="cell-muted">${esc(TYPE_LABEL[r.request_type] || r.request_type)}</td>
       <td>${esc(r.title)} ${r.current_state_file_url ? `<button class="btn-link cell-muted" data-open="${esc(r.current_state_file_url)}" style="border:none;background:none;text-decoration:underline;cursor:pointer;">(hiện trạng)</button>` : ''}</td>
       <td><span class="badge badge-${STATUS_BADGE[r.status]}">${esc(STATUS_LABEL[r.status])}</span></td>

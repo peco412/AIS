@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Công nợ tổng hợp — ERP AIS</title>
+<title>Chiết khấu hình thức đóng học phí — ERP AIS</title>
 <link rel="manifest" href="/manifest.json" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="mobile-web-app-capable" content="yes" />
@@ -16,7 +16,7 @@
 <link rel="stylesheet" href="/css/dashboard.css" />
 <link rel="stylesheet" href="/css/module.css" />
 </head>
-<body data-page="/edu/debt-overview.html">
+<body data-page="/master-data/payment-plan-discounts.html">
 
 <div class="app-shell">
   <aside class="sidebar" id="sidebar">
@@ -38,27 +38,13 @@
 
   <main class="main">
     <div class="page-header">
-      <div><h1>Công nợ tổng hợp</h1><div class="sub">Toàn bộ hoá đơn đóng thiếu từ cả 3 nguồn: Ví / Tiền mặt tại quầy / Chuyển khoản tại quầy.</div></div>
-    </div>
-
-    <div class="stat-grid" id="statCards"></div>
-
-    <div class="toolbar">
-      <select class="select-input" id="filterStatus">
-        <option value="">Tất cả (Chưa/Một phần)</option>
-        <option value="unpaid">Chưa thanh toán</option>
-        <option value="partially_paid">Đã thanh toán một phần</option>
-      </select>
-      <select class="select-input" id="filterProgram"><option value="">Tất cả chương trình</option></select>
-      <select class="select-input" id="filterLevel"><option value="">Tất cả cấp độ</option></select>
-      <select class="select-input" id="filterCourse"><option value="">Tất cả khoá</option></select>
-      <div class="cell-muted" id="resultCount"></div>
+      <div><h1>Chiết khấu theo hình thức đóng học phí</h1><div class="sub">% giảm thêm khi phụ huynh đóng gộp trọn cấp độ con / cấp độ / chương trình thay vì từng khoá lẻ.</div></div>
     </div>
 
     <div class="data-table-wrap">
       <table class="data-table">
-        <thead><tr><th>Học viên</th><th>Chương trình / Cấp độ / Khoá</th><th>Kỳ học phí</th><th>Số tiền gốc</th><th>Đã đóng</th><th>Còn nợ</th><th>Nợ theo nguồn</th><th data-i18n="common.status">Trạng thái</th></tr></thead>
-        <tbody id="tableBody"><tr><td colspan="8" class="empty-cell">Đang tải dữ liệu...</td></tr></tbody>
+        <thead><tr><th>Hình thức đóng</th><th>% Chiết khấu</th><th>Cập nhật lần cuối</th><th></th></tr></thead>
+        <tbody id="tableBody"><tr><td colspan="4" class="empty-cell">Đang tải dữ liệu...</td></tr></tbody>
       </table>
     </div>
   </main>
@@ -66,7 +52,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="/env.js"></script>
-<script type="module" src="/edu/debt-overview.js"></script>
+<script type="module" src="/master-data/payment-plan-discounts.js"></script>
 <script src="/js/pwa.js"></script>
 </body>
 </html>

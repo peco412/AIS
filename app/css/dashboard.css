@@ -155,6 +155,11 @@
   content: ''; position: absolute; left: -10px; top: 50%; transform: translateY(-50%);
   width: 3px; height: 60%; border-radius: 2px; background: var(--accent-deep);
 }
+.sidebar__nav .sidebar__subgroup {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+  color: var(--muted); opacity: 0.75; padding: 10px 12px 4px; margin-top: 2px;
+}
+.sidebar__nav .sidebar__subgroup:first-child { margin-top: 0; }
 .sidebar__nav .icon { width: 18px; text-align: center; opacity: 0.9; font-size: 14px; }
 
 .sidebar__footer {
@@ -391,6 +396,44 @@ body.hub-body { background: var(--surface); }
 .hub-topbar__right { display: flex; align-items: center; gap: 14px; }
 
 .hub-main { max-width: 1100px; margin: 0 auto; padding: 24px 20px 60px; }
+
+/* Bo cuc 2 cot theo dung yeu cau: trai = Tong quan, phai = dieu huong 5
+   phan (Ban dieu hanh/Khoi van phong/Trung tam/Portal/Co so du lieu) */
+.hub-columns { display: grid; grid-template-columns: 1fr 1.2fr; gap: 24px; align-items: start; }
+@media (max-width: 900px) { .hub-columns { grid-template-columns: 1fr; } }
+.hub-col--overview, .hub-col--nav { display: flex; flex-direction: column; }
+
+/* O chuc mung sinh nhat CHAY DONG (marquee ngang lien tuc) */
+.birthday-banner--marquee { overflow: hidden; position: relative; }
+.birthday-banner--marquee .birthday-banner__marquee-track {
+  overflow: hidden; white-space: nowrap; flex: 1;
+}
+.birthday-banner--marquee .birthday-banner__marquee-track span {
+  display: inline-block; padding-left: 100%;
+  animation: marquee-scroll 14s linear infinite;
+  font-weight: 600; color: var(--ink);
+}
+@keyframes marquee-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-100%); }
+}
+
+/* Bang trang thong bao day - phong cach ghi chu dan bang, tung dong la
+   1 "to giay note" nho de phan biet voi danh sach thong bao thuong */
+.notice-board {
+  background: var(--surface-card); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 16px; margin-top: 16px;
+}
+.notice-board__title { font-size: 13.5px; font-weight: 700; margin: 0 0 12px; }
+.notice-board__list { display: flex; flex-direction: column; gap: 8px; max-height: 360px; overflow-y: auto; }
+.notice-board__item {
+  background: #fffbe6; border: 1px solid #f0e4a8; border-radius: 8px;
+  padding: 10px 12px; font-size: 12.5px; cursor: pointer; transition: transform 0.12s;
+}
+.notice-board__item:hover { transform: translateY(-1px); }
+.notice-board__item__title { font-weight: 600; color: var(--ink); margin-bottom: 2px; }
+.notice-board__item__meta { color: var(--muted); font-size: 11px; }
+
 .hub-section-title {
   font-family: var(--font-display); font-size: 15px; font-weight: 700; color: var(--ink);
   margin: 26px 4px 14px;
