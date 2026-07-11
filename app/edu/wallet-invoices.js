@@ -94,9 +94,20 @@ async function selectStudent(student) {
     ? links.map((l) => `${l.parent_accounts?.full_name || '—'} (${l.relationship || ''}) — ${l.parent_accounts?.phone || '—'}`).join(' · ')
     : 'Chưa liên kết phụ huynh nào';
 
-  let { data: wallet } = await supabase.from('wallets').select('id').eq('student_id', student.id).maybeSingle();
+  let { data: wallet, error: walletErr } = await supabase.from('wallets').select('id').eq('student_id', student.id).maybeSingle();
+  if (walletErr) {
+    document.getElementById('walletBalance').textContent = 'Lỗi tải ví';
+    console.error('Lỗi tải ví:', walletErr.message);
+    alert(`Không tải được thông tin ví: ${walletErr.message}\n\nBáo lại quản trị hệ thống nếu lỗi này lặp lại.`);
+    return;
+  }
   if (!wallet) {
-    const { data: created } = await supabase.from('wallets').insert({ student_id: student.id }).select('id').single();
+    const { data: created, error: createErr } = await supabase.from('wallets').insert({ student_id: student.id }).select('id').single();
+    if (createErr || !created) {
+      document.getElementById('walletBalance').textContent = 'Lỗi tạo ví';
+      alert(`Không tạo được ví mới cho học sinh này: ${createErr?.message || 'không rõ lý do'}.\n\nBáo lại quản trị hệ thống nếu lỗi này lặp lại.`);
+      return;
+    }
     wallet = created;
   }
   ACTIVE_WALLET_ID = wallet.id;
