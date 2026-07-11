@@ -47,8 +47,13 @@ function findActiveGroup(currentPage, profile) {
   // (Nhan su/Ke toan) dù ho khong thuoc phong do. Gio uu tien nhom ma
   // chinh nguoi dang xem CO QUYEN thay item do (canAccess), chi fallback
   // ve khop href don thuan neu khong nhom nao khop dung quyen.
+  //
+  // Loai bo nhom "alwaysShow" (vd "Chuc nang ca nhan") khoi danh sach
+  // canh tranh — nhung nhom nay LUON hien rieng, khong nen duoc chon lam
+  // "nhom dang active" chi vi chua 1 item trung href (vd "Phieu mua
+  // hang" xuat hien ca o day nhu 1 loi tat ca nhan).
   const groupsWithHref = NAV_CONFIG.filter((group) =>
-    group.sectionKey && group.items.some((item) => currentPage.endsWith(item.href))
+    group.sectionKey && !group.alwaysShow && group.items.some((item) => currentPage.endsWith(item.href))
   );
   if (groupsWithHref.length === 0) return null;
   if (profile) {
@@ -56,6 +61,16 @@ function findActiveGroup(currentPage, profile) {
       group.items.some((item) => currentPage.endsWith(item.href) && canAccess(item, profile))
     );
     if (matchByRole) return matchByRole;
+
+    // Khong nhom nao qua duoc kiem tra quyen (vd giao vien khong co quyen
+    // "Thu hoc phi" o CA 2 ban, do dung thu vao link khong danh cho ho) —
+    // thay vi mac dinh chon nhom DUNG DAU mang (thuong la Nhan su/Ke toan,
+    // gay cam giac "bi day nham vao phong khac"), uu tien nhom co layer
+    // KHOP DUNG boi canh vai tro chinh cua nguoi dang xem.
+    const isCentersPerson = profile.isCenterManager || profile.isTeacher || profile.roleCode === 'CONSULTANT';
+    const layerPref = isCentersPerson ? 'centers' : 'office';
+    const byLayer = groupsWithHref.find((group) => group.layer === layerPref);
+    if (byLayer) return byLayer;
   }
   return groupsWithHref[0];
 }
