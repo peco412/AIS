@@ -13,6 +13,16 @@
   min-height: 100vh;
 }
 
+/* Bo sidebar cay thu muc, thay bang he thong The gioi + Icon Hub — topbar
+   va main chiem full chieu ngang, khong con cot sidebar nua. */
+.app-shell.app-shell--no-sidebar {
+  grid-template-columns: 1fr;
+  grid-template-areas:
+    "topbar"
+    "main";
+}
+.app-shell--no-sidebar .main { max-width: 1100px; margin: 0 auto; }
+
 @media (max-width: 960px) {
   .app-shell { grid-template-columns: 0 1fr; }
   .sidebar {
@@ -580,3 +590,81 @@ body.hub-body { background: var(--surface); }
 .tile-consultant { --tile-bg: linear-gradient(150deg, #818cf8, #4f46e5); }
 .tile-exec   { --tile-bg: linear-gradient(150deg, #1e3a8a, #0f172a); }
 .tile-quick  { --tile-bg: linear-gradient(150deg, #38bdf8, #0284c7); }
+
+/* =========================================================================
+   HE THONG "4 THE GIOI" (ERP/CRM/Database/Ca nhan) — thay the sidebar cay
+   thu muc. World Switcher (dropdown chon the gioi) + Hub Overlay (luoi
+   icon toan man hinh thay cho viec di chuyen bang cay muc luc).
+   ========================================================================= */
+
+.world-switcher { position: relative; margin-left: 12px; }
+.world-switcher__btn {
+  display: flex; align-items: center; gap: 6px;
+  background: color-mix(in srgb, var(--world-color) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--world-color) 25%, transparent);
+  color: var(--world-color);
+  border-radius: 999px; padding: 6px 12px 6px 10px;
+  font-size: 12.5px; font-weight: 700; cursor: pointer;
+  transition: background var(--dur-fast) var(--ease);
+}
+.world-switcher__btn:hover { background: color-mix(in srgb, var(--world-color) 16%, transparent); }
+.world-switcher__icon { font-size: 14px; }
+.world-switcher__caret { font-size: 9px; opacity: 0.7; margin-left: 2px; }
+.world-switcher__menu {
+  position: absolute; top: calc(100% + 8px); left: 0; z-index: 200;
+  background: var(--surface-card); border: 1px solid var(--border);
+  border-radius: var(--radius-md); box-shadow: var(--shadow-md);
+  padding: 6px; min-width: 220px;
+}
+.world-switcher__option {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  background: transparent; border: none; border-radius: 8px;
+  padding: 9px 10px; font-size: 13px; font-weight: 600; color: var(--ink);
+  cursor: pointer; text-align: left; transition: background var(--dur-fast) var(--ease);
+}
+.world-switcher__option:hover { background: var(--surface-sunken); }
+.world-switcher__option.active { background: color-mix(in srgb, var(--world-color) 12%, transparent); color: var(--world-color); }
+.world-switcher__option .world-switcher__icon { font-size: 16px; }
+
+.hub-overlay {
+  position: fixed; inset: 0; z-index: 500;
+  display: flex; align-items: stretch; justify-content: flex-end;
+  opacity: 0; pointer-events: none; transition: opacity var(--dur-med) var(--ease);
+}
+.hub-overlay.show { opacity: 1; pointer-events: auto; }
+.hub-overlay__backdrop {
+  position: absolute; inset: 0; background: rgba(0,0,0,0.32); backdrop-filter: blur(2px);
+}
+.hub-overlay__panel {
+  position: relative; width: min(560px, 92vw); height: 100%;
+  background: var(--surface-base); box-shadow: var(--shadow-lg);
+  display: flex; flex-direction: column;
+  transform: translateX(24px); transition: transform var(--dur-med) var(--ease);
+}
+.hub-overlay.show .hub-overlay__panel { transform: translateX(0); }
+.hub-overlay__header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 22px; border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--world-color) 8%, var(--surface-base));
+}
+.hub-overlay__header-title { font-size: 17px; font-weight: 800; color: var(--ink); display: flex; align-items: center; gap: 10px; }
+.hub-overlay__body { flex: 1; overflow-y: auto; padding: 20px 22px 40px; }
+.hub-overlay__section { margin-bottom: 26px; }
+.hub-overlay__section-title { font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; margin: 0 0 12px; }
+.hub-overlay__subgroup-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; margin: 14px 0 8px; }
+.hub-overlay__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px; }
+.hub-overlay__tile {
+  display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center;
+  padding: 14px 8px; border-radius: var(--radius-md); background: var(--surface-card);
+  border: 1px solid var(--border); text-decoration: none; color: var(--ink);
+  transition: transform var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
+}
+.hub-overlay__tile:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+.hub-overlay__tile.active { border-color: var(--accent); background: var(--accent-tint); }
+.hub-overlay__tile-icon { font-size: 24px; }
+.hub-overlay__tile-label { font-size: 11.5px; font-weight: 600; line-height: 1.3; }
+
+@media (max-width: 640px) {
+  .world-switcher__label { display: none; }
+  .hub-overlay__grid { grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); }
+}

@@ -57,10 +57,20 @@ function findActiveGroup(currentPage, profile) {
   );
   if (groupsWithHref.length === 0) return null;
   if (profile) {
-    const matchByRole = groupsWithHref.find((group) =>
+    const roleMatches = groupsWithHref.filter((group) =>
       group.items.some((item) => currentPage.endsWith(item.href) && canAccess(item, profile))
     );
-    if (matchByRole) return matchByRole;
+    if (roleMatches.length > 0) {
+      // Neu NHIEU nhom cung hop le (vd BDH/Ky thuat co quyen "nhu ACC" o
+      // moi noi do inDept() tu dong dung cho ho, nen ca ban Ke toan LAN
+      // ban Khoi trung tam deu qua duoc kiem tra) — uu tien ban "Khoi
+      // trung tam" vi day la ngu canh van hanh cu the hon (tab da bam
+      // vao la tab Khoi trung tam), thay vi mac dinh roi vao Ke toan chi
+      // vi no dung truoc trong mang cau hinh.
+      const centersMatch = roleMatches.find((group) => group.layer === 'centers');
+      if (centersMatch) return centersMatch;
+      return roleMatches[0];
+    }
 
     // Khong nhom nao qua duoc kiem tra quyen (vd giao vien khong co quyen
     // "Thu hoc phi" o CA 2 ban, do dung thu vao link khong danh cho ho) —
@@ -75,117 +85,229 @@ function findActiveGroup(currentPage, profile) {
   return groupsWithHref[0];
 }
 
-function renderNav(profile, currentPage) {
-  const sidebarNav = document.getElementById('sidebarNav');
-  if (!sidebarNav) return;
-  sidebarNav.innerHTML = '';
+// ============================================================================
+// HE THONG "4 THE GIOI" (ERP / CRM / Database / Ca nhan) — thay the hoan
+// toan sidebar cay thu muc bang icon hub, dung theo yeu cau tach rieng
+// ERP (Ban dieu hanh + Khoi van phong, quy trinh noi bo) khoi CRM (Khoi
+// trung tam, huong ve khach hang/hoc vien) khoi Database (cau hinh goc).
+// ============================================================================
+export const WORLD_LAYERS = {
+  erp: ['executive', 'office'],
+  crm: ['centers'],
+  database: ['masterdata'],
+  personal: ['personal'],
+};
+const WORLD_META = {
+  erp: { label: 'ERP — Vận hành nội bộ', icon: '🏢', color: '#0094D9' },
+  crm: { label: 'CRM — Khối trung tâm', icon: '🎓', color: '#22a06b' },
+  database: { label: 'Database — Dữ liệu gốc', icon: '🗄️', color: '#6c5ce7' },
+  personal: { label: 'Cá nhân', icon: '👤', color: '#8a8f98' },
+};
+const WORLD_STORAGE_KEY = 'ais_current_world';
 
-  // 1) "Tầng Thông báo, Tổng quan công việc" — luôn hiện đầu tiên
-  const topGroup = NAV_CONFIG.find((g) => !g.sectionKey && !g.section);
-  if (topGroup) {
-    const items = topGroup.items.filter((item) => canAccess(item, profile));
-    if (items.length > 0) {
-      const heading = document.createElement('div');
-      heading.className = 'sidebar__section';
-      heading.textContent = t('nav.layer.overview', 'Thông Báo & Tổng Quan');
-      sidebarNav.appendChild(heading);
-
-      const ul = document.createElement('ul');
-      ul.className = 'sidebar__nav';
-      items.forEach((item) => ul.appendChild(buildNavLi(item, profile, currentPage)));
-      sidebarNav.appendChild(ul);
-    }
-  }
-
-  // 2) "Chức năng cá nhân" — LUÔN hiện đủ (alwaysShow: true), không chỉ khi
-  // đang đứng đúng trang trong nhóm này như trước, để đúng ý "1 trong 4
-  // phần chính luôn thấy được, không ẩn hiện tuỳ ngữ cảnh".
-  const personalGroup = NAV_CONFIG.find((g) => g.alwaysShow);
-  if (personalGroup) {
-    const items = personalGroup.items.filter((item) => canAccess(item, profile));
-    if (items.length > 0) {
-      const parentLabel = document.createElement('div');
-      parentLabel.className = 'sidebar__section sidebar__section--parent';
-      parentLabel.textContent = t('nav.layer.personal', 'Tiện Ích Cá Nhân');
-      sidebarNav.appendChild(parentLabel);
-
-      const heading = document.createElement('div');
-      heading.className = 'sidebar__section sidebar__section--child';
-      heading.textContent = t(personalGroup.sectionKey, personalGroup.section);
-      sidebarNav.appendChild(heading);
-
-      const ul = document.createElement('ul');
-      ul.className = 'sidebar__nav';
-      items.forEach((item) => ul.appendChild(buildNavLi(item, profile, currentPage)));
-      sidebarNav.appendChild(ul);
-    }
-  }
-
-  // 3) "Tầng Phòng ban điều hành" HOẶC "Tầng Hệ thống trung tâm" — tuỳ
-  // nhóm đang active thuộc layer nào (2 tầng khác nhau theo đúng yêu cầu,
-  // KHÔNG gộp chung 1 nhãn "Các phòng ban" như trước nữa). Vẫn chỉ hiện
-  // đúng 1 nhóm con tại 1 thời điểm (giữ nguyên tắc chống rối mắt).
-  const activeGroup = findActiveGroup(currentPage, profile);
-  if (!activeGroup || activeGroup.alwaysShow || !activeGroup.sectionKey) return;
-
-  const visibleItems = activeGroup.items.filter((item) => canAccess(item, profile));
-  if (visibleItems.length === 0) return;
-
-  const LAYER_LABEL = {
-    executive: { key: 'nav.layer.executive', fallback: 'Ban Điều Hành' },
-    office: { key: 'nav.layer.office', fallback: 'Khối Văn Phòng' },
-    centers: { key: 'nav.layer.centers', fallback: 'Khối Trung Tâm' },
-    masterdata: { key: 'nav.layer.masterdata', fallback: 'Cấu Hình Dữ Liệu Gốc' },
-  };
-  const layerInfo = LAYER_LABEL[activeGroup.layer];
-
-  if (layerInfo) {
-    const parentLabel = document.createElement('div');
-    parentLabel.className = 'sidebar__section sidebar__section--parent';
-    parentLabel.textContent = t(layerInfo.key, layerInfo.fallback);
-    sidebarNav.appendChild(parentLabel);
-  }
-
-  // "Ban điều hành" chỉ có đúng 1 nhóm bên trong — nhãn cha và nhãn con sẽ
-  // trùng chữ nhau ("Ban Điều Hành" / "Ban điều hành"), bỏ nhãn con cho
-  // gọn, khác với Khối Văn Phòng/Khối Trung Tâm có nhiều phòng ban con
-  // thật sự cần phân biệt.
-  if (activeGroup.layer !== 'executive' && activeGroup.layer !== 'masterdata') {
-    const heading = document.createElement('div');
-    heading.className = 'sidebar__section sidebar__section--child';
-    heading.textContent = t(activeGroup.sectionKey, activeGroup.section || '');
-    sidebarNav.appendChild(heading);
-  }
-
-  const ul = document.createElement('ul');
-  ul.className = 'sidebar__nav';
-  const SUBGROUP_LABEL = {
-    tuition: 'Thu học phí',
-    warehouse: 'Kho & Chi phí vận hành',
-    role: 'Chức năng riêng (theo vai trò)',
-  };
-  let lastSubgroup = null;
-  visibleItems.forEach((item) => {
-    if (item.subgroup && item.subgroup !== lastSubgroup && SUBGROUP_LABEL[item.subgroup]) {
-      lastSubgroup = item.subgroup;
-      const subHeading = document.createElement('li');
-      subHeading.className = 'sidebar__subgroup';
-      subHeading.textContent = SUBGROUP_LABEL[item.subgroup];
-      ul.appendChild(subHeading);
-    }
-    ul.appendChild(buildNavLi(item, profile, currentPage));
-  });
-  sidebarNav.appendChild(ul);
+export function layerToWorld(layer) {
+  return Object.keys(WORLD_LAYERS).find((w) => WORLD_LAYERS[w].includes(layer)) || 'erp';
 }
 
-function buildNavLi(item, profile, currentPage) {
-  const li = document.createElement('li');
-  const a = document.createElement('a');
-  a.href = item.href;
-  a.innerHTML = `<span class="icon">${item.icon}</span><span>${esc(t(item.labelKey, item.label))}</span>`;
-  if (currentPage && currentPage.endsWith(item.href)) a.classList.add('active');
-  li.appendChild(a);
-  return li;
+export function getSavedWorld() {
+  return localStorage.getItem(WORLD_STORAGE_KEY);
+}
+
+function setSavedWorld(world) {
+  localStorage.setItem(WORLD_STORAGE_KEY, world);
+}
+
+// The gioi hien tai: uu tien lua chon nguoi dung da luu tu truoc (chuyen
+// qua lai bang nut tren thanh tren cung), khong co thi tu suy ra tu trang
+// dang dung (vd dang o /acc/... -> ERP), mac dinh ERP neu khong doan duoc.
+function resolveCurrentWorld(currentPage, profile) {
+  const saved = getSavedWorld();
+  if (saved && WORLD_LAYERS[saved]) return saved;
+  const group = findActiveGroup(currentPage, profile);
+  if (group?.layer) return layerToWorld(group.layer);
+  return 'erp';
+}
+
+function renderNav(profile, currentPage) {
+  // AN HAN sidebar cay thu muc cu — thay bang he thong "4 The gioi" (ERP/
+  // CRM/Database/Ca nhan) + Icon Hub, dung theo yeu cau bo sidebar vi qua
+  // roi. Sidebar <aside> van con trong HTML cua tung trang (khong sua tay
+  // 80+ file), chi an di bang JS + CSS o day.
+  const sidebar = document.querySelector('.sidebar');
+  if (sidebar) sidebar.style.display = 'none';
+  document.querySelector('.app-shell')?.classList.add('app-shell--no-sidebar');
+
+  const currentWorld = resolveCurrentWorld(currentPage, profile);
+  injectWorldSwitcher(profile, currentWorld, currentPage);
+  injectHubLauncher(profile, currentWorld, currentPage);
+}
+
+// Danh sach the gioi ma nguoi nay THUC SU co it nhat 1 muc dung duoc —
+// an han the gioi rong (vd nhan vien thuong khong co gi trong "Database").
+function worldsWithAccess(profile) {
+  return Object.keys(WORLD_META).filter((world) => {
+    if (world === 'personal') return true; // ai cung co Chuc nang ca nhan
+    return NAV_CONFIG.some((group) =>
+      group.sectionKey && !group.alwaysShow && WORLD_LAYERS[world].includes(group.layer)
+      && group.items.some((item) => canAccess(item, profile))
+    );
+  });
+}
+
+/**
+ * Nut chon The gioi tren thanh tren cung — bam vao mo menu 4 lua chon
+ * (ERP/CRM/Database/Ca nhan), chon xong luu lai va tu dieu huong ve trang
+ * chu cua the gioi do (dashboard.html), tru khi dang o san 1 trang thuoc
+ * dung the gioi vua chon (thi chi doi trang thai, khong dieu huong).
+ */
+function injectWorldSwitcher(profile, currentWorld, currentPage) {
+  const anchor = document.querySelector('.topbar__left') || document.querySelector('.hub-topbar__brand');
+  if (!anchor) return;
+  document.getElementById('worldSwitcher')?.remove();
+
+  const available = worldsWithAccess(profile);
+  if (available.length <= 1) return; // chi 1 the gioi thi khong can nut chon
+
+  const meta = WORLD_META[currentWorld];
+  const wrap = document.createElement('div');
+  wrap.id = 'worldSwitcher';
+  wrap.className = 'world-switcher';
+  wrap.innerHTML = `
+    <button type="button" class="world-switcher__btn" id="worldSwitcherBtn" style="--world-color:${meta.color};">
+      <span class="world-switcher__icon">${meta.icon}</span>
+      <span class="world-switcher__label">${esc(meta.label.split(' — ')[0])}</span>
+      <span class="world-switcher__caret">▾</span>
+    </button>
+    <div class="world-switcher__menu" id="worldSwitcherMenu" style="display:none;">
+      ${available.map((w) => `
+        <button type="button" class="world-switcher__option ${w === currentWorld ? 'active' : ''}" data-world="${w}" style="--world-color:${WORLD_META[w].color};">
+          <span class="world-switcher__icon">${WORLD_META[w].icon}</span>
+          <span>${esc(WORLD_META[w].label)}</span>
+        </button>
+      `).join('')}
+    </div>
+  `;
+  anchor.appendChild(wrap);
+
+  const btn = wrap.querySelector('#worldSwitcherBtn');
+  const menu = wrap.querySelector('#worldSwitcherMenu');
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+  });
+  document.addEventListener('click', () => { menu.style.display = 'none'; });
+  wrap.querySelectorAll('[data-world]').forEach((opt) => {
+    opt.addEventListener('click', () => {
+      const world = opt.dataset.world;
+      setSavedWorld(world);
+      menu.style.display = 'none';
+      document.dispatchEvent(new CustomEvent('ais:worldchange', { detail: { world } }));
+      // Dang o dung trang thuoc the gioi vua chon -> chi ve lai hub, khong
+      // can dieu huong. Khac the gioi -> ve trang chu de bat dau lai.
+      const stillInWorld = layerToWorld(findActiveGroup(currentPage, profile)?.layer) === world;
+      if (!stillInWorld && !currentPage?.endsWith('/dashboard.html')) {
+        window.location.href = '/dashboard.html';
+      } else {
+        injectWorldSwitcher(profile, world, currentPage);
+        injectHubLauncher(profile, world, currentPage);
+      }
+    });
+  });
+}
+
+/**
+ * Nut mo Hub (thay cho nut hamburger cu tung dung de dong/mo sidebar) —
+ * bam vao hien 1 lop phu day man hinh voi luoi icon cua DUNG the gioi
+ * dang chon, thay hoan toan cho viec di chuyen bang cay sidebar truoc day.
+ */
+function injectHubLauncher(profile, currentWorld, currentPage) {
+  let menuToggle = document.getElementById('menuToggle');
+  if (!menuToggle) {
+    // Trang khong san co nut hamburger (vd dashboard.html dung topbar
+    // rieng "hub-topbar") — tu tao 1 nut moi de mo Hub.
+    const anchor = document.querySelector('.topbar__left') || document.querySelector('.hub-topbar__brand');
+    if (!anchor) return;
+    menuToggle = document.createElement('button');
+    menuToggle.id = 'menuToggle';
+    menuToggle.className = 'menu-toggle';
+    anchor.insertBefore(menuToggle, anchor.firstChild);
+  }
+  menuToggle.textContent = '⊞';
+  menuToggle.title = t('common.openHub', 'Mở danh mục điều hướng');
+  menuToggle.style.display = '';
+  menuToggle.onclick = () => openHubOverlay(profile, currentWorld, currentPage);
+}
+
+function openHubOverlay(profile, currentWorld, currentPage) {
+  document.getElementById('hubOverlay')?.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'hubOverlay';
+  overlay.className = 'hub-overlay';
+
+  const meta = WORLD_META[currentWorld];
+  const groups = NAV_CONFIG.filter((g) =>
+    g.sectionKey && !g.alwaysShow && WORLD_LAYERS[currentWorld].includes(g.layer)
+  );
+  // "Ca nhan" la 1 nhom rieng (alwaysShow), khong nam trong NAV_CONFIG
+  // theo dung pattern nhu cac the gioi khac — gom rieng khi world=personal.
+  const personalGroup = NAV_CONFIG.find((g) => g.alwaysShow);
+  const effectiveGroups = currentWorld === 'personal' && personalGroup ? [personalGroup] : groups;
+
+  const sectionsHtml = effectiveGroups.map((group) => {
+    const items = group.items.filter((item) => canAccess(item, profile));
+    if (items.length === 0) return '';
+    const SUBGROUP_LABEL = { tuition: 'Thu học phí', warehouse: 'Kho & Chi phí vận hành', role: 'Chức năng riêng' };
+    const hasSub = items.some((i) => i.subgroup);
+    let bodyHtml;
+    if (hasSub) {
+      bodyHtml = Object.keys(SUBGROUP_LABEL).map((sg) => {
+        const sgItems = items.filter((i) => i.subgroup === sg);
+        if (sgItems.length === 0) return '';
+        return `
+          <div class="hub-overlay__subgroup-label">${SUBGROUP_LABEL[sg]}</div>
+          <div class="hub-overlay__grid">${sgItems.map((item) => hubTileHtml(item, profile, currentPage)).join('')}</div>
+        `;
+      }).join('');
+    } else {
+      bodyHtml = `<div class="hub-overlay__grid">${items.map((item) => hubTileHtml(item, profile, currentPage)).join('')}</div>`;
+    }
+    return `
+      <div class="hub-overlay__section">
+        <h3 class="hub-overlay__section-title">${esc(t(group.sectionKey, group.section))}</h3>
+        ${bodyHtml}
+      </div>
+    `;
+  }).join('');
+
+  overlay.innerHTML = `
+    <div class="hub-overlay__backdrop" id="hubOverlayBackdrop"></div>
+    <div class="hub-overlay__panel">
+      <div class="hub-overlay__header" style="--world-color:${meta.color};">
+        <div class="hub-overlay__header-title"><span>${meta.icon}</span> ${esc(meta.label)}</div>
+        <button type="button" class="icon-btn" id="hubOverlayClose">✕</button>
+      </div>
+      <div class="hub-overlay__body">
+        ${sectionsHtml || '<div class="empty-cell">Không có mục nào khả dụng trong thế giới này.</div>'}
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  requestAnimationFrame(() => overlay.classList.add('show'));
+
+  const close = () => { overlay.classList.remove('show'); setTimeout(() => overlay.remove(), 200); };
+  overlay.querySelector('#hubOverlayBackdrop').addEventListener('click', close);
+  overlay.querySelector('#hubOverlayClose').addEventListener('click', close);
+}
+
+function hubTileHtml(item, profile, currentPage) {
+  const active = currentPage && currentPage.endsWith(item.href);
+  return `
+    <a href="${item.href}" class="hub-overlay__tile ${active ? 'active' : ''}">
+      <div class="hub-overlay__tile-icon">${item.icon}</div>
+      <div class="hub-overlay__tile-label">${esc(t(item.labelKey, item.label))}</div>
+    </a>
+  `;
 }
 
 function esc(s) { return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }

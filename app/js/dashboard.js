@@ -1,4 +1,4 @@
-import { bootShell, MOBILE_ALLOWED_HREFS, isMobileViewport } from './shell.js';
+import { bootShell, MOBILE_ALLOWED_HREFS, isMobileViewport, WORLD_LAYERS, getSavedWorld, layerToWorld } from './shell.js';
 import { supabase } from './supabase.js';
 import { NAV_CONFIG } from './navConfig.js';
 import { t } from './i18n.js';
@@ -51,8 +51,15 @@ function renderHub(profile) {
     masterdata: 'Cấu Hình Dữ Liệu Gốc',
   };
   let lastLayer = null;
+  const currentWorld = getSavedWorld() || 'erp';
 
   NAV_CONFIG.forEach((group) => {
+    // Chi hien dung THE GIOI dang chon (ERP/CRM/Database/Ca nhan) — dong
+    // bo voi He thong "4 The gioi" o shell.js, tranh trang chu hien lan
+    // lon ca cac phong ban khong thuoc the gioi nguoi dang xem chon.
+    const groupWorld = group.alwaysShow ? 'personal' : layerToWorld(group.layer);
+    if (groupWorld !== currentWorld) return;
+
     const visibleItems = group.items.filter((item) => canAccess(item));
 
     // Nhóm không tiêu đề (Bảng tổng quan/Thông báo) đã có sẵn lối vào
@@ -196,6 +203,14 @@ function renderGreeting(profile) {
   if (dateEl) dateEl.textContent = new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 }
 
+function updateHubSectionTitle() {
+  const el = document.querySelector('[data-i18n="dashboard.apps"]');
+  if (!el) return;
+  const world = getSavedWorld() || 'erp';
+  const TITLE = { erp: 'ERP — Vận hành nội bộ', crm: 'CRM — Khối trung tâm', database: 'Database — Dữ liệu gốc', personal: 'Chức năng cá nhân' };
+  el.textContent = TITLE[world] || 'Phòng ban';
+}
+
 (async () => {
   try {
     const { profile } = await bootShell();
@@ -204,8 +219,9 @@ function renderGreeting(profile) {
     // buoc do bi thieu thoi, cac phan khac van hien binh thuong.
     try { checkBirthday(profile.dob, profile.fullName.split(' ').slice(-1)[0]); } catch (e) { console.warn('checkBirthday lỗi:', e); }
     try { renderGreeting(profile); } catch (e) { console.warn('renderGreeting lỗi:', e); }
-    try { renderHub(profile); } catch (e) { console.warn('renderHub lỗi:', e); }
+    try { updateHubSectionTitle(); renderHub(profile); } catch (e) { console.warn('renderHub lỗi:', e); }
     document.addEventListener('ais:langchange', () => renderHub(profile));
+    document.addEventListener('ais:worldchange', () => { updateHubSectionTitle(); renderHub(profile); });
 
     const installCard = document.getElementById('installBanner');
     registerInstallBanner(installCard, installCard);
