@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mua sắm — AIS Center</title>
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#0094D9" />
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/parent.css" />
+<style>
+  .shop-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .shop-item__name { flex: 1; }
+  .shop-item__price { font-weight: 700; color: var(--accent-deep); font-size: 13px; }
+  .shop-item__qty { display: flex; align-items: center; gap: 8px; }
+  .shop-item__qty button { width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--border); background: #fff; font-size: 15px; cursor: pointer; }
+  .shop-item__qty span { min-width: 20px; text-align: center; font-weight: 600; }
+  .shop-item__size { width: 60px; padding: 6px; border-radius: 8px; border: 1px solid var(--border); font-size: 12px; }
+</style>
+</head>
+<body>
+
+<header class="app-topbar">
+  <div class="app-topbar__title">🛍️ Mua sắm bằng Ví</div>
+  <div class="app-topbar__right"><button class="icon-btn" onclick="location.href='wallet.html'">✕</button></div>
+</header>
+
+<main class="app-main">
+  <div class="form-error" id="shopError"></div>
+  <div class="card">
+    <h3>Danh sách sản phẩm</h3>
+    <div id="itemsList"></div>
+  </div>
+
+  <div class="card" style="position:sticky; bottom:80px; box-shadow:0 -4px 16px rgba(0,0,0,0.08);">
+    <div class="batch-row"><span class="cell-muted">Tổng tiền (AIScoins)</span><strong id="cartTotal">0</strong></div>
+    <button class="btn-primary" id="btnSubmitOrder">Gửi yêu cầu mua hàng</button>
+    <p class="cell-muted" style="text-align:center; margin-top:8px; font-size:11px;">Trung tâm sẽ kiểm tra hàng thực tế trước khi trừ ví.</p>
+  </div>
+</main>
+
+<nav class="bottom-nav">
+  <a href="home.html"><span class="icon">🏠</span>Trang chủ</a>
+  <a href="wallet.html" class="active"><span class="icon">💳</span>Ví AIScoins</a>
+  <a href="account.html"><span class="icon">👤</span>Tài khoản</a>
+</nav>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="env.js"></script>
+<script type="module" src="js/shop.js"></script>
+</body>
+</html>

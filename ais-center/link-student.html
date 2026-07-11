@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Liên kết học sinh — AIS Center</title>
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#0094D9" />
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/parent.css" />
+</head>
+<body class="auth-body">
+
+<div class="auth-card">
+  <div class="auth-logo">🔗 <span>Liên kết học sinh</span></div>
+  <p class="auth-sub">Nhập đúng thông tin học sinh để tự động liên kết ví với con của bạn. Hệ thống sẽ đối chiếu với số điện thoại bạn vừa đăng nhập.</p>
+
+  <div class="form-error" id="linkError"></div>
+  <div class="cell-muted" id="linkSuccess" style="display:none; background:#e3f6e9; color:#1d8a4c; padding:10px 13px; border-radius:10px; margin-bottom:14px;"></div>
+
+  <div class="field">
+    <label for="studentName">Họ và tên học sinh (đúng như hồ sơ tại trung tâm)</label>
+    <input type="text" id="studentName" placeholder="Nguyễn Văn A" />
+  </div>
+  <div class="field">
+    <label for="studentDob">Ngày sinh học sinh</label>
+    <input type="date" id="studentDob" />
+  </div>
+
+  <button class="btn-primary" id="btnLink">Liên kết ngay</button>
+  <button class="btn-link" id="btnSkip">Để sau, vào trang chủ</button>
+
+  <p class="cell-muted" style="text-align:center; margin-top:16px; font-size:11.5px;">
+    Không liên kết được? Số điện thoại bạn đăng nhập cần trùng với số đã đăng ký tại trung tâm lúc ghi danh. Vui lòng liên hệ trực tiếp trung tâm để được hỗ trợ.
+  </p>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="env.js"></script>
+<script type="module" src="js/linkStudent.js"></script>
+</body>
+</html>

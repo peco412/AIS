@@ -144,10 +144,7 @@ function selectedPlanType() {
 document.querySelectorAll('input[name="planType"]').forEach((radio) => {
   radio.addEventListener('change', async () => {
     const type = selectedPlanType();
-    document.getElementById('manualFields').style.display = type === 'manual' ? 'block' : 'none';
-    document.getElementById('planScopeField').style.display = type === 'manual' ? 'none' : 'block';
     document.getElementById('planPricePreview').textContent = '';
-    if (type === 'manual') return;
 
     const label = document.getElementById('planScopeLabel');
     const select = document.getElementById('planScopeSelect');
@@ -175,16 +172,17 @@ document.getElementById('planScopeSelect').addEventListener('change', updatePlan
 // Gia luon cong don tu tang thap nhat "Khoa" (program_courses) - dung
 // cho ca 3 hinh thuc, chi khac nhau o cach loc pham vi (qua 1/2/3 lop
 // join tuong ung voi sublevel/level/program).
-let PLAN_FINAL_PRICE = 0;
+let PLAN_BASE_PRICE = 0;
+let PLAN_TYPE_DISCOUNT_RATE = 0;
 
 async function updatePlanPricePreview() {
   const type = selectedPlanType();
   const scopeId = document.getElementById('planScopeSelect').value;
   const previewEl = document.getElementById('planPricePreview');
-  if (type === 'manual' || !scopeId) { previewEl.textContent = ''; PLAN_FINAL_PRICE = 0; updateRemainingPreview(); return; }
+  if (!scopeId) { previewEl.textContent = ''; PLAN_BASE_PRICE = 0; PLAN_TYPE_DISCOUNT_RATE = 0; recomputeAmounts(); return; }
 
   const { data: discountRow } = await supabase.from('payment_plan_discounts').select('discount_rate').eq('plan_type', type).single();
-  const discountRate = discountRow?.discount_rate || 0;
+  PLAN_TYPE_DISCOUNT_RATE = discountRow?.discount_rate || 0;
 
   let basePrice = 0, courseCount = 0;
   if (type === 'sublevel') {
@@ -207,16 +205,16 @@ async function updatePlanPricePreview() {
     courseCount = (data || []).length;
   }
 
-  // Cong don them uu dai He thong (Hệ thống ưu đãi cua Ke toan cau hinh)
-  // vao xem truoc — truoc day preview CHI tinh uu dai theo hinh thuc
-  // dong, thieu mat phan nay du RPC tao hoa don o server da tinh dung.
-  const totalRate = Math.min((discountRate || 0) + (AUTO_DISCOUNT_RATE || 0), 1);
-  const finalPrice = basePrice * (1 - totalRate);
-  PLAN_FINAL_PRICE = finalPrice;
+  PLAN_BASE_PRICE = basePrice;
+  // Xem truoc gop du 3 nguon uu dai (hinh thuc dong + He thong tu dong +
+  // tay nhap them, tay nhap se cong sau khi nguoi dung go o duoi) — o day
+  // moi hien 2 nguon dau, uu dai tay se cap nhat qua recomputeAmounts().
+  const previewRate = Math.min(PLAN_TYPE_DISCOUNT_RATE + AUTO_DISCOUNT_RATE, 1);
+  const finalPrice = basePrice * (1 - previewRate);
   previewEl.innerHTML = basePrice > 0
-    ? `Gồm ${courseCount} khoá — Giá gốc: ${fmtMoney(basePrice)} đ — Giảm ${(totalRate * 100).toFixed(1)}% (hình thức đóng + hệ thống ưu đãi) — <strong>Thu: ${fmtMoney(finalPrice)} đ</strong>`
+    ? `Gồm ${courseCount} khoá — Giá gốc: ${fmtMoney(basePrice)} đ — Giảm ${(previewRate * 100).toFixed(1)}% (hình thức đóng + hệ thống ưu đãi, chưa gồm ưu đãi tay) — <strong>Thu: ${fmtMoney(finalPrice)} đ</strong>`
     : `<span style="color:var(--danger);">Chưa cấu hình học phí cho khoá nào thuộc phạm vi này.</span>`;
-  updateRemainingPreview();
+  recomputeAmounts();
 }
 
 let AUTO_DISCOUNT_RATE = 0;
@@ -225,13 +223,11 @@ let RECEIVED_TOUCHED = false;
 document.getElementById('btnNewInvoice').addEventListener('click', async () => {
   document.getElementById('createError').classList.remove('show');
   document.querySelector('input[name="planType"][value="sublevel"]').checked = true;
-  document.getElementById('manualFields').style.display = 'none';
   document.getElementById('planScopeField').style.display = 'block';
   document.querySelector('input[name="planType"]:checked').dispatchEvent(new Event('change'));
   const now = new Date();
   document.getElementById('invYear').value = now.getFullYear();
   document.getElementById('invMonth').value = now.getMonth() + 1;
-  document.getElementById('invAmountVnd').value = '';
   document.getElementById('invDueDate').value = '';
   document.getElementById('manualDiscountRate').value = 0;
   document.getElementById('specialCategory').value = '';
@@ -264,42 +260,28 @@ document.getElementById('btnNewInvoice').addEventListener('click', async () => {
 });
 
 function updateNetAmountPreview() {
-  const total = Number(document.getElementById('invAmountVnd').value) || 0;
+  recomputeAmounts();
+}
+
+// Tong tien sau uu dai = Gia goc x (1 - Uu dai hinh thuc dong - Uu dai He
+// thong tu dong - Uu dai tay nhap them) — gop CA 3 nguon uu dai lam 1,
+// ap dung chung cho ca 3 hinh thuc thu (Theo khoa/Cap do/Chuong trinh).
+function recomputeAmounts() {
   const manualRate = Number(document.getElementById('manualDiscountRate').value) / 100 || 0;
-  // Ưu đãi tự động + ưu đãi tay CỘNG DỒN (khác quy tắc top-up ví vốn giới
-  // hạn 40% — ở đây la giam gia hoc phi tai cho, khong ap tran nhu vi).
-  const totalRate = Math.min(AUTO_DISCOUNT_RATE + manualRate, 1);
-  const net = total * (1 - totalRate);
+  const totalRate = Math.min(PLAN_TYPE_DISCOUNT_RATE + AUTO_DISCOUNT_RATE + manualRate, 1);
+  const net = PLAN_BASE_PRICE * (1 - totalRate);
   document.getElementById('netAmountPreview').textContent = `${net.toLocaleString('vi-VN')} đ`;
   // Mac dinh "Tien nhan" = du Tong tien (truong hop thuong gap nhat: dong
   // du 1 lan) — nhung neu nhan vien da tu tay sua o thi khong ghi de nua,
   // de ho tu do ghi dung so tien thuc nhan khi phu huynh dong 1 phan.
   if (!RECEIVED_TOUCHED) document.getElementById('invReceivedVnd').value = net || '';
-  updateRemainingPreview(net);
-}
-
-// "Tien nhan" la O NHAP TAY that su (khong phai tinh san) — phu huynh co
-// the tra MOT PHAN ngay luc do, nhan vien tu ghi dung so tien thuc nhan,
-// he thong moi tinh ra "So tien con lai" dung nghia.
-function updateRemainingPreview(netTotal) {
-  const type = selectedPlanType();
-  const total = netTotal ?? (type === 'manual' ? (() => {
-    const t = Number(document.getElementById('invAmountVnd').value) || 0;
-    const manualRate = Number(document.getElementById('manualDiscountRate').value) / 100 || 0;
-    const totalRate = Math.min(AUTO_DISCOUNT_RATE + manualRate, 1);
-    return t * (1 - totalRate);
-  })() : PLAN_FINAL_PRICE);
-  // Mac dinh Tien nhan = du tong tien khi doi hinh thuc/pham vi, tru khi
-  // nhan vien da tu tay sua (giong y het hanh vi ben "Nhap tay tu do").
-  if (!RECEIVED_TOUCHED) document.getElementById('invReceivedVnd').value = total || '';
   const received = Number(document.getElementById('invReceivedVnd').value) || 0;
-  const remaining = Math.max(total - received, 0);
+  const remaining = Math.max(net - received, 0);
   document.getElementById('remainingPreview').textContent = `${remaining.toLocaleString('vi-VN')} đ`;
   document.getElementById('remainingPreview').style.color = remaining > 0 ? 'var(--danger)' : 'var(--success)';
 }
-document.getElementById('invAmountVnd').addEventListener('input', updateNetAmountPreview);
-document.getElementById('manualDiscountRate').addEventListener('input', updateNetAmountPreview);
-document.getElementById('invReceivedVnd').addEventListener('input', () => { RECEIVED_TOUCHED = true; updateRemainingPreview(); });
+document.getElementById('manualDiscountRate').addEventListener('input', recomputeAmounts);
+document.getElementById('invReceivedVnd').addEventListener('input', () => { RECEIVED_TOUCHED = true; recomputeAmounts(); });
 document.getElementById('closeCreateModal').addEventListener('click', () => createModal.classList.remove('show'));
 document.getElementById('cancelCreateModal').addEventListener('click', () => createModal.classList.remove('show'));
 
@@ -307,69 +289,32 @@ document.getElementById('btnSubmitInvoice').addEventListener('click', async () =
   const errBox = document.getElementById('createError');
   errBox.classList.remove('show');
   const type = selectedPlanType();
+  const scopeId = document.getElementById('planScopeSelect').value;
+  if (!scopeId) { errBox.textContent = 'Vui lòng chọn phạm vi.'; errBox.classList.add('show'); return; }
 
   try {
-    if (type === 'manual') {
-      const totalAmount = Number(document.getElementById('invAmountVnd').value);
-      const manualRate = Number(document.getElementById('manualDiscountRate').value) / 100 || 0;
-      const totalRate = Math.min(AUTO_DISCOUNT_RATE + manualRate, 1);
-      const discountVnd = Math.round(totalAmount * totalRate);
-      const netOwed = totalAmount - discountVnd;
-      const specialCategory = document.getElementById('specialCategory').value || null;
-      const receivedVnd = Math.min(Number(document.getElementById('invReceivedVnd').value) || 0, netOwed);
-      const hinhThucThu = document.getElementById('hinhThucThu').value;
+    const manualRate = Number(document.getElementById('manualDiscountRate').value) / 100 || 0;
+    const specialCategory = document.getElementById('specialCategory').value || null;
+    const { data: newInvoice, error } = await supabase.rpc('create_payment_plan_invoice', {
+      p_student_id: ACTIVE_STUDENT.id, p_plan_type: type, p_scope_id: scopeId,
+      p_manual_discount_rate: manualRate, p_special_category: specialCategory,
+    });
+    if (error) throw error;
 
-      const payload = {
-        student_id: ACTIVE_STUDENT.id,
-        period_year: Number(document.getElementById('invYear').value),
-        period_month: Number(document.getElementById('invMonth').value),
-        amount_vnd: totalAmount,
-        amount_aiscoin: totalAmount,
-        manual_discount_vnd: discountVnd,
-        discount_type: specialCategory ? 'special' : (totalRate > 0 ? 'case' : 'none'),
-        special_category: specialCategory,
-        manual_discount_reason: totalRate > 0
-          ? `Ưu đãi tự động ${(AUTO_DISCOUNT_RATE * 100).toFixed(1)}% + tay ${(manualRate * 100).toFixed(1)}%${specialCategory ? ` (${specialCategory})` : ''}`
-          : null,
-        due_date: document.getElementById('invDueDate').value,
-        status: 'unpaid',
-      };
-      if (!payload.amount_vnd || !payload.due_date) { errBox.textContent = 'Vui lòng nhập đủ số tiền và hạn chót.'; errBox.classList.add('show'); return; }
-
-      const { data: newInvoice, error } = await supabase.from('invoices').insert(payload).select('id').single();
-      if (error) throw error;
-
-      // "Tien nhan" — ghi nhan NGAY luon phan da thu duoc trong cung 1
-      // thao tac (truoc day form chi tao hoa don, khong ghi nhan thu tien
-      // gi ca, nen "Trang thai" khong bao gio tu chuyen dung theo dac ta).
-      if (receivedVnd > 0) {
-        const { error: ledgerErr } = await supabase.from('debt_ledger').insert({
-          invoice_id: newInvoice.id, source: hinhThucThu, amount_vnd: receivedVnd,
-        });
-        if (ledgerErr) throw ledgerErr;
-        const { error: refreshErr } = await supabase.rpc('refresh_invoice_status', { p_invoice_id: newInvoice.id });
-        if (refreshErr) throw refreshErr;
-      }
-    } else {
-      const scopeId = document.getElementById('planScopeSelect').value;
-      if (!scopeId) { errBox.textContent = 'Vui lòng chọn phạm vi.'; errBox.classList.add('show'); return; }
-      const { data: newInvoice, error } = await supabase.rpc('create_payment_plan_invoice', { p_student_id: ACTIVE_STUDENT.id, p_plan_type: type, p_scope_id: scopeId });
-      if (error) throw error;
-
-      // Ghi nhan tien thu NGAY LUC TAO — dung y het luong "Nhap tay tu do",
-      // truoc day hinh thuc Theo khoa/Cap do/Chuong trinh CHUA TUNG ghi
-      // nhan tien thu cung luc, chi tao hoa don roi bo do "unpaid" mai.
-      const receivedVnd = Math.min(Number(document.getElementById('invReceivedVnd').value) || 0, PLAN_FINAL_PRICE);
-      const hinhThucThu = document.getElementById('hinhThucThu').value;
-      if (receivedVnd > 0 && newInvoice?.id) {
-        const { error: ledgerErr } = await supabase.from('debt_ledger').insert({
-          invoice_id: newInvoice.id, source: hinhThucThu, amount_vnd: receivedVnd,
-        });
-        if (ledgerErr) throw ledgerErr;
-        const { error: refreshErr } = await supabase.rpc('refresh_invoice_status', { p_invoice_id: newInvoice.id });
-        if (refreshErr) throw refreshErr;
-      }
+    // "Tien nhan" — ghi nhan NGAY luon phan da thu duoc trong cung 1 thao
+    // tac (truoc day form chi tao hoa don, khong ghi nhan thu tien gi ca,
+    // nen "Trang thai" khong bao gio tu chuyen dung theo dac ta).
+    const receivedVnd = Math.min(Number(document.getElementById('invReceivedVnd').value) || 0, PLAN_BASE_PRICE);
+    const hinhThucThu = document.getElementById('hinhThucThu').value;
+    if (receivedVnd > 0 && newInvoice?.id) {
+      const { error: ledgerErr } = await supabase.from('debt_ledger').insert({
+        invoice_id: newInvoice.id, source: hinhThucThu, amount_vnd: receivedVnd,
+      });
+      if (ledgerErr) throw ledgerErr;
+      const { error: refreshErr } = await supabase.rpc('refresh_invoice_status', { p_invoice_id: newInvoice.id });
+      if (refreshErr) throw refreshErr;
     }
+
     createModal.classList.remove('show');
     await selectStudent(ACTIVE_STUDENT);
   } catch (err) {
