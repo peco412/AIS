@@ -105,55 +105,45 @@ export const NAV_CONFIG = [
     ],
   },
   {
-    sectionKey: 'nav.section.center', section: 'Quản lý trung tâm', layer: 'centers',
+    sectionKey: 'nav.section.center', section: 'Khối trung tâm', layer: 'centers',
     items: [
-      // --- Phần Thu học phí ---
-      { subgroup: 'tuition', labelKey: 'nav.edu.walletInvoices', label: 'Thu học phí', href: '/edu/wallet-invoices.html', icon: '💳', visible: (p) => p.isCenterManager || inDept(p, 'ACC') },
+      // ========== Phần 1: Thu học phí ==========
+      { subgroup: 'tuition', labelKey: 'nav.edu.walletInvoices', label: 'Thu học phí', href: '/edu/wallet-invoices.html', icon: '💳', visible: (p) => p.isCenterManager || p.roleCode === 'CONSULTANT' || inDept(p, 'ACC') },
       { subgroup: 'tuition', labelKey: 'nav.acc.walletTopupRequests', label: 'Xác nhận nạp ví', href: '/acc/wallet-topup-requests.html', icon: '✅', visible: (p) => p.isCenterManager },
       { subgroup: 'tuition', labelKey: 'nav.edu.debtOverview', label: 'Công nợ học phí', href: '/edu/debt-overview.html', icon: '📒', visible: (p) => p.isCenterManager || isExecOrTech(p) },
-      { subgroup: 'tuition', labelKey: 'nav.edu.refundRequests', label: 'Yêu cầu hoàn phí', href: '/edu/refund-requests.html', icon: '↩️', visible: (p) => p.isCenterManager || inDept(p, 'ACC') },
-      { subgroup: 'tuition', labelKey: 'nav.edu.programPricing', label: 'Bảng giá chương trình học', href: '/edu/program-pricing.html', icon: '🏷️', visible: (p) => p.isCenterManager || inDept(p, 'ACC') },
+      { subgroup: 'tuition', labelKey: 'nav.edu.refundRequests', label: 'Yêu cầu hoàn phí', href: '/edu/refund-requests.html', icon: '↩️', visible: (p) => p.isCenterManager || p.roleCode === 'CONSULTANT' || inDept(p, 'ACC') },
+      { subgroup: 'tuition', labelKey: 'nav.edu.programPricing', label: 'Bảng giá chương trình học', href: '/edu/program-pricing.html', icon: '🏷️', visible: (p) => p.isCenterManager || p.roleCode === 'CONSULTANT' || inDept(p, 'ACC') },
       { subgroup: 'tuition', labelKey: 'nav.edu.parentLinks', label: 'Liên kết Phụ huynh', href: '/edu/parent-links.html', icon: '🔗', visible: (p) => p.isCenterManager || inDept(p, 'ACC') },
-      // --- Phần Kho Trung tâm & Quản lý Chi phí vận hành ---
+      // ========== Phần 2: Kho Trung tâm & Quản lý Chi phí vận hành ==========
       { subgroup: 'warehouse', labelKey: 'nav.edu.inventory', label: 'Kho trung tâm', href: '/edu/inventory.html', icon: '📦', visible: (p) => true },
       { subgroup: 'warehouse', labelKey: 'nav.acc.purchaseOrders', label: 'Phiếu thanh toán chi phí (mua hàng)', href: '/acc/purchase-orders.html', icon: '🧾', visible: (p) => p.isCenterManager },
-      // --- Phần Chức năng riêng từng vai trò (Quản lý trung tâm) ---
+      // ========== Phần 3: Chức năng riêng từng vai trò ==========
+      // -- Vai trò: Quản lý Trung tâm --
       { subgroup: 'role', labelKey: 'nav.edu.overview', label: 'Tổng quan trung tâm', href: '/edu/center-overview.html', icon: '🏫', visible: (p) => p.isCenterManager || inDept(p, 'HR') || inDept(p, 'MKT') },
       { subgroup: 'role', labelKey: 'nav.edu.attendance', label: 'Điểm danh & thống kê', href: '/edu/attendance-overview.html', icon: '✅', visible: (p) => p.isCenterManager },
       { subgroup: 'role', labelKey: 'nav.edu.dutySchedule', label: 'Phân lịch trực trung tâm', href: '/edu/duty-schedule.html', icon: '🕒', visible: (p) => p.isCenterManager || inDept(p, 'HR') || inDept(p, 'MKT') },
       { subgroup: 'role', labelKey: 'nav.edu.teacherSchedule', label: 'Phân lịch dạy giáo viên', href: '/edu/teacher-schedule.html', icon: '📆', visible: (p) => p.isCenterManager || inDept(p, 'HR') || inDept(p, 'MKT') },
-      { subgroup: 'role', labelKey: 'nav.edu.teachers', label: 'Danh sách giáo viên', href: '/edu/teachers.html', icon: '🍎', visible: (p) => p.isCenterManager || inDept(p, 'HR') || inDept(p, 'MKT') },
-      { subgroup: 'role', labelKey: 'nav.edu.classes', label: 'Danh sách lớp', href: '/edu/classes.html', icon: '🏷', visible: (p) => p.isCenterManager || inDept(p, 'HR') || inDept(p, 'MKT') },
-      { subgroup: 'role', labelKey: 'nav.edu.students', label: 'Danh sách học viên', href: '/edu/students.html', icon: '🎒', visible: (p) => p.isCenterManager || inDept(p, 'HR') || inDept(p, 'MKT') },
       { subgroup: 'role', labelKey: 'nav.edu.classAssignment', label: 'Phân lớp học viên', href: '/edu/class-assignment.html', icon: '🔀', visible: (p) => p.isCenterManager || inDept(p, 'HR') || inDept(p, 'MKT') },
-      { subgroup: 'role', labelKey: 'nav.edu.grades', label: 'Bảng điểm học viên', href: '/edu/grades.html', icon: '📈', visible: (p) => p.isCenterManager || inDept(p, 'HR') || inDept(p, 'MKT') },
-      { subgroup: 'role', labelKey: 'nav.hr.leaveRequests', label: 'Đơn nghỉ (Cán bộ và Giáo viên)', href: '/hr/leave-requests.html', icon: '🌴', visible: (p) => p.isCenterManager },
+      { subgroup: 'role', labelKey: 'nav.edu.students', label: 'Quản lý danh sách học viên', href: '/edu/students.html', icon: '🎒', visible: (p) => p.isCenterManager || inDept(p, 'HR') || inDept(p, 'MKT') },
+      { subgroup: 'role', labelKey: 'nav.edu.grades', label: 'Xem tổng kết bảng điểm', href: '/edu/grades.html', icon: '📈', visible: (p) => p.isCenterManager || inDept(p, 'HR') || inDept(p, 'MKT') },
       { subgroup: 'role', labelKey: 'nav.sign', label: 'Ký số hồ sơ', href: '/edu/sign.html', icon: '✍️', visible: (p) => p.isCenterManager || isExecOrTech(p) },
+      { subgroup: 'role', labelKey: 'nav.edu.classes', label: 'Danh sách lớp', href: '/edu/classes.html', icon: '🏷', visible: (p) => p.isCenterManager || inDept(p, 'HR') || inDept(p, 'MKT') },
+      { subgroup: 'role', labelKey: 'nav.hr.leaveRequests', label: 'Đơn nghỉ (Cán bộ và Giáo viên)', href: '/hr/leave-requests.html', icon: '🌴', visible: (p) => p.isCenterManager },
+      // -- Vai trò: Giáo viên --
+      { subgroup: 'role', labelKey: 'nav.teacher.classes', label: 'Lớp phụ trách', href: '/teacher/classes.html', icon: '🏷', visible: (p) => p.isTeacher },
+      { subgroup: 'role', labelKey: 'nav.teacher.attendance', label: 'Điểm danh học viên', href: '/teacher/attendance.html', icon: '✔️', visible: (p) => p.isTeacher },
+      { subgroup: 'role', labelKey: 'nav.teacher.grades', label: 'Nhập bảng điểm lớp học', href: '/teacher/grades.html', icon: '📝', visible: (p) => p.isTeacher },
+      { subgroup: 'role', labelKey: 'nav.teacher.trialStudents', label: 'Danh sách học thử theo lớp', href: '/teacher/trial-students.html', icon: '🎓', visible: (p) => p.isTeacher },
+      { subgroup: 'role', labelKey: 'nav.teacher.schedule', label: 'Lịch giảng dạy', href: '/teacher/schedule.html', icon: '📆', visible: (p) => p.isTeacher },
+      { subgroup: 'role', labelKey: 'nav.hr.leaveRequests', label: 'Đơn nghỉ', href: '/hr/leave-requests.html', icon: '🌴', visible: (p) => p.isTeacher },
+      // -- Vai trò: Nhân viên tư vấn --
+      { subgroup: 'role', labelKey: 'nav.consultant.leads', label: 'Hồ sơ khách hàng', href: '/consultant/leads.html', icon: '📇', visible: (p) => p.roleCode === 'CONSULTANT' },
+      { subgroup: 'role', labelKey: 'nav.consultant.stats', label: 'Thống kê hồ sơ', href: '/consultant/stats.html', icon: '📊', visible: (p) => p.roleCode === 'CONSULTANT' },
+      { subgroup: 'role', labelKey: 'nav.consultant.trialRegistration', label: 'Đăng ký học thử', href: '/consultant/trial-registration.html', icon: '🎓', visible: (p) => p.roleCode === 'CONSULTANT' },
+      { subgroup: 'role', labelKey: 'nav.hr.leaveRequests', label: 'Đơn nghỉ (Cán bộ)', href: '/hr/leave-requests.html', icon: '🌴', visible: (p) => p.roleCode === 'CONSULTANT' },
     ],
   },
   {
-    sectionKey: 'nav.section.teacher', section: 'Giáo viên', layer: 'centers',
-    items: [
-      { labelKey: 'nav.teacher.schedule', label: 'Lịch giảng dạy', href: '/teacher/schedule.html', icon: '📆', visible: (p) => p.isTeacher },
-      { labelKey: 'nav.teacher.classes', label: 'Lớp phụ trách', href: '/teacher/classes.html', icon: '🏷', visible: (p) => p.isTeacher },
-      { labelKey: 'nav.teacher.attendance', label: 'Điểm danh', href: '/teacher/attendance.html', icon: '✔️', visible: (p) => p.isTeacher },
-      { labelKey: 'nav.teacher.grades', label: 'Bảng điểm lớp học', href: '/teacher/grades.html', icon: '📝', visible: (p) => p.isTeacher },
-      { labelKey: 'nav.teacher.trialStudents', label: 'Danh sách học thử', href: '/teacher/trial-students.html', icon: '🎓', visible: (p) => p.isTeacher },
-      { labelKey: 'nav.hr.leaveRequests', label: 'Đơn nghỉ', href: '/hr/leave-requests.html', icon: '🌴', visible: (p) => p.isTeacher },
-    ],
-  },
-  {
-    sectionKey: 'nav.section.consultant', section: 'Nhân viên tư vấn', layer: 'centers',
-    items: [
-      { labelKey: 'nav.consultant.leads', label: 'Hồ sơ khách hàng', href: '/consultant/leads.html', icon: '📇', visible: (p) => p.roleCode === 'CONSULTANT' },
-      { labelKey: 'nav.consultant.trialRegistration', label: 'Đăng ký học thử', href: '/consultant/trial-registration.html', icon: '🎓', visible: (p) => p.roleCode === 'CONSULTANT' },
-      { labelKey: 'nav.edu.walletInvoices', label: 'Thu học phí', href: '/edu/wallet-invoices.html', icon: '💳', visible: (p) => p.roleCode === 'CONSULTANT' },
-      { labelKey: 'nav.edu.programPricing', label: 'Bảng giá chương trình học', href: '/edu/program-pricing.html', icon: '🏷️', visible: (p) => p.roleCode === 'CONSULTANT' },
-      { labelKey: 'nav.edu.refundRequests', label: 'Yêu cầu hoàn phí', href: '/edu/refund-requests.html', icon: '↩️', visible: (p) => p.roleCode === 'CONSULTANT' },
-      { labelKey: 'nav.consultant.stats', label: 'Thống kê hồ sơ', href: '/consultant/stats.html', icon: '📊', visible: (p) => p.roleCode === 'CONSULTANT' },
-      { labelKey: 'nav.hr.leaveRequests', label: 'Đơn nghỉ (Cán bộ)', href: '/hr/leave-requests.html', icon: '🌴', visible: (p) => p.roleCode === 'CONSULTANT' },
-    ],
-  },
   {
     sectionKey: 'nav.section.exec', section: 'Ban điều hành', layer: 'executive',
     items: [

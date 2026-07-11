@@ -42,6 +42,13 @@
 </header>
 
 <main class="hub-main">
+  <div class="hero-greeting" id="heroGreeting">
+    <div class="hero-greeting__text">
+      <div class="hero-greeting__eyebrow" id="heroDate">—</div>
+      <h1 class="hero-greeting__title">Chào buổi sáng, <span id="heroName">bạn</span> 👋</h1>
+    </div>
+  </div>
+
   <div class="hub-columns">
     <!-- ================= CỘT TRÁI — PHẦN TỔNG QUAN ================= -->
     <div class="hub-col hub-col--overview">
@@ -92,9 +99,6 @@
     <div class="hub-col hub-col--nav">
       <h2 class="hub-section-title" data-i18n="dashboard.apps">Phòng ban</h2>
       <div class="app-hub" id="appHub"><!-- render bởi js/dashboard.js theo quyền --></div>
-
-      <h2 class="hub-section-title" data-i18n="dashboard.quickLinks">Truy cập nhanh</h2>
-      <div class="app-hub app-hub--small" id="quickHub"></div>
     </div>
   </div>
 </main>

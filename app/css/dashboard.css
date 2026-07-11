@@ -397,14 +397,47 @@ body.hub-body { background: var(--surface); }
 
 .hub-main { max-width: 1100px; margin: 0 auto; padding: 24px 20px 60px; }
 
+/* Hero chao mung ca nhan hoa — diem nhan chinh cua dashboard, gradient
+   nhe theo accent cua phan he dang chon, chu lon am ap khong gao */
+.hero-greeting {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-deep) 100%);
+  border-radius: var(--radius-lg);
+  padding: 28px 32px;
+  margin-bottom: 22px;
+  box-shadow: var(--shadow-md);
+  position: relative;
+  overflow: hidden;
+}
+.hero-greeting::after {
+  content: ''; position: absolute; top: -40%; right: -8%; width: 260px; height: 260px;
+  background: rgba(255,255,255,0.10); border-radius: 50%;
+}
+.hero-greeting::before {
+  content: ''; position: absolute; bottom: -60%; right: 18%; width: 180px; height: 180px;
+  background: rgba(255,255,255,0.07); border-radius: 50%;
+}
+.hero-greeting__eyebrow {
+  color: rgba(255,255,255,0.82); font-size: 12.5px; font-weight: 600;
+  text-transform: capitalize; margin-bottom: 6px; letter-spacing: 0.01em;
+}
+.hero-greeting__title {
+  color: #fff; font-size: 24px; font-weight: 700; margin: 0; letter-spacing: -0.01em;
+  position: relative; z-index: 1;
+}
+
 /* Bo cuc 2 cot theo dung yeu cau: trai = Tong quan, phai = dieu huong 5
    phan (Ban dieu hanh/Khoi van phong/Trung tam/Portal/Co so du lieu) */
 .hub-columns { display: grid; grid-template-columns: 1fr 1.2fr; gap: 24px; align-items: start; }
 @media (max-width: 900px) { .hub-columns { grid-template-columns: 1fr; } }
 .hub-col--overview, .hub-col--nav { display: flex; flex-direction: column; }
 
-/* O chuc mung sinh nhat CHAY DONG (marquee ngang lien tuc) */
-.birthday-banner--marquee { overflow: hidden; position: relative; }
+/* O chuc mung sinh nhat CHAY DONG (marquee ngang lien tuc) — nen gradient
+   am, khac han the trung tinh xung quanh de "an mung" dung nghia */
+.birthday-banner--marquee {
+  overflow: hidden; position: relative;
+  background: linear-gradient(120deg, #fff1e6, #ffe6f0);
+  border-color: rgba(217, 119, 87, 0.18);
+}
 .birthday-banner--marquee .birthday-banner__marquee-track {
   overflow: hidden; white-space: nowrap; flex: 1;
 }
@@ -418,19 +451,22 @@ body.hub-body { background: var(--surface); }
   100% { transform: translateX(-100%); }
 }
 
-/* Bang trang thong bao day - phong cach ghi chu dan bang, tung dong la
-   1 "to giay note" nho de phan biet voi danh sach thong bao thuong */
+/* Bang thong bao day — dong bo dung phong cach the trang/bong mem cua
+   he thong (khong con kieu "giay note vang" lac tong truoc do), moi dong
+   co vach mau accent ben trai de phan biet voi danh sach thuong */
 .notice-board {
   background: var(--surface-card); border: 1px solid var(--border);
-  border-radius: var(--radius-md); padding: 16px; margin-top: 16px;
+  border-radius: var(--radius-md); padding: 18px; margin-top: 16px;
+  box-shadow: var(--shadow-xs);
 }
-.notice-board__title { font-size: 13.5px; font-weight: 700; margin: 0 0 12px; }
-.notice-board__list { display: flex; flex-direction: column; gap: 8px; max-height: 360px; overflow-y: auto; }
+.notice-board__title { font-size: 13.5px; font-weight: 700; margin: 0 0 12px; display: flex; align-items: center; gap: 6px; }
+.notice-board__list { display: flex; flex-direction: column; gap: 6px; max-height: 360px; overflow-y: auto; }
 .notice-board__item {
-  background: #fffbe6; border: 1px solid #f0e4a8; border-radius: 8px;
-  padding: 10px 12px; font-size: 12.5px; cursor: pointer; transition: transform 0.12s;
+  background: var(--surface-sunken); border-left: 3px solid var(--accent); border-radius: 8px;
+  padding: 10px 12px; font-size: 12.5px; cursor: pointer;
+  transition: background var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
 }
-.notice-board__item:hover { transform: translateY(-1px); }
+.notice-board__item:hover { background: var(--accent-tint); transform: translateX(2px); }
 .notice-board__item__title { font-weight: 600; color: var(--ink); margin-bottom: 2px; }
 .notice-board__item__meta { color: var(--muted); font-size: 11px; }
 

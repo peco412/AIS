@@ -17,8 +17,6 @@ const HUB_ICON = {
   'nav.section.mkt': '📣',
   'nav.section.fac': '🛠',
   'nav.section.center': '🏫',
-  'nav.section.teacher': '🍎',
-  'nav.section.consultant': '📇',
   'nav.section.exec': '🏛',
 };
 const HUB_COLOR_CLASS = {
@@ -29,8 +27,6 @@ const HUB_COLOR_CLASS = {
   'nav.section.mkt': 'tile-mkt',
   'nav.section.fac': 'tile-fac',
   'nav.section.center': 'tile-center',
-  'nav.section.teacher': 'tile-teacher',
-  'nav.section.consultant': 'tile-consultant',
   'nav.section.exec': 'tile-exec',
 };
 
@@ -38,10 +34,8 @@ function esc(s) { return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&am
 
 function renderHub(profile) {
   const appHub = document.getElementById('appHub');
-  const quickHub = document.getElementById('quickHub');
-  if (!appHub || !quickHub) return;
+  if (!appHub) return;
   appHub.innerHTML = '';
-  quickHub.innerHTML = '';
 
   const isMobile = isMobileViewport();
   const canAccess = (item) => {
@@ -61,17 +55,9 @@ function renderHub(profile) {
   NAV_CONFIG.forEach((group) => {
     const visibleItems = group.items.filter((item) => canAccess(item));
 
-    if (!group.sectionKey) {
-      // Nhóm không tiêu đề = mục dùng chung, ai cũng có -> hiển thị ở "Truy cập nhanh"
-      group.items.forEach((item) => {
-        const a = document.createElement('a');
-        a.href = item.href;
-        a.className = 'app-tile';
-        a.innerHTML = `<div class="app-tile__icon tile-quick">${item.icon}</div><div class="app-tile__label">${esc(t(item.labelKey, item.label))}</div>`;
-        quickHub.appendChild(a);
-      });
-      return;
-    }
+    // Nhóm không tiêu đề (Bảng tổng quan/Thông báo) đã có sẵn lối vào
+    // riêng ở sidebar + cột Tổng quan, không cần lặp lại ở đây nữa.
+    if (!group.sectionKey) return;
 
     // Nhom tile theo dung tang (Phong ban dieu hanh / He thong trung tam /
     // Ca nhan) - chen 1 nhan tieu de nho moi khi doi sang tang khac, tranh
@@ -167,10 +153,19 @@ async function loadStats(profile) {
   document.getElementById('statUnread').textContent = unread;
 }
 
+function renderGreeting(profile) {
+  const hour = new Date().getHours();
+  const timeGreeting = hour < 11 ? 'Chào buổi sáng' : hour < 14 ? 'Chào buổi trưa' : hour < 18 ? 'Chào buổi chiều' : 'Chào buổi tối';
+  const firstName = profile.fullName?.split(' ').slice(-1)[0] || 'bạn';
+  document.querySelector('.hero-greeting__title').innerHTML = `${timeGreeting}, <span id="heroName">${esc(firstName)}</span> 👋`;
+  document.getElementById('heroDate').textContent = new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+}
+
 (async () => {
   try {
     const { profile } = await bootShell();
     checkBirthday(profile.dob, profile.fullName.split(' ').slice(-1)[0]);
+    renderGreeting(profile);
     renderHub(profile);
     document.addEventListener('ais:langchange', () => renderHub(profile));
 

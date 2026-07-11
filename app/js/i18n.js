@@ -90,7 +90,7 @@ const DICT = {
   'nav.tasks': { vi: 'Phân việc', en: 'Task assignment' },
   'nav.sign': { vi: 'Ký số hồ sơ', en: 'Sign documents' },
 
-  'nav.section.center': { vi: 'Quản lý trung tâm', en: 'Center management' },
+  'nav.section.center': { vi: 'Khối trung tâm', en: 'Centers block' },
   'nav.edu.overview': { vi: 'Tổng quan trung tâm', en: 'Center overview' },
   'nav.edu.attendance': { vi: 'Điểm danh & thống kê', en: 'Attendance & stats' },
   'nav.edu.tuition': { vi: 'Thu học phí', en: 'Tuition collection' },
