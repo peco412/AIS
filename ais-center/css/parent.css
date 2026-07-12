@@ -82,7 +82,7 @@ h1, h2, h3 { font-weight: 700; letter-spacing: -0.01em; margin: 0; }
 .app-topbar__right { display: flex; align-items: center; gap: 10px; }
 .icon-btn { border: none; background: var(--surface-fill); width: 36px; height: 36px; border-radius: var(--radius-pill); font-size: 16px; cursor: pointer; transition: background var(--dur-fast) var(--ease); }
 
-.app-main { max-width: 480px; margin: 0 auto; padding: 18px 16px 90px; }
+.app-main { max-width: 480px; margin: 0 auto; padding: 18px 16px 100px; }
 
 .student-switcher { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 18px; }
 .student-chip {
@@ -91,18 +91,65 @@ h1, h2, h3 { font-weight: 700; letter-spacing: -0.01em; margin: 0; }
 }
 .student-chip.active { background: var(--accent); color: #fff; }
 
+/* The ngan hang — nang cap cam giac "uy tin" bang hoa tiet the vat ly
+   (van tinh, chip the, dai vien tron trang tri), chu so du lon ro rang,
+   them huy hieu "Da xac thuc" nho tao niem tin ve bao mat. */
 .balance-hero {
-  background: linear-gradient(150deg, var(--accent-deep), var(--accent));
-  color: #fff; border-radius: var(--radius-lg); padding: 26px 22px; margin-bottom: 20px;
-  box-shadow: 0 14px 30px rgba(var(--accent-rgb), 0.25);
+  position: relative; overflow: hidden;
+  background: linear-gradient(135deg, var(--accent-deep) 0%, var(--accent) 55%, #00b8d4 100%);
+  color: #fff; border-radius: 22px; padding: 24px 22px 22px; margin-bottom: 20px;
+  box-shadow: 0 16px 32px rgba(var(--accent-rgb), 0.28), 0 4px 10px rgba(0,0,0,0.08);
 }
-.balance-hero__label { font-size: 12.5px; opacity: 0.85; margin-bottom: 6px; }
-.balance-hero__value { font-size: 32px; font-weight: 800; letter-spacing: -0.02em; }
-.balance-hero__actions { display: flex; gap: 10px; margin-top: 18px; }
+.balance-hero::before {
+  content: ''; position: absolute; top: -30%; right: -10%; width: 220px; height: 220px;
+  background: rgba(255,255,255,0.08); border-radius: 50%;
+}
+.balance-hero::after {
+  content: ''; position: absolute; bottom: -40%; left: 10%; width: 160px; height: 160px;
+  background: rgba(255,255,255,0.06); border-radius: 50%;
+}
+.balance-hero__top { display: flex; align-items: center; justify-content: space-between; position: relative; z-index: 1; }
+.balance-hero__label { font-size: 12.5px; opacity: 0.9; font-weight: 600; letter-spacing: 0.01em; }
+.balance-hero__verified {
+  display: flex; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 700;
+  background: rgba(255,255,255,0.18); padding: 4px 10px; border-radius: 999px; backdrop-filter: blur(4px);
+}
+.balance-hero__value { font-size: 34px; font-weight: 800; letter-spacing: -0.02em; margin-top: 10px; position: relative; z-index: 1; }
+.balance-hero__vnd { position: relative; z-index: 1; }
+.balance-hero__chip {
+  width: 34px; height: 26px; border-radius: 6px; margin-top: 18px; position: relative; z-index: 1;
+  background: linear-gradient(135deg, rgba(255,255,255,0.5), rgba(255,255,255,0.2));
+  border: 1px solid rgba(255,255,255,0.3);
+}
+.balance-hero__actions { display: flex; gap: 10px; margin-top: 16px; position: relative; z-index: 1; }
 .balance-hero__actions a {
-  flex: 1; text-align: center; padding: 10px; border-radius: var(--radius-md); background: rgba(255,255,255,0.18);
+  flex: 1; text-align: center; padding: 11px; border-radius: var(--radius-md); background: rgba(255,255,255,0.16);
   color: #fff; font-size: 13px; font-weight: 700; text-decoration: none; backdrop-filter: blur(6px);
+  border: 1px solid rgba(255,255,255,0.14);
+  transition: background var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
 }
+.balance-hero__actions a:active { transform: scale(0.97); background: rgba(255,255,255,0.24); }
+
+/* Luoi icon chuc nang — thay danh sach the doc bang luoi 2x3 kieu vi
+   dien tu/ngan hang hien dai (Momo/ZaloPay-style), quet mat nhanh hon
+   nhieu so voi list truoc day. */
+.action-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 22px; }
+.action-tile {
+  display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center;
+  text-decoration: none; color: var(--ink); padding: 4px 0;
+}
+.action-tile__icon {
+  width: 54px; height: 54px; border-radius: 16px; display: flex; align-items: center; justify-content: center;
+  font-size: 24px; box-shadow: var(--shadow-sm);
+  transition: transform var(--dur-fast) var(--ease-spring), box-shadow var(--dur-fast) var(--ease);
+}
+.action-tile:active .action-tile__icon { transform: scale(0.92); }
+.action-tile__label { font-size: 11.5px; font-weight: 600; line-height: 1.25; color: var(--ink-soft); }
+.action-tile--topup .action-tile__icon { background: linear-gradient(150deg, #34c759, #1d8a4c); color: #fff; }
+.action-tile--tuition .action-tile__icon { background: linear-gradient(150deg, #0094d9, #0072a8); color: #fff; }
+.action-tile--withdraw .action-tile__icon { background: linear-gradient(150deg, #ff9f0a, #c47600); color: #fff; }
+.action-tile--shop .action-tile__icon { background: linear-gradient(150deg, #af52de, #8033a8); color: #fff; }
+.action-tile--history .action-tile__icon { background: linear-gradient(150deg, #8a8f98, #5a5f66); color: #fff; }
 
 .card { background: var(--surface-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 18px; margin-bottom: 14px; box-shadow: var(--shadow-xs); }
 .card h3 { font-size: 14px; margin-bottom: 12px; }
@@ -132,11 +179,20 @@ h1, h2, h3 { font-weight: 700; letter-spacing: -0.01em; margin: 0; }
 
 .empty-state { text-align: center; padding: 40px 16px; color: var(--muted); font-size: 13.5px; }
 
+/* Bottom Nav — them "vien vo hinh" quanh tab dang active dang pill mem,
+   giong cam giac cac app ngan hang/vi dien tu hien dai, thay vi chi doi
+   mau chu don gian nhu truoc. */
 .bottom-nav {
   position: fixed; bottom: 0; left: 0; right: 0; z-index: 20;
-  display: flex; background: rgba(255,255,255,0.92); backdrop-filter: blur(16px);
-  border-top: 1px solid var(--border); padding: 8px 6px calc(8px + env(safe-area-inset-bottom));
+  display: flex; background: rgba(255,255,255,0.94); backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border); padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+  box-shadow: 0 -4px 16px rgba(0,0,0,0.04);
 }
-.bottom-nav a { flex: 1; text-align: center; text-decoration: none; color: var(--muted); font-size: 10.5px; padding: 6px 0; }
-.bottom-nav a .icon { display: block; font-size: 19px; margin-bottom: 2px; }
-.bottom-nav a.active { color: var(--accent); }
+.bottom-nav a {
+  flex: 1; text-align: center; text-decoration: none; color: var(--muted); font-size: 10.5px;
+  padding: 7px 4px; border-radius: 14px; font-weight: 600;
+  transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+.bottom-nav a .icon { display: block; font-size: 20px; margin-bottom: 3px; transition: transform var(--dur-fast) var(--ease-spring); }
+.bottom-nav a.active { color: var(--accent); background: var(--accent-tint); }
+.bottom-nav a.active .icon { transform: translateY(-1px); }
