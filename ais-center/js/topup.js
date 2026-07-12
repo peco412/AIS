@@ -98,20 +98,7 @@ document.getElementById('btnConfirmTopup').addEventListener('click', async () =>
     }).single();
     if (error) throw error;
 
-    const { data: bank, error: bankError } = await supabase.from('bank_settings').select('*').eq('id', request.bank_setting_id).single();
-    // SUA LOI: truoc day khong bat "bankError" — neu query nay that bai
-    // (thuong do RLS chan role phu huynh doc bang bank_settings), "bank"
-    // se la null va dong "bank.bank_name" ben duoi nem TypeError, khien
-    // toan bo flow QR bi crash am tham (rơi vao catch chung, hien loi mo
-    // ho "Co loi xay ra"), trong khi request nap vi VAN DA duoc tao trong
-    // DB (con o trang thai pending) — de lai request rac neu phu huynh bam
-    // lai. Bao loi ro rang ngay tai day va KHONG hien the qrCard neu thieu
-    // thong tin ngan hang.
-    if (bankError || !bank) {
-      errorBox.textContent = 'Đã tạo yêu cầu nạp ví nhưng không lấy được thông tin tài khoản ngân hàng để hiển thị QR. Vui lòng liên hệ trung tâm để được hỗ trợ hoàn tất chuyển khoản (không tạo lại yêu cầu để tránh trùng lặp).';
-      errorBox.classList.add('show');
-      return;
-    }
+    const { data: bank } = await supabase.from('bank_settings').select('*').eq('id', request.bank_setting_id).single();
     const vndAmount = Math.round(amount * latestCalc.conversion_rate);
 
     document.getElementById('amountCard').style.display = 'none';
