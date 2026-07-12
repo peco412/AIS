@@ -69,6 +69,7 @@ const DICT = {
   'nav.acc.walletTopupRequests': { vi: 'Xác nhận nạp ví', en: 'Confirm wallet top-ups' },
   'nav.edu.refundRequests': { vi: 'Yêu cầu hoàn phí', en: 'Refund requests' },
   'nav.acc.walletLinks': { vi: 'Danh sách liên kết Ví', en: 'Wallet links list' },
+  'nav.acc.walletRecovery': { vi: 'Khắc phục sự cố nạp ví', en: 'Wallet topup recovery' },
   'nav.acc.suppliers': { vi: 'Nhà cung cấp', en: 'Suppliers' },
   'nav.acc.purchaseOrders': { vi: 'Phiếu mua hàng', en: 'Purchase orders' },
   'nav.edu.programPricing': { vi: 'Bảng giá chương trình học', en: 'Program pricing' },

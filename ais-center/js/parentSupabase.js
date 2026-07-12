@@ -66,6 +66,15 @@ export async function bootParentShell() {
     parent = created;
   }
 
+  if (!parent || !parent.id) {
+    // Neu toi day ma van chua co "parent.id" hop le (vd do thieu GRANT
+    // quyen bang, hoac insert bi RLS chan ngam khi doc lai) — bao loi ro
+    // rang thay vi de cac buoc sau (truy van parent_student_links) chay
+    // voi id=null, gay loi 400 kho hieu "eq.null" nhu truoc day.
+    console.error('Không xác định được hồ sơ phụ huynh sau khi đăng ký/đăng nhập.', parent);
+    throw new Error('Không tải được hồ sơ phụ huynh. Vui lòng thử đăng xuất và đăng nhập lại, hoặc báo quản trị hệ thống nếu lỗi lặp lại.');
+  }
+
   const { data: links } = await supabase
     .from('parent_student_links')
     .select('student_id, relationship, students(id, full_name, center_id, centers(name))')
