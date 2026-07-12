@@ -23,6 +23,14 @@
     <h3>Số AIScoins muốn nạp</h3>
     <div class="field"><input type="number" id="coinAmount" placeholder="Nhập số tiền, VD: 15000000" min="1" step="10000" /></div>
 
+    <div class="amount-presets" id="amountPresets">
+      <button type="button" class="amount-chip" data-amount="5000000">5 triệu</button>
+      <button type="button" class="amount-chip" data-amount="10000000">10 triệu</button>
+      <button type="button" class="amount-chip" data-amount="20000000">20 triệu</button>
+      <button type="button" class="amount-chip" data-amount="30000000">30 triệu</button>
+      <button type="button" class="amount-chip" data-amount="50000000">50 triệu</button>
+    </div>
+
     <div class="topup-preview" id="previewBox" style="display:none;">
       <div class="topup-preview__row"><span>Số coins nhận được</span><strong id="previewCoins">–</strong></div>
       <div class="topup-preview__row"><span>Chiết khấu theo mức nạp</span><strong id="previewTierRate">–</strong></div>
@@ -33,7 +41,7 @@
     </div>
   </div>
 
-  <button class="btn-primary" id="btnConfirmTopup">Tạo yêu cầu nạp ví</button>
+  <button class="btn-primary" id="btnConfirmTopup" disabled>Chọn số tiền cần nạp</button>
 
   <div class="card" id="qrCard" style="display:none; text-align:center;">
     <h3>Chuyển khoản để hoàn tất nạp ví</h3>

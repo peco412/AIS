@@ -10,10 +10,20 @@ function fmtPercent(r) { return `${(Number(r) * 100).toFixed(1)}%`; }
 async function updatePreview() {
   const amount = Number(document.getElementById('coinAmount').value);
   const previewBox = document.getElementById('previewBox');
-  if (!amount || amount <= 0) { previewBox.style.display = 'none'; return; }
+  if (!amount || amount <= 0) {
+    previewBox.style.display = 'none';
+    const btn = document.getElementById('btnConfirmTopup');
+    btn.textContent = 'Chọn số tiền cần nạp';
+    btn.disabled = true;
+    return;
+  }
 
   const { data, error } = await supabase.rpc('calculate_topup_conversion', { p_coin_amount: amount, p_center_id: CENTER_ID }).single();
-  if (error || !data) { previewBox.style.display = 'none'; return; }
+  if (error || !data) {
+    previewBox.style.display = 'none';
+    document.getElementById('btnConfirmTopup').disabled = true;
+    return;
+  }
 
   latestCalc = data;
   previewBox.style.display = 'block';
@@ -21,7 +31,15 @@ async function updatePreview() {
   document.getElementById('previewCoins').textContent = `${fmtMoney(amount)} AIScoins`;
   document.getElementById('previewTierRate').textContent = fmtPercent(data.tier_rate);
   document.getElementById('previewGross').textContent = `${fmtMoney(amount)} coin`;
-  document.getElementById('previewVnd').textContent = `${fmtMoney(amount * data.conversion_rate)} VNĐ`;
+  const vndToPay = Math.round(amount * data.conversion_rate);
+  document.getElementById('previewVnd').textContent = `${fmtMoney(vndToPay)} VNĐ`;
+
+  // Nut xac nhan hien LUON dung so tien se thanh toan — dung cam giac
+  // "xem lai truoc khi xac nhan" cua app ngan hang, thay vi 1 nut chung
+  // chung "Tao yeu cau" khong ro dang xac nhan bao nhieu tien.
+  const btn = document.getElementById('btnConfirmTopup');
+  btn.textContent = `Xác nhận nạp ${fmtMoney(vndToPay)} đ →`;
+  btn.disabled = false;
 
   const programRow = document.getElementById('previewProgramRow');
   if (data.program_rate > 0) {
@@ -42,7 +60,22 @@ async function updatePreview() {
 document.getElementById('coinAmount').addEventListener('input', () => {
   clearTimeout(debounceTimer);
   debounceTimer = setTimeout(updatePreview, 250);
+  syncActiveChip();
 });
+
+// Nut chon nhanh so tien — bam vao la dien ngay vao o nhap + cap nhat
+// xem truoc, giong thao tac quen thuoc cua cac app ngan hang/vi dien tu.
+document.querySelectorAll('.amount-chip').forEach((chip) => {
+  chip.addEventListener('click', () => {
+    document.getElementById('coinAmount').value = chip.dataset.amount;
+    syncActiveChip();
+    updatePreview();
+  });
+});
+function syncActiveChip() {
+  const val = document.getElementById('coinAmount').value;
+  document.querySelectorAll('.amount-chip').forEach((c) => c.classList.toggle('active', c.dataset.amount === val));
+}
 
 const errorBox = document.getElementById('topupError');
 
@@ -97,18 +130,10 @@ document.getElementById('btnConfirmTopup').addEventListener('click', async () =>
 
 async function notifyStaffNewTopupRequest(request, vndAmount) {
   try {
-    const { data: staffRole } = await supabase.from('departments').select('id').eq('code', 'ACC').single();
-    const { data: staff } = await supabase.from('employees').select('id')
-      .or(`department_id.eq.${staffRole?.id},center_id.eq.${CENTER_ID}`);
-
-    const title = `💰 Yêu cầu nạp ví mới — ${request.transfer_content}`;
-    const content = `Cần đối chiếu chuyển khoản ${vndAmount.toLocaleString('vi-VN')} VNĐ, nội dung "${request.transfer_content}".`;
-
-    for (const s of staff || []) {
-      await supabase.from('notifications').insert({
-        scope: 'personal', target_employee_id: s.id, title, content, url: '/acc/wallet-topup-requests.html',
-      });
-    }
+    const { error } = await supabase.rpc('notify_staff_new_topup_request', {
+      p_request_id: request.id, p_center_id: CENTER_ID, p_vnd_amount: vndAmount,
+    });
+    if (error) throw error;
   } catch (e) {
     console.warn('Không gửi được thông báo cho nhân viên:', e.message);
   }

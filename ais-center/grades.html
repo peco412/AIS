@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Bảng điểm — AIS Center</title>
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#0094D9" />
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/parent.css" />
+</head>
+<body>
+
+<header class="app-topbar">
+  <button class="icon-btn" onclick="location.href='account.html'">←</button>
+  <div class="app-topbar__title">📊 Bảng điểm của con</div>
+  <div style="width:36px;"></div>
+</header>
+
+<main class="app-main">
+  <div class="student-switcher" id="studentSwitcher"></div>
+  <div id="gradesList"><div class="empty-state">Đang tải dữ liệu...</div></div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="env.js"></script>
+<script type="module" src="js/grades.js"></script>
+</body>
+</html>

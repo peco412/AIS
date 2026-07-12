@@ -177,6 +177,18 @@ h1, h2, h3 { font-weight: 700; letter-spacing: -0.01em; margin: 0; }
 .topup-preview__row strong { color: var(--accent-deep); }
 .topup-preview__hint { font-size: 11.5px; color: var(--muted); margin-top: 8px; }
 
+/* Nut chon nhanh so tien nap — dung theo dung yeu cau "giong app ngan
+   hang, co san so tien goi y" thay vi chi go tay tu do nhu truoc. */
+.amount-presets { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0 4px; }
+.amount-chip {
+  flex: 1; min-width: 70px; padding: 10px 6px; border-radius: var(--radius-md);
+  border: 1.5px solid var(--border); background: var(--surface-fill); color: var(--ink-soft);
+  font-size: 12.5px; font-weight: 700; cursor: pointer;
+  transition: all var(--dur-fast) var(--ease);
+}
+.amount-chip:active { transform: scale(0.95); }
+.amount-chip.active { border-color: var(--accent); background: var(--accent-tint); color: var(--accent-deep); }
+
 .empty-state { text-align: center; padding: 40px 16px; color: var(--muted); font-size: 13.5px; }
 
 /* Bottom Nav — them "vien vo hinh" quanh tab dang active dang pill mem,
