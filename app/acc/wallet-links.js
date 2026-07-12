@@ -13,14 +13,14 @@ async function loadCenters() {
 
 async function loadRows() {
   const tbody = document.getElementById('tableBody');
-  tbody.innerHTML = '<tr><td colspan="5" class="empty-cell">Đang tải dữ liệu...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="7" class="empty-cell">Đang tải dữ liệu...</td></tr>';
 
   const { data: links, error } = await supabase
     .from('parent_student_links')
-    .select('parent_accounts(full_name, phone), students(id, full_name, center_id, centers(name))');
+    .select('parent_accounts(parent_code, full_name, phone), students(id, student_code, full_name, center_id, centers(name))');
 
-  if (error) { tbody.innerHTML = `<tr><td colspan="5" class="empty-cell">Lỗi: ${esc(error.message)}</td></tr>`; return; }
-  if (!links || links.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="empty-cell">Chưa có liên kết nào.</td></tr>'; return; }
+  if (error) { tbody.innerHTML = `<tr><td colspan="7" class="empty-cell">Lỗi: ${esc(error.message)}</td></tr>`; return; }
+  if (!links || links.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="empty-cell">Chưa có liên kết nào.</td></tr>'; return; }
 
   const studentIds = links.map((l) => l.students?.id).filter(Boolean);
   const { data: wallets } = await supabase.from('wallets').select('id, student_id').in('student_id', studentIds.length ? studentIds : ['00000000-0000-0000-0000-000000000000']);
@@ -35,8 +35,10 @@ async function loadRows() {
   }
 
   ALL_ROWS = links.filter((l) => l.students).map((l) => ({
+    parentCode: l.parent_accounts?.parent_code || '—',
     parentName: l.parent_accounts?.full_name || '—',
     phone: l.parent_accounts?.phone || '—',
+    studentCode: l.students.student_code || '—',
     studentName: l.students.full_name,
     centerId: l.students.center_id,
     centerName: l.students.centers?.name || '—',
@@ -53,17 +55,19 @@ function render() {
   const rows = ALL_ROWS.filter((r) => {
     if (centerId && r.centerId !== centerId) return false;
     if (!q) return true;
-    return r.parentName.toLowerCase().includes(q) || r.studentName.toLowerCase().includes(q) || r.phone.includes(q);
+    return r.parentName.toLowerCase().includes(q) || r.studentName.toLowerCase().includes(q) || r.phone.includes(q) || r.parentCode.toLowerCase().includes(q) || r.studentCode.toLowerCase().includes(q);
   });
 
   document.getElementById('resultCount').textContent = `${rows.length} liên kết`;
   const tbody = document.getElementById('tableBody');
   tbody.innerHTML = rows.length === 0
-    ? '<tr><td colspan="5" class="empty-cell">Không có kết quả nào.</td></tr>'
+    ? '<tr><td colspan="7" class="empty-cell">Không có kết quả nào.</td></tr>'
     : rows.map((r) => `
       <tr>
+        <td class="cell-code mono">${esc(r.parentCode)}</td>
         <td>${esc(r.parentName)}</td>
         <td class="mono cell-muted">${esc(r.phone)}</td>
+        <td class="cell-code mono">${esc(r.studentCode)}</td>
         <td>${esc(r.studentName)}</td>
         <td class="cell-muted">${esc(r.centerName)}</td>
         <td class="mono" style="text-align:right; font-weight:600;">${fmtMoney(r.balance)} coin</td>

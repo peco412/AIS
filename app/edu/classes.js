@@ -39,13 +39,13 @@ document.getElementById('level').addEventListener('change', (e) => {
 
 async function loadRows() {
   const tbody = document.getElementById('tableBody');
-  tbody.innerHTML = '<tr><td colspan="7" class="empty-cell">Đang tải dữ liệu...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="8" class="empty-cell">Đang tải dữ liệu...</td></tr>';
   const { data, error } = await supabase
     .from('classes')
-    .select('id, name, schedule_note, student_count, start_date, status, program_id, level_id, sublevel_id, teacher_id, programs(name), program_levels(name), program_sublevels(name), employees(full_name)')
+    .select('id, class_code, name, schedule_note, student_count, start_date, status, program_id, level_id, sublevel_id, teacher_id, programs(name), program_levels(name), program_sublevels(name), employees(full_name)')
     .eq('center_id', PROFILE.centerId)
     .order('start_date', { ascending: false });
-  if (error) { tbody.innerHTML = `<tr><td colspan="7" class="empty-cell">Lỗi: ${error.message}</td></tr>`; return; }
+  if (error) { tbody.innerHTML = `<tr><td colspan="8" class="empty-cell">Lỗi: ${error.message}</td></tr>`; return; }
   ALL_ROWS = data || [];
   render();
 }
@@ -65,10 +65,11 @@ function render() {
   document.getElementById('resultCount').textContent = `${rows.length} lớp`;
 
   const tbody = document.getElementById('tableBody');
-  if (rows.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="empty-cell">Không có lớp nào.</td></tr>'; return; }
+  if (rows.length === 0) { tbody.innerHTML = '<tr><td colspan="8" class="empty-cell">Không có lớp nào.</td></tr>'; return; }
 
   tbody.innerHTML = rows.map((r) => `
     <tr>
+      <td class="cell-code mono">${esc(r.class_code || '—')}</td>
       <td><strong>${esc(r.name)}</strong><div class="cell-muted">${esc(r.schedule_note || '')}</div></td>
       <td class="cell-muted">${esc(r.programs?.name || '')} ${r.program_levels?.name ? '· ' + esc(r.program_levels.name) : ''} ${r.program_sublevels?.name ? '· ' + esc(r.program_sublevels.name) : ''}</td>
       <td>${r.employees?.full_name ? esc(r.employees.full_name) : '<span class="cell-muted">Chưa phân công</span>'}</td>

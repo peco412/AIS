@@ -26,13 +26,13 @@ async function loadLookups() {
 
 async function loadRows() {
   const tbody = document.getElementById('tableBody');
-  tbody.innerHTML = '<tr><td colspan="7" class="empty-cell">Đang tải dữ liệu...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="8" class="empty-cell">Đang tải dữ liệu...</td></tr>';
   const { data, error } = await supabase
     .from('students')
-    .select('id, full_name, dob, parent_name, phone, status, class_id, classes(name)')
+    .select('id, student_code, full_name, dob, parent_name, phone, status, class_id, classes(name)')
     .eq('center_id', PROFILE.centerId)
     .order('full_name');
-  if (error) { tbody.innerHTML = `<tr><td colspan="7" class="empty-cell">Lỗi: ${error.message}</td></tr>`; return; }
+  if (error) { tbody.innerHTML = `<tr><td colspan="8" class="empty-cell">Lỗi: ${error.message}</td></tr>`; return; }
   ALL_ROWS = data || [];
   render();
 }
@@ -52,10 +52,11 @@ function render() {
   document.getElementById('resultCount').textContent = `${rows.length} học viên`;
 
   const tbody = document.getElementById('tableBody');
-  if (rows.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="empty-cell">Không có học viên nào.</td></tr>'; return; }
+  if (rows.length === 0) { tbody.innerHTML = '<tr><td colspan="8" class="empty-cell">Không có học viên nào.</td></tr>'; return; }
 
   tbody.innerHTML = rows.map((r) => `
     <tr>
+      <td class="cell-code mono">${esc(r.student_code || '—')}</td>
       <td><span class="avatar-sm">${esc((r.full_name || '?').trim().split(/\s+/).slice(-2).map(w=>w[0]).join('').toUpperCase())}</span>${esc(r.full_name)}</td>
       <td class="cell-muted">${fmtDate(r.dob)}</td>
       <td>${r.classes?.name ? esc(r.classes.name) : '<span class="cell-muted">Chưa phân lớp</span>'}</td>

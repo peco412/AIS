@@ -55,6 +55,13 @@
     <p class="cell-muted" style="margin-top:12px;">⚠️ Nhập <strong>đúng nội dung chuyển khoản</strong> ở trên để hệ thống đối chiếu chính xác.</p>
     <button class="btn-link" onclick="location.href='wallet.html'">Xong, về trang chủ</button>
   </div>
+
+  <div class="card" id="topupSuccess" style="display:none; text-align:center;">
+    <div style="font-size:48px; margin-bottom:8px;">✅</div>
+    <h3>Nạp ví thành công!</h3>
+    <p class="cell-muted">Đã nhận <strong id="successAmount"></strong> và cộng đủ AIScoins vào ví.</p>
+    <button class="btn-primary" onclick="location.href='wallet.html'" style="margin-top:12px;">Về trang chủ</button>
+  </div>
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>

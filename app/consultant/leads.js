@@ -10,13 +10,13 @@ function fmtDate(d) { return d ? new Date(d).toLocaleDateString('vi-VN') : '—'
 
 async function loadRows() {
   const tbody = document.getElementById('tableBody');
-  tbody.innerHTML = '<tr><td colspan="6" class="empty-cell">Đang tải dữ liệu...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="7" class="empty-cell">Đang tải dữ liệu...</td></tr>';
   const { data, error } = await supabase
     .from('crm_leads')
-    .select('id, full_name, dob, parent_name, phone, status')
+    .select('id, code, full_name, dob, parent_name, phone, status')
     .eq('consultant_id', PROFILE.id)
     .order('created_at', { ascending: false });
-  if (error) { tbody.innerHTML = `<tr><td colspan="6" class="empty-cell">Lỗi: ${error.message}</td></tr>`; return; }
+  if (error) { tbody.innerHTML = `<tr><td colspan="7" class="empty-cell">Lỗi: ${error.message}</td></tr>`; return; }
   ALL_ROWS = data || [];
   renderStats();
   render();
@@ -46,10 +46,11 @@ function render() {
   document.getElementById('resultCount').textContent = `${rows.length} hồ sơ`;
 
   const tbody = document.getElementById('tableBody');
-  if (rows.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="empty-cell">Chưa có hồ sơ nào.</td></tr>'; return; }
+  if (rows.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="empty-cell">Chưa có hồ sơ nào.</td></tr>'; return; }
 
   tbody.innerHTML = rows.map((r) => `
     <tr>
+      <td class="cell-code mono">${esc(r.code || '—')}</td>
       <td>${esc(r.full_name)}</td>
       <td class="cell-muted">${fmtDate(r.dob)}</td>
       <td class="cell-muted">${esc(r.parent_name || '—')}</td>

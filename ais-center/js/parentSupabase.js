@@ -83,12 +83,18 @@ async function bootParentShellInner(sessionData) {
 
   if (!parent) {
     // Lần đầu xác thực OTP thành công, chưa có hồ sơ nào khớp SĐT — tự tạo
-    // hồ sơ mới liên kết với auth_user_id này (chưa có link tới học sinh
-    // nào, cần lễ tân/kế toán trung tâm bổ sung link thủ công qua ERP sau
-    // khi xác minh danh tính).
+    // hồ sơ mới liên kết với auth_user_id này. SUA LOI THAT: truoc day mac
+    // dinh thang "Phụ huynh" (chuoi chung chung) vi luong OTP KHONG HOI TEN
+    // nhu luong dang ky bang mat khau — khien danh sach "Lien ket Vi" ben
+    // ERP hien toan chu "Phụ huynh" giong het nhau, khong phan biet duoc
+    // ai voi ai. Gio hoi ten that ngay luc tao tai khoan lan dau.
+    let realName = sessionData.session.user.user_metadata?.full_name;
+    if (!realName) {
+      realName = window.prompt('Chào mừng bạn! Vui lòng nhập họ tên của bạn để hoàn tất đăng ký:', '')?.trim();
+    }
     const { data: created, error } = await supabase.from('parent_accounts').insert({
       auth_user_id: sessionData.session.user.id,
-      full_name: sessionData.session.user.user_metadata?.full_name || 'Phụ huynh',
+      full_name: realName || 'Phụ huynh (chưa cập nhật tên)',
       phone: phone || 'unknown',
     }).select('*').single();
     if (error) { console.error('Không tạo được hồ sơ phụ huynh:', error.message); throw error; }

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Danh sách liên kết Ví — ERP AIS</title>
+<title>Nhật ký giao dịch SePay — ERP AIS</title>
 <link rel="manifest" href="/manifest.json" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="mobile-web-app-capable" content="yes" />
@@ -16,7 +16,7 @@
 <link rel="stylesheet" href="/css/dashboard.css" />
 <link rel="stylesheet" href="/css/module.css" />
 </head>
-<body data-page="/acc/wallet-links.html">
+<body data-page="/acc/sepay-transactions.html">
 
 <div class="app-shell">
   <aside class="sidebar" id="sidebar">
@@ -38,29 +38,47 @@
 
   <main class="main">
     <div class="page-header">
-      <div><h1>Danh sách liên kết Ví</h1><div class="sub">Toàn bộ phụ huynh đã liên kết ví với con, kèm số dư hiện tại.</div></div>
+      <div><h1>Nhật ký giao dịch SePay</h1><div class="sub">Ghi lại TOÀN BỘ giao dịch chuyển khoản SePay báo về — kể cả những giao dịch KHÔNG khớp được yêu cầu nào, để đối chiếu thủ công, không bao giờ mất dữ liệu gốc.</div></div>
     </div>
 
     <div class="toolbar">
-      <div class="toolbar__filters">
-        <input class="text-input" type="text" id="searchInput" placeholder="Tìm theo tên phụ huynh/học sinh/SĐT..." style="min-width:280px;" />
-        <select class="select-input" id="filterCenter"><option value="">Tất cả trung tâm</option></select>
-      </div>
+      <select class="select-input" id="filterStatus">
+        <option value="">Tất cả</option>
+        <option value="unmatched">Chưa khớp — cần đối chiếu</option>
+        <option value="matched">Đã khớp</option>
+      </select>
       <div class="cell-muted" id="resultCount"></div>
     </div>
 
     <div class="data-table-wrap">
       <table class="data-table">
-        <thead><tr><th>Mã PH</th><th>Tên phụ huynh</th><th>SĐT</th><th>Mã HS</th><th>Tên học sinh</th><th>Trung tâm</th><th style="text-align:right;">Số coins hiện tại</th></tr></thead>
-        <tbody id="tableBody"><tr><td colspan="7" class="empty-cell">Đang tải dữ liệu...</td></tr></tbody>
+        <thead><tr><th>Thời gian</th><th>Số tiền</th><th>Nội dung CK gốc</th><th>Mã trích xuất</th><th data-i18n="common.status">Trạng thái</th><th></th></tr></thead>
+        <tbody id="tableBody"><tr><td colspan="6" class="empty-cell">Đang tải dữ liệu...</td></tr></tbody>
       </table>
     </div>
   </main>
 </div>
 
+<div class="modal-overlay" id="reconcileModal">
+  <div class="modal-box">
+    <button class="modal-close" id="closeReconcileModal">✕</button>
+    <h3>Đối chiếu thủ công</h3>
+    <p class="cell-muted" id="reconcileTxInfo" style="font-size:13px;"></p>
+    <div class="form-error" id="reconcileError"></div>
+    <div class="field">
+      <label for="reconcileRequestSelect">Chọn đúng yêu cầu nạp ví đang chờ</label>
+      <select id="reconcileRequestSelect"></select>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-outline" id="cancelReconcile"><span data-i18n="common.cancel">Huỷ</span></button>
+      <button type="button" class="btn btn-accent" id="submitReconcile">Xác nhận khớp lệnh</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="/env.js"></script>
-<script type="module" src="/acc/wallet-links.js"></script>
+<script type="module" src="/acc/sepay-transactions.js"></script>
 <script src="/js/pwa.js"></script>
 </body>
 </html>

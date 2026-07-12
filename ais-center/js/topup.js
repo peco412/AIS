@@ -117,6 +117,11 @@ document.getElementById('btnConfirmTopup').addEventListener('click', async () =>
       `?amount=${vndAmount}&addInfo=${encodeURIComponent(request.transfer_content)}&accountName=${encodeURIComponent(bank.account_name)}`;
     document.getElementById('qrImage').src = qrUrl;
 
+    // Lang nghe Realtime — tu dong doi giao dien khi Ke toan HOAC he
+    // thong (qua webhook SePay, neu da cau hinh) xac nhan xong, khong
+    // can phu huynh phai tu bam lam moi trang.
+    subscribeToRequestStatus(request.id);
+
     // Báo cho Kế toán + Quản lý trung tâm có yêu cầu mới cần đối chiếu sao
     // kê — không đợi họ tự vào kiểm tra định kỳ.
     await notifyStaffNewTopupRequest(request, vndAmount);
@@ -137,6 +142,40 @@ async function notifyStaffNewTopupRequest(request, vndAmount) {
   } catch (e) {
     console.warn('Không gửi được thông báo cho nhân viên:', e.message);
   }
+}
+
+// Lang nghe Realtime tren dung 1 dong wallet_topup_requests — khi status
+// doi thanh "confirmed" (do Ke toan bam tay HOAC he thong tu dong xac
+// nhan qua webhook SePay neu da cau hinh), tu chuyen giao dien sang trang
+// thai thanh cong, khong can phu huynh tu lam moi trang.
+function subscribeToRequestStatus(requestId) {
+  const channel = supabase
+    .channel(`topup-request-${requestId}`)
+    .on('postgres_changes', {
+      event: 'UPDATE', schema: 'public', table: 'wallet_topup_requests', filter: `id=eq.${requestId}`,
+    }, (payload) => {
+      if (payload.new.status === 'confirmed') {
+        showTopupSuccess(payload.new);
+        channel.unsubscribe();
+      } else if (payload.new.status === 'rejected') {
+        showTopupRejected(payload.new);
+        channel.unsubscribe();
+      }
+    })
+    .subscribe();
+}
+
+function showTopupSuccess(request) {
+  document.getElementById('qrCard').style.display = 'none';
+  const successEl = document.getElementById('topupSuccess');
+  successEl.style.display = 'block';
+  successEl.querySelector('#successAmount').textContent = `${fmtMoney(request.confirmed_amount_vnd || 0)} VNĐ`;
+}
+
+function showTopupRejected(request) {
+  const errorBox = document.getElementById('topupError');
+  errorBox.textContent = `Yêu cầu bị từ chối${request.reject_reason ? ': ' + request.reject_reason : ''}. Vui lòng liên hệ trung tâm.`;
+  errorBox.classList.add('show');
 }
 
 (async () => {

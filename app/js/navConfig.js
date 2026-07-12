@@ -75,6 +75,7 @@ export const NAV_CONFIG = [
       { labelKey: 'nav.edu.refundRequests', label: 'Yêu cầu hoàn phí', href: '/edu/refund-requests.html', icon: '↩️', visible: (p) => inDept(p, 'ACC') },
       { labelKey: 'nav.acc.walletLinks', label: 'Danh sách liên kết Ví', href: '/acc/wallet-links.html', icon: '📋', visible: (p) => inDept(p, 'ACC') },
       { labelKey: 'nav.acc.walletRecovery', label: 'Khắc phục sự cố nạp ví', href: '/acc/wallet-recovery.html', icon: '🛟', visible: (p) => inDept(p, 'ACC') },
+      { labelKey: 'nav.acc.sepayTransactions', label: 'Nhật ký giao dịch SePay', href: '/acc/sepay-transactions.html', icon: '📜', visible: (p) => inDept(p, 'ACC') },
       { labelKey: 'nav.acc.attendancePayroll', label: 'Bảng kê chấm công', href: '/acc/attendance-payroll-report.html', icon: '🕒', visible: (p) => inDept(p, 'ACC') },
       { labelKey: 'nav.acc.payroll', label: 'Bảng lương', href: '/acc/payroll.html', icon: '🧾', visible: (p) => inDept(p, 'ACC') },
       { labelKey: 'nav.tasks', label: 'Phân việc', href: '/acc/tasks.html', icon: '✅', visible: (p) => inDept(p, 'ACC') },
