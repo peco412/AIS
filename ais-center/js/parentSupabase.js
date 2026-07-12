@@ -39,6 +39,28 @@ export async function bootParentShell() {
     throw new Error('NO_SESSION');
   }
 
+  // SUA LOI THAT: truoc day neu buoc nao ben duoi (tai ho so phu huynh,
+  // tai danh sach hoc sinh...) bi loi bat ngo, ham nay THROW, va MOI
+  // TRANG goi no deu bat loi bang catch RONG (chi co comment, khong hien
+  // gi ca) — khien trang trang tron, nhin nhu "chua lam xong tinh nang"
+  // dung y nhu nguoi dung phan anh, trong khi thuc ra la co loi bi nuot
+  // im lang. Boc rieng doan nay de LUON hien banner loi ro rang truoc
+  // khi nem loi tiep, du trang goi co bat loi im lang hay khong.
+  try {
+    return await bootParentShellInner(sessionData);
+  } catch (e) {
+    if (e.message === 'NO_SESSION') throw e; // da dieu huong roi, khong can bao gi them
+    console.error('bootParentShell lỗi:', e);
+    const main = document.querySelector('main') || document.body;
+    const banner = document.createElement('div');
+    banner.style.cssText = 'background:#fce7e6; color:#d3352f; padding:16px; border-radius:12px; margin:16px; font-size:14px; line-height:1.5;';
+    banner.innerHTML = `⚠️ <strong>Không tải được dữ liệu.</strong><br>${e.message || 'Có lỗi xảy ra, vui lòng thử lại.'}<br><button onclick="location.reload()" style="margin-top:8px; padding:8px 16px; border-radius:8px; border:none; background:#d3352f; color:#fff; font-weight:600;">Tải lại trang</button>`;
+    main.prepend(banner);
+    throw e;
+  }
+}
+
+async function bootParentShellInner(sessionData) {
   const phone = sessionData.session.user.phone || sessionData.session.user.user_metadata?.phone;
   let { data: parent } = await supabase.from('parent_accounts').select('*').eq('auth_user_id', sessionData.session.user.id).maybeSingle();
 
