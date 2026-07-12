@@ -71,7 +71,14 @@ async function bootParentShellInner(sessionData) {
     // của phiên đăng nhập hiện tại (không update trực tiếp từ client vì RLS
     // sẽ chặn hồ sơ chưa có auth_user_id — xem claim_parent_account() ở DB).
     const { data: claimed } = await supabase.rpc('claim_parent_account').maybeSingle();
-    if (claimed) parent = claimed;
+    // SUA LOI THAT: claim_parent_account() la ham SQL tra ve KIEU DONG
+    // (composite type) - khi KHONG tim thay dong nao de nhan, no tra ve
+    // 1 "dong" voi TAT CA field = null (vd {id:null, full_name:null,...}),
+    // KHONG PHAI null hoan toan! `if (claimed)` truoc day luon dung vi
+    // day van la 1 object hop le (chi la rong), khien code tuong nham la
+    // "da tim thay ho so" va BO QUA luon buoc tao moi ben duoi — de lai
+    // "parent.id" = null, gay loi 400 "eq.null" khi truy van sau nay.
+    if (claimed?.id) parent = claimed;
   }
 
   if (!parent) {

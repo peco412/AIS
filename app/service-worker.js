@@ -11,7 +11,7 @@
 // Tăng số version CACHE_NAME này (v3, v4...) MỖI KHI deploy code mới có
 // thay đổi quan trọng, để buộc mọi client xoá sạch cache cũ ngay lập tức.
 // =====================================================================
-const CACHE_NAME = 'ais-shell-v93';
+const CACHE_NAME = 'ais-shell-v94';
 const APP_SHELL = [
   '/index.html',
   '/dashboard.html',
