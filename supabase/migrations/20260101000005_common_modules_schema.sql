@@ -7,7 +7,7 @@
 -- File PDF có thể mở popup để ký số kéo-thả tại chỗ (lưu đè bản cũ)
 -- ---------------------------------------------------------------------
 create table internal_proposals (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   code text not null unique,
   employee_id uuid not null references employees(id),
   department_id uuid not null references departments(id),
@@ -31,7 +31,7 @@ create index idx_proposal_employee on internal_proposals(employee_id);
 -- category quyết định phân quyền xem theo phòng ban (RLS ở file 08)
 -- ---------------------------------------------------------------------
 create table archive_files (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   department_id uuid not null references departments(id),
   center_id uuid references centers(id),
   category doc_category not null,
@@ -51,7 +51,7 @@ create index idx_archive_category on archive_files(category);
 -- KÝ SỐ HỒ SƠ - LOG (mọi thao tác ký, kể cả "tự nhập file rồi ký")
 -- ---------------------------------------------------------------------
 create table signature_logs (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   employee_id uuid not null references employees(id),  -- người ký
   source_file_url text not null,
   signed_file_url text not null,
@@ -68,7 +68,7 @@ create table signature_logs (
 -- THÔNG BÁO
 -- ---------------------------------------------------------------------
 create table notifications (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   scope notification_scope not null,
   center_id uuid references centers(id),        -- khi scope='center'
   department_id uuid references departments(id),-- khi scope='department'
@@ -92,7 +92,7 @@ create table notification_reads (
 -- LỊCH HỌP (offline hoặc online qua Google Calendar)
 -- ---------------------------------------------------------------------
 create table meetings (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   kind meeting_kind not null,
   title text not null,
   description text,
@@ -118,7 +118,7 @@ create table meeting_participants (
 -- LOG HOẠT ĐỘNG HỆ THỐNG (chỉ nhân viên kỹ thuật xem được - RLS file 08)
 -- ---------------------------------------------------------------------
 create table activity_logs (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   employee_id uuid references employees(id),
   action text not null,                -- 'login','create_contract','sign_document',...
   entity_type text,

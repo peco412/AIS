@@ -12,7 +12,7 @@
 -- xu ly hoan tien.
 -- ---------------------------------------------------------------------
 create table if not exists tuition_refund_requests (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   code text unique,
   student_id uuid not null references students(id),
   source text not null check (source in ('CASH', 'BANK_TRANSFER')),

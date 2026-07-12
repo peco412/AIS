@@ -51,7 +51,7 @@ create type meeting_kind as enum ('offline', 'online');
 -- PHÂN HỆ (Division): ALOHA / iLingo
 -- ---------------------------------------------------------------------
 create table divisions (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   code text not null unique,          -- 'ALOHA' | 'ILINGO'
   name text not null,
   theme_color text not null,          -- #0094D9 ALOHA | #0B6C37 iLingo
@@ -62,7 +62,7 @@ create table divisions (
 -- TRUNG TÂM (8 trung tâm, thuộc 1 trong 2 phân hệ)
 -- ---------------------------------------------------------------------
 create table centers (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   division_id uuid not null references divisions(id),
   code text not null unique,          -- ví dụ MOCAY, DUYENHAI...
   name text not null,
@@ -75,7 +75,7 @@ create table centers (
 -- PHÒNG BAN
 -- ---------------------------------------------------------------------
 create table departments (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   code text not null unique,          -- BDH, BCM, HR, ACC, MKT, EDU, FAC, TECH
   name text not null,
   created_at timestamptz not null default now()
@@ -87,7 +87,7 @@ create table departments (
 --                 2=ban điều hành (duyệt cấp 2), 9=nhân viên kỹ thuật (toàn quyền)
 -- ---------------------------------------------------------------------
 create table positions (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   department_id uuid not null references departments(id),
   name text not null,                  -- 'Trưởng phòng nhân sự', 'Giáo viên', ...
   approval_level smallint not null default 0,
@@ -99,7 +99,7 @@ create table positions (
 -- VAI TRÒ HỆ THỐNG (dùng cho phân quyền UI/RLS, độc lập với chức vụ)
 -- ---------------------------------------------------------------------
 create table system_roles (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   code text not null unique, -- 'EXECUTIVE','DEPT_HEAD','DEPT_DEPUTY','STAFF',
                               -- 'CENTER_MANAGER','TEACHER','CONSULTANT','TECH'
   name text not null
@@ -110,7 +110,7 @@ create table system_roles (
 -- Mã nhân viên tự sinh: AIS-0001 (xem function ở file 07)
 -- ---------------------------------------------------------------------
 create table employees (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   auth_user_id uuid unique references auth.users(id) on delete set null,
   employee_code text not null unique,      -- AIS-0001
   full_name text not null,
@@ -149,7 +149,7 @@ create index idx_employees_status on employees(status);
 
 -- Bằng cấp / chứng chỉ / CV (nhiều file, tất cả PDF)
 create table employee_documents (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   employee_id uuid not null references employees(id) on delete cascade,
   doc_type text not null check (doc_type in ('degree','certificate','cv')),
   file_url text not null,

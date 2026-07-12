@@ -77,7 +77,7 @@ create policy students_update on students for update
 -- =====================================================================
 
 create table if not exists mkt_ad_expenses (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   platform text not null,              -- Facebook Ads, Google Ads, TikTok Ads, Zalo...
   center_id uuid references centers(id),
   amount numeric(14,2) not null,

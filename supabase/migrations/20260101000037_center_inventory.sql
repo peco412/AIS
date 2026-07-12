@@ -4,7 +4,7 @@
 -- =====================================================================
 
 create table if not exists inventory_items (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   code text not null unique,
   name text not null,
   has_size boolean not null default false, -- true cho ao thun (can chon size)
@@ -24,7 +24,7 @@ insert into inventory_items (code, name, has_size, display_order) values
 on conflict (code) do nothing;
 
 create table if not exists inventory_transactions (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   code text unique,
   transaction_type text not null check (transaction_type in ('in', 'out')), -- nhap / xuat
   item_id uuid not null references inventory_items(id),

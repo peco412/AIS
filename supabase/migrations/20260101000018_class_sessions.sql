@@ -17,7 +17,7 @@ alter table classes add column if not exists days_of_week smallint[]; -- [1,3,5]
 -- (b) biết chính xác lớp còn bao nhiêu buổi tới hết khoá.
 -- ---------------------------------------------------------------------
 create table if not exists class_sessions (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   class_id uuid not null references classes(id) on delete cascade,
   session_date date not null,
   created_at timestamptz not null default now(),

@@ -32,7 +32,7 @@ comment on column employees.can_teach is 'Có thể đứng lớp giảng dạy 
 alter table students add column if not exists monthly_fee numeric(12,2);
 
 create table if not exists tuition_payments (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   student_id uuid not null references students(id),
   center_id uuid not null references centers(id),
   amount numeric(12,2) not null check (amount > 0),
@@ -104,7 +104,7 @@ for each row execute function log_tuition_to_cash_flow();
 -- PHẦN 4 — Module xin thêm quyền hạn theo yêu cầu phòng ban
 -- ---------------------------------------------------------------------
 create table if not exists permission_requests (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   requested_by uuid not null references employees(id),   -- trưởng phòng đứng ra xin
   target_employee_id uuid not null references employees(id), -- nhân sự được xin quyền
   module_key text not null,        -- vd 'acc.payment_requests', 'fac.stats'...
@@ -139,7 +139,7 @@ create policy permission_requests_decide on permission_requests for update
 -- quy ước (vd tên trang), dùng để CHECK THÊM ở phía frontend khi hiển thị
 -- menu/nút bấm cho đúng nhân sự đó, ngoài các quyền mặc định theo vai trò.
 create table if not exists granted_permissions (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   employee_id uuid not null references employees(id),
   module_key text not null,
   granted_by uuid references employees(id),

@@ -23,7 +23,7 @@ create policy leave_select on leave_requests for select
 -- PHẦN 2 — Đăng ký nhận thông báo đẩy (Web Push) trên từng thiết bị
 -- ---------------------------------------------------------------------
 create table if not exists push_subscriptions (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   employee_id uuid not null references employees(id) on delete cascade,
   endpoint text not null unique,
   p256dh text not null,

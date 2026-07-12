@@ -5,7 +5,7 @@
 -- Chương trình học lớn: PRE-SCHOOL, KIDS, PRE A1 STARTERS, A1 MOVERS,
 -- A2 FLYERS, A2 KET, B1 PET, B2 FCE, IELTS, COMMUNICATION
 create table programs (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   code text not null unique,
   name text not null,
   display_order smallint not null default 0
@@ -13,7 +13,7 @@ create table programs (
 
 -- Cấp độ (Pre-School 1, Kids 1, Movers, Foundation...)
 create table program_levels (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   program_id uuid not null references programs(id) on delete cascade,
   name text not null,
   display_order smallint not null default 0
@@ -21,7 +21,7 @@ create table program_levels (
 
 -- Cấp độ con / khoá cụ thể (Pre-School 1.1, Movers 1, Speed Up 1...)
 create table program_sublevels (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   level_id uuid not null references program_levels(id) on delete cascade,
   name text not null,
   display_order smallint not null default 0
@@ -31,7 +31,7 @@ create table program_sublevels (
 -- LỚP HỌC
 -- ---------------------------------------------------------------------
 create table classes (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   name text not null,
   center_id uuid not null references centers(id),
   program_id uuid not null references programs(id),
@@ -54,7 +54,7 @@ create index idx_classes_teacher on classes(teacher_id);
 -- HỌC VIÊN
 -- ---------------------------------------------------------------------
 create table students (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   full_name text not null,
   dob date,
   current_school text,
@@ -100,7 +100,7 @@ for each row execute function trg_update_class_count();
 -- BẢNG ĐIỂM HỌC VIÊN (điền tự động từ Bảng điểm lớp học của giáo viên)
 -- ---------------------------------------------------------------------
 create table student_grades (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   student_id uuid not null references students(id) on delete cascade,
   class_id uuid not null references classes(id),
   level_id uuid references program_levels(id),
@@ -115,7 +115,7 @@ create index idx_grades_student on student_grades(student_id);
 
 -- Điểm danh theo buổi
 create table class_attendance (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   class_id uuid not null references classes(id) on delete cascade,
   student_id uuid not null references students(id) on delete cascade,
   session_date date not null,
@@ -130,7 +130,7 @@ create table class_attendance (
 -- LỊCH TRỰC TRUNG TÂM & PHÂN LỊCH TUẦN GIÁO VIÊN
 -- ---------------------------------------------------------------------
 create table center_duty_schedules (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   center_id uuid not null references centers(id),
   employee_id uuid not null references employees(id),
   duty_date date not null,
@@ -141,7 +141,7 @@ create table center_duty_schedules (
 create index idx_duty_center_date on center_duty_schedules(center_id, duty_date);
 
 create table teacher_weekly_schedules (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   teacher_id uuid not null references employees(id),
   class_id uuid references classes(id),
   center_id uuid not null references centers(id),
@@ -159,7 +159,7 @@ create index idx_teacher_sched_teacher on teacher_weekly_schedules(teacher_id, w
 
 -- Phân lịch làm việc nhân sự hành chính (trừ phòng học vụ), tại các trung tâm
 create table work_schedules (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   employee_id uuid not null references employees(id),
   center_id uuid not null references centers(id),
   work_date date not null,
@@ -173,7 +173,7 @@ create index idx_work_sched_employee on work_schedules(employee_id, work_date);
 -- TƯ VẤN - HỒ SƠ KHÁCH HÀNG (CRM)
 -- ---------------------------------------------------------------------
 create table crm_leads (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   full_name text not null,
   dob date,
   current_school text,

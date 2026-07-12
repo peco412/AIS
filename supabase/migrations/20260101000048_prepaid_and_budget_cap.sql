@@ -16,7 +16,7 @@
 -- PHAN 1 - TK 242: Chi phi tra truoc phan bo dan
 -- ---------------------------------------------------------------------
 create table if not exists prepaid_expenses (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   payment_request_id uuid not null references payment_requests(id),
   total_amount numeric(14,2) not null,
   start_date date not null,
@@ -27,7 +27,7 @@ create table if not exists prepaid_expenses (
 );
 
 create table if not exists prepaid_expense_allocations (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   prepaid_expense_id uuid not null references prepaid_expenses(id) on delete cascade,
   period_year int not null,
   period_month int not null,
@@ -121,7 +121,7 @@ create policy prepaid_allocations_select on prepaid_expense_allocations for sele
 -- PHAN 2 - Dinh muc tran chi phi van hanh theo Trung tam + Hang muc chi
 -- ---------------------------------------------------------------------
 create table if not exists center_expense_budgets (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   center_id uuid not null references centers(id),
   expense_category_id uuid not null references expense_categories(id),
   monthly_cap numeric(14,2) not null default 0,

@@ -8,7 +8,7 @@
 -- 04.Phieutrinhsukien, 05.Phieudenghimuasam
 -- ---------------------------------------------------------------------
 create table document_templates (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   code text not null unique,      -- '01.Hopdonglaodong'
   name text not null,
   file_url text not null,         -- PDF gốc (dùng làm nền cho PDF Form Viewer)
@@ -22,7 +22,7 @@ create table document_templates (
 -- Quy trình ký: nhân viên -> trưởng phòng nhân sự -> ban điều hành -> lưu trữ
 -- ---------------------------------------------------------------------
 create table contracts (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   code text not null unique,
   employee_id uuid not null references employees(id),
   template_id uuid references document_templates(id),
@@ -45,7 +45,7 @@ create index idx_contracts_employee on contracts(employee_id);
 -- SỐ NGÀY PHÉP (tự cộng 1 ngày/tháng, trừ khi nghỉ phép, có thể chỉnh tay)
 -- ---------------------------------------------------------------------
 create table leave_balances (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   employee_id uuid not null references employees(id),
   year int not null,
   month int not null,
@@ -62,7 +62,7 @@ create table leave_balances (
 -- theo prefix HR, hoặc tách riêng tuỳ cấu hình generate_document_code)
 -- ---------------------------------------------------------------------
 create table leave_requests (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   code text not null unique,
   employee_id uuid not null references employees(id),
   leave_type leave_type not null,
@@ -83,7 +83,7 @@ create index idx_leave_employee on leave_requests(employee_id);
 -- ĐƠN CÔNG TÁC
 -- ---------------------------------------------------------------------
 create table business_trips (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   code text not null unique,
   employee_id uuid not null references employees(id),
   title text not null,

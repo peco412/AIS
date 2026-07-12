@@ -46,7 +46,7 @@ create policy payment_plan_discounts_write on payment_plan_discounts for all
 -- ky nhu hien tai, khong can bang rieng).
 -- ---------------------------------------------------------------------
 create table if not exists payment_plan_purchases (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   student_id uuid not null references students(id),
   plan_type text not null check (plan_type in ('level', 'program')),
   level_id uuid references program_levels(id),

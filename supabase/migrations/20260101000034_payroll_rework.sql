@@ -40,7 +40,7 @@ create policy base_salary_write on employee_base_salary for all
 -- PHAN 2 - Don xin cham cong tre - duyet 1 CAP DUY NHAT (Pho phong Nhan su)
 -- ---------------------------------------------------------------------
 create table if not exists late_clockin_requests (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   code text unique,
   employee_id uuid not null references employees(id),
   late_date date not null,

@@ -22,7 +22,7 @@ update centers set latitude = 9.8152535,  longitude = 106.1890901 where code = '
 -- PHẦN 2 — Lịch sử chấm công theo vị trí GPS
 -- ---------------------------------------------------------------------
 create table if not exists attendance_checkins (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   employee_id uuid not null references employees(id),
   center_id uuid not null references centers(id),
   check_type text not null check (check_type in ('in', 'out')),

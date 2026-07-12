@@ -4,7 +4,7 @@
 -- =====================================================================
 
 create table if not exists wallet_purchase_requests (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   code text unique,
   student_id uuid not null references students(id),
   center_id uuid not null references centers(id),
@@ -20,7 +20,7 @@ create trigger wallet_purchase_set_code before insert on wallet_purchase_request
 for each row execute function trg_set_code_hr();
 
 create table if not exists wallet_purchase_items (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   request_id uuid not null references wallet_purchase_requests(id) on delete cascade,
   item_id uuid not null references inventory_items(id),
   size text,

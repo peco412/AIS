@@ -8,7 +8,7 @@
 -- ban điều hành ký -> gộp pdf + chứng từ gốc -> lưu kho
 -- ---------------------------------------------------------------------
 create table payment_requests (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   code text not null unique,
   requester_id uuid not null references employees(id),
   department_id uuid references departments(id),
@@ -35,7 +35,7 @@ create index idx_payreq_requester on payment_requests(requester_id);
 -- PHIẾU TẠM ỨNG (mã ACC2-yyyy-mm-000001)
 -- ---------------------------------------------------------------------
 create table advance_requests (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   code text not null unique,
   requester_id uuid not null references employees(id),
   department_id uuid references departments(id),
@@ -61,7 +61,7 @@ create index idx_advreq_requester on advance_requests(requester_id);
 -- CÔNG NỢ / DÒNG TIỀN / BÁO CÁO TÀI CHÍNH (dữ liệu tổng hợp cho biểu đồ)
 -- ---------------------------------------------------------------------
 create table receivables (                -- quản lý công nợ
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   center_id uuid references centers(id),
   partner_name text not null,             -- đối tác / phụ huynh / nhà cung cấp
   amount numeric(14,2) not null,
@@ -74,7 +74,7 @@ create table receivables (                -- quản lý công nợ
 );
 
 create table cash_flow_entries (          -- quản lý dòng tiền
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   center_id uuid references centers(id),
   entry_type text not null check (entry_type in ('inflow','outflow')),
   category text,
@@ -92,7 +92,7 @@ create index idx_cashflow_center_date on cash_flow_entries(center_id, entry_date
 -- BẢNG LƯƠNG NHÂN VIÊN
 -- ---------------------------------------------------------------------
 create table payroll (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   employee_id uuid not null references employees(id),
   year int not null,
   month int not null,
@@ -112,7 +112,7 @@ create table payroll (
 -- department_id xác định module đang dùng bảng này cho phòng nào
 -- ---------------------------------------------------------------------
 create table task_assignments (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   department_id uuid not null references departments(id),
   assigned_by uuid not null references employees(id),   -- trưởng phòng
   assigned_to uuid not null references employees(id),   -- có thể là chính mình

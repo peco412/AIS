@@ -6,7 +6,7 @@
 -- YÊU CẦU TRUYỀN THÔNG (phòng ban khác gửi yêu cầu hỗ trợ)
 -- ---------------------------------------------------------------------
 create table communication_requests (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   code text not null unique,
   requester_id uuid not null references employees(id),
   department_id uuid references departments(id),
@@ -31,7 +31,7 @@ create index idx_commreq_requester on communication_requests(requester_id);
 -- ban điều hành duyệt cấp 2 + ký -> lưu kho
 -- ---------------------------------------------------------------------
 create table event_proposals (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   code text not null unique,
   center_manager_id uuid not null references employees(id),
   center_id uuid not null references centers(id),
@@ -55,7 +55,7 @@ create index idx_eventprop_center on event_proposals(center_id);
 -- lưu ý: password nên mã hoá phía ứng dụng, KHÔNG lưu plaintext
 -- ---------------------------------------------------------------------
 create table internal_accounts (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   platform text not null,             -- Facebook, Google Ads, Zalo OA...
   account_name text not null,
   username text,
@@ -70,7 +70,7 @@ create table internal_accounts (
 -- YÊU CẦU CƠ SỞ VẬT CHẤT (phòng ban khác gửi yêu cầu hỗ trợ)
 -- ---------------------------------------------------------------------
 create table facility_requests (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   code text not null unique,
   requester_id uuid not null references employees(id),
   department_id uuid references departments(id),
@@ -91,7 +91,7 @@ create index idx_facreq_requester on facility_requests(requester_id);
 -- Quy trình: người điền ký -> trưởng phòng CSVC duyệt+ký -> ban điều hành ký -> lưu kho
 -- ---------------------------------------------------------------------
 create table purchase_requests (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   code text not null unique,
   requester_id uuid not null references employees(id),
   center_id uuid references centers(id),
@@ -114,7 +114,7 @@ create index idx_purchasereq_requester on purchase_requests(requester_id);
 -- HỆ THỐNG THỐNG KÊ CSVC (kiểm kê tài sản, tuỳ chọn mở rộng)
 -- ---------------------------------------------------------------------
 create table facility_assets (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   center_id uuid not null references centers(id),
   asset_name text not null,
   category text,

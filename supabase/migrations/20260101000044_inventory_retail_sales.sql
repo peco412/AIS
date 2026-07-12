@@ -22,7 +22,7 @@ update inventory_items set product_group = 'media' where code in ('AOTHUN-HV','B
 -- dong, tu dong tru ton kho + hach toan doanh thu.
 -- ---------------------------------------------------------------------
 create table if not exists retail_sales (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   code text unique,
   student_id uuid references students(id), -- co the null neu khach vang lai khong phai hoc vien
   customer_name text,      -- ten hoc vien hoac khach le
@@ -39,7 +39,7 @@ create table if not exists retail_sales (
 );
 
 create table if not exists retail_sale_items (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   sale_id uuid not null references retail_sales(id) on delete cascade,
   item_id uuid not null references inventory_items(id),
   size text,

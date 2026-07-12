@@ -8,7 +8,7 @@
 -- PHAN 1 - Danh muc Nha cung cap
 -- ---------------------------------------------------------------------
 create table if not exists suppliers (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   code text unique,
   name text not null,
   category text, -- hang muc cung cap (vd: Van phong pham, Thiet bi dien tu...)
@@ -31,7 +31,7 @@ create policy suppliers_write on suppliers for all
 -- PHAN 2 - Hang muc chi (co san 5 muc theo dac ta + cho phep them tay)
 -- ---------------------------------------------------------------------
 create table if not exists expense_categories (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   code text unique not null,
   name text not null,
   display_order smallint not null default 0,
@@ -56,7 +56,7 @@ create policy expense_categories_write on expense_categories for all
 -- BDH), sau khi approved_3 thi KHOA du lieu (khong cho sua nua).
 -- ---------------------------------------------------------------------
 create table if not exists purchase_orders (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   code text unique,
   supplier_id uuid not null references suppliers(id),
   requester_id uuid not null references employees(id),
@@ -80,7 +80,7 @@ create trigger purchase_orders_set_code before insert on purchase_orders
 for each row execute function trg_set_code_acc1();
 
 create table if not exists purchase_order_items (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   order_id uuid not null references purchase_orders(id) on delete cascade,
   description text not null,
   quantity numeric(10,2) not null default 1,

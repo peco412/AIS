@@ -12,7 +12,7 @@
 -- program_sublevels tu gio la "Cap do con" (khong con gia rieng nua).
 -- ---------------------------------------------------------------------
 create table if not exists program_courses (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   sublevel_id uuid not null references program_sublevels(id) on delete cascade,
   name text not null,
   price_vnd numeric(14,2),

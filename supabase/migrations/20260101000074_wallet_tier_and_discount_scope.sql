@@ -13,7 +13,7 @@
 
 -- --------------------- PHAN A: Bac chiet khau vi cau hinh duoc ---------------------
 create table if not exists wallet_tier_discounts (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   min_amount numeric(14,2) not null unique,
   discount_rate numeric(5,4) not null check (discount_rate >= 0 and discount_rate <= 1),
   updated_by uuid references employees(id),

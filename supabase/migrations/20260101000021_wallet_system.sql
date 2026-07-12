@@ -15,7 +15,7 @@
 -- PHẦN 1 — Tài khoản phụ huynh (độc lập hoàn toàn với employees/system_roles)
 -- ---------------------------------------------------------------------
 create table if not exists parent_accounts (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   auth_user_id uuid unique references auth.users(id) on delete set null,
   full_name text not null,
   phone text not null unique,
@@ -25,7 +25,7 @@ create table if not exists parent_accounts (
 );
 
 create table if not exists parent_student_links (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   parent_account_id uuid not null references parent_accounts(id) on delete cascade,
   student_id uuid not null references students(id) on delete cascade,
   relationship text, -- 'Bố', 'Mẹ', 'Người giám hộ'...
@@ -57,7 +57,7 @@ $$;
 -- PHẦN 2 — Chương trình ưu đãi + audit log (mục 2)
 -- ---------------------------------------------------------------------
 create table if not exists discount_programs (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   name text not null,
   scope text not null check (scope in ('system', 'center')),
   center_id uuid references centers(id), -- null nếu scope='system'
@@ -72,7 +72,7 @@ create table if not exists discount_programs (
 create index if not exists idx_discount_programs_scope_status on discount_programs(scope, status);
 
 create table if not exists discount_program_audit_log (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   program_id uuid references discount_programs(id),
   actor_id uuid not null references employees(id),
   action text not null, -- 'create' | 'update' | 'activate' | 'deactivate'
@@ -165,13 +165,13 @@ for each row execute function log_discount_program_change();
 -- PHẦN 3 — Ví, lô nạp, hàm tính chiết khấu (mục 1, 2.3, 2.4)
 -- ---------------------------------------------------------------------
 create table if not exists wallets (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   student_id uuid not null unique references students(id),
   created_at timestamptz not null default now()
 );
 
 create table if not exists wallet_topup_batches (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   wallet_id uuid not null references wallets(id),
   coin_amount numeric(14,2) not null check (coin_amount > 0),
   coin_remaining numeric(14,2) not null check (coin_remaining >= 0),
@@ -282,7 +282,7 @@ $$;
 -- PHẦN 4 — Trừ ví FIFO + công nợ song song 2 đơn vị (mục 3.1, 4.1)
 -- ---------------------------------------------------------------------
 create table if not exists invoices (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   student_id uuid not null references students(id),
   period_year int not null,
   period_month int not null,
@@ -295,7 +295,7 @@ create table if not exists invoices (
 );
 
 create table if not exists debt_ledger (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   invoice_id uuid not null references invoices(id),
   source text not null check (source in ('WALLET', 'CASH', 'BANK_TRANSFER')),
   batch_id uuid references wallet_topup_batches(id), -- chỉ có nếu source=WALLET, để biết đúng conversion_rate đã dùng
@@ -407,7 +407,7 @@ $$;
 -- PHẦN 5 — Hoàn tiền khi rút ví (mục 4.2, 5.4)
 -- ---------------------------------------------------------------------
 create table if not exists wallet_withdrawal_requests (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   wallet_id uuid not null references wallets(id),
   requested_by uuid not null references parent_accounts(id),
   preview_amount_vnd numeric(14,2) not null, -- số tiền dự kiến hoàn, tính lúc gửi yêu cầu
@@ -464,7 +464,7 @@ $$;
 -- PHẦN 6 — Nhật ký tài chính + Hash Chain (mục 3.2)
 -- ---------------------------------------------------------------------
 create table if not exists financial_transaction_logs (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   source text not null check (source in ('WALLET', 'CASH', 'BANK_TRANSFER')),
   amount numeric(14,2) not null,
   invoice_id uuid references invoices(id),

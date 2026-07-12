@@ -57,7 +57,7 @@ $$;
 -- PHẦN 2 — Cấu hình tài khoản ngân hàng nhận tiền (để tạo QR chuyển khoản)
 -- ---------------------------------------------------------------------
 create table if not exists bank_settings (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   center_id uuid references centers(id), -- null = áp dụng chung toàn hệ thống
   bank_bin text not null,      -- mã ngân hàng theo chuẩn VietQR, vd Vietcombank = 970436
   bank_name text not null,     -- tên hiển thị, vd "Vietcombank"
@@ -79,7 +79,7 @@ create policy bank_settings_write on bank_settings for all
 -- không hề chuyển tiền thật (lỗ hổng đã có từ trước).
 -- ---------------------------------------------------------------------
 create table if not exists wallet_topup_requests (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   wallet_id uuid not null references wallets(id),
   requested_by uuid not null references parent_accounts(id),
   coin_amount numeric(14,2) not null check (coin_amount > 0),

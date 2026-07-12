@@ -9,7 +9,7 @@
 -- app di động thật, dùng FCM/APNs token chứ không phải Web Push subscription.
 -- ---------------------------------------------------------------------
 create table if not exists parent_push_tokens (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   parent_account_id uuid not null references parent_accounts(id) on delete cascade,
   device_token text not null unique,
   platform text not null check (platform in ('ios', 'android')),
@@ -28,7 +28,7 @@ create policy parent_push_tokens_own on parent_push_tokens for all
 -- để quyết định có cần fallback SMS sau 6 giờ hay không.
 -- ---------------------------------------------------------------------
 create table if not exists debt_reminder_logs (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   invoice_id uuid not null references invoices(id),
   channel text not null check (channel in ('push', 'sms')),
   status text not null check (status in ('sent', 'failed', 'skipped')),

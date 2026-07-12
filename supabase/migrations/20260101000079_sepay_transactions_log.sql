@@ -9,7 +9,7 @@
 -- =====================================================================
 
 create table if not exists sepay_transactions (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   sepay_transaction_id text not null unique, -- ma giao dich phia SePay, dung chong trung
   amount_vnd numeric(14,2) not null,
   raw_content text, -- noi dung goc SePay gui ve (chua qua xu ly trich xuat)
