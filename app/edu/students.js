@@ -14,14 +14,16 @@ function fillSelect(el, items, { valueKey = 'id', labelKey = 'name', placeholder
 }
 
 async function loadLookups() {
-  const [{ data: classes }, { data: levels }] = await Promise.all([
+  const [{ data: classes }, { data: levels }, { data: consultants }] = await Promise.all([
     supabase.from('classes').select('id, name').eq('center_id', PROFILE.centerId).order('name'),
     supabase.from('program_levels').select('id, name').order('display_order'),
+    supabase.from('employees').select('id, full_name, system_roles!inner(code)').eq('system_roles.code', 'CONSULTANT').eq('center_id', PROFILE.centerId),
   ]);
   CLASSES = classes || []; LEVELS = levels || [];
   fillSelect(document.getElementById('filterClass'), CLASSES, { placeholder: 'Tất cả các lớp' });
   fillSelect(document.getElementById('classSelect'), CLASSES, { placeholder: '— Chưa phân lớp —' });
   fillSelect(document.getElementById('entryLevel'), LEVELS, { placeholder: '—' });
+  fillSelect(document.getElementById('sourceConsultant'), consultants || [], { labelKey: 'full_name', placeholder: '— Không qua tư vấn viên nào —' });
 }
 
 async function loadRows() {
@@ -102,6 +104,7 @@ async function openEdit(id) {
   document.getElementById('dob').value = row.dob || '';
   document.getElementById('currentSchool').value = row.current_school || '';
   document.getElementById('entryLevel').value = row.entry_level_id || '';
+  document.getElementById('sourceConsultant').value = row.source_consultant_id || '';
   document.getElementById('classSelect').value = row.class_id || '';
   document.getElementById('parentName').value = row.parent_name || '';
   document.getElementById('email').value = row.email || '';
@@ -122,6 +125,7 @@ form.addEventListener('submit', async (e) => {
     dob: document.getElementById('dob').value || null,
     current_school: document.getElementById('currentSchool').value || null,
     entry_level_id: document.getElementById('entryLevel').value || null,
+    source_consultant_id: document.getElementById('sourceConsultant').value || null,
     class_id: document.getElementById('classSelect').value || null,
     parent_name: document.getElementById('parentName').value || null,
     email: document.getElementById('email').value || null,

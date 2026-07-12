@@ -76,6 +76,9 @@ export const NAV_CONFIG = [
       { labelKey: 'nav.acc.walletLinks', label: 'Danh sách liên kết Ví', href: '/acc/wallet-links.html', icon: '📋', visible: (p) => inDept(p, 'ACC') },
       { labelKey: 'nav.acc.walletRecovery', label: 'Khắc phục sự cố nạp ví', href: '/acc/wallet-recovery.html', icon: '🛟', visible: (p) => inDept(p, 'ACC') },
       { labelKey: 'nav.acc.sepayTransactions', label: 'Nhật ký giao dịch SePay', href: '/acc/sepay-transactions.html', icon: '📜', visible: (p) => inDept(p, 'ACC') },
+      { labelKey: 'nav.acc.generalLedger', label: 'Sổ cái kế toán', href: '/acc/general-ledger.html', icon: '📗', visible: (p) => inDept(p, 'ACC') },
+      { labelKey: 'nav.acc.periodClosing', label: 'Đối soát & Khoá sổ', href: '/acc/period-closing.html', icon: '🔒', visible: (p) => inDept(p, 'ACC') },
+      { labelKey: 'nav.acc.commissions', label: 'Hoa hồng tư vấn viên', href: '/acc/commissions.html', icon: '💼', visible: (p) => inDept(p, 'ACC') },
       { labelKey: 'nav.acc.attendancePayroll', label: 'Bảng kê chấm công', href: '/acc/attendance-payroll-report.html', icon: '🕒', visible: (p) => inDept(p, 'ACC') },
       { labelKey: 'nav.acc.payroll', label: 'Bảng lương', href: '/acc/payroll.html', icon: '🧾', visible: (p) => inDept(p, 'ACC') },
       { labelKey: 'nav.tasks', label: 'Phân việc', href: '/acc/tasks.html', icon: '✅', visible: (p) => inDept(p, 'ACC') },
@@ -135,6 +138,7 @@ export const NAV_CONFIG = [
       { subgroup: 'role', labelKey: 'nav.teacher.schedule', label: 'Lịch giảng dạy', href: '/teacher/schedule.html', icon: '📆', visible: (p) => p.isTeacher },
       // -- Vai trò: Nhân viên tư vấn --
       { subgroup: 'role', labelKey: 'nav.consultant.leads', label: 'Hồ sơ khách hàng', href: '/consultant/leads.html', icon: '📇', visible: (p) => p.roleCode === 'CONSULTANT' },
+      { subgroup: 'role', labelKey: 'nav.acc.commissions', label: 'Hoa hồng của tôi', href: '/acc/commissions.html', icon: '💼', visible: (p) => p.roleCode === 'CONSULTANT' },
       { subgroup: 'role', labelKey: 'nav.consultant.stats', label: 'Thống kê hồ sơ', href: '/consultant/stats.html', icon: '📊', visible: (p) => p.roleCode === 'CONSULTANT' },
       { subgroup: 'role', labelKey: 'nav.consultant.trialRegistration', label: 'Đăng ký học thử', href: '/consultant/trial-registration.html', icon: '🎓', visible: (p) => p.roleCode === 'CONSULTANT' },
     ],

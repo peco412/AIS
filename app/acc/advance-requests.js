@@ -34,6 +34,14 @@ async function loadRows() {
   if (error) { tbody.innerHTML = `<tr><td colspan="7" class="empty-cell">Lỗi: ${esc(error.message)}</td></tr>`; return; }
   ALL_ROWS = data || [];
 
+  // Kiem tra khoan nao da hoan ung roi, de an nut "Hoan ung" cho dung.
+  const approvedIds = ALL_ROWS.filter((r) => r.status === 'approved_3').map((r) => r.id);
+  if (approvedIds.length > 0) {
+    const { data: settlements } = await supabase.from('advance_settlements').select('advance_request_id').in('advance_request_id', approvedIds);
+    const settledSet = new Set((settlements || []).map((s) => s.advance_request_id));
+    ALL_ROWS.forEach((r) => { r.hasSettlement = settledSet.has(r.id); });
+  }
+
   DIRECT_MANAGER_MAP = {};
   (data || []).forEach((r) => {
     const emp = r.employees;
@@ -74,12 +82,33 @@ function render() {
       <td>
         <button class="btn btn-outline btn-sm" data-view="${r.id}">Xem</button>
         ${action ? `<button class="btn btn-accent btn-sm" data-act="${r.id}">${action.label}</button>` : ''}
+        ${r.status === 'approved_3' && !r.hasSettlement && (IS_ACC_HEAD || IS_EXEC) ? `<button class="btn btn-outline btn-sm" data-settle="${r.id}">Hoàn ứng</button>` : ''}
+        ${r.hasSettlement ? `<span class="badge badge-active" style="font-size:10px;">Đã hoàn ứng</span>` : ''}
       </td>
     </tr>`;
   }).join('');
 
   tbody.querySelectorAll('[data-view]').forEach((b) => b.addEventListener('click', () => viewRow(b.dataset.view)));
   tbody.querySelectorAll('[data-act]').forEach((b) => b.addEventListener('click', () => runAction(b.dataset.act)));
+  tbody.querySelectorAll('[data-settle]').forEach((b) => b.addEventListener('click', () => settleRow(b.dataset.settle)));
+}
+
+async function settleRow(id) {
+  const row = ALL_ROWS.find((r) => r.id === id);
+  const actualSpentStr = prompt(`Khoản tạm ứng "${row.code}" — ${fmtMoney(row.amount)} đ.\n\nSố tiền THỰC SỰ đã chi (có chứng từ):`, row.amount);
+  if (actualSpentStr === null) return;
+  const actualSpent = Number(actualSpentStr);
+  if (isNaN(actualSpent) || actualSpent < 0) { alert('Số tiền không hợp lệ.'); return; }
+  const notes = prompt('Diễn giải các khoản đã chi (VD: "Mua văn phòng phẩm 2tr, taxi công tác 500k..."):', '');
+
+  const diff = row.amount - actualSpent;
+  const diffMsg = diff > 0 ? `Nhân viên cần TRẢ LẠI ${fmtMoney(diff)} đ.` : diff < 0 ? `Công ty cần BÙ THÊM ${fmtMoney(Math.abs(diff))} đ.` : 'Khớp đúng 100% số tạm ứng.';
+  if (!confirm(`Xác nhận hoàn ứng?\n\nTạm ứng: ${fmtMoney(row.amount)} đ\nThực chi: ${fmtMoney(actualSpent)} đ\n${diffMsg}\n\nThao tác này sẽ ghi sổ kế toán ngay.`)) return;
+
+  const { error } = await supabase.rpc('settle_advance', { p_request_id: id, p_actual_spent: actualSpent, p_receipt_notes: notes, p_actor_id: PROFILE.id });
+  if (error) { alert('Lỗi: ' + error.message); return; }
+  alert('Đã hoàn ứng thành công.');
+  await loadRows();
 }
 
 async function viewRow(id) {
@@ -134,9 +163,21 @@ async function runAction(id) {
         updatePayload.executive_signed_at = nowIso;
         updatePayload.executive_signed_by = PROFILE.id;
         updatePayload.final_file_url = newUrl;
+        // SUA LOI THAT: buoc duyet cuoi (chi tien that su) truoc day CHI
+        // doi trang thai suong, KHONG GHI SO KE TOAN GI CA — "Tam ung"
+        // hoan toan vo hinh voi Bao cao tai chinh/So cai. Bo status khoi
+        // update thang, de approve_advance_final() tu lo (vua doi trang
+        // thai VUA ghi No 141/Co 111-112 dung 1 cho, khong tach roi 2
+        // buoc de tranh lech nhau.
+        delete updatePayload.status;
       }
       const { error } = await supabase.from('advance_requests').update(updatePayload).eq('id', row.id);
       if (error) throw error;
+
+      if (action.step === 'executive') {
+        const { error: glError } = await supabase.rpc('approve_advance_final', { p_request_id: row.id, p_approver_id: PROFILE.id });
+        if (glError) throw glError;
+      }
 
       if (action.step === 'executive') {
         const now = new Date();

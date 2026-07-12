@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="vi" data-division="aloha">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Đối soát &amp; Khoá sổ — ERP AIS</title>
+<link rel="manifest" href="/manifest.json" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="ERP AIS" />
+<link rel="apple-touch-icon" href="/assets/icon-192.png" />
+<meta name="theme-color" content="#0094D9" />
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/css/tokens.css" />
+<link rel="stylesheet" href="/css/dashboard.css" />
+<link rel="stylesheet" href="/css/module.css" />
+<style>
+  .recon-card { background: var(--surface-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; margin-bottom: 16px; }
+  .recon-row { display: grid; grid-template-columns: 140px 1fr 1fr 1fr auto; gap: 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .recon-row:last-child { border-bottom: none; }
+  .recon-diff-ok { color: var(--success); font-weight: 700; }
+  .recon-diff-bad { color: var(--danger); font-weight: 700; }
+  .period-status { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 999px; font-weight: 700; font-size: 13px; }
+  .period-status--open { background: var(--warning-tint); color: var(--warning); }
+  .period-status--closed { background: var(--success-tint); color: var(--success); }
+</style>
+</head>
+<body data-page="/acc/period-closing.html">
+
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar__brand"><span class="dot"></span><div>ERP AIS<small data-i18n="brand.subtitle">Hệ thống quản trị nội bộ</small></div></div>
+    <nav id="sidebarNav"></nav>
+    <div class="sidebar__footer">© 2026 ERP AIS</div>
+  </aside>
+  <header class="topbar">
+    <div class="topbar__left"><button class="menu-toggle" id="menuToggle">☰</button></div>
+    <div class="topbar__right">
+      <button class="icon-btn" onclick="location.href='/notifications.html'">🔔<span class="badge" id="notifBadge" style="display:none;">0</span></button>
+      <div class="user-chip" onclick="location.href='/profile.html'">
+        <div class="user-chip__avatar" id="userChipAvatar">--</div>
+        <div class="user-chip__meta"><div class="name" id="userChipName">Đang tải...</div><div class="role" id="userChipRole">—</div></div>
+      </div>
+      <button class="icon-btn" id="logoutBtn">⎋</button>
+    </div>
+  </header>
+
+  <main class="main">
+    <div class="page-header">
+      <div><h1>Đối soát &amp; Khoá sổ</h1><div class="sub">Kiểm tra số liệu hệ thống khớp với thực tế trước khi khoá — sau khi khoá, KHÔNG AI sửa/thêm bút toán được cho kỳ đó nữa.</div></div>
+    </div>
+
+    <div class="toolbar">
+      <select class="select-input" id="selectYear"></select>
+      <select class="select-input" id="selectMonth"></select>
+      <span id="periodStatusBadge"></span>
+    </div>
+
+    <div class="recon-card">
+      <h3>Đối soát số dư (Tiền mặt / Ngân hàng)</h3>
+      <p class="cell-muted" style="font-size:12.5px; margin-top:-6px;">So sánh số dư hệ thống tự tính (Sổ cái) với số tiền thực tế kiểm đếm / sao kê ngân hàng tính đến hết kỳ này.</p>
+      <div class="recon-row" style="font-weight:700; font-size:11.5px; color:var(--muted); text-transform:uppercase;">
+        <div>Tài khoản</div><div>Số dư Sổ cái</div><div>Số dư thực tế</div><div>Chênh lệch</div><div></div>
+      </div>
+      <div id="reconRows"></div>
+    </div>
+
+    <div class="recon-card">
+      <h3>Thao tác khoá sổ</h3>
+      <div id="closeActionArea"></div>
+    </div>
+
+    <div class="recon-card">
+      <h3>Lịch sử các kỳ đã khoá</h3>
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Kỳ</th><th>Người khoá</th><th>Thời gian khoá</th><th data-i18n="common.status">Trạng thái</th><th></th></tr></thead>
+          <tbody id="historyBody"><tr><td colspan="5" class="empty-cell">Đang tải...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="/env.js"></script>
+<script type="module" src="/acc/period-closing.js"></script>
+<script src="/js/pwa.js"></script>
+</body>
+</html>

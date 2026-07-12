@@ -94,28 +94,31 @@ async function selectStudent(student) {
     ? links.map((l) => `${l.parent_accounts?.full_name || '—'} (${l.relationship || ''}) — ${l.parent_accounts?.phone || '—'}`).join(' · ')
     : 'Chưa liên kết phụ huynh nào';
 
-  let { data: wallet, error: walletErr } = await supabase.from('wallets').select('id').eq('student_id', student.id).maybeSingle();
+  // SUA LOI THIET KE: "So du vi" o day CHI la thong tin THAM KHAO them
+  // cho nhan vien khi thu hoc phi tai cho (biet hoc sinh co san tien
+  // trong vi hay khong) — KHONG PHAI dieu kien bat buoc de trang hoat
+  // dong. Truoc day code TU Y TAO VI MOI neu chua co (thao tac GHI,
+  // khong can thiet, va thuong bi chan boi quyen han) roi return SOM
+  // neu that bai, khien ca phan DANH SACH HOA DON (chuc nang CHINH cua
+  // trang nay) cung khong tai duoc theo — 2 viec khong lien quan gi
+  // nhau bi troi vao 1. Gio CHI DOC (khong tao), va KHONG BAO GIO chan
+  // loadInvoices() du vi co loi gi di nua.
+  const { data: wallet, error: walletErr } = await supabase.from('wallets').select('id').eq('student_id', student.id).maybeSingle();
   if (walletErr) {
-    document.getElementById('walletBalance').textContent = 'Lỗi tải ví';
-    console.error('Lỗi tải ví:', walletErr.message);
-    alert(`Không tải được thông tin ví: ${walletErr.message}\n\nBáo lại quản trị hệ thống nếu lỗi này lặp lại.`);
-    return;
+    document.getElementById('walletBalance').textContent = '—';
+    console.warn('Không tải được số dư ví (không ảnh hưởng thu học phí tại chỗ):', walletErr.message);
+  } else if (!wallet) {
+    document.getElementById('walletBalance').textContent = 'Chưa có ví';
+    ACTIVE_WALLET_ID = null;
+  } else {
+    ACTIVE_WALLET_ID = wallet.id;
+    const { data: batches } = await supabase.from('wallet_topup_batches').select('coin_remaining').eq('wallet_id', wallet.id);
+    const balance = (batches || []).reduce((s, b) => s + Number(b.coin_remaining), 0);
+    document.getElementById('walletBalance').textContent = `${fmtMoney(balance)} coin`;
   }
-  if (!wallet) {
-    const { data: created, error: createErr } = await supabase.from('wallets').insert({ student_id: student.id }).select('id').single();
-    if (createErr || !created) {
-      document.getElementById('walletBalance').textContent = 'Lỗi tạo ví';
-      alert(`Không tạo được ví mới cho học sinh này: ${createErr?.message || 'không rõ lý do'}.\n\nBáo lại quản trị hệ thống nếu lỗi này lặp lại.`);
-      return;
-    }
-    wallet = created;
-  }
-  ACTIVE_WALLET_ID = wallet.id;
 
-  const { data: batches } = await supabase.from('wallet_topup_batches').select('coin_remaining').eq('wallet_id', wallet.id);
-  const balance = (batches || []).reduce((s, b) => s + Number(b.coin_remaining), 0);
-  document.getElementById('walletBalance').textContent = `${fmtMoney(balance)} coin`;
-
+  // Luon chay, bat ke phan vi ben tren co loi hay khong — day moi la
+  // chuc nang CHINH cua trang "Thu hoc phi".
   await loadInvoices();
 }
 
@@ -368,17 +371,19 @@ document.getElementById('btnSubmitInvoice').addEventListener('click', async () =
     }
 
     // "Tien nhan" — ghi nhan NGAY luon phan da thu duoc trong cung 1 thao
-    // tac (truoc day form chi tao hoa don, khong ghi nhan thu tien gi ca,
-    // nen "Trang thai" khong bao gio tu chuyen dung theo dac ta).
+    // tac. SUA LOI THAT QUAN TRONG: truoc day insert THANG vao debt_ledger
+    // + goi rieng refresh_invoice_status — BO QUA HOAN TOAN buoc ghi so
+    // tai chinh (append_financial_log), khien khoan thu nay KHONG BAO GIO
+    // vao duoc Bao cao tai chinh lan So cai. Da co san dung 1 ham lam CA
+    // 3 viec cung luc (record_counter_payment) — dung lai cho dung, giong
+    // y het luong "thu tiep hoa don da co san" ben duoi dang dung dung.
     const receivedVnd = Math.min(Number(document.getElementById('invReceivedVnd').value) || 0, PLAN_BASE_PRICE);
     const hinhThucThu = document.getElementById('hinhThucThu').value;
     if (receivedVnd > 0 && newInvoice?.id) {
-      const { error: ledgerErr } = await supabase.from('debt_ledger').insert({
-        invoice_id: newInvoice.id, source: hinhThucThu, amount_vnd: receivedVnd,
+      const { error: paymentErr } = await supabase.rpc('record_counter_payment', {
+        p_invoice_id: newInvoice.id, p_source: hinhThucThu, p_amount_vnd: receivedVnd, p_actor_id: PROFILE.id,
       });
-      if (ledgerErr) throw ledgerErr;
-      const { error: refreshErr } = await supabase.rpc('refresh_invoice_status', { p_invoice_id: newInvoice.id });
-      if (refreshErr) throw refreshErr;
+      if (paymentErr) throw paymentErr;
     }
 
     createModal.classList.remove('show');
