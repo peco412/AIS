@@ -1,8 +1,10 @@
 // =====================================================================
-// Đăng ký bằng SĐT + mật khẩu — tuỳ cấu hình Supabase Auth (mục "Confirm
-// phone" trong Phone Provider) mà có thể cần xác minh OTP 1 LẦN DUY NHẤT
-// ngay sau khi đăng ký trước khi dùng được; các lần đăng nhập SAU đó chỉ
-// cần SĐT + mật khẩu, không cần OTP nữa.
+// Dang ky bang SDT + mat khau — DA BO HAN buoc xac minh OTP theo yeu cau
+// (dang nhap hang ngay da dung mat khau tu truoc, buoc OTP luc dang ky
+// la du thua). QUAN TRONG: de dang ky hoat dong dung KHONG can OTP, phai
+// vao Supabase Dashboard -> Authentication -> Providers -> Phone -> TAT
+// "Confirm phone" — neu con BAT, Supabase se tu doi hoi xac minh OTP o
+// phia server bat ke code frontend co hay khong, se bao loi ngay o day.
 // =====================================================================
 const ENV = window.__ENV__ || {};
 const supabase = window.supabase.createClient(
@@ -21,8 +23,6 @@ function normalizePhone(input) {
   return '+84' + digits;
 }
 
-let currentPhone = '';
-
 document.getElementById('btnRegister').addEventListener('click', async () => {
   clearError();
   const fullName = document.getElementById('fullName').value.trim();
@@ -34,12 +34,10 @@ document.getElementById('btnRegister').addEventListener('click', async () => {
   if (password.length < 6) { showError('Mật khẩu cần tối thiểu 6 ký tự.'); return; }
   if (password !== confirmPassword) { showError('Mật khẩu nhập lại không khớp.'); return; }
 
-  currentPhone = normalizePhone(phone);
-
   const btn = document.getElementById('btnRegister');
   btn.disabled = true; btn.textContent = 'Đang tạo tài khoản...';
   const { data, error } = await supabase.auth.signUp({
-    phone: currentPhone, password,
+    phone: normalizePhone(phone), password,
     options: { data: { full_name: fullName } },
   });
   btn.disabled = false; btn.textContent = 'Đăng ký';
@@ -51,37 +49,15 @@ document.getElementById('btnRegister').addEventListener('click', async () => {
     return;
   }
 
-  if (data.session) {
-    // Khong yeu cau xac minh OTP (da tat "Confirm phone" o Supabase) -> vao thang
-    window.location.href = 'link-student.html';
+  if (!data.session) {
+    // Truong hop nay chi xay ra neu "Confirm phone" ben Supabase Dashboard
+    // van con BAT — can nguoi quan tri he thong tat thiet lap do di thi
+    // dang ky moi vao thang duoc, khong con buoc OTP nao o day nua.
+    showError('Không thể vào thẳng tài khoản — hệ thống đang yêu cầu xác minh thêm. Báo quản trị hệ thống kiểm tra lại cấu hình đăng nhập.');
     return;
   }
 
-  // Can xac minh OTP 1 lan de kich hoat tai khoan
-  document.getElementById('registerStep').style.display = 'none';
-  document.getElementById('otpStep').style.display = 'block';
-  document.getElementById('otpPhoneDisplay').textContent = currentPhone;
-});
-
-document.getElementById('btnVerifyOtp').addEventListener('click', async () => {
-  clearError();
-  const otp = document.getElementById('otp').value.trim();
-  if (!otp) { showError('Vui lòng nhập mã OTP.'); return; }
-
-  const btn = document.getElementById('btnVerifyOtp');
-  btn.disabled = true; btn.textContent = 'Đang xác nhận...';
-  const { error } = await supabase.auth.verifyOtp({ phone: currentPhone, token: otp, type: 'sms' });
-  btn.disabled = false; btn.textContent = 'Xác nhận';
-
-  if (error) { showError('Mã OTP không đúng hoặc đã hết hạn: ' + error.message); return; }
   window.location.href = 'link-student.html';
-});
-
-document.getElementById('btnResendOtp').addEventListener('click', async () => {
-  clearError();
-  const { error } = await supabase.auth.resend({ type: 'sms', phone: currentPhone });
-  if (error) showError('Không gửi lại được mã: ' + error.message);
-  else alert('Đã gửi lại mã OTP.');
 });
 
 document.getElementById('btnGoLogin').addEventListener('click', () => { window.location.href = 'index.html'; });
