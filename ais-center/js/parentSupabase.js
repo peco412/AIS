@@ -35,7 +35,7 @@ export function fmtDateTime(d) { return d ? new Date(d).toLocaleString('vi-VN') 
 export async function bootParentShell() {
   const { data: sessionData } = await supabase.auth.getSession();
   if (!sessionData.session) {
-    window.location.href = '/ais-center/index.html';
+    window.location.href = '/index.html';
     throw new Error('NO_SESSION');
   }
 
@@ -117,7 +117,7 @@ async function bootParentShellInner(sessionData) {
 
   document.getElementById('logoutBtn')?.addEventListener('click', async () => {
     await supabase.auth.signOut();
-    window.location.href = '/ais-center/index.html';
+    window.location.href = '/index.html';
   });
 
   if (students.length === 0) {

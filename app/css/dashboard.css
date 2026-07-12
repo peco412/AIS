@@ -3,18 +3,23 @@
    sáng (vibrancy), topbar kính mờ, nội dung dạng thẻ nổi khối mềm.
    ===================================================================== */
 
+/* Sidebar da bo han (xem .sidebar { display:none !important } o duoi) —
+   .app-shell mac dinh LUON full-width ngay tu dau, khong con doi JS them
+   class .app-shell--no-sidebar moi dung layout dung, tranh khoang trong
+   "co hut" cho sidebar truoc khi JS chay xong. */
 .app-shell {
   display: grid;
-  grid-template-columns: var(--sidebar-w) 1fr;
+  grid-template-columns: 1fr;
   grid-template-rows: var(--topbar-h) 1fr;
   grid-template-areas:
-    "sidebar topbar"
-    "sidebar main";
+    "topbar"
+    "main";
   min-height: 100vh;
 }
+.app-shell .main { max-width: 1100px; margin: 0 auto; }
 
-/* Bo sidebar cay thu muc, thay bang he thong The gioi + Icon Hub — topbar
-   va main chiem full chieu ngang, khong con cot sidebar nua. */
+/* Giu lai bien the co ten cu (khong con dung thuc te nua vi da la mac
+   dinh) chi de tranh vo code cu con tham chieu class nay o dau do. */
 .app-shell.app-shell--no-sidebar {
   grid-template-columns: 1fr;
   grid-template-areas:
@@ -76,6 +81,11 @@
 }
 
 /* ---------- Sidebar (kính mờ sáng) ---------- */
+/* Sidebar cay thu muc DA THAY THE HOAN TOAN boi he thong "The gioi" +
+   Icon Hub (World Switcher + Hub Overlay trong shell.js) — an cung bang
+   CSS ngay tu dau (khong doi JS chay xong moi an) de KHONG con hien
+   tuong "chop nhay" thay hien roi moi an, dung theo yeu cau "xoa luon". */
+.sidebar { display: none !important; }
 .sidebar {
   grid-area: sidebar;
   background: var(--glass-bg);

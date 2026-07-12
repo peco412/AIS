@@ -30,13 +30,14 @@ async function loadRows() {
 
   const { data, error } = await supabase
     .from('discount_programs_view')
-    .select('id, code, name, scope, discount_rate, valid_from, valid_to, status, applies_to, centers(name), programs(name), program_sublevels(name), program_courses(name)')
+    .select('id, code, name, scope, discount_rate, valid_from, valid_to, status, applies_to, applies_via, centers(name), programs(name), program_sublevels(name), program_courses(name)')
     .order('created_at', { ascending: false });
 
-  if (error) { tbody.innerHTML = `<tr><td colspan="8" class="empty-cell">Lỗi: ${esc(error.message)}</td></tr>`; return; }
-  if (!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="8" class="empty-cell">Chưa có chương trình ưu đãi nào.</td></tr>'; return; }
+  if (error) { tbody.innerHTML = `<tr><td colspan="9" class="empty-cell">Lỗi: ${esc(error.message)}</td></tr>`; return; }
+  if (!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="9" class="empty-cell">Chưa có chương trình ưu đãi nào.</td></tr>'; return; }
 
   const APPLIES_LABEL = { all: 'Tất cả', program: 'Theo chương trình', sublevel: 'Theo cấp độ', course: 'Theo khoá' };
+  const VIA_LABEL = { both: 'Cả hai', counter: 'Tại trung tâm', wallet: 'Tại ví' };
   const scopeRefName = (r) => r.programs?.name || r.program_sublevels?.name || r.program_courses?.name || '';
 
   tbody.innerHTML = data.map((r) => `
@@ -44,6 +45,7 @@ async function loadRows() {
       <td class="cell-code mono">${esc(r.code || '—')}</td>
       <td>${esc(r.name)}</td>
       <td class="cell-muted">${esc(APPLIES_LABEL[r.applies_to] || r.applies_to)}${scopeRefName(r) ? ` — ${esc(scopeRefName(r))}` : ''}</td>
+      <td><span class="badge badge-submitted" style="font-size:10px;">${esc(VIA_LABEL[r.applies_via] || r.applies_via)}</span></td>
       <td class="cell-muted">${r.scope === 'system' ? 'Toàn hệ thống' : esc(r.centers?.name || '—')}</td>
       <td class="mono">${fmtPercent(r.discount_rate)}</td>
       <td class="cell-muted" style="font-size:12px;">${fmtDateTime(r.valid_from)} → ${fmtDateTime(r.valid_to)}</td>
@@ -211,6 +213,7 @@ document.getElementById('programForm').addEventListener('submit', async (e) => {
     status: 'active',
     created_by: PROFILE.id,
     applies_to: appliesTo,
+    applies_via: document.getElementById('progAppliesVia').value,
     program_id: appliesTo === 'program' ? scopeRefId : null,
     sublevel_id: appliesTo === 'sublevel' ? scopeRefId : null,
     course_id: appliesTo === 'course' ? scopeRefId : null,

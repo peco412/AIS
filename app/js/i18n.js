@@ -42,6 +42,7 @@ const DICT = {
   'nav.md.expenseCategories': { vi: 'Hạng mục chi', en: 'Expense categories' },
   'nav.md.programPricing': { vi: 'Chương trình & Bảng giá khoá học', en: 'Programs & course pricing' },
   'nav.md.paymentPlanDiscounts': { vi: 'Chiết khấu hình thức đóng học phí', en: 'Payment plan discounts' },
+  'nav.md.walletTierDiscounts': { vi: 'Chiết khấu ví (bậc theo số tiền nạp)', en: 'Wallet tier discounts' },
   'nav.md.inventoryItems': { vi: 'Danh mục sản phẩm kho', en: 'Inventory product catalog' },
   'nav.section.personal': { vi: 'Chức năng cá nhân', en: 'Personal functions' },
   'nav.hr.lateClockin': { vi: 'Đơn xin chấm công trễ', en: 'Late clock-in request' },
