@@ -36,7 +36,7 @@ async function searchAndPick() {
   feedback.textContent = 'Đang tìm...';
   resultsList.style.display = 'none';
 
-  let query = supabase.from('students').select('id, full_name, center_id, class_id, centers(name)').ilike('full_name', `%${q}%`).limit(8);
+  let query = supabase.from('students').select('id, full_name, center_id, class_id, phone, parent_name, centers(name)').or(`full_name.ilike.%${q}%,phone.ilike.%${q}%`).limit(8);
   if (PROFILE.centerId && !['EXECUTIVE', 'TECH'].includes(PROFILE.roleCode) && PROFILE.departmentCode !== 'ACC') {
     query = query.eq('center_id', PROFILE.centerId);
   }
@@ -59,7 +59,7 @@ async function searchAndPick() {
   resultsList.style.display = 'block';
   resultsList.innerHTML = data.map((s) => `
     <button type="button" class="btn btn-outline btn-sm" data-pick="${s.id}" style="margin: 2px 6px 2px 0;">
-      ${esc(s.full_name)} — ${esc(s.centers?.name || 'chưa gắn trung tâm')}
+      ${esc(s.full_name)} ${s.phone ? `(${esc(s.phone)})` : ''} — ${esc(s.centers?.name || 'chưa gắn trung tâm')}
     </button>
   `).join('');
   resultsList.querySelectorAll('[data-pick]').forEach((btn) => {
@@ -269,7 +269,18 @@ async function updatePlanPricePreview() {
 let AUTO_DISCOUNT_RATE = 0;
 let RECEIVED_TOUCHED = false;
 
-document.getElementById('btnNewInvoice').addEventListener('click', async () => {
+// SUA THEO DUNG SO DO MOI: "Tao hoa don" gio CHI lam o "Trang tao hoa don
+// chung" (dua theo Tu van chot), tranh 2 cho cung tao hoa don gay chong
+// cheo/nham lan hinh thuc. Trang nay ("Thu hoc phi") tu gio CHI con vai
+// tro THU TIEN cho hoa don DA CO san, khong tao moi nua — nut cu chuyen
+// thanh dieu huong sang trang moi thay vi mo modal rieng (giu nguyen
+// modal/logic cu ben duoi o dang khong dung toi, tranh rui ro xoa nham
+// lam hong code dang chay tot).
+document.getElementById('btnNewInvoice').addEventListener('click', () => {
+  window.location.href = '/edu/general-invoicing.html';
+});
+
+async function _unusedOpenInvoiceModal() {
   document.getElementById('createError').classList.remove('show');
   document.querySelector('input[name="planType"][value="sublevel"]').checked = true;
   document.getElementById('planScopeField').style.display = 'block';
@@ -307,7 +318,7 @@ document.getElementById('btnNewInvoice').addEventListener('click', async () => {
   }
   updateNetAmountPreview();
   createModal.classList.add('show');
-});
+}
 
 function updateNetAmountPreview() {
   recomputeAmounts();

@@ -9,7 +9,7 @@
 // =====================================================================
 
 const VAPID_PUBLIC_KEY = window.__ENV__?.VAPID_PUBLIC_KEY
-  || 'BMjLA_Hhoa86J2O3saX6-twTp-oEgqB-QT0cZo12w800-DfyTG1oAz7UHPqQdD7ZZCOLXY0fcABx1NOSuX3hSww';
+  || 'BM40mzrBnzJt7Flt-2M-zq-c-U2li7e0l9eOntppGtaAzz0adO5ceA1be7KmI7wa6p62haLVUiRi4aajhuXNe9Y';
 
 function urlBase64ToUint8Array(base64String) {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);

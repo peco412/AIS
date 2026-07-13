@@ -103,6 +103,7 @@ const DICT = {
   'nav.edu.tuition': { vi: 'Thu học phí', en: 'Tuition collection' },
   'nav.edu.debtOverview': { vi: 'Công nợ tổng hợp', en: 'Consolidated debt' },
   'nav.edu.parentLinks': { vi: 'Liên kết Phụ huynh', en: 'Parent-student links' },
+  'nav.edu.generalInvoicing': { vi: 'Tạo hoá đơn chung', en: 'General invoicing' },
   'nav.edu.walletInvoices': { vi: 'Thu học phí', en: 'Tuition collection' },
   'nav.edu.invoiceDetail': { vi: 'Tra cứu & Thanh toán hoá đơn', en: 'Invoice lookup & payment' },
   'nav.edu.walletPaymentLog': { vi: 'Thu học phí qua Ví (Log)', en: 'Wallet payment log' },

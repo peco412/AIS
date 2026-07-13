@@ -111,6 +111,7 @@ export const NAV_CONFIG = [
     sectionKey: 'nav.section.center', section: 'Khối trung tâm', layer: 'centers',
     items: [
       // ========== Phần 1: Thu học phí ==========
+      { subgroup: 'tuition', labelKey: 'nav.edu.generalInvoicing', label: 'Tạo hoá đơn chung', href: '/edu/general-invoicing.html', icon: '📋', visible: (p) => p.isCenterManager || p.roleCode === 'CONSULTANT' || inDept(p, 'ACC') },
       { subgroup: 'tuition', labelKey: 'nav.edu.walletInvoices', label: 'Thu học phí', href: '/edu/wallet-invoices.html', icon: '💳', visible: (p) => p.isCenterManager || p.roleCode === 'CONSULTANT' || inDept(p, 'ACC') },
       { subgroup: 'tuition', labelKey: 'nav.edu.invoiceDetail', label: 'Tra cứu & Thanh toán hoá đơn', href: '/edu/invoice-detail.html', icon: '🧾', visible: (p) => p.isCenterManager || p.roleCode === 'CONSULTANT' || inDept(p, 'ACC') },
       { subgroup: 'tuition', labelKey: 'nav.acc.walletTopupRequests', label: 'Xác nhận nạp ví', href: '/acc/wallet-topup-requests.html', icon: '✅', visible: (p) => p.isCenterManager },

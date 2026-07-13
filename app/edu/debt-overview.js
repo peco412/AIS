@@ -10,7 +10,7 @@ async function loadRows() {
   const tbody = document.getElementById('tableBody');
   tbody.innerHTML = '<tr><td colspan="8" class="empty-cell">Đang tải dữ liệu...</td></tr>';
 
-  const { data: students } = await supabase.from('students').select('id, full_name, class_id, classes(program_id, level_id, course_id, programs(name), program_levels(name), program_courses(name))').eq('center_id', PROFILE.centerId);
+  const { data: students } = await supabase.from('students').select('id, full_name, class_id, classes(program_id, level_id, course_id, start_date, programs(name), program_levels(name), program_courses(name))').eq('center_id', PROFILE.centerId);
   const studentIds = (students || []).map((s) => s.id);
   const studentMap = {};
   (students || []).forEach((s) => { studentMap[s.id] = s; });
@@ -37,6 +37,10 @@ async function loadRows() {
     paidRows.forEach((l) => { bySource[l.source] = (bySource[l.source] || 0) + Number(l.amount_vnd); });
     const student = studentMap[inv.student_id];
     const cls = student?.classes;
+    // Canh bao rieng: qua 30 ngay ke tu ngay BAT DAU HOC ma van chua
+    // dong du (khac voi due_date thong thuong — vd due_date con han
+    // nhung da hoc duoc hon 1 thang roi ma chua dong thi van can luu y).
+    const isOverdue30d = cls?.start_date && (new Date(cls.start_date).getTime() + 30 * 86400000 < Date.now());
     return {
       ...inv,
       studentName: student?.full_name || '—',
@@ -46,6 +50,7 @@ async function loadRows() {
       programName: cls?.programs?.name || '—',
       levelName: cls?.program_levels?.name || '—',
       courseName: cls?.program_courses?.name || '—',
+      isOverdue30d,
       paidTotal,
       remaining: Number(inv.amount_vnd) - paidTotal,
       bySource,
@@ -89,7 +94,7 @@ function render() {
 
     return `
     <tr>
-      <td>${esc(r.studentName)}</td>
+      <td>${esc(r.studentName)}${r.isOverdue30d ? ' <span class="badge badge-rejected" title="Đã học quá 30 ngày kể từ ngày bắt đầu mà chưa đóng đủ">⚠️ Quá 30 ngày</span>' : ''}</td>
       <td class="cell-muted" style="font-size:11.5px;">${esc(r.programName)} / ${esc(r.levelName)} / ${esc(r.courseName)}</td>
       <td class="cell-muted">${r.period_month}/${r.period_year}</td>
       <td class="mono">${fmtMoney(r.amount_vnd)} đ</td>

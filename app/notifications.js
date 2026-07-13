@@ -4,6 +4,24 @@ import { supabase, esc } from '/js/supabase.js';
 const SCOPE_ICON = { system: '🌐', center: '🏫', department: '🏢', personal: '👤' };
 const SCOPE_LABEL = { system: 'Toàn hệ thống', center: 'Trung tâm', department: 'Phòng ban', personal: 'Cá nhân' };
 
+// PHAN LOAI THEO NGHIEP VU — suy ra tu tien to duong dan link_url (da co
+// san), KHONG can sua tung noi tao thong bao (9+ cho khac nhau trong he
+// thong) — cach nhanh nhat de tach "chong cheo" nhieu loai thong bao
+// tron lan 1 danh sach nhu truoc, ma khong dong cham nhieu code.
+const CATEGORY_MAP = [
+  { prefix: '/hr/', label: 'Nhân sự', icon: '👥' },
+  { prefix: '/acc/', label: 'Kế toán', icon: '💰' },
+  { prefix: '/fac/', label: 'CSVC', icon: '🔧' },
+  { prefix: '/mkt/', label: 'Truyền thông', icon: '📣' },
+  { prefix: '/edu/', label: 'Học vụ / Học phí', icon: '🎓' },
+  { prefix: '/exec/', label: 'Ban điều hành', icon: '🏛️' },
+];
+function categoryOf(row) {
+  const url = row.link_url || '';
+  const found = CATEGORY_MAP.find((c) => url.startsWith(c.prefix));
+  return found || { label: 'Khác', icon: '🔔' };
+}
+
 let PROFILE = null;
 let ALL_ROWS = [];
 let READ_IDS = new Set();
@@ -27,23 +45,27 @@ async function loadRows() {
 
 function render() {
   const scope = document.getElementById('filterScope').value;
-  const rows = ALL_ROWS.filter((r) => !scope || r.scope === scope);
+  const category = document.getElementById('filterCategory').value;
+  const rows = ALL_ROWS.filter((r) => (!scope || r.scope === scope) && (!category || categoryOf(r).label === category));
   document.getElementById('resultCount').textContent = `${rows.length} thông báo`;
 
   const list = document.getElementById('notifList');
   if (rows.length === 0) { list.innerHTML = '<div class="empty-cell">Không có thông báo nào.</div>'; return; }
 
-  list.innerHTML = rows.map((n) => `
+  list.innerHTML = rows.map((n) => {
+    const cat = categoryOf(n);
+    return `
     <div class="notif-item ${READ_IDS.has(n.id) ? '' : 'unread'}" data-id="${n.id}" ${n.link_url ? `data-goto="${esc(n.link_url)}" style="cursor:pointer;"` : ''}>
-      <div class="notif-scope-icon">${SCOPE_ICON[n.scope] || '🔔'}</div>
+      <div class="notif-scope-icon">${cat.icon}</div>
       <div class="notif-body">
         <div class="notif-title">${esc(n.title)}</div>
         <div class="notif-content">${esc(n.content || '')}</div>
-        <div class="notif-meta">${SCOPE_LABEL[n.scope]} · ${fmtDate(n.created_at)}</div>
+        <div class="notif-meta"><span class="badge badge-submitted" style="font-size:10px;">${cat.label}</span> · ${SCOPE_LABEL[n.scope]} · ${fmtDate(n.created_at)}</div>
       </div>
       ${!READ_IDS.has(n.id) ? '<button class="btn btn-outline btn-sm" data-mark>Đánh dấu đã đọc</button>' : ''}
     </div>
-  `).join('');
+  `;
+  }).join('');
 
   // Bam vao thong bao (ngoai nut "Danh dau da doc") -> dieu huong toi
   // dung trang lien quan, dung du lieu link_url moi sua/them.
@@ -71,6 +93,7 @@ async function markRead(notificationId) {
 }
 
 document.getElementById('filterScope').addEventListener('change', render);
+document.getElementById('filterCategory').addEventListener('change', render);
 
 document.getElementById('btnMarkAll').addEventListener('click', async () => {
   const unread = ALL_ROWS.filter((r) => !READ_IDS.has(r.id));
