@@ -163,7 +163,10 @@ async function loadInvoices() {
 
     return `
       <tr>
-        <td>${inv.period_month}/${inv.period_year}${plan ? `<div class="cell-muted" style="font-size:11px;">${PLAN_LABEL[plan.plan_type]}</div>` : ''}</td>
+        <td>
+          <a href="/edu/invoice-detail.html?code=${encodeURIComponent(inv.invoice_code || '')}" class="mono cell-code" style="text-decoration:none;" title="Mở trang chi tiết/thanh toán riêng">${esc(inv.invoice_code || '—')}</a>
+          <div>${inv.period_month}/${inv.period_year}${plan ? `<div class="cell-muted" style="font-size:11px;">${PLAN_LABEL[plan.plan_type]}</div>` : ''}</div>
+        </td>
         <td class="mono">${fmtMoney(inv.amount_vnd)} đ${discountNote}</td>
         <td class="mono" style="color:var(--success);">${fmtMoney(paid)} đ</td>
         <td class="mono" style="color:var(--danger); font-weight:600;">${fmtMoney(remaining)} đ</td>

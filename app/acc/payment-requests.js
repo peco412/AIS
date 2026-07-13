@@ -219,7 +219,7 @@ document.getElementById('submitDocs').addEventListener('click', async () => {
       .eq('id', row.id);
     if (error) throw error;
     notifyDepartmentHeads('ACC', 'Có phiếu đề nghị thanh toán mới cần phân việc',
-      `${PROFILE.fullName} vừa gửi phiếu ${row.code} (${fmtMoney(row.amount)}) — vào Phân việc để giao cho nhân sự xử lý.`, '/acc/tasks.html');
+      `${PROFILE.fullName} vừa gửi phiếu ${row.code} (${fmtMoney(row.amount)}) — vào Phân việc để giao cho nhân sự xử lý.`, '/acc/tasks.html', PROFILE.id);
     docsModal.classList.remove('show');
     await loadRows();
   } catch (err) {

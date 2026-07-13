@@ -175,7 +175,7 @@ document.getElementById('openFillEditor').addEventListener('click', async () => 
       });
       if (error) throw error;
       notifyDepartmentHeads('FAC', `Có phiếu đề nghị ${typeLabel} mới cần phân việc`,
-        `${PROFILE.fullName} vừa gửi 1 phiếu đề nghị ${typeLabel} — vào Phân việc để giao cho nhân sự xử lý.`, '/fac/tasks.html');
+        `${PROFILE.fullName} vừa gửi 1 phiếu đề nghị ${typeLabel} — vào Phân việc để giao cho nhân sự xử lý.`, '/fac/tasks.html', PROFILE.id);
       await loadRows();
     },
   });

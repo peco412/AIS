@@ -78,7 +78,7 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
     const { error } = await supabase.from('late_clockin_requests').insert({ employee_id: PROFILE.id, late_date: lateDate, reason });
     if (error) throw error;
     notifyDepartmentHeads('HR', 'Có đơn xin chấm công trễ mới',
-      `${PROFILE.fullName} vừa gửi đơn xin chấm công trễ ngày ${new Date(lateDate).toLocaleDateString('vi-VN')} — cần Phó phòng Nhân sự duyệt.`, '/hr/late-clockin-requests.html');
+      `${PROFILE.fullName} vừa gửi đơn xin chấm công trễ ngày ${new Date(lateDate).toLocaleDateString('vi-VN')} — cần Phó phòng Nhân sự duyệt.`, '/hr/late-clockin-requests.html', PROFILE.id);
     modal.classList.remove('show');
     await loadRows();
   } catch (err) {

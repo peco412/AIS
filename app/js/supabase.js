@@ -94,7 +94,7 @@ export async function triggerPush(notification) {
         target_employee_id: notification.target_employee_id || null,
         title: notification.title,
         content: notification.content || '',
-        url: notification.url || '/notifications.html',
+        url: notification.link_url || notification.url || '/notifications.html',
       },
     });
   } catch (e) {
@@ -108,8 +108,15 @@ export async function triggerPush(notification) {
 // là mắt xích trước đây bị thiếu: tạo phiếu xong không ai được báo, nên
 // trưởng phòng không biết có việc mới để phân công.
 // ---------------------------------------------------------------------
-export async function notifyDepartmentHeads(deptCode, title, content, url) {
+// SUA LOI NGHIEM TRONG: truoc day insert SAI cot "url" (khong ton tai
+// tren bang notifications) va THIEU cot bat buoc "created_by" - loi bi
+// nuot am tham qua try/catch, khien Truong phong 9 luong nghiep vu khac
+// nhau KHONG BAO GIO nhan duoc thong bao tu truoc gio. Them tham so
+// p_created_by (bat buoc — nguoi tao ra hanh dong kich hoat thong bao
+// nay, dung PROFILE.id tai noi goi).
+export async function notifyDepartmentHeads(deptCode, title, content, linkUrl, createdBy) {
   try {
+    if (!createdBy) { console.warn('notifyDepartmentHeads: thiếu createdBy, không gửi được thông báo (cột created_by bắt buộc).'); return; }
     const { data: dept } = await supabase.from('departments').select('id').eq('code', deptCode).single();
     if (!dept) return;
     const { data: heads } = await supabase
@@ -122,7 +129,7 @@ export async function notifyDepartmentHeads(deptCode, title, content, url) {
       .map((e) => e.id);
 
     for (const employeeId of headIds) {
-      const notif = { scope: 'personal', target_employee_id: employeeId, title, content, url };
+      const notif = { scope: 'personal', target_employee_id: employeeId, title, content, link_url: linkUrl, created_by: createdBy };
       await supabase.from('notifications').insert(notif);
       triggerPush(notif);
     }

@@ -79,7 +79,7 @@ async function centerDecide(id, newStatus) {
 
   if (newStatus === 'center_approved') {
     notifyDepartmentHeads('FAC', 'Có yêu cầu CSVC mới cần phân việc',
-      `Yêu cầu "${row.title}" đã được Quản lý trung tâm duyệt — vào Phân việc để giao cho nhân sự xử lý.`, '/fac/tasks.html');
+      `Yêu cầu "${row.title}" đã được Quản lý trung tâm duyệt — vào Phân việc để giao cho nhân sự xử lý.`, '/fac/tasks.html', PROFILE.id);
   } else {
     const notif = { scope: 'personal', target_employee_id: row.requester_id, title: `Yêu cầu "${row.title}" đã bị từ chối`, content: 'Quản lý trung tâm đã từ chối yêu cầu này.' };
     await supabase.from('notifications').insert({ ...notif, created_by: PROFILE.id });
@@ -132,7 +132,7 @@ document.getElementById('submitCreate').addEventListener('click', async () => {
       const { data: managers } = await supabase.from('employees').select('id')
         .eq('center_id', PROFILE.centerId).eq('role_id', (await supabase.from('system_roles').select('id').eq('code', 'CENTER_MANAGER').single()).data?.id);
       for (const m of managers || []) {
-        const notif = { scope: 'personal', target_employee_id: m.id, title: 'Có yêu cầu CSVC mới cần duyệt', content: `${PROFILE.fullName} vừa gửi yêu cầu "${title}" — cần bạn duyệt trước khi chuyển phòng CSVC.`, url: '/fac/requests.html' };
+        const notif = { scope: 'personal', target_employee_id: m.id, title: 'Có yêu cầu CSVC mới cần duyệt', content: `${PROFILE.fullName} vừa gửi yêu cầu "${title}" — cần bạn duyệt trước khi chuyển phòng CSVC.`, link_url: '/fac/requests.html' };
         await supabase.from('notifications').insert({ ...notif, created_by: PROFILE.id });
         triggerPush(notif);
       }

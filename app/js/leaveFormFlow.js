@@ -260,7 +260,7 @@ export async function initLeaveFormFlow() {
 
         const deptCode = MY_GROUP === 'teacher' ? 'EDU' : (PROFILE.departmentCode || 'HR');
         notifyDepartmentHeads(deptCode, `Có đơn "${formLabel(formCode)}" mới cần duyệt`,
-          `${PROFILE.fullName} vừa gửi đơn ${formLabel(formCode)} — vào duyệt ngay.`, location.pathname);
+          `${PROFILE.fullName} vừa gửi đơn ${formLabel(formCode)} — vào duyệt ngay.`, location.pathname, PROFILE.id);
 
         await loadRows();
       },

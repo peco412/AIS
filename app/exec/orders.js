@@ -88,7 +88,7 @@ document.getElementById('commForm').addEventListener('submit', async (e) => {
   });
   if (error) { errBox.textContent = error.message; errBox.classList.add('show'); return; }
   notifyDepartmentHeads('MKT', 'Có yêu cầu truyền thông mới cần phân việc (từ Ban điều hành)',
-    `${PROFILE.fullName} vừa gửi yêu cầu "${document.getElementById('commTitle').value.trim()}" — vào Phân việc để giao cho nhân sự xử lý.`, '/mkt/tasks.html');
+    `${PROFILE.fullName} vừa gửi yêu cầu "${document.getElementById('commTitle').value.trim()}" — vào Phân việc để giao cho nhân sự xử lý.`, '/mkt/tasks.html', PROFILE.id);
   e.target.reset();
   await loadOrders();
 });
@@ -105,7 +105,7 @@ document.getElementById('facForm').addEventListener('submit', async (e) => {
   });
   if (error) { errBox.textContent = error.message; errBox.classList.add('show'); return; }
   notifyDepartmentHeads('FAC', 'Có yêu cầu CSVC mới cần phân việc (từ Ban điều hành)',
-    `${PROFILE.fullName} vừa gửi yêu cầu "${document.getElementById('facTitle').value.trim()}" — vào Phân việc để giao cho nhân sự xử lý.`, '/fac/tasks.html');
+    `${PROFILE.fullName} vừa gửi yêu cầu "${document.getElementById('facTitle').value.trim()}" — vào Phân việc để giao cho nhân sự xử lý.`, '/fac/tasks.html', PROFILE.id);
   e.target.reset();
   await loadOrders();
 });

@@ -81,6 +81,19 @@ async function fetchPending() {
     });
   }
 
+  // Đơn xin nghỉ — TRUOC DAY CHUA CO trong trang tong hop nay, du DA co
+  // du 3 cap duyet toi BDH (approved_2 -> approved_3) tu lau — BDH phai
+  // tu nho vao dung trang Nhan su moi duyet duoc, khong gop chung 1 cho
+  // nhu cac loai khac. Them vao cho dung tinh than "tong hop moi thu can
+  // BDH xu ly o 1 noi" da neu ngay tren dau file nay.
+  if (isHead('HR') || isExec()) {
+    const { data } = await supabase.from('leave_requests').select('id, code, status, employees:employee_id(full_name)').in('status', ['approved_1', 'approved_2']);
+    (data || []).forEach((r) => {
+      if (r.status === 'approved_1' && (isHead('HR') || isExec())) rows.push(row('Đơn xin nghỉ', r.code, r.employees?.full_name, 'Chờ Nhân sự duyệt', '/hr/leave-requests.html'));
+      if (r.status === 'approved_2' && isExec()) rows.push(row('Đơn xin nghỉ', r.code, r.employees?.full_name, 'Chờ ban điều hành duyệt', '/hr/leave-requests.html'));
+    });
+  }
+
   return rows;
 }
 

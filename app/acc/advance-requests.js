@@ -238,7 +238,7 @@ document.getElementById('openFillEditor').addEventListener('click', async () => 
       });
       if (error) throw error;
       notifyDepartmentHeads('ACC', 'Có phiếu đề nghị tạm ứng mới cần phân việc',
-        `${PROFILE.fullName} vừa gửi phiếu tạm ứng (${fmtMoney(Number(amount))}) — vào Phân việc để giao cho nhân sự xử lý.`, '/acc/tasks.html');
+        `${PROFILE.fullName} vừa gửi phiếu tạm ứng (${fmtMoney(Number(amount))}) — vào Phân việc để giao cho nhân sự xử lý.`, '/acc/tasks.html', PROFILE.id);
       await loadRows();
     },
   });

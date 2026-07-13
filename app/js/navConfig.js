@@ -79,6 +79,7 @@ export const NAV_CONFIG = [
       { labelKey: 'nav.acc.generalLedger', label: 'Sổ cái kế toán', href: '/acc/general-ledger.html', icon: '📗', visible: (p) => inDept(p, 'ACC') },
       { labelKey: 'nav.acc.periodClosing', label: 'Đối soát & Khoá sổ', href: '/acc/period-closing.html', icon: '🔒', visible: (p) => inDept(p, 'ACC') },
       { labelKey: 'nav.acc.commissions', label: 'Hoa hồng tư vấn viên', href: '/acc/commissions.html', icon: '💼', visible: (p) => inDept(p, 'ACC') },
+      { labelKey: 'nav.acc.budgetSetup', label: 'Thiết lập ngân sách', href: '/acc/budget-setup.html', icon: '📐', visible: (p) => inDept(p, 'ACC') },
       { labelKey: 'nav.acc.attendancePayroll', label: 'Bảng kê chấm công', href: '/acc/attendance-payroll-report.html', icon: '🕒', visible: (p) => inDept(p, 'ACC') },
       { labelKey: 'nav.acc.payroll', label: 'Bảng lương', href: '/acc/payroll.html', icon: '🧾', visible: (p) => inDept(p, 'ACC') },
       { labelKey: 'nav.tasks', label: 'Phân việc', href: '/acc/tasks.html', icon: '✅', visible: (p) => inDept(p, 'ACC') },
@@ -111,6 +112,7 @@ export const NAV_CONFIG = [
     items: [
       // ========== Phần 1: Thu học phí ==========
       { subgroup: 'tuition', labelKey: 'nav.edu.walletInvoices', label: 'Thu học phí', href: '/edu/wallet-invoices.html', icon: '💳', visible: (p) => p.isCenterManager || p.roleCode === 'CONSULTANT' || inDept(p, 'ACC') },
+      { subgroup: 'tuition', labelKey: 'nav.edu.invoiceDetail', label: 'Tra cứu & Thanh toán hoá đơn', href: '/edu/invoice-detail.html', icon: '🧾', visible: (p) => p.isCenterManager || p.roleCode === 'CONSULTANT' || inDept(p, 'ACC') },
       { subgroup: 'tuition', labelKey: 'nav.acc.walletTopupRequests', label: 'Xác nhận nạp ví', href: '/acc/wallet-topup-requests.html', icon: '✅', visible: (p) => p.isCenterManager },
       { subgroup: 'tuition', labelKey: 'nav.edu.walletPaymentLog', label: 'Thu học phí qua Ví (Log)', href: '/edu/wallet-payment-log.html', icon: '📜', visible: (p) => p.isCenterManager || p.roleCode === 'CONSULTANT' || inDept(p, 'ACC') },
       { subgroup: 'tuition', labelKey: 'nav.edu.debtOverview', label: 'Công nợ học phí', href: '/edu/debt-overview.html', icon: '📒', visible: (p) => p.isCenterManager || isExecOrTech(p) },
@@ -123,6 +125,7 @@ export const NAV_CONFIG = [
       // -- Vai trò: Quản lý Trung tâm --
       { subgroup: 'role', labelKey: 'nav.edu.overview', label: 'Tổng quan trung tâm', href: '/edu/center-overview.html', icon: '🏫', visible: (p) => p.isCenterManager || inDept(p, 'HR') || inDept(p, 'MKT') },
       { subgroup: 'role', labelKey: 'nav.edu.attendance', label: 'Điểm danh & thống kê', href: '/edu/attendance-overview.html', icon: '✅', visible: (p) => p.isCenterManager },
+      { subgroup: 'role', labelKey: 'nav.acc.budgetSetup', label: 'Ngân sách trung tâm (xem)', href: '/acc/budget-setup.html', icon: '📐', visible: (p) => p.isCenterManager },
       { subgroup: 'role', labelKey: 'nav.edu.dutySchedule', label: 'Phân lịch trực trung tâm', href: '/edu/duty-schedule.html', icon: '🕒', visible: (p) => p.isCenterManager || inDept(p, 'HR') || inDept(p, 'MKT') },
       { subgroup: 'role', labelKey: 'nav.edu.teacherSchedule', label: 'Phân lịch dạy giáo viên', href: '/edu/teacher-schedule.html', icon: '📆', visible: (p) => p.isCenterManager || inDept(p, 'HR') || inDept(p, 'MKT') },
       { subgroup: 'role', labelKey: 'nav.edu.classAssignment', label: 'Phân lớp học viên', href: '/edu/class-assignment.html', icon: '🔀', visible: (p) => p.isCenterManager || inDept(p, 'HR') || inDept(p, 'MKT') },

@@ -142,7 +142,7 @@ async function notifyUnexcusedAbsence(classId, date, students) {
   const content = `Lớp ${classInfo.name}: ${names} — vắng không phép, cần liên hệ ngay với phụ huynh.`;
 
   for (const manager of managers || []) {
-    const notif = { scope: 'personal', target_employee_id: manager.id, title, content, url: `/edu/class-attendance-matrix.html?class=${classId}` };
+    const notif = { scope: 'personal', target_employee_id: manager.id, title, content, link_url: `/edu/class-attendance-matrix.html?class=${classId}` };
     await supabase.from('notifications').insert({ ...notif, created_by: PROFILE.id });
     triggerPush(notif);
   }

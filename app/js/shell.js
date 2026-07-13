@@ -140,6 +140,34 @@ function renderNav(profile, currentPage) {
   const currentWorld = resolveCurrentWorld(currentPage, profile);
   injectWorldSwitcher(profile, currentWorld, currentPage);
   injectHubLauncher(profile, currentWorld, currentPage);
+  if (!currentPage?.endsWith('/dashboard.html')) injectSiblingStrip(profile, currentPage);
+}
+
+/**
+ * Dai "cac chuc nang cung nhom" — hien NGAY tren moi trang (khong can
+ * bam mo Hub moi thay), dung theo yeu cau "vao 1 chuc nang muon thay lai
+ * cac chuc nang khac cung hub de tien di chuyen". Chi hien khi nhom hien
+ * tai co NHIEU HON 1 muc (khong hien neu chi minh trang dang dung).
+ */
+function injectSiblingStrip(profile, currentPage) {
+  document.getElementById('siblingStrip')?.remove();
+
+  const group = findActiveGroup(currentPage, profile);
+  if (!group) return;
+  const items = group.items.filter((item) => canAccess(item, profile));
+  if (items.length <= 1) return; // chi 1 muc (chinh trang nay) thi khong can dai gi ca
+
+  const main = document.querySelector('.main');
+  if (!main) return;
+
+  const strip = document.createElement('div');
+  strip.id = 'siblingStrip';
+  strip.className = 'sibling-strip';
+  strip.innerHTML = items.map((item) => {
+    const active = currentPage && currentPage.endsWith(item.href);
+    return `<a href="${item.href}" class="sibling-strip__item ${active ? 'active' : ''}">${item.icon} ${esc(t(item.labelKey, item.label))}</a>`;
+  }).join('');
+  main.insertBefore(strip, main.firstChild);
 }
 
 // Danh sach the gioi ma nguoi nay THUC SU co it nhat 1 muc dung duoc —

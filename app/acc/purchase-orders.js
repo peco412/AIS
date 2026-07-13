@@ -159,6 +159,28 @@ document.getElementById('btnSubmitPo').addEventListener('click', async () => {
   const rows = Array.from(document.querySelectorAll('#poItemsList > div'));
   if (rows.length === 0) { errBox.textContent = 'Vui lòng thêm ít nhất 1 dòng hàng hoá.'; errBox.classList.add('show'); return; }
 
+  // Canh bao TRAN NGAN SACH (mem — chi canh bao, khong chan) — dung lai
+  // ham check_budget_cap() da co san tu truoc nhung chua tung duoc goi o
+  // dau trong toan bo he thong.
+  const totalAmount = rows.reduce((s, row) => {
+    const qty = Number(row.querySelector('.po-item-qty')?.value) || 0;
+    const price = Number(row.querySelector('.po-item-price')?.value) || 0;
+    return s + qty * price;
+  }, 0);
+  const expenseCategoryId = document.getElementById('expenseCategory').value;
+  if (expenseCategoryId && PROFILE.centerId) {
+    const { data: budgetCheck } = await supabase.rpc('check_budget_cap', {
+      p_center_id: PROFILE.centerId, p_expense_category_id: expenseCategoryId, p_new_amount: totalAmount,
+    });
+    const check = budgetCheck?.[0];
+    if (check?.would_exceed) {
+      const proceed = confirm(
+        `⚠️ CẢNH BÁO VƯỢT TRẦN NGÂN SÁCH\n\nHạng mục này đã chi ${Number(check.already_spent).toLocaleString('vi-VN')} đ / trần ${Number(check.monthly_cap).toLocaleString('vi-VN')} đ tháng này.\nPhiếu này (${totalAmount.toLocaleString('vi-VN')} đ) sẽ làm VƯỢT trần.\n\nVẫn muốn tiếp tục tạo phiếu?`
+      );
+      if (!proceed) return;
+    }
+  }
+
   const btn = document.getElementById('btnSubmitPo');
   btn.disabled = true; btn.textContent = 'Đang lưu...';
   try {

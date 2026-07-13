@@ -34,7 +34,7 @@ function render() {
   if (rows.length === 0) { list.innerHTML = '<div class="empty-cell">Không có thông báo nào.</div>'; return; }
 
   list.innerHTML = rows.map((n) => `
-    <div class="notif-item ${READ_IDS.has(n.id) ? '' : 'unread'}" data-id="${n.id}">
+    <div class="notif-item ${READ_IDS.has(n.id) ? '' : 'unread'}" data-id="${n.id}" ${n.link_url ? `data-goto="${esc(n.link_url)}" style="cursor:pointer;"` : ''}>
       <div class="notif-scope-icon">${SCOPE_ICON[n.scope] || '🔔'}</div>
       <div class="notif-body">
         <div class="notif-title">${esc(n.title)}</div>
@@ -44,6 +44,15 @@ function render() {
       ${!READ_IDS.has(n.id) ? '<button class="btn btn-outline btn-sm" data-mark>Đánh dấu đã đọc</button>' : ''}
     </div>
   `).join('');
+
+  // Bam vao thong bao (ngoai nut "Danh dau da doc") -> dieu huong toi
+  // dung trang lien quan, dung du lieu link_url moi sua/them.
+  list.querySelectorAll('[data-goto]').forEach((el) => {
+    el.addEventListener('click', (e) => {
+      if (e.target.closest('[data-mark]')) return;
+      window.location.href = el.dataset.goto;
+    });
+  });
 
   list.querySelectorAll('[data-mark]').forEach((btn) => {
     btn.addEventListener('click', async () => {

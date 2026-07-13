@@ -35,7 +35,11 @@ async function loadLeaveDays(year, month) {
 
 // Số ngày KHÔNG chấm công (không có GPS check-in "vào") trong các ngày
 // làm việc (loại Chủ nhật) của tháng, TRỪ những ngày đã có đơn xin chấm
-// công trễ được duyệt (được tính là đúng giờ, không bị trừ).
+// công trễ được duyệt (được tính là đúng giờ, không bị trừ) VA TRU
+// NHUNG NGAY DA DUOC DUYET NGHI PHEP (SUA LOI TRU LUONG 2 LAN — truoc
+// day ngay nghi phep VUA bi tru qua "leaveDays" VUA bi tinh lai la
+// "khong cham cong" vi ngay nghi dung nhien khong co check-in, dan den
+// nhan vien nao co xin nghi deu bi tru luong DOI cho dung nhung ngay do).
 async function loadAbsentDays(year, month) {
   const daysInMonth = new Date(year, month, 0).getDate();
   const workDates = [];
@@ -46,9 +50,13 @@ async function loadAbsentDays(year, month) {
   const from = `${year}-${String(month).padStart(2, '0')}-01T00:00:00`;
   const to = new Date(year, month, 1).toISOString();
 
-  const [{ data: checkins }, { data: excused }] = await Promise.all([
+  const [{ data: checkins }, { data: excused }, { data: approvedLeaves }] = await Promise.all([
     supabase.from('attendance_checkins').select('employee_id, checked_at').eq('check_type', 'in').gte('checked_at', from).lt('checked_at', to),
     supabase.from('late_clockin_requests').select('employee_id, late_date').eq('status', 'approved').gte('late_date', `${year}-${String(month).padStart(2, '0')}-01`).lt('late_date', to.slice(0, 10)),
+    // Lay ca don nghi bat dau TRUOC thang nay nhung con keo dai sang
+    // thang nay (vd nghi tu 28/6 den 3/7) — khong the chi loc theo
+    // start_date nam trong thang, phai xet ca ngay ket thuc.
+    supabase.from('leave_requests').select('employee_id, start_date, days').eq('status', 'approved_3'),
   ]);
 
   const checkedByEmp = {}; // employee_id -> Set(dateStr)
@@ -62,11 +70,28 @@ async function loadAbsentDays(year, month) {
     excusedByEmp[e.employee_id].add(e.late_date);
   });
 
+  // Tu start_date + so ngay nghi -> liet ke tung ngay cu the da nghi, chi
+  // giu lai nhung ngay THUC SU roi vao thang dang tinh luong.
+  const leaveDatesByEmp = {};
+  (approvedLeaves || []).forEach((lv) => {
+    const start = new Date(lv.start_date + 'T00:00:00');
+    const numDays = Math.ceil(Number(lv.days) || 0);
+    for (let i = 0; i < numDays; i++) {
+      const d = new Date(start); d.setDate(d.getDate() + i);
+      const key = d.toISOString().slice(0, 10);
+      if (key >= from.slice(0, 10) && key < to.slice(0, 10)) {
+        leaveDatesByEmp[lv.employee_id] = leaveDatesByEmp[lv.employee_id] || new Set();
+        leaveDatesByEmp[lv.employee_id].add(key);
+      }
+    }
+  });
+
   const result = {};
   ALL_EMPLOYEES.forEach((emp) => {
     const checkedDates = checkedByEmp[emp.id] || new Set();
     const excusedDates = excusedByEmp[emp.id] || new Set();
-    result[emp.id] = workDates.filter((d) => !checkedDates.has(d) && !excusedDates.has(d)).length;
+    const leaveDates = leaveDatesByEmp[emp.id] || new Set();
+    result[emp.id] = workDates.filter((d) => !checkedDates.has(d) && !excusedDates.has(d) && !leaveDates.has(d)).length;
   });
   return result;
 }

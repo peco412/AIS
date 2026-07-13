@@ -678,3 +678,21 @@ body.hub-body { background: var(--surface); }
   .world-switcher__label { display: none; }
   .hub-overlay__grid { grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); }
 }
+
+/* Dai "cac chuc nang cung nhom" — hien ngay dau moi trang, cuon ngang
+   duoc, giup di chuyen nhanh giua cac trang lien quan ma khong can mo
+   Hub overlay day du. */
+.sibling-strip {
+  display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 18px;
+  border-bottom: 1px solid var(--border);
+}
+.sibling-strip::-webkit-scrollbar { height: 4px; }
+.sibling-strip::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
+.sibling-strip__item {
+  flex-shrink: 0; display: flex; align-items: center; gap: 6px;
+  padding: 7px 14px; border-radius: 999px; background: var(--surface-fill);
+  color: var(--ink-soft); font-size: 12.5px; font-weight: 600; text-decoration: none;
+  border: 1px solid transparent; transition: all var(--dur-fast) var(--ease);
+}
+.sibling-strip__item:hover { background: var(--accent-tint); color: var(--accent-deep); }
+.sibling-strip__item.active { background: var(--accent); color: #fff; }

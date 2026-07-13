@@ -54,7 +54,8 @@ function renderProgram(prog) {
       levelTotal += slTotal;
 
       const coursesHtml = courses.map((c) => `
-        <span class="course-chip">
+        <span class="course-chip" data-id="${c.id}" data-type="course" data-parent="${sl.id}" ${CAN_EDIT ? 'draggable="true"' : ''}>
+          ${CAN_EDIT ? '<span class="drag-handle" title="Kéo để đổi thứ tự">⠿</span>' : ''}
           ${esc(c.name)}:
           ${CAN_EDIT
             ? `<input type="number" class="price-input" data-course="${c.id}" value="${c.price_vnd || 0}" />
@@ -64,8 +65,8 @@ function renderProgram(prog) {
       `).join('');
 
       return `
-        <div class="sublevel-row">
-          <span class="sublevel-row__name">↳ ${esc(sl.name)}</span>
+        <div class="sublevel-row" data-id="${sl.id}" data-type="sublevel" data-parent="${level.id}" ${CAN_EDIT ? 'draggable="true"' : ''}>
+          <span class="sublevel-row__name">${CAN_EDIT ? '<span class="drag-handle" title="Kéo để đổi thứ tự">⠿</span> ' : ''}↳ ${esc(sl.name)}</span>
           <span style="display:flex; align-items:center; gap:10px;">
             ${courses.length > 1 ? `<span class="mono cell-muted">Tổng: ${fmtMoney(slTotal)} đ</span>` : ''}
             ${CAN_EDIT ? `
@@ -82,8 +83,8 @@ function renderProgram(prog) {
 
     return `
       <div class="level-block">
-        <div class="level-block__title" style="display:flex; justify-content:space-between; align-items:center;">
-          <span>${esc(level.name)} <span class="cell-muted" style="text-transform:none; font-weight:400;">— trọn cấp độ: ${fmtMoney(levelTotal)} đ</span></span>
+        <div class="level-block__title" data-id="${level.id}" data-type="level" data-parent="${prog.id}" style="display:flex; justify-content:space-between; align-items:center;" ${CAN_EDIT ? 'draggable="true"' : ''}>
+          <span>${CAN_EDIT ? '<span class="drag-handle" title="Kéo để đổi thứ tự">⠿</span> ' : ''}${esc(level.name)} <span class="cell-muted" style="text-transform:none; font-weight:400;">— trọn cấp độ: ${fmtMoney(levelTotal)} đ</span></span>
           ${CAN_EDIT ? `
             <span>
               <button type="button" class="btn-mini" data-add-sublevel="${level.id}">+ Cấp độ con</button>
@@ -97,8 +98,9 @@ function renderProgram(prog) {
   }).join('');
 
   return `
-    <details class="program-group">
-      <summary>
+    <details class="program-group" data-id="${prog.id}" data-type="program">
+      <summary data-id="${prog.id}" data-type="program" data-parent="root" ${CAN_EDIT ? 'draggable="true"' : ''}>
+        ${CAN_EDIT ? '<span class="drag-handle" title="Kéo để đổi thứ tự">⠿</span>' : ''}
         <span class="name">${esc(prog.name)}</span>
         <span style="display:flex; align-items:center; gap:10px;">
           <span class="total">Trọn chương trình: ${fmtMoney(programTotal)} đ</span>
@@ -113,8 +115,69 @@ function renderProgram(prog) {
   `;
 }
 
+// Kéo-thả đổi thứ tự — dung 1 co che CHUNG cho ca 4 tang (Chuong trinh/
+// Cap do/Cap do con/Khoa hoc), chi khac nhau o BANG can update va DIEU
+// KIEN cung nhom cha (data-parent) — chi cho phep tha vao dung ANH/CHI
+// EM cung cha, tranh keo lung tung giua cac nhom khac nhau gay sai du lieu.
+const REORDER_TABLE = { program: 'programs', level: 'program_levels', sublevel: 'program_sublevels', course: 'program_courses' };
+
+function wireDragReorder(container) {
+  let draggedEl = null;
+
+  container.addEventListener('dragstart', (e) => {
+    const el = e.target.closest('[draggable="true"]');
+    if (!el) return;
+    draggedEl = el;
+    e.dataTransfer.effectAllowed = 'move';
+    setTimeout(() => el.classList.add('dragging'), 0);
+  });
+
+  container.addEventListener('dragend', (e) => {
+    const el = e.target.closest('[draggable="true"]');
+    el?.classList.remove('dragging');
+    draggedEl = null;
+  });
+
+  container.addEventListener('dragover', (e) => {
+    const target = e.target.closest('[draggable="true"]');
+    if (!target || !draggedEl || target === draggedEl) return;
+    // Chi cho tha vao dung PHAN TU CUNG LOAI + CUNG NHOM CHA (vd Khoa hoc
+    // chi doi cho voi Khoa hoc khac trong CUNG 1 Cap do con).
+    if (target.dataset.type !== draggedEl.dataset.type || target.dataset.parent !== draggedEl.dataset.parent) return;
+    e.preventDefault();
+    const rect = target.getBoundingClientRect();
+    const before = (e.clientY - rect.top) < rect.height / 2;
+    target.parentNode.insertBefore(draggedEl, before ? target : target.nextSibling);
+  });
+
+  container.addEventListener('drop', async (e) => {
+    const target = e.target.closest('[draggable="true"]');
+    if (!target || !draggedEl) return;
+    e.preventDefault();
+    await persistNewOrder(draggedEl.dataset.type, draggedEl.dataset.parent);
+  });
+}
+
+async function persistNewOrder(type, parentId) {
+  const table = REORDER_TABLE[type];
+  // Lay lai DUNG THU TU tren man hinh SAU KHI tha (DOM da tu sap xep lai
+  // qua buoc dragover o tren) — lay tat ca phan tu cung loai+cung nhom
+  // cha, theo dung thu tu hien tai trong DOM.
+  const container = document.getElementById('programGroups');
+  const items = Array.from(container.querySelectorAll(`[data-type="${type}"][data-parent="${parentId}"]`));
+  const updates = items.map((el, idx) => ({ id: el.dataset.id, display_order: idx }));
+
+  try {
+    await Promise.all(updates.map((u) => supabase.from(table).update({ display_order: u.display_order }).eq('id', u.id)));
+  } catch (e) {
+    alert('Lỗi khi lưu thứ tự mới: ' + e.message);
+  }
+  await loadPricing(); // tai lai de dam bao khop 100% voi database (khong tin DOM mai mai)
+}
+
 function wireEvents(container) {
   if (!CAN_EDIT) return;
+  wireDragReorder(container);
 
   container.querySelectorAll('.price-input').forEach((input) => {
     input.addEventListener('change', async () => {
