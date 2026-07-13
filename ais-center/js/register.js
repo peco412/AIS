@@ -43,9 +43,18 @@ document.getElementById('btnRegister').addEventListener('click', async () => {
   btn.disabled = false; btn.textContent = 'Đăng ký';
 
   if (error) {
-    showError(error.message.includes('already registered') || error.message.includes('already exists')
-      ? 'Số điện thoại này đã có tài khoản — vui lòng đăng nhập.'
-      : 'Không đăng ký được: ' + error.message);
+    // Hien THANG error.code (dang tin cay nhat theo tai lieu Supabase) —
+    // giup chan doan chinh xac ngay, dac biet quan trong voi loi 400 luc
+    // dang ky vi co the do NHIEU nguyen nhan cau hinh khac nhau.
+    console.error('Lỗi đăng ký — code:', error.code, '| status:', error.status, '| message:', error.message);
+    let friendlyMsg;
+    if (error.code === 'phone_exists' || error.code === 'user_already_exists') friendlyMsg = 'Số điện thoại này đã có tài khoản — vui lòng đăng nhập.';
+    else if (error.code === 'phone_provider_disabled') friendlyMsg = 'Đăng ký bằng SĐT+mật khẩu đang bị TẮT ở cấu hình hệ thống (Supabase Dashboard → Authentication → Sign In / Providers → Phone) — báo quản trị hệ thống bật lên.';
+    else if (error.code === 'weak_password') friendlyMsg = 'Mật khẩu quá yếu, vui lòng đặt mật khẩu khác.';
+    else if (error.code === 'sms_send_failed') friendlyMsg = 'Không gửi được SMS xác minh — có thể chưa cấu hình nhà cung cấp SMS (Twilio/MessageBird...) bên Supabase.';
+    else if (error.code === 'validation_failed') friendlyMsg = 'Định dạng số điện thoại không hợp lệ.';
+    else friendlyMsg = `Không đăng ký được (mã lỗi: ${error.code || 'không rõ'}) — báo quản trị hệ thống kèm mã lỗi này.`;
+    showError(friendlyMsg);
     return;
   }
 

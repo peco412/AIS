@@ -109,12 +109,23 @@ document.getElementById('btnConfirmTopup').addEventListener('click', async () =>
     document.getElementById('qrAccountNo').textContent = bank.account_no;
     document.getElementById('qrAccountName').textContent = bank.account_name;
     document.getElementById('qrAmount').textContent = `${fmtMoney(vndAmount)} VNĐ`;
-    document.getElementById('qrContent').textContent = request.transfer_content;
+
+    // SUA LOI THAT: VietinBank BAT BUOC noi dung chuyen khoan phai BAT
+    // DAU bang tu khoa "SEVQR" thi SePay moi nhan duoc bao bien dong so
+    // du tu ngan hang (theo dung tai lieu SePay) — neu khong co, SePay
+    // se KHONG BAO GIO thay giao dich, du chuyen tien thanh cong. CHI
+    // them vao noi dung HIEN THI/QR cho phu huynh chuyen, KHONG DUNG vao
+    // "request.transfer_content" goc (van giu nguyen de doi chieu dung
+    // trong database — tranh lech voi cach SePay tach ma qua "Payment
+    // Code Structure").
+    const isVietinBank = /vietin/i.test(bank.bank_name || '');
+    const bankTransferContent = isVietinBank ? `SEVQR ${request.transfer_content}` : request.transfer_content;
+    document.getElementById('qrContent').textContent = bankTransferContent;
 
     // Dùng dịch vụ tạo QR chuyển khoản công khai của VietQR (không cần API
     // key riêng) — tự sinh QR đúng ngân hàng/số tài khoản/số tiền/nội dung.
     const qrUrl = `https://img.vietqr.io/image/${bank.bank_bin}-${bank.account_no}-compact2.png` +
-      `?amount=${vndAmount}&addInfo=${encodeURIComponent(request.transfer_content)}&accountName=${encodeURIComponent(bank.account_name)}`;
+      `?amount=${vndAmount}&addInfo=${encodeURIComponent(bankTransferContent)}&accountName=${encodeURIComponent(bank.account_name)}`;
     document.getElementById('qrImage').src = qrUrl;
 
     // Lang nghe Realtime — tu dong doi giao dien khi Ke toan HOAC he

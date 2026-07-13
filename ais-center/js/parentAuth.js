@@ -33,9 +33,20 @@ document.getElementById('btnLogin').addEventListener('click', async () => {
   btn.disabled = false; btn.textContent = 'Đăng nhập';
 
   if (error) {
-    showError(error.message.includes('Invalid login credentials')
-      ? 'Số điện thoại hoặc mật khẩu không đúng.'
-      : 'Không đăng nhập được: ' + error.message);
+    // Hien THANG error.code (theo dung tai lieu Supabase, day la truong
+    // DANG TIN CAY nhat de xac dinh nguyen nhan that su, dang tin cay
+    // hon nhieu so voi doan chu error.message hay HTTP status chung
+    // chung) — giup chan doan chinh xac ngay tren man hinh, khong can
+    // vao Dashboard xem log.
+    console.error('Lỗi đăng nhập — code:', error.code, '| status:', error.status, '| message:', error.message);
+    let friendlyMsg;
+    if (error.code === 'phone_not_confirmed') friendlyMsg = 'Số điện thoại chưa được xác minh — báo quản trị hệ thống xác nhận lại tài khoản này.';
+    else if (error.code === 'phone_provider_disabled') friendlyMsg = 'Đăng nhập bằng SĐT+mật khẩu đang bị tắt ở cấu hình hệ thống — báo quản trị hệ thống kiểm tra lại.';
+    else if (error.code === 'invalid_credentials') friendlyMsg = 'Số điện thoại hoặc mật khẩu không đúng.';
+    else if (error.code === 'user_banned') friendlyMsg = 'Tài khoản này đang bị tạm khoá — liên hệ trung tâm.';
+    else if (error.code === 'over_request_rate_limit' || error.code === 'over_sms_send_rate_limit') friendlyMsg = 'Thử lại quá nhiều lần — vui lòng đợi vài phút rồi thử lại.';
+    else friendlyMsg = `Không đăng nhập được (mã lỗi: ${error.code || 'không rõ'}) — báo quản trị hệ thống kèm mã lỗi này.`;
+    showError(friendlyMsg);
     return;
   }
   window.location.href = 'home.html';
