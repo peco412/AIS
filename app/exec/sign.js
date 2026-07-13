@@ -94,6 +94,16 @@ async function fetchPending() {
     });
   }
 
+  // Chi phi quang cao Truyen thong — moi nang cap len co duyet 3 cap,
+  // them vao day cho dung tinh than tong hop moi thu can BDH xu ly.
+  if (isHead('MKT') || isExec()) {
+    const { data } = await supabase.from('mkt_ad_expenses').select('id, code, status, employees:created_by(full_name)').in('status', ['approved_1', 'approved_2']);
+    (data || []).forEach((r) => {
+      if (r.status === 'approved_1' && (isHead('MKT') || isExec())) rows.push(row('Chi phí quảng cáo', r.code, r.employees?.full_name, 'Chờ Kế toán duyệt', '/mkt/expense-reports.html'));
+      if (r.status === 'approved_2' && isExec()) rows.push(row('Chi phí quảng cáo', r.code, r.employees?.full_name, 'Chờ ban điều hành duyệt', '/mkt/expense-reports.html'));
+    });
+  }
+
   return rows;
 }
 

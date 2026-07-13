@@ -62,17 +62,33 @@
         <div class="field"><label for="spendDate">Ngày chi *</label><input type="date" id="spendDate" required /></div>
         <div class="field"><label for="center">Trung tâm</label><select id="center"><option value="">— Không áp dụng —</option></select></div>
       </div>
+      <div class="field"><label for="expenseCategory">Hạng mục chi *</label><select id="expenseCategory" required></select></div>
       <div class="field"><label for="note">Ghi chú</label><input type="text" id="note" /></div>
-      <div class="modal-actions"><button type="submit" class="btn btn-accent">Ghi nhận</button></div>
+      <div class="modal-actions"><button type="submit" class="btn btn-accent">Gửi duyệt</button></div>
     </form>
 
     <div class="data-table-wrap" style="margin-top:20px;">
       <table class="data-table">
-        <thead><tr><th>Ngày</th><th>Nền tảng</th><th>Trung tâm</th><th>Số tiền</th><th>Ghi chú</th></tr></thead>
-        <tbody id="tableBody"><tr><td colspan="5" class="empty-cell">Đang tải dữ liệu...</td></tr></tbody>
+        <thead><tr><th>Mã</th><th>Ngày</th><th>Nền tảng</th><th>Trung tâm</th><th>Số tiền</th><th data-i18n="common.status">Trạng thái</th><th></th></tr></thead>
+        <tbody id="tableBody"><tr><td colspan="7" class="empty-cell">Đang tải dữ liệu...</td></tr></tbody>
       </table>
     </div>
   </main>
+</div>
+
+<div class="modal-overlay" id="paymentMethodModal">
+  <div class="modal-box">
+    <button class="modal-close" id="closePaymentMethodModal">✕</button>
+    <h3>Xác nhận phê duyệt cấp cuối</h3>
+    <p class="cell-muted">Chọn hình thức đã chi để ghi đúng sổ kế toán:</p>
+    <div class="field"><label for="finalPaymentMethod">Hình thức</label>
+      <select id="finalPaymentMethod"><option value="BANK_TRANSFER">Chuyển khoản</option><option value="CASH">Tiền mặt</option></select>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-outline" id="cancelPaymentMethodModal">Huỷ</button>
+      <button type="button" class="btn btn-accent" id="confirmPaymentMethod">Xác nhận duyệt & ghi sổ</button>
+    </div>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>

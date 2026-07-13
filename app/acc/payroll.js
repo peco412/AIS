@@ -111,7 +111,7 @@ async function loadAdvanceTotals(year, month) {
 async function loadTable() {
   const [year, month] = document.getElementById('filterMonth').value.split('-').map(Number);
   const tbody = document.getElementById('tableBody');
-  tbody.innerHTML = '<tr><td colspan="16" class="empty-cell">Đang tải dữ liệu...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="17" class="empty-cell">Đang tải dữ liệu...</td></tr>';
 
   const [{ data: configs }, { data: payrolls }, leaveDaysMap, absentDaysMap, advanceMap] = await Promise.all([
     supabase.from('employee_base_salary').select('*'),
@@ -139,6 +139,8 @@ async function loadTable() {
       penalty_amount: existing?.penalty_amount || 0,
       insurance_deduction: existing?.insurance_deduction ?? 557550,
       tax_deduction: existing?.tax_deduction || 0,
+      payrollId: existing?.id || null,
+      paidAt: existing?.paid_at || null,
     };
   });
 
@@ -159,7 +161,7 @@ function render() {
   const rows = Object.values(ROW_DATA);
   renderStats(rows);
 
-  tbody.innerHTML = rows.map(({ employee, config, leaveDays, absentDays, advanceTotal, performance_bonus, urgent_bonus, penalty_amount, insurance_deduction, tax_deduction }) => {
+  tbody.innerHTML = rows.map(({ employee, config, leaveDays, absentDays, advanceTotal, performance_bonus, urgent_bonus, penalty_amount, insurance_deduction, tax_deduction, paidAt }) => {
     const net = computeNet(ROW_DATA[employee.id]);
     return `
     <tr data-employee="${employee.id}">
@@ -178,6 +180,7 @@ function render() {
       <td><input type="number" class="insurance-input" value="${insurance_deduction}" ${CAN_EDIT ? '' : 'disabled'} style="width:100px;" title="Mặc định 10.5% x 5.310.000, sửa được nếu mức tham chiếu thay đổi" /></td>
       <td><input type="number" class="tax-input" value="${tax_deduction}" ${CAN_EDIT ? '' : 'disabled'} style="width:90px;" placeholder="Nhập tay" /></td>
       <td class="mono net-display" style="font-weight:700;">${fmtMoney(net)} đ</td>
+      <td>${paidAt ? `<span class="badge badge-active" title="${new Date(paidAt).toLocaleString('vi-VN')}">✓ Đã chi</span>` : '<span class="cell-muted" style="font-size:11px;">Chưa chi</span>'}</td>
       <td>${CAN_EDIT ? `<button class="btn btn-accent btn-sm" data-save="${employee.id}">Lưu</button>` : ''}</td>
     </tr>`;
   }).join('');
@@ -240,6 +243,34 @@ function renderStats(rows) {
 document.getElementById('btnRecalc').addEventListener('click', loadTable);
 document.getElementById('filterMonth').addEventListener('change', loadTable);
 
+// ============ Xac nhan chi luong -> ghi So cai ============
+const confirmPaymentModal = document.getElementById('confirmPaymentModal');
+document.getElementById('btnConfirmPayment').addEventListener('click', () => {
+  document.getElementById('payrollConfirmError').classList.remove('show');
+  confirmPaymentModal.classList.add('show');
+});
+document.getElementById('closeConfirmPaymentModal').addEventListener('click', () => confirmPaymentModal.classList.remove('show'));
+document.getElementById('cancelConfirmPayment').addEventListener('click', () => confirmPaymentModal.classList.remove('show'));
+
+document.getElementById('submitConfirmPayment').addEventListener('click', async () => {
+  const errBox = document.getElementById('payrollConfirmError');
+  errBox.classList.remove('show');
+  const [year, month] = document.getElementById('filterMonth').value.split('-').map(Number);
+  const method = document.getElementById('payrollPaymentMethod').value;
+
+  const btn = document.getElementById('submitConfirmPayment');
+  btn.disabled = true; btn.textContent = 'Đang xử lý...';
+  const { data, error } = await supabase.rpc('mark_payroll_paid_bulk', { p_year: year, p_month: month, p_actor_id: PROFILE.id, p_method: method });
+  btn.disabled = false; btn.textContent = 'Xác nhận & ghi sổ';
+
+  if (error) { errBox.textContent = error.message; errBox.classList.add('show'); return; }
+
+  confirmPaymentModal.classList.remove('show');
+  const result = data;
+  alert(`Đã xác nhận chi lương cho ${result.success} nhân viên.${result.failed > 0 ? `\n\n⚠️ ${result.failed} người bị lỗi: ${result.errors}` : ''}`);
+  await loadTable();
+});
+
 (async () => {
   try {
     const { profile } = await bootShell();
@@ -247,6 +278,7 @@ document.getElementById('filterMonth').addEventListener('change', loadTable);
     PROFILE = { ...profile, departmentCode: emp?.departments?.code };
     // Ma tran: Bang tinh luong chi Ke toan duoc ghi, BDH/Ky thuat/NS chi xem.
     CAN_EDIT = PROFILE.departmentCode === 'ACC';
+    if (!CAN_EDIT) document.getElementById('btnConfirmPayment').style.display = 'none';
 
     monthOptions();
     const { data: employees } = await supabase.from('employees').select('id, employee_code, full_name').eq('status', 'active').order('full_name');

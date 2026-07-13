@@ -91,7 +91,7 @@ export const NAV_CONFIG = [
     items: [
       { labelKey: 'nav.mkt.requests', label: 'Yêu cầu truyền thông', href: '/mkt/requests.html', icon: '📣', visible: () => true },
       { labelKey: 'nav.mkt.eventProposals', label: 'Trình sự kiện', href: '/mkt/event-proposals.html', icon: '🎪', visible: (p) => inDept(p, 'MKT') || p.isCenterManager },
-      { labelKey: 'nav.mkt.expenseReports', label: 'Báo cáo chi phí', href: '/mkt/expense-reports.html', icon: '📈', visible: (p) => inDept(p, 'MKT') },
+      { labelKey: 'nav.mkt.expenseReports', label: 'Báo cáo chi phí', href: '/mkt/expense-reports.html', icon: '📈', visible: (p) => inDept(p, 'MKT') || inDept(p, 'ACC') || isExecOrTech(p) },
       { labelKey: 'nav.mkt.accounts', label: 'Tài khoản nội bộ', href: '/mkt/accounts.html', icon: '🔑', visible: (p) => inDept(p, 'MKT') },
       { labelKey: 'nav.tasks', label: 'Phân việc', href: '/mkt/tasks.html', icon: '✅', visible: (p) => inDept(p, 'MKT') },
       { labelKey: 'nav.sign', label: 'Ký số hồ sơ', href: '/mkt/sign.html', icon: '✍️', visible: (p) => (p.departmentCode === 'MKT' && isDeptHeadOrAbove(p)) || isExecOrTech(p) },
