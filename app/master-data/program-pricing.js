@@ -59,6 +59,7 @@ function renderProgram(prog) {
           ${esc(c.name)}:
           ${CAN_EDIT
             ? `<input type="number" class="price-input" data-course="${c.id}" value="${c.price_vnd || 0}" draggable="false" />
+               <button type="button" class="chip-save" data-save-price="${c.id}" title="Lưu giá này" draggable="false">💾</button>
                <button type="button" class="chip-del" data-del-course="${c.id}" title="Xoá khoá này" draggable="false">✕</button>`
             : `<strong class="mono">${fmtMoney(c.price_vnd)} đ</strong>`}
         </span>
@@ -167,10 +168,16 @@ async function persistNewOrder(type, parentId) {
   const items = Array.from(container.querySelectorAll(`[data-type="${type}"][data-parent="${parentId}"]`));
   const updates = items.map((el, idx) => ({ id: el.dataset.id, display_order: idx }));
 
-  try {
-    await Promise.all(updates.map((u) => supabase.from(table).update({ display_order: u.display_order }).eq('id', u.id)));
-  } catch (e) {
-    alert('Lỗi khi lưu thứ tự mới: ' + e.message);
+  // SUA LOI THAT: supabase-js KHONG throw loi cho cac truy van that bai
+  // (chi tra ve {error} trong ket qua) — try/catch o day TRUOC GIO
+  // KHONG BAO GIO bat duoc loi thuc su, khien viec luu that bai bi NUOT
+  // AM THAM, roi tai lai (loadPricing) hien dung thu tu CU trong database
+  // — nhin giong nhu "keo xong lai ve cho cu". Gio kiem tra dung {error}
+  // tra ve tu MOI cau update, bao ro neu co bat ky cai nao that bai.
+  const results = await Promise.all(updates.map((u) => supabase.from(table).update({ display_order: u.display_order }).eq('id', u.id)));
+  const failed = results.filter((r) => r.error);
+  if (failed.length > 0) {
+    alert(`Lỗi khi lưu thứ tự mới (${failed.length}/${updates.length} dòng thất bại): ${failed[0].error.message}`);
   }
   await loadPricing(); // tai lai de dam bao khop 100% voi database (khong tin DOM mai mai)
 }
@@ -179,10 +186,19 @@ function wireEvents(container) {
   if (!CAN_EDIT) return;
   wireDragReorder(container);
 
-  container.querySelectorAll('.price-input').forEach((input) => {
-    input.addEventListener('change', async () => {
-      const { error } = await supabase.from('program_courses').update({ price_vnd: Number(input.value) || 0 }).eq('id', input.dataset.course);
-      if (error) { alert('Lỗi: ' + error.message); return; }
+  // SUA THEO YEU CAU: bo han kieu "tu luu ngay khi roi o nhap" (change
+  // event) — du da sua loi draggable, van co the con nguyen nhan khac
+  // gay gian doan luc go so. Gio CHI luu khi bam nut 💾 ro rang, khong
+  // co gi xay ra trong luc go — an toan tuyet doi, khong con kha nang
+  // bi "nhay" trang giua chung.
+  container.querySelectorAll('[data-save-price]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const courseId = btn.dataset.savePrice;
+      const input = container.querySelector(`.price-input[data-course="${courseId}"]`);
+      const newPrice = Number(input.value) || 0;
+      btn.disabled = true; btn.textContent = '⏳';
+      const { error } = await supabase.from('program_courses').update({ price_vnd: newPrice }).eq('id', courseId);
+      if (error) { alert('Lỗi: ' + error.message); btn.disabled = false; btn.textContent = '💾'; return; }
       await loadPricing();
     });
   });
