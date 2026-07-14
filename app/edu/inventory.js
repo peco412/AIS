@@ -328,13 +328,6 @@ document.getElementById('btnSubmitRetail').addEventListener('click', async () =>
   }
 });
 
-function toggleSizeField() {
-  const opt = document.getElementById('txItem').selectedOptions[0];
-  const hasSize = opt?.dataset.hasSize === 'true';
-  document.getElementById('txSizeField').style.display = hasSize ? 'block' : 'none';
-}
-document.getElementById('txItem').addEventListener('change', toggleSizeField);
-
 document.getElementById('btnSubmitTx').addEventListener('click', async () => {
   const errBox = document.getElementById('txFormError');
   errBox.classList.remove('show');
