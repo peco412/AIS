@@ -24,7 +24,6 @@ async function initCenterPicker() {
 async function loadItems() {
   const { data } = await supabase.from('inventory_items').select('*').order('display_order');
   ITEMS = data || [];
-  document.getElementById('txItem').innerHTML = ITEMS.map((it) => `<option value="${it.id}" data-has-size="${it.has_size}">${esc(it.name)} (${esc(it.code)})</option>`).join('');
 }
 
 async function loadWalletPurchases() {
