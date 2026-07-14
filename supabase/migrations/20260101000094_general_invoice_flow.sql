@@ -191,6 +191,10 @@ where s.status = 'studying'
         and i.period_year = extract(year from current_date)::int
         and i.period_month = extract(month from current_date)::int
     ))
+    -- THIEU "or" o day la nguyen nhan gay loi syntax khi chay that —
+    -- 2 dieu kien trong ngoac dung canh nhau ma khong co toan tu noi se
+    -- khong hop le, PHAI co "or" noi lai.
+    or
     -- "Theo khoa le" / "Tron cap do con" — mua TRON GOI 1 LAN cho nhieu
     -- thang, KHONG duoc kiem tra theo thang (se bi nhac lai sai moi
     -- thang du da dong du) — chi kiem tra "TU KHI XEP VAO LOP HIEN TAI

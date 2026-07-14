@@ -17,23 +17,33 @@ const WALLET_STATUS_BADGE = { pending: 'submitted', center_confirmed: 'approved_
 
 async function loadWalletRequests() {
   const tbody = document.getElementById('walletBody');
-  const { data, error } = await supabase
-    .from('wallet_withdrawal_requests')
-    .select('id, preview_amount_vnd, actual_amount_vnd, status, created_at, wallets(student_id, students(full_name))')
-    .in('status', ['pending', 'center_confirmed'])
-    .order('created_at', { ascending: true });
+  const showHistory = document.getElementById('showWalletHistory').checked;
 
-  if (error) { tbody.innerHTML = `<tr><td colspan="4" class="empty-cell">Lỗi: ${esc(error.message)}</td></tr>`; return; }
-  if (!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="empty-cell">Không có yêu cầu nào đang chờ.</td></tr>'; return; }
+  // SUA LOI THAT: truoc day CHI tai status pending/center_confirmed —
+  // yeu cau da Tu choi/Da hoan BIEN MAT hoan toan, khong xem lai duoc.
+  // Gio mac dinh van chi hien "dang cho" cho gon, nhung co the bat cong
+  // tac de xem THEM ca lich su (da duyet/da tu choi).
+  let query = supabase
+    .from('wallet_withdrawal_requests')
+    .select('id, preview_amount_vnd, actual_amount_vnd, status, created_at, reject_reason, wallets(student_id, students(full_name))')
+    .order('created_at', { ascending: false });
+  if (!showHistory) query = query.in('status', ['pending', 'center_confirmed']);
+
+  const { data, error } = await query;
+
+  if (error) { tbody.innerHTML = `<tr><td colspan="5" class="empty-cell">Lỗi: ${esc(error.message)}</td></tr>`; return; }
+  if (!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="empty-cell">Không có yêu cầu nào.</td></tr>'; return; }
 
   tbody.innerHTML = data.map((r) => `
     <tr>
       <td>${esc(r.wallets?.students?.full_name || '—')}</td>
       <td class="mono">${fmtMoney(r.preview_amount_vnd)} đ</td>
       <td><span class="badge badge-${WALLET_STATUS_BADGE[r.status]}">${WALLET_STATUS_LABEL[r.status]}</span></td>
-      <td>
+      <td class="cell-muted" style="font-size:12px;">${r.status === 'rejected' ? esc(r.reject_reason || '') : ''}</td>
+      <td style="white-space:nowrap;">
         ${(r.status === 'pending' && IS_CENTER_STAFF) ? `<button class="btn btn-accent btn-sm" data-confirm="${r.id}">Xác nhận</button>` : ''}
         ${(r.status === 'center_confirmed' && IS_ACC) ? `<button class="btn btn-accent btn-sm" data-approve="${r.id}">Duyệt hoàn</button>` : ''}
+        ${(r.status === 'pending' && IS_CENTER_STAFF) || (r.status === 'center_confirmed' && IS_ACC) ? `<button class="btn btn-outline btn-sm" data-reject="${r.id}">Từ chối</button>` : ''}
       </td>
     </tr>
   `).join('');
@@ -51,7 +61,18 @@ async function loadWalletRequests() {
     alert('Đã duyệt. Vui lòng chuyển tiền hoàn thực tế cho phụ huynh.');
     await loadWalletRequests();
   }));
+  // MOI: nut Tu choi — truoc day HOAN TOAN KHONG CO, khien yeu cau cu
+  // "treo" mai o pending khi Trung tam khong dong y, Ke toan khong co gi
+  // de bam (chi hien nut o dung status "center_confirmed").
+  tbody.querySelectorAll('[data-reject]').forEach((b) => b.addEventListener('click', async () => {
+    const reason = prompt('Lý do từ chối (bắt buộc):');
+    if (!reason?.trim()) { if (reason !== null) alert('Bắt buộc ghi lý do.'); return; }
+    const { error: err } = await supabase.rpc('reject_wallet_withdrawal', { p_request_id: b.dataset.reject, p_rejector_id: PROFILE.id, p_reason: reason });
+    if (err) { alert('Lỗi: ' + err.message); return; }
+    await loadWalletRequests();
+  }));
 }
+document.getElementById('showWalletHistory').addEventListener('change', loadWalletRequests);
 
 // ---------------------------------------------------------------------
 // Yêu cầu hoàn tiền mặt/Chuyển khoản

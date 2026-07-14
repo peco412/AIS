@@ -26,6 +26,35 @@ document.getElementById('searchStudent').addEventListener('input', () => {
   searchTimer = setTimeout(searchAndPick, 350);
 });
 
+// Tim nhanh theo MA HOA DON — gop chuc nang cua trang invoice-detail.html
+// truoc day vao thang day, tranh 2 trang cung lam gan giong nhau. Nhap
+// dung ma la tu dong tim ra hoc sinh + tai san danh sach hoa don cua ho.
+async function searchByInvoiceCode() {
+  const code = document.getElementById('searchInvoiceCode').value.trim();
+  const feedback = document.getElementById('searchFeedback');
+  if (!code) return;
+
+  feedback.textContent = 'Đang tìm mã hoá đơn...';
+  const { data, error } = await supabase
+    .from('invoices')
+    .select('id, invoice_code, students(id, full_name, center_id, class_id, centers(name))')
+    .eq('invoice_code', code.toUpperCase())
+    .maybeSingle();
+
+  if (error) { feedback.textContent = `Lỗi: ${error.message}`; return; }
+  if (!data || !data.students) {
+    feedback.textContent = `Không tìm thấy hoá đơn với mã "${code}". Kiểm tra lại chính tả (VD: HD-00001).`;
+    return;
+  }
+
+  feedback.textContent = '';
+  document.getElementById('searchInvoiceCode').value = '';
+  await selectStudent(data.students);
+}
+document.getElementById('searchInvoiceCode').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') searchByInvoiceCode();
+});
+
 async function searchAndPick() {
   if (!PROFILE) return; // chờ tải xong hồ sơ trước khi tìm, tránh lỗi
   const q = document.getElementById('searchStudent').value.trim();
@@ -164,7 +193,7 @@ async function loadInvoices() {
     return `
       <tr>
         <td>
-          <a href="/edu/invoice-detail.html?code=${encodeURIComponent(inv.invoice_code || '')}" class="mono cell-code" style="text-decoration:none;" title="Mở trang chi tiết/thanh toán riêng">${esc(inv.invoice_code || '—')}</a>
+          <span class="mono cell-code">${esc(inv.invoice_code || '—')}</span>
           <div>${inv.period_month}/${inv.period_year}${plan ? `<div class="cell-muted" style="font-size:11px;">${PLAN_LABEL[plan.plan_type]}</div>` : ''}</div>
         </td>
         <td class="mono">${fmtMoney(inv.amount_vnd)} đ${discountNote}</td>

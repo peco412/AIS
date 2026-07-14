@@ -113,7 +113,6 @@ export const NAV_CONFIG = [
       // ========== Phần 1: Thu học phí ==========
       { subgroup: 'tuition', labelKey: 'nav.edu.generalInvoicing', label: 'Tạo hoá đơn chung', href: '/edu/general-invoicing.html', icon: '📋', visible: (p) => p.isCenterManager || p.roleCode === 'CONSULTANT' || inDept(p, 'ACC') },
       { subgroup: 'tuition', labelKey: 'nav.edu.walletInvoices', label: 'Thu học phí', href: '/edu/wallet-invoices.html', icon: '💳', visible: (p) => p.isCenterManager || p.roleCode === 'CONSULTANT' || inDept(p, 'ACC') },
-      { subgroup: 'tuition', labelKey: 'nav.edu.invoiceDetail', label: 'Tra cứu & Thanh toán hoá đơn', href: '/edu/invoice-detail.html', icon: '🧾', visible: (p) => p.isCenterManager || p.roleCode === 'CONSULTANT' || inDept(p, 'ACC') },
       { subgroup: 'tuition', labelKey: 'nav.acc.walletTopupRequests', label: 'Xác nhận nạp ví', href: '/acc/wallet-topup-requests.html', icon: '✅', visible: (p) => p.isCenterManager },
       { subgroup: 'tuition', labelKey: 'nav.edu.walletPaymentLog', label: 'Thu học phí qua Ví (Log)', href: '/edu/wallet-payment-log.html', icon: '📜', visible: (p) => p.isCenterManager || p.roleCode === 'CONSULTANT' || inDept(p, 'ACC') },
       { subgroup: 'tuition', labelKey: 'nav.edu.debtOverview', label: 'Công nợ học phí', href: '/edu/debt-overview.html', icon: '📒', visible: (p) => p.isCenterManager || isExecOrTech(p) },
@@ -170,6 +169,7 @@ export const NAV_CONFIG = [
       { labelKey: 'nav.md.programPricing', label: 'Chương trình & Bảng giá khoá học', href: '/master-data/program-pricing.html', icon: '🏷️', visible: (p) => ['TECH', 'EXECUTIVE'].includes(p.roleCode) || inDept(p, 'ACC') },
       { labelKey: 'nav.md.paymentPlanDiscounts', label: 'Chiết khấu hình thức đóng học phí', href: '/master-data/payment-plan-discounts.html', icon: '📉', visible: (p) => ['TECH', 'EXECUTIVE'].includes(p.roleCode) || inDept(p, 'ACC') },
       { labelKey: 'nav.md.walletTierDiscounts', label: 'Chiết khấu ví (bậc theo số tiền nạp)', href: '/master-data/wallet-tier-discounts.html', icon: '💳', visible: (p) => ['TECH', 'EXECUTIVE'].includes(p.roleCode) || inDept(p, 'ACC') },
+      { labelKey: 'nav.md.sizeChart', label: 'Bảng size theo chiều cao/cân nặng', href: '/master-data/size-chart.html', icon: '📏', visible: (p) => ['TECH'].includes(p.roleCode) || inDept(p, 'ACC') || inDept(p, 'FAC') },
       { labelKey: 'nav.md.inventoryItems', label: 'Danh mục sản phẩm kho', href: '/master-data/inventory-items.html', icon: '📦', visible: (p) => ['TECH', 'EXECUTIVE'].includes(p.roleCode) },
     ],
   },

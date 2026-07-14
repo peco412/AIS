@@ -27,6 +27,17 @@
 
 <main class="app-main">
   <div class="form-error" id="shopError"></div>
+
+  <div class="card">
+    <h3>📏 Số đo của con (để gợi ý size áo)</h3>
+    <p class="cell-muted" style="font-size:12px; margin-top:-6px;">Không bắt buộc — nếu biết đúng size rồi có thể bỏ qua, tự chọn tay bên dưới.</p>
+    <div style="display:flex; gap:10px;">
+      <input type="number" id="childHeight" placeholder="Chiều cao (cm)" style="flex:1; padding:10px; border-radius:10px; border:1px solid var(--border);" />
+      <input type="number" id="childWeight" placeholder="Cân nặng (kg)" style="flex:1; padding:10px; border-radius:10px; border:1px solid var(--border);" />
+    </div>
+    <p id="sizeSuggestHint" style="font-size:13px; margin-top:8px; color:var(--accent-deep);"></p>
+  </div>
+
   <div class="card">
     <h3>Danh sách sản phẩm</h3>
     <div id="itemsList"></div>

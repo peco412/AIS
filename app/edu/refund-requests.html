@@ -42,11 +42,16 @@
       <button class="btn btn-accent" id="btnNewCounterRefund">+ Tạo yêu cầu hoàn (tiền mặt/CK)</button>
     </div>
 
-    <div class="page-header" style="margin-top:8px;"><div><h1 style="font-size:15px;">↩️ Yêu cầu rút Ví</h1></div></div>
+    <div class="page-header" style="margin-top:8px;">
+      <div><h1 style="font-size:15px;">↩️ Yêu cầu rút Ví</h1></div>
+      <label class="cell-muted" style="font-size:12.5px; display:flex; align-items:center; gap:6px; cursor:pointer;">
+        <input type="checkbox" id="showWalletHistory" /> Xem cả lịch sử (đã duyệt/đã từ chối)
+      </label>
+    </div>
     <div class="data-table-wrap" style="margin-bottom:24px;">
       <table class="data-table">
-        <thead><tr><th>Học sinh</th><th>Số tiền dự kiến</th><th data-i18n="common.status">Trạng thái</th><th></th></tr></thead>
-        <tbody id="walletBody"><tr><td colspan="4" class="empty-cell">Đang tải dữ liệu...</td></tr></tbody>
+        <thead><tr><th>Học sinh</th><th>Số tiền dự kiến</th><th data-i18n="common.status">Trạng thái</th><th>Ghi chú</th><th></th></tr></thead>
+        <tbody id="walletBody"><tr><td colspan="5" class="empty-cell">Đang tải dữ liệu...</td></tr></tbody>
       </table>
     </div>
 

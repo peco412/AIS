@@ -2,7 +2,36 @@ import { supabase, esc, fmtMoney, bootParentShell, getSelectedStudentId } from '
 
 let STUDENT_ID = null;
 let ITEMS = [];
+let SUGGESTED_SIZE = null;
 const CART = {}; // itemId -> { qty, size }
+
+// Goi y SIZE tu dong theo chieu cao/can nang — doi voi CA cac o size da
+// co san du lieu (dung 1 lan cho tat ca san pham can size, khong phai
+// nhap tay tung san pham 1 nhu truoc).
+async function suggestSize() {
+  const height = Number(document.getElementById('childHeight').value) || null;
+  const weight = Number(document.getElementById('childWeight').value) || null;
+  const hint = document.getElementById('sizeSuggestHint');
+  if (!height && !weight) { hint.textContent = ''; SUGGESTED_SIZE = null; return; }
+
+  const { data, error } = await supabase.rpc('suggest_size', { p_height_cm: height, p_weight_kg: weight });
+  if (error || !data) {
+    hint.textContent = 'Không tìm được size gợi ý phù hợp — vui lòng chọn tay.';
+    SUGGESTED_SIZE = null;
+    return;
+  }
+  SUGGESTED_SIZE = data;
+  hint.innerHTML = `✓ Gợi ý size: <strong>${esc(data)}</strong> (có thể sửa tay nếu muốn chọn size khác)`;
+
+  // Tu dien vao MOI o size con TRONG (chua duoc phu huynh tu go tay
+  // truoc do) — khong ghi de neu ho da tu chinh size rieng cho san
+  // pham nao do.
+  document.querySelectorAll('.shop-item__size').forEach((input) => {
+    if (!input.value) input.value = data;
+  });
+}
+document.getElementById('childHeight').addEventListener('input', suggestSize);
+document.getElementById('childWeight').addEventListener('input', suggestSize);
 
 async function loadItems() {
   const { data } = await supabase.from('inventory_items').select('id, name, price_vnd, has_size').order('display_order');
@@ -15,7 +44,7 @@ async function loadItems() {
         <div>${esc(it.name)}</div>
         <div class="shop-item__price">${fmtMoney(it.price_vnd)} coin</div>
       </div>
-      ${it.has_size ? `<input type="text" class="shop-item__size" placeholder="Size" data-size-for="${it.id}" />` : ''}
+      ${it.has_size ? `<input type="text" class="shop-item__size" placeholder="Size" data-size-for="${it.id}" value="${esc(SUGGESTED_SIZE || '')}" />` : ''}
       <div class="shop-item__qty">
         <button data-minus="${it.id}">−</button>
         <span id="qty-${it.id}">0</span>
