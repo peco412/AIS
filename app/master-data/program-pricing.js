@@ -54,15 +54,15 @@ function renderProgram(prog) {
       levelTotal += slTotal;
 
       const coursesHtml = courses.map((c) => `
-        <span class="course-chip" data-id="${c.id}" data-type="course" data-parent="${sl.id}" ${CAN_EDIT ? 'draggable="true"' : ''}>
-          ${CAN_EDIT ? '<span class="drag-handle" title="Kéo để đổi thứ tự">⠿</span>' : ''}
-          ${esc(c.name)}:
+        <div class="course-row" data-id="${c.id}" data-type="course" data-parent="${sl.id}" ${CAN_EDIT ? 'draggable="true"' : ''}>
+          <span class="course-row__name">${CAN_EDIT ? '<span class="drag-handle" title="Kéo để đổi thứ tự">⠿</span> ' : ''}${esc(c.name)}</span>
           ${CAN_EDIT
-            ? `<input type="number" class="price-input" data-course="${c.id}" value="${c.price_vnd || 0}" draggable="false" />
-               <button type="button" class="chip-save" data-save-price="${c.id}" title="Lưu giá này" draggable="false">💾</button>
-               <button type="button" class="chip-del" data-del-course="${c.id}" title="Xoá khoá này" draggable="false">✕</button>`
+            ? `<span class="course-row__actions">
+                 <input type="number" class="price-input" data-course="${c.id}" data-original="${c.price_vnd || 0}" value="${c.price_vnd || 0}" draggable="false" />
+                 <button type="button" class="chip-del" data-del-course="${c.id}" title="Xoá khoá này" draggable="false">✕</button>
+               </span>`
             : `<strong class="mono">${fmtMoney(c.price_vnd)} đ</strong>`}
-        </span>
+        </div>
       `).join('');
 
       return `
@@ -182,25 +182,52 @@ async function persistNewOrder(type, parentId) {
   await loadPricing(); // tai lai de dam bao khop 100% voi database (khong tin DOM mai mai)
 }
 
+// Thanh "Luu thay doi" TONG THE — hien khi co it nhat 1 o gia da sua so
+// voi gia tri goc (data-original), an di khi khong con gi thay doi.
+function updateSaveBarVisibility() {
+  const dirtyInputs = Array.from(document.querySelectorAll('.price-input')).filter(
+    (i) => Number(i.value) !== Number(i.dataset.original)
+  );
+  const bar = document.getElementById('saveBar');
+  if (dirtyInputs.length > 0) {
+    bar.style.display = 'flex';
+    document.getElementById('saveBarCount').textContent = `${dirtyInputs.length} giá đã sửa, chưa lưu`;
+  } else {
+    bar.style.display = 'none';
+  }
+}
+
+async function saveAllPrices() {
+  const dirtyInputs = Array.from(document.querySelectorAll('.price-input')).filter(
+    (i) => Number(i.value) !== Number(i.dataset.original)
+  );
+  if (dirtyInputs.length === 0) return;
+
+  const btn = document.getElementById('btnSaveAll');
+  btn.disabled = true; btn.textContent = 'Đang lưu...';
+
+  const results = await Promise.all(dirtyInputs.map((input) =>
+    supabase.from('program_courses').update({ price_vnd: Number(input.value) || 0 }).eq('id', input.dataset.course)
+  ));
+  const failed = results.filter((r) => r.error);
+
+  btn.disabled = false; btn.textContent = '💾 Lưu tất cả thay đổi';
+  if (failed.length > 0) {
+    alert(`Lỗi khi lưu (${failed.length}/${dirtyInputs.length} thất bại): ${failed[0].error.message}`);
+  }
+  await loadPricing();
+}
+
 function wireEvents(container) {
   if (!CAN_EDIT) return;
   wireDragReorder(container);
 
-  // SUA THEO YEU CAU: bo han kieu "tu luu ngay khi roi o nhap" (change
-  // event) — du da sua loi draggable, van co the con nguyen nhan khac
-  // gay gian doan luc go so. Gio CHI luu khi bam nut 💾 ro rang, khong
-  // co gi xay ra trong luc go — an toan tuyet doi, khong con kha nang
-  // bi "nhay" trang giua chung.
-  container.querySelectorAll('[data-save-price]').forEach((btn) => {
-    btn.addEventListener('click', async () => {
-      const courseId = btn.dataset.savePrice;
-      const input = container.querySelector(`.price-input[data-course="${courseId}"]`);
-      const newPrice = Number(input.value) || 0;
-      btn.disabled = true; btn.textContent = '⏳';
-      const { error } = await supabase.from('program_courses').update({ price_vnd: newPrice }).eq('id', courseId);
-      if (error) { alert('Lỗi: ' + error.message); btn.disabled = false; btn.textContent = '💾'; return; }
-      await loadPricing();
-    });
+  // Theo doi cac o gia DA THAY DOI (khac gia tri goc) — hien 1 nut Luu
+  // TONG THE duy nhat cho toan trang, thay vi tung nut rieng le truoc
+  // day. Gia tri goc luu san trong data-original de so sanh, khong can
+  // giu bien rieng phuc tap.
+  container.querySelectorAll('.price-input').forEach((input) => {
+    input.addEventListener('input', updateSaveBarVisibility);
   });
 
   container.querySelectorAll('[data-add-course]').forEach((btn) => btn.addEventListener('click', async () => {
@@ -266,6 +293,8 @@ document.getElementById('btnAddProgram')?.addEventListener('click', async () => 
   if (error) { alert('Lỗi: ' + error.message); return; }
   await loadPricing();
 });
+
+document.getElementById('btnSaveAll').addEventListener('click', saveAllPrices);
 
 (async () => {
   try {
