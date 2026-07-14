@@ -58,8 +58,8 @@ function renderProgram(prog) {
           ${CAN_EDIT ? '<span class="drag-handle" title="Kéo để đổi thứ tự">⠿</span>' : ''}
           ${esc(c.name)}:
           ${CAN_EDIT
-            ? `<input type="number" class="price-input" data-course="${c.id}" value="${c.price_vnd || 0}" />
-               <button type="button" class="chip-del" data-del-course="${c.id}" title="Xoá khoá này">✕</button>`
+            ? `<input type="number" class="price-input" data-course="${c.id}" value="${c.price_vnd || 0}" draggable="false" />
+               <button type="button" class="chip-del" data-del-course="${c.id}" title="Xoá khoá này" draggable="false">✕</button>`
             : `<strong class="mono">${fmtMoney(c.price_vnd)} đ</strong>`}
         </span>
       `).join('');
