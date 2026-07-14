@@ -93,6 +93,12 @@ document.getElementById('btnSubmitWithdraw').addEventListener('click', async () 
     PARENT_ID = parent.id;
     const studentId = getSelectedStudentId(students);
 
+    // Luon hien ten hoc sinh de phu huynh xac nhan dung la con minh
+    // truoc khi gui yeu cau rut vi - tranh nham vi giua cac con.
+    const student = students.find((s) => s.id === studentId);
+    const ownerLabel = document.getElementById('walletOwnerLabel');
+    if (ownerLabel) ownerLabel.textContent = student ? student.full_name : '—';
+
     const { data: wallet } = await supabase.from('wallets').select('id').eq('student_id', studentId).maybeSingle();
     if (!wallet) {
       document.getElementById('batchBreakdown').innerHTML = '<div class="empty-state">Chưa có ví.</div>';

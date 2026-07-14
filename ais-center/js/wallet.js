@@ -14,7 +14,18 @@ function renderSwitcher() {
   });
 }
 
+function updateOwnerLabel() {
+  // Luon hien ten hoc sinh (ke ca khi chi co 1 con) de phu huynh yen tam
+  // dung la vi cua con minh - truoc day chi hien qua studentSwitcher,
+  // ma switcher lai bi an khi STUDENTS.length <= 1.
+  const el = document.getElementById('walletOwnerLabel');
+  if (!el) return;
+  const student = STUDENTS.find((s) => s.id === SELECTED_ID);
+  el.textContent = student ? student.full_name : '—';
+}
+
 async function loadBalance() {
+  updateOwnerLabel();
   const { data: wallet } = await supabase.from('wallets').select('id').eq('student_id', SELECTED_ID).maybeSingle();
 
   if (!wallet) {
