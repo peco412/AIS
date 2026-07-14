@@ -2,6 +2,7 @@ import { bootShell } from '/js/shell.js';
 import { supabase, esc } from '/js/supabase.js';
 
 let CAN_EDIT = false;
+let LOADED_PROGRAMS = []; // cache du lieu da sap xep, dung de tinh anh/chi em khi bam mui ten (khong can doc lai DOM)
 
 function fmtMoney(n) { return Number(n || 0).toLocaleString('vi-VN'); }
 
@@ -33,61 +34,89 @@ async function loadPricing() {
 
   if (error) { container.innerHTML = `<div class="empty-cell">Lỗi: ${esc(error.message)}</div>`; return; }
 
-  container.innerHTML = (programs && programs.length > 0)
-    ? programs.map((prog) => renderProgram(prog)).join('')
+  // Sap xep san moi tang (Supabase khong dam bao sap xep long nhau qua
+  // .order() cho cac bang con) — cache lai de dung khi tinh mui ten.
+  LOADED_PROGRAMS = (programs || []).slice().sort((a, b) => a.display_order - b.display_order);
+  LOADED_PROGRAMS.forEach((p) => {
+    p.program_levels = (p.program_levels || []).slice().sort((a, b) => a.display_order - b.display_order);
+    p.program_levels.forEach((l) => {
+      l.program_sublevels = (l.program_sublevels || []).slice().sort((a, b) => a.display_order - b.display_order);
+      l.program_sublevels.forEach((sl) => {
+        sl.program_courses = (sl.program_courses || []).slice().sort((a, b) => a.display_order - b.display_order);
+      });
+    });
+  });
+
+  container.innerHTML = LOADED_PROGRAMS.length > 0
+    ? LOADED_PROGRAMS.map((prog) => renderProgram(prog)).join('')
     : '<div class="empty-cell">Chưa có chương trình học nào.</div>';
 
   wireEvents(container);
 }
 
+// Nut mui ten len/xuong — dung CHUNG cho ca 4 tang, disabled dung o dau/
+// cuoi danh sach anh/chi em (khong can chuyen JS rieng cho tung tang).
+function arrowButtons(type, id, isFirst, isLast) {
+  if (!CAN_EDIT) return '';
+  return `
+    <button type="button" class="btn-arrow" data-move-up="${id}" data-move-type="${type}" ${isFirst ? 'disabled' : ''} title="Đưa lên trên">▲</button>
+    <button type="button" class="btn-arrow" data-move-down="${id}" data-move-type="${type}" ${isLast ? 'disabled' : ''} title="Đưa xuống dưới">▼</button>
+  `;
+}
+
 function renderProgram(prog) {
-  const levels = (prog.program_levels || []).sort((a, b) => a.display_order - b.display_order);
+  const levels = prog.program_levels;
   let programTotal = 0;
 
-  const levelsHtml = levels.map((level) => {
-    const sublevels = (level.program_sublevels || []).sort((a, b) => a.display_order - b.display_order);
+  const levelsHtml = levels.map((level, levelIdx) => {
+    const sublevels = level.program_sublevels;
     let levelTotal = 0;
 
-    const sublevelsHtml = sublevels.map((sl) => {
-      const courses = (sl.program_courses || []).sort((a, b) => a.display_order - b.display_order);
+    const sublevelsHtml = sublevels.map((sl, slIdx) => {
+      const courses = sl.program_courses;
       const slTotal = courses.reduce((s, c) => s + Number(c.price_vnd || 0), 0);
       levelTotal += slTotal;
 
-      const coursesHtml = courses.map((c) => `
-        <div class="course-row" data-id="${c.id}" data-type="course" data-parent="${sl.id}" ${CAN_EDIT ? 'draggable="true"' : ''}>
-          <span class="course-row__name">${CAN_EDIT ? '<span class="drag-handle" title="Kéo để đổi thứ tự">⠿</span> ' : ''}${esc(c.name)}</span>
+      const coursesHtml = courses.map((c, cIdx) => `
+        <div class="course-row" data-id="${c.id}">
+          <span class="course-row__name">${esc(c.name)}</span>
           ${CAN_EDIT
             ? `<span class="course-row__actions">
-                 <input type="number" class="price-input" data-course="${c.id}" data-original="${c.price_vnd || 0}" value="${c.price_vnd || 0}" draggable="false" />
-                 <button type="button" class="chip-del" data-del-course="${c.id}" title="Xoá khoá này" draggable="false">✕</button>
+                 ${arrowButtons('course', c.id, cIdx === 0, cIdx === courses.length - 1)}
+                 <input type="number" class="price-input" data-course="${c.id}" data-original="${c.price_vnd || 0}" value="${c.price_vnd || 0}" />
+                 <button type="button" class="chip-del" data-del-course="${c.id}" title="Xoá khoá này">✕</button>
                </span>`
             : `<strong class="mono">${fmtMoney(c.price_vnd)} đ</strong>`}
         </div>
       `).join('');
 
       return `
-        <div class="sublevel-row" data-id="${sl.id}" data-type="sublevel" data-parent="${level.id}" ${CAN_EDIT ? 'draggable="true"' : ''}>
-          <span class="sublevel-row__name">${CAN_EDIT ? '<span class="drag-handle" title="Kéo để đổi thứ tự">⠿</span> ' : ''}↳ ${esc(sl.name)}</span>
-          <span style="display:flex; align-items:center; gap:10px;">
-            ${courses.length > 1 ? `<span class="mono cell-muted">Tổng: ${fmtMoney(slTotal)} đ</span>` : ''}
-            ${CAN_EDIT ? `
-              <button type="button" class="btn-mini" data-add-course="${sl.id}">+ Khoá</button>
-              <button type="button" class="btn-mini btn-mini--danger" data-del-sublevel="${sl.id}" data-name="${esc(sl.name)}">🗑️ Xoá cấp độ con</button>
-            ` : ''}
-          </span>
+        <div class="sublevel-wrap" data-id="${sl.id}">
+          <div class="sublevel-row">
+            <span class="sublevel-row__name">↳ ${esc(sl.name)}</span>
+            <span style="display:flex; align-items:center; gap:10px;">
+              ${courses.length > 1 ? `<span class="mono cell-muted">Tổng: ${fmtMoney(slTotal)} đ</span>` : ''}
+              ${CAN_EDIT ? `
+                ${arrowButtons('sublevel', sl.id, slIdx === 0, slIdx === sublevels.length - 1)}
+                <button type="button" class="btn-mini" data-add-course="${sl.id}">+ Khoá</button>
+                <button type="button" class="btn-mini btn-mini--danger" data-del-sublevel="${sl.id}" data-name="${esc(sl.name)}">🗑️ Xoá cấp độ con</button>
+              ` : ''}
+            </span>
+          </div>
+          <div class="course-list">${coursesHtml}</div>
         </div>
-        <div class="course-list">${coursesHtml}</div>
       `;
     }).join('');
 
     programTotal += levelTotal;
 
     return `
-      <div class="level-block">
-        <div class="level-block__title" data-id="${level.id}" data-type="level" data-parent="${prog.id}" style="display:flex; justify-content:space-between; align-items:center;" ${CAN_EDIT ? 'draggable="true"' : ''}>
-          <span>${CAN_EDIT ? '<span class="drag-handle" title="Kéo để đổi thứ tự">⠿</span> ' : ''}${esc(level.name)} <span class="cell-muted" style="text-transform:none; font-weight:400;">— trọn cấp độ: ${fmtMoney(levelTotal)} đ</span></span>
+      <div class="level-wrap" data-id="${level.id}">
+        <div class="level-block__title" style="display:flex; justify-content:space-between; align-items:center;">
+          <span>${esc(level.name)} <span class="cell-muted" style="text-transform:none; font-weight:400;">— trọn cấp độ: ${fmtMoney(levelTotal)} đ</span></span>
           ${CAN_EDIT ? `
             <span>
+              ${arrowButtons('level', level.id, levelIdx === 0, levelIdx === levels.length - 1)}
               <button type="button" class="btn-mini" data-add-sublevel="${level.id}">+ Cấp độ con</button>
               <button type="button" class="btn-mini btn-mini--danger" data-del-level="${level.id}" data-name="${esc(level.name)}">🗑️ Xoá cấp độ</button>
             </span>
@@ -98,14 +127,16 @@ function renderProgram(prog) {
     `;
   }).join('');
 
+  const progIdx = LOADED_PROGRAMS.findIndex((p) => p.id === prog.id);
+
   return `
-    <details class="program-group" data-id="${prog.id}" data-type="program">
-      <summary data-id="${prog.id}" data-type="program" data-parent="root" ${CAN_EDIT ? 'draggable="true"' : ''}>
-        ${CAN_EDIT ? '<span class="drag-handle" title="Kéo để đổi thứ tự">⠿</span>' : ''}
+    <details class="program-group" data-id="${prog.id}">
+      <summary>
         <span class="name">${esc(prog.name)}</span>
         <span style="display:flex; align-items:center; gap:10px;">
           <span class="total">Trọn chương trình: ${fmtMoney(programTotal)} đ</span>
           ${CAN_EDIT ? `
+            ${arrowButtons('program', prog.id, progIdx === 0, progIdx === LOADED_PROGRAMS.length - 1)}
             <button type="button" class="btn-mini" data-add-level="${prog.id}">+ Cấp độ</button>
             <button type="button" class="btn-mini btn-mini--danger" data-del-program="${prog.id}" data-name="${esc(prog.name)}">🗑️ Xoá chương trình</button>
           ` : ''}
@@ -116,74 +147,57 @@ function renderProgram(prog) {
   `;
 }
 
-// Kéo-thả đổi thứ tự — dung 1 co che CHUNG cho ca 4 tang (Chuong trinh/
-// Cap do/Cap do con/Khoa hoc), chi khac nhau o BANG can update va DIEU
-// KIEN cung nhom cha (data-parent) — chi cho phep tha vao dung ANH/CHI
-// EM cung cha, tranh keo lung tung giua cac nhom khac nhau gay sai du lieu.
 const REORDER_TABLE = { program: 'programs', level: 'program_levels', sublevel: 'program_sublevels', course: 'program_courses' };
 
-function wireDragReorder(container) {
-  let draggedEl = null;
-
-  container.addEventListener('dragstart', (e) => {
-    const el = e.target.closest('[draggable="true"]');
-    if (!el) return;
-    draggedEl = el;
-    e.dataTransfer.effectAllowed = 'move';
-    setTimeout(() => el.classList.add('dragging'), 0);
-  });
-
-  container.addEventListener('dragend', (e) => {
-    const el = e.target.closest('[draggable="true"]');
-    el?.classList.remove('dragging');
-    draggedEl = null;
-  });
-
-  container.addEventListener('dragover', (e) => {
-    const target = e.target.closest('[draggable="true"]');
-    if (!target || !draggedEl || target === draggedEl) return;
-    // Chi cho tha vao dung PHAN TU CUNG LOAI + CUNG NHOM CHA (vd Khoa hoc
-    // chi doi cho voi Khoa hoc khac trong CUNG 1 Cap do con).
-    if (target.dataset.type !== draggedEl.dataset.type || target.dataset.parent !== draggedEl.dataset.parent) return;
-    e.preventDefault();
-    const rect = target.getBoundingClientRect();
-    const before = (e.clientY - rect.top) < rect.height / 2;
-    target.parentNode.insertBefore(draggedEl, before ? target : target.nextSibling);
-  });
-
-  container.addEventListener('drop', async (e) => {
-    const target = e.target.closest('[draggable="true"]');
-    if (!target || !draggedEl) return;
-    e.preventDefault();
-    await persistNewOrder(draggedEl.dataset.type, draggedEl.dataset.parent);
-  });
-}
-
-async function persistNewOrder(type, parentId) {
-  const table = REORDER_TABLE[type];
-  // Lay lai DUNG THU TU tren man hinh SAU KHI tha (DOM da tu sap xep lai
-  // qua buoc dragover o tren) — lay tat ca phan tu cung loai+cung nhom
-  // cha, theo dung thu tu hien tai trong DOM.
-  const container = document.getElementById('programGroups');
-  const items = Array.from(container.querySelectorAll(`[data-type="${type}"][data-parent="${parentId}"]`));
-  const updates = items.map((el, idx) => ({ id: el.dataset.id, display_order: idx }));
-
-  // SUA LOI THAT: supabase-js KHONG throw loi cho cac truy van that bai
-  // (chi tra ve {error} trong ket qua) — try/catch o day TRUOC GIO
-  // KHONG BAO GIO bat duoc loi thuc su, khien viec luu that bai bi NUOT
-  // AM THAM, roi tai lai (loadPricing) hien dung thu tu CU trong database
-  // — nhin giong nhu "keo xong lai ve cho cu". Gio kiem tra dung {error}
-  // tra ve tu MOI cau update, bao ro neu co bat ky cai nao that bai.
-  const results = await Promise.all(updates.map((u) => supabase.from(table).update({ display_order: u.display_order }).eq('id', u.id)));
-  const failed = results.filter((r) => r.error);
-  if (failed.length > 0) {
-    alert(`Lỗi khi lưu thứ tự mới (${failed.length}/${updates.length} dòng thất bại): ${failed[0].error.message}`);
+// Doi cho VOI DUNG 1 anh/chi em ke ben (len hoac xuong) — chi hoan doi
+// display_order giua 2 dong, KHONG dung toi cau truc DOM long nhau nen
+// khong co rui ro "bo lai noi dung con" nhu kieu keo-tha HTML truoc day.
+function findSiblingsAndIndex(type, id) {
+  if (type === 'program') return { siblings: LOADED_PROGRAMS, idx: LOADED_PROGRAMS.findIndex((p) => p.id === id) };
+  for (const prog of LOADED_PROGRAMS) {
+    if (type === 'level') {
+      const idx = prog.program_levels.findIndex((l) => l.id === id);
+      if (idx !== -1) return { siblings: prog.program_levels, idx };
+    }
+    for (const level of prog.program_levels) {
+      if (type === 'sublevel') {
+        const idx = level.program_sublevels.findIndex((sl) => sl.id === id);
+        if (idx !== -1) return { siblings: level.program_sublevels, idx };
+      }
+      for (const sl of level.program_sublevels) {
+        if (type === 'course') {
+          const idx = sl.program_courses.findIndex((c) => c.id === id);
+          if (idx !== -1) return { siblings: sl.program_courses, idx };
+        }
+      }
+    }
   }
-  await loadPricing(); // tai lai de dam bao khop 100% voi database (khong tin DOM mai mai)
+  return { siblings: [], idx: -1 };
 }
 
-// Thanh "Luu thay doi" TONG THE — hien khi co it nhat 1 o gia da sua so
-// voi gia tri goc (data-original), an di khi khong con gi thay doi.
+async function moveItem(type, id, direction) {
+  const { siblings, idx } = findSiblingsAndIndex(type, id);
+  if (idx === -1) return;
+  const swapIdx = idx + direction;
+  if (swapIdx < 0 || swapIdx >= siblings.length) return;
+
+  const a = siblings[idx];
+  const b = siblings[swapIdx];
+  const table = REORDER_TABLE[type];
+
+  const [r1, r2] = await Promise.all([
+    supabase.from(table).update({ display_order: b.display_order }).eq('id', a.id),
+    supabase.from(table).update({ display_order: a.display_order }).eq('id', b.id),
+  ]);
+  if (r1.error || r2.error) {
+    alert('Lỗi khi đổi thứ tự: ' + (r1.error?.message || r2.error?.message));
+    return;
+  }
+  await loadPricing();
+}
+
+// Thanh "Luu thay doi" TONG THE cho GIA — hien khi co it nhat 1 o gia da
+// sua so voi gia tri goc (data-original), an di khi khong con gi thay doi.
 function updateSaveBarVisibility() {
   const dirtyInputs = Array.from(document.querySelectorAll('.price-input')).filter(
     (i) => Number(i.value) !== Number(i.dataset.original)
@@ -220,12 +234,10 @@ async function saveAllPrices() {
 
 function wireEvents(container) {
   if (!CAN_EDIT) return;
-  wireDragReorder(container);
 
-  // Theo doi cac o gia DA THAY DOI (khac gia tri goc) — hien 1 nut Luu
-  // TONG THE duy nhat cho toan trang, thay vi tung nut rieng le truoc
-  // day. Gia tri goc luu san trong data-original de so sanh, khong can
-  // giu bien rieng phuc tap.
+  container.querySelectorAll('[data-move-up]').forEach((btn) => btn.addEventListener('click', () => moveItem(btn.dataset.moveType, btn.dataset.moveUp, -1)));
+  container.querySelectorAll('[data-move-down]').forEach((btn) => btn.addEventListener('click', () => moveItem(btn.dataset.moveType, btn.dataset.moveDown, 1)));
+
   container.querySelectorAll('.price-input').forEach((input) => {
     input.addEventListener('input', updateSaveBarVisibility);
   });

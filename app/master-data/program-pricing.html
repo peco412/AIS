@@ -57,8 +57,8 @@
   .program-group summary .name { font-weight: 700; font-size: 14.5px; }
   .program-group summary .total { font-family: var(--font-mono); color: var(--accent-deep); font-weight: 700; }
   .program-group[open] summary { border-bottom: 1px solid var(--border); }
-  .level-block { padding: 14px 20px; border-bottom: 1px solid var(--separator); }
-  .level-block:last-child { border-bottom: none; }
+  .level-wrap { padding: 14px 20px; border-bottom: 1px solid var(--separator); }
+  .level-wrap:last-child { border-bottom: none; }
   .level-block__title { font-size: 12.5px; font-weight: 700; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 8px; }
   .sublevel-row { display: flex; justify-content: space-between; align-items: baseline; padding: 6px 0 6px 12px; font-size: 13px; border-left: 2px solid var(--border); margin-bottom: 4px; }
   .sublevel-row__name { color: var(--ink-soft); }
@@ -72,13 +72,13 @@
   .course-row__actions { display: flex; align-items: center; gap: 4px; }
   .course-row .price-input { width: 110px; font-size: 12px; padding: 4px 8px; }
   .chip-del { border: none; background: none; color: var(--danger); cursor: pointer; font-size: 11px; padding: 0 2px; }
-  .chip-save { border: none; background: none; cursor: pointer; font-size: 12px; padding: 0 2px; }
-  .chip-save:hover { transform: scale(1.15); }
-  .drag-handle { cursor: grab; color: var(--muted); font-size: 14px; margin-right: 4px; user-select: none; }
-  .drag-handle:active { cursor: grabbing; }
-  [draggable="true"] { transition: opacity 0.15s, background 0.15s; }
-  [draggable="true"].dragging { opacity: 0.4; background: var(--accent-tint); }
-  [draggable="true"]:hover .drag-handle { color: var(--accent); }
+  .btn-arrow {
+    border: 1px solid var(--border); background: var(--surface-fill); color: var(--ink-soft);
+    cursor: pointer; font-size: 10px; width: 22px; height: 22px; border-radius: 6px;
+    display: inline-flex; align-items: center; justify-content: center; margin-right: 1px;
+  }
+  .btn-arrow:hover:not(:disabled) { background: var(--accent-tint); color: var(--accent-deep); }
+  .btn-arrow:disabled { opacity: 0.25; cursor: not-allowed; }
   .btn-mini {
     border: 1px solid var(--border); background: var(--surface-fill); color: var(--ink-soft);
     font-size: 10.5px; font-weight: 700; padding: 4px 9px; border-radius: 999px; cursor: pointer;
