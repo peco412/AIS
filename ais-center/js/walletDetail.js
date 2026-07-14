@@ -46,5 +46,51 @@ import { supabase, esc, fmtMoney, fmtDate, bootParentShell, getSelectedStudentId
         </div>
       </div>
     `).join('');
+
+    await loadSpendHistory(wallet.id, studentId);
   } catch (e) { /* bootParentShell tự điều hướng */ }
 })();
+
+// MOI: gop 3 nguon CHI TIEU tu vi (truoc day trang nay chi hien lo NAP,
+// khong he co gi cho biet DA MUA/DA CHI o dau) — Dong hoc phi qua vi,
+// Mua sam qua App, Rut vi (hoan tien) — sap xep chung theo thoi gian.
+async function loadSpendHistory(walletId, studentId) {
+  const listEl = document.getElementById('spendHistoryList');
+  listEl.innerHTML = '<div class="empty-state">Đang tải...</div>';
+
+  const [{ data: tuitionPayments }, { data: purchases }, { data: withdrawals }] = await Promise.all([
+    supabase.from('debt_ledger').select('amount_coin, amount_vnd, created_at, invoices!inner(period_month, period_year, student_id)').eq('source', 'WALLET').eq('invoices.student_id', studentId).order('created_at', { ascending: false }).limit(30),
+    supabase.from('wallet_purchase_requests').select('code, total_coin_amount, status, created_at, confirmed_at').eq('student_id', studentId).eq('status', 'confirmed').order('confirmed_at', { ascending: false }).limit(30),
+    supabase.from('wallet_withdrawal_requests').select('actual_amount_vnd, preview_amount_vnd, status, created_at, approved_at').eq('wallet_id', walletId).eq('status', 'approved').order('approved_at', { ascending: false }).limit(30),
+  ]);
+
+  const events = [];
+  (tuitionPayments || []).forEach((r) => {
+    events.push({
+      date: r.created_at, icon: '🎓', label: `Đóng học phí${r.invoices ? ` tháng ${r.invoices.period_month}/${r.invoices.period_year}` : ''}`,
+      amount: -Number(r.amount_coin || 0),
+    });
+  });
+  (purchases || []).forEach((r) => {
+    events.push({ date: r.confirmed_at || r.created_at, icon: '🛍️', label: `Mua sắm — ${r.code}`, amount: -Number(r.total_coin_amount || 0) });
+  });
+  (withdrawals || []).forEach((r) => {
+    events.push({ date: r.approved_at || r.created_at, icon: '↩️', label: 'Hoàn tiền (rút ví)', amount: -Number(r.actual_amount_vnd || r.preview_amount_vnd || 0) });
+  });
+
+  events.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  listEl.innerHTML = events.length === 0
+    ? '<div class="empty-state">Chưa có giao dịch chi tiêu nào.</div>'
+    : events.slice(0, 30).map((e) => `
+      <div class="batch-row">
+        <div class="batch-row__left">
+          <div class="date">${e.icon} ${e.label}</div>
+          <div class="meta">${fmtDate(e.date)}</div>
+        </div>
+        <div class="batch-row__right">
+          <div class="coin" style="color:var(--danger, #e53e3e);">${fmtMoney(e.amount)}</div>
+        </div>
+      </div>
+    `).join('');
+}

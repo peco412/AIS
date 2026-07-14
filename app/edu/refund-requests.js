@@ -34,11 +34,20 @@ async function loadWalletRequests() {
   if (error) { tbody.innerHTML = `<tr><td colspan="5" class="empty-cell">Lỗi: ${esc(error.message)}</td></tr>`; return; }
   if (!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="empty-cell">Không có yêu cầu nào.</td></tr>'; return; }
 
-  tbody.innerHTML = data.map((r) => `
-    <tr>
+  tbody.innerHTML = data.map((r) => {
+    // Danh dau ro cac don CU bi "ket" tu truoc (luc chua co nut Tu choi)
+    // — cang cho lau cang can uu tien xu ly ngay bang nut moi. Chi tinh
+    // cho don con dang pending/center_confirmed (chua xu ly xong).
+    const daysWaiting = Math.floor((Date.now() - new Date(r.created_at).getTime()) / 86400000);
+    const isStale = ['pending', 'center_confirmed'].includes(r.status) && daysWaiting >= 3;
+    return `
+    <tr ${isStale ? 'style="background:var(--danger-tint);"' : ''}>
       <td>${esc(r.wallets?.students?.full_name || '—')}</td>
       <td class="mono">${fmtMoney(r.preview_amount_vnd)} đ</td>
-      <td><span class="badge badge-${WALLET_STATUS_BADGE[r.status]}">${WALLET_STATUS_LABEL[r.status]}</span></td>
+      <td>
+        <span class="badge badge-${WALLET_STATUS_BADGE[r.status]}">${WALLET_STATUS_LABEL[r.status]}</span>
+        ${isStale ? `<div style="color:var(--danger); font-size:11px; font-weight:700; margin-top:3px;">⚠️ Đã chờ ${daysWaiting} ngày — đơn cũ, ưu tiên xử lý</div>` : ''}
+      </td>
       <td class="cell-muted" style="font-size:12px;">${r.status === 'rejected' ? esc(r.reject_reason || '') : ''}</td>
       <td style="white-space:nowrap;">
         ${(r.status === 'pending' && IS_CENTER_STAFF) ? `<button class="btn btn-accent btn-sm" data-confirm="${r.id}">Xác nhận</button>` : ''}
@@ -46,7 +55,8 @@ async function loadWalletRequests() {
         ${(r.status === 'pending' && IS_CENTER_STAFF) || (r.status === 'center_confirmed' && IS_ACC) ? `<button class="btn btn-outline btn-sm" data-reject="${r.id}">Từ chối</button>` : ''}
       </td>
     </tr>
-  `).join('');
+  `;
+  }).join('');
 
   tbody.querySelectorAll('[data-confirm]').forEach((b) => b.addEventListener('click', async () => {
     if (!confirm('Xác nhận yêu cầu rút ví này để chuyển sang Kế toán duyệt?')) return;

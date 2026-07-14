@@ -28,15 +28,38 @@ async function loadPreview() {
   return total;
 }
 
+// SUA LOI THAT: truoc day CHI kiem tra status='pending' — neu yeu cau da
+// bi TU CHOI, dang cho Ke toan (center_confirmed), hoac da hoan xong
+// (approved), trang nay KHONG HIEN GI CA, phu huynh tuong nhu chua tung
+// gui yeu cau — day chinh la ly do "co cho hien co cho khong" giua ERP
+// (da sua du 4 trang thai) va App phu huynh (truoc day chi biet 1 trang
+// thai). Gio kiem tra YEU CAU GAN NHAT bat ke trang thai nao.
 async function checkPendingRequest() {
-  const { data } = await supabase.from('wallet_withdrawal_requests').select('id, preview_amount_vnd, created_at').eq('wallet_id', WALLET_ID).eq('status', 'pending').maybeSingle();
-  if (data) {
-    document.getElementById('pendingNotice').style.display = 'block';
-    document.getElementById('pendingNotice').textContent = `Bạn đã có 1 yêu cầu rút ${fmtMoney(data.preview_amount_vnd)} VNĐ đang chờ duyệt (gửi lúc ${fmtDate(data.created_at)}).`;
-    document.getElementById('btnSubmitWithdraw').style.display = 'none';
-    return true;
-  }
-  return false;
+  const { data } = await supabase
+    .from('wallet_withdrawal_requests')
+    .select('id, preview_amount_vnd, status, created_at, reject_reason')
+    .eq('wallet_id', WALLET_ID)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const notice = document.getElementById('pendingNotice');
+  if (!data) { notice.style.display = 'none'; return false; }
+
+  const STATUS_MSG = {
+    pending: `⏳ Yêu cầu rút ${fmtMoney(data.preview_amount_vnd)} VNĐ đang chờ Trung tâm xác nhận (gửi lúc ${fmtDate(data.created_at)}).`,
+    center_confirmed: `⏳ Yêu cầu rút ${fmtMoney(data.preview_amount_vnd)} VNĐ đã được Trung tâm xác nhận, đang chờ Kế toán duyệt cuối.`,
+    approved: `✅ Yêu cầu rút ${fmtMoney(data.preview_amount_vnd)} VNĐ đã được duyệt xong — Kế toán sẽ chuyển khoản hoàn tiền trong thời gian sớm nhất.`,
+    rejected: `❌ Yêu cầu rút ví trước đó đã bị từ chối${data.reject_reason ? ` — Lý do: "${esc(data.reject_reason)}"` : ''}. Bạn có thể gửi yêu cầu mới nếu cần.`,
+  };
+
+  notice.style.display = 'block';
+  notice.textContent = STATUS_MSG[data.status] || '';
+
+  // Chi CHO PHEP gui yeu cau MOI khi yeu cau gan nhat da bi TU CHOI hoac
+  // DA HOAN XONG (approved) — con dang pending/center_confirmed thi phai
+  // cho xu ly xong yeu cau hien tai truoc, tranh gui trung.
+  return data.status === 'pending' || data.status === 'center_confirmed';
 }
 
 document.getElementById('btnSubmitWithdraw').addEventListener('click', async () => {
@@ -78,8 +101,8 @@ document.getElementById('btnSubmitWithdraw').addEventListener('click', async () 
     }
     WALLET_ID = wallet.id;
 
-    const hasPending = await checkPendingRequest();
+    const blocksNewRequest = await checkPendingRequest();
     await loadPreview();
-    if (hasPending) document.getElementById('btnSubmitWithdraw').style.display = 'none';
+    if (blocksNewRequest) document.getElementById('btnSubmitWithdraw').style.display = 'none';
   } catch (e) { /* bootParentShell tự điều hướng */ }
 })();

@@ -97,43 +97,97 @@ async function loadTransactions() {
 
   const { data, error } = await supabase
     .from('inventory_transactions')
-    .select('code, transaction_type, size, quantity, transaction_date, note, inventory_items(code, name), employees(full_name)')
+    .select('code, receipt_code, transaction_type, size, quantity, transaction_date, note, inventory_items(code, name), employees(full_name)')
     .eq('center_id', WORKING_CENTER_ID)
     .order('transaction_date', { ascending: false })
-    .limit(100);
+    .limit(300);
 
   if (error) { tbody.innerHTML = `<tr><td colspan="8" class="empty-cell">Lỗi: ${esc(error.message)}</td></tr>`; return; }
-  document.getElementById('resultCount').textContent = `${(data || []).length} phiếu gần nhất`;
 
-  tbody.innerHTML = (data || []).length === 0
+  // GOP THEO MA PHIEU — truoc day moi DONG SAN PHAM la 1 hang rieng, 1
+  // hoa don 3 mon hien thanh 3 dong voi 3 ma khac nhau, gay nham lan. Gio
+  // gop lai dung 1 dong/phieu, liet ke ro cac mat hang ben trong.
+  const receiptMap = new Map();
+  (data || []).forEach((r) => {
+    const key = r.receipt_code || r.code;
+    if (!receiptMap.has(key)) {
+      receiptMap.set(key, {
+        receipt_code: key, transaction_type: r.transaction_type, transaction_date: r.transaction_date,
+        performer: r.employees?.full_name, note: r.note, items: [],
+      });
+    }
+    receiptMap.get(key).items.push({ name: r.inventory_items?.name, size: r.size, quantity: r.quantity });
+  });
+  const receipts = Array.from(receiptMap.values());
+
+  document.getElementById('resultCount').textContent = `${receipts.length} phiếu gần nhất (${(data || []).length} dòng sản phẩm)`;
+
+  tbody.innerHTML = receipts.length === 0
     ? '<tr><td colspan="8" class="empty-cell">Chưa có phiếu nào.</td></tr>'
-    : data.map((r) => `
+    : receipts.map((rc) => `
       <tr>
-        <td class="cell-code">${esc(r.code || '—')}</td>
-        <td class="cell-muted">${fmtDate(r.transaction_date)}</td>
-        <td><span class="badge badge-${r.transaction_type === 'in' ? 'active' : 'submitted'}">${r.transaction_type === 'in' ? 'Nhập' : 'Xuất'}</span></td>
-        <td>${esc(r.inventory_items?.name || '—')}</td>
-        <td class="cell-muted">${esc(r.size || '—')}</td>
-        <td class="mono">${r.quantity}</td>
-        <td class="cell-muted">${esc(r.employees?.full_name || '—')}</td>
-        <td class="cell-muted">${esc(r.note || '—')}</td>
+        <td class="cell-code">${esc(rc.receipt_code || '—')}</td>
+        <td class="cell-muted">${fmtDate(rc.transaction_date)}</td>
+        <td><span class="badge badge-${rc.transaction_type === 'in' ? 'active' : 'submitted'}">${rc.transaction_type === 'in' ? 'Nhập' : 'Xuất'}</span></td>
+        <td colspan="2">${rc.items.map((it) => `${esc(it.name || '—')}${it.size ? ` (${esc(it.size)})` : ''} ×${it.quantity}`).join('<br/>')}</td>
+        <td class="mono">${rc.items.reduce((s, it) => s + it.quantity, 0)}</td>
+        <td class="cell-muted">${esc(rc.performer || '—')}</td>
+        <td class="cell-muted">${esc(rc.note || '—')}</td>
       </tr>
     `).join('');
 }
 
 // ---------------------------------------------------------------------
-// Tạo phiếu nhập/xuất
+// Tạo phiếu nhập/xuất — NHIEU DONG 1 luc (truoc day chi 1 mon/phieu, rat
+// cham khi can nhap nhieu san pham — gio dung chung mau voi Ban le,
+// them bao nhieu dong tuy y, luu 1 lan cho tat ca).
 // ---------------------------------------------------------------------
 const txModal = document.getElementById('txModal');
+let txRowCounter = 0;
+
+const SIZE_OPTIONS = ['1', '2', '3', '4', '5', '6', '7', '8', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
+
+function addTxItemRow() {
+  const id = `tx-item-${txRowCounter++}`;
+  const wrap = document.createElement('div');
+  wrap.className = 'field-grid-2';
+  wrap.style.cssText = 'border-bottom:1px solid var(--border); padding-bottom:8px; margin-bottom:8px; align-items:end;';
+  wrap.dataset.rowId = id;
+  wrap.innerHTML = `
+    <div class="field" style="grid-column: span 2;">
+      <label>Mặt hàng</label>
+      <select class="tx-item-select">${ITEMS.map((it) => `<option value="${it.id}" data-has-size="${it.has_size}">${esc(it.name)}</option>`).join('')}</select>
+    </div>
+    <div class="field tx-item-size-field" style="display:none;">
+      <label>Size</label>
+      <select class="tx-item-size">${SIZE_OPTIONS.map((s) => `<option value="${s}">${s}</option>`).join('')}</select>
+    </div>
+    <div class="field"><label>Số lượng</label><input type="number" class="tx-item-qty" min="1" value="1" /></div>
+    <div class="field"><button type="button" class="btn btn-outline btn-sm tx-item-remove">Xoá dòng</button></div>
+  `;
+  document.getElementById('txItemsList').appendChild(wrap);
+
+  const select = wrap.querySelector('.tx-item-select');
+  const sizeField = wrap.querySelector('.tx-item-size-field');
+  const toggleThisRowSize = () => {
+    sizeField.style.display = select.selectedOptions[0]?.dataset.hasSize === 'true' ? 'block' : 'none';
+  };
+  select.addEventListener('change', toggleThisRowSize);
+  toggleThisRowSize();
+
+  wrap.querySelector('.tx-item-remove').addEventListener('click', () => wrap.remove());
+}
+document.getElementById('btnAddTxRow').addEventListener('click', addTxItemRow);
 
 function openTxModal(type) {
   document.getElementById('txFormError').classList.remove('show');
   document.getElementById('txType').value = type;
   document.getElementById('txModalTitle').textContent = type === 'in' ? 'Phiếu nhập kho' : 'Phiếu xuất kho';
-  document.getElementById('txQuantity').value = '';
   document.getElementById('txDate').value = new Date().toISOString().slice(0, 10);
   document.getElementById('txNote').value = '';
-  toggleSizeField();
+  document.getElementById('txItemsList').innerHTML = '';
+  txRowCounter = 0;
+  addTxItemRow(); // luon co san 1 dong de bat dau, khong bat go phai tu bam "+ Them"
   txModal.classList.add('show');
 }
 document.getElementById('btnStockIn').addEventListener('click', () => openTxModal('in'));
@@ -285,37 +339,60 @@ document.getElementById('btnSubmitTx').addEventListener('click', async () => {
   const errBox = document.getElementById('txFormError');
   errBox.classList.remove('show');
 
-  const itemOpt = document.getElementById('txItem').selectedOptions[0];
-  const hasSize = itemOpt?.dataset.hasSize === 'true';
-  const payload = {
-    transaction_type: document.getElementById('txType').value,
-    item_id: document.getElementById('txItem').value,
-    size: hasSize ? document.getElementById('txSize').value : null,
-    quantity: Number(document.getElementById('txQuantity').value),
-    center_id: WORKING_CENTER_ID,
-    performed_by: PROFILE.id,
-    transaction_date: document.getElementById('txDate').value,
-    note: document.getElementById('txNote').value || null,
-  };
-  if (!payload.quantity || payload.quantity <= 0) { errBox.textContent = 'Vui lòng nhập số lượng hợp lệ.'; errBox.classList.add('show'); return; }
+  const rows = Array.from(document.querySelectorAll('#txItemsList > div'));
+  if (rows.length === 0) { errBox.textContent = 'Vui lòng thêm ít nhất 1 mặt hàng.'; errBox.classList.add('show'); return; }
 
-  // Xuất kho không cho vượt quá tồn kho hiện có — kiểm tra phía client để
-  // báo sớm (RLS/DB không tự chặn số âm, tránh kho bị âm ngoài ý muốn).
-  if (payload.transaction_type === 'out') {
-    const { data: stockRows } = await supabase.from('inventory_stock_view').select('stock_quantity')
-      .eq('center_id', WORKING_CENTER_ID).eq('item_id', payload.item_id).eq('size', payload.size || '');
-    const currentStock = stockRows?.[0]?.stock_quantity || 0;
-    if (payload.quantity > currentStock) {
-      errBox.textContent = `Kho chỉ còn ${currentStock} — không thể xuất ${payload.quantity}.`;
-      errBox.classList.add('show');
-      return;
+  const type = document.getElementById('txType').value;
+  const date = document.getElementById('txDate').value;
+  const note = document.getElementById('txNote').value || null;
+
+  const payloads = rows.map((row) => {
+    const select = row.querySelector('.tx-item-select');
+    const hasSize = select.selectedOptions[0]?.dataset.hasSize === 'true';
+    return {
+      transaction_type: type,
+      item_id: select.value,
+      item_name: select.selectedOptions[0].textContent,
+      size: hasSize ? row.querySelector('.tx-item-size').value : null,
+      quantity: Number(row.querySelector('.tx-item-qty').value) || 0,
+      center_id: WORKING_CENTER_ID,
+      performed_by: PROFILE.id,
+      transaction_date: date,
+      note,
+    };
+  });
+
+  const invalid = payloads.find((p) => !p.quantity || p.quantity <= 0);
+  if (invalid) { errBox.textContent = `Số lượng không hợp lệ cho "${invalid.item_name}".`; errBox.classList.add('show'); return; }
+
+  // Xuat kho khong cho vuot qua ton kho hien co — kiem tra tung dong
+  // TRUOC khi luu bat ky dong nao, tranh luu dang do (mot so dong thanh
+  // cong, dong khac bi tu choi giua chung gay du lieu lech nhau).
+  if (type === 'out') {
+    for (const p of payloads) {
+      const { data: stockRows } = await supabase.from('inventory_stock_view').select('stock_quantity')
+        .eq('center_id', WORKING_CENTER_ID).eq('item_id', p.item_id).eq('size', p.size || '');
+      const currentStock = stockRows?.[0]?.stock_quantity || 0;
+      if (p.quantity > currentStock) {
+        errBox.textContent = `"${p.item_name}"${p.size ? ` (size ${p.size})` : ''}: kho chỉ còn ${currentStock} — không thể xuất ${p.quantity}.`;
+        errBox.classList.add('show');
+        return;
+      }
     }
   }
 
   const btn = document.getElementById('btnSubmitTx');
   btn.disabled = true; btn.textContent = 'Đang lưu...';
-  const { error } = await supabase.from('inventory_transactions').insert(payload);
-  btn.disabled = false; btn.textContent = 'Lưu phiếu';
+
+  // MOI: sinh 1 MA PHIEU CHUNG cho ca phieu (nhieu dong) — truoc day moi
+  // dong tu sinh ma rieng qua trigger, khien "Log xuat kho" hien 1 hoa
+  // don thanh nhieu dong ma khac nhau, khong gop lai duoc.
+  const { data: receiptCode, error: codeErr } = await supabase.rpc('generate_inventory_receipt_code', { p_type: type });
+  if (codeErr) { errBox.textContent = 'Lỗi sinh mã phiếu: ' + codeErr.message; errBox.classList.add('show'); btn.disabled = false; btn.textContent = 'Lưu phiếu (tất cả dòng)'; return; }
+
+  const insertPayloads = payloads.map(({ item_name, ...p }) => ({ ...p, receipt_code: receiptCode }));
+  const { error } = await supabase.from('inventory_transactions').insert(insertPayloads);
+  btn.disabled = false; btn.textContent = 'Lưu phiếu (tất cả dòng)';
   if (error) { errBox.textContent = error.message; errBox.classList.add('show'); return; }
 
   txModal.classList.remove('show');

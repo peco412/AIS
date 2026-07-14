@@ -151,6 +151,32 @@ h1, h2, h3 { font-weight: 700; letter-spacing: -0.01em; margin: 0; }
 .action-tile--shop .action-tile__icon { background: linear-gradient(150deg, #af52de, #8033a8); color: #fff; }
 .action-tile--history .action-tile__icon { background: linear-gradient(150deg, #8a8f98, #5a5f66); color: #fff; }
 
+/* Banner khuyen mai — mac dinh hien loi chao mung neu chua co uu dai nao
+   dang chay, tu doi noi dung neu co uu dai that (xem home.js). */
+.promo-banner {
+  background: linear-gradient(135deg, #0094d9, #005f8f);
+  color: #fff; border-radius: var(--radius-lg); padding: 18px 20px; margin-bottom: 18px;
+  box-shadow: var(--shadow-sm); position: relative; overflow: hidden;
+}
+.promo-banner::after {
+  content: ''; position: absolute; right: -30px; top: -30px; width: 120px; height: 120px;
+  background: rgba(255,255,255,0.08); border-radius: 50%;
+}
+.promo-banner__title { font-size: 16px; font-weight: 800; margin-bottom: 4px; }
+.promo-banner__sub { font-size: 12.5px; opacity: 0.92; }
+
+/* Hub icon — luoi 4 cot goi toi cac chuc nang chinh, thay cho danh sach
+   the "sap ra mat" khong hoat dong truoc day. */
+.hub-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px 8px; margin-bottom: 20px; }
+.hub-tile { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; text-decoration: none; color: var(--ink); }
+.hub-tile__icon {
+  width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center;
+  font-size: 21px; background: var(--surface-card); box-shadow: var(--shadow-xs);
+  transition: transform var(--dur-fast) var(--ease-spring);
+}
+.hub-tile:active .hub-tile__icon { transform: scale(0.9); }
+.hub-tile__label { font-size: 10.5px; font-weight: 600; color: var(--ink-soft); line-height: 1.2; }
+
 .card { background: var(--surface-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 18px; margin-bottom: 14px; box-shadow: var(--shadow-xs); }
 .card h3 { font-size: 14px; margin-bottom: 12px; }
 
