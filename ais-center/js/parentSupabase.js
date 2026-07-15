@@ -110,6 +110,17 @@ async function bootParentShellInner(sessionData) {
     throw new Error('Không tải được hồ sơ phụ huynh. Vui lòng thử đăng xuất và đăng nhập lại, hoặc báo quản trị hệ thống nếu lỗi lặp lại.');
   }
 
+  // Tu dong lien ket voi TAT CA hoc sinh co SDT trung khop (khong can
+  // phu huynh tu nhap Ho ten/Ngay sinh) - chay moi lan vao App nen cung
+  // se bat duoc hoc sinh MOI duoc them SDT trung sau nay, khong chi luc
+  // dang ky lan dau. Loi o day KHONG chan luong dang nhap (chi log), vi
+  // day la tien ich cong them, khong phai buoc bat buoc de vao App.
+  try {
+    await supabase.rpc('auto_link_all_students_by_phone');
+  } catch (e) {
+    console.warn('Không tự động liên kết được học sinh theo SĐT:', e.message);
+  }
+
   const { data: links } = await supabase
     .from('parent_student_links')
     .select('student_id, relationship, students(id, full_name, center_id, centers(name))')
