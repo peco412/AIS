@@ -4,7 +4,7 @@ import { t } from '/js/i18n.js';
 
 const STATUS_LABEL = new Proxy({}, { get: (_, code) => t('status.class_' + code, code) });
 let PROFILE = null;
-let PROGRAMS = [], LEVELS = [], SUBLEVELS = [], TEACHERS = [];
+let PROGRAMS = [], LEVELS = [], SUBLEVELS = [], COURSES = [], TEACHERS = [];
 let ALL_ROWS = [];
 
 function fillSelect(el, items, { valueKey = 'id', labelKey = 'name', placeholder } = {}) {
@@ -14,13 +14,14 @@ function fillSelect(el, items, { valueKey = 'id', labelKey = 'name', placeholder
 }
 
 async function loadLookups() {
-  const [{ data: programs }, { data: levels }, { data: sublevels }, { data: teachers }] = await Promise.all([
+  const [{ data: programs }, { data: levels }, { data: sublevels }, { data: courses }, { data: teachers }] = await Promise.all([
     supabase.from('programs').select('id, name').order('display_order'),
     supabase.from('program_levels').select('id, name, program_id').order('display_order'),
     supabase.from('program_sublevels').select('id, name, level_id').order('display_order'),
+    supabase.from('program_courses').select('id, name, sublevel_id').order('display_order'),
     supabase.from('employees').select('id, full_name, center_id').eq('center_id', PROFILE.centerId),
   ]);
-  PROGRAMS = programs || []; LEVELS = levels || []; SUBLEVELS = sublevels || []; TEACHERS = teachers || [];
+  PROGRAMS = programs || []; LEVELS = levels || []; SUBLEVELS = sublevels || []; COURSES = courses || []; TEACHERS = teachers || [];
 
   fillSelect(document.getElementById('filterProgram'), PROGRAMS, { placeholder: 'Tất cả chương trình' });
   fillSelect(document.getElementById('program'), PROGRAMS, { placeholder: '— Chọn chương trình —' });
@@ -35,6 +36,11 @@ document.getElementById('program').addEventListener('change', (e) => {
 document.getElementById('level').addEventListener('change', (e) => {
   const subs = SUBLEVELS.filter((s) => s.level_id === e.target.value);
   fillSelect(document.getElementById('sublevel'), subs, { placeholder: '—' });
+  fillSelect(document.getElementById('course'), [], { placeholder: '—' });
+});
+document.getElementById('sublevel').addEventListener('change', (e) => {
+  const courses = COURSES.filter((c) => c.sublevel_id === e.target.value);
+  fillSelect(document.getElementById('course'), courses, { placeholder: '—' });
 });
 
 async function loadRows() {
@@ -42,7 +48,7 @@ async function loadRows() {
   tbody.innerHTML = '<tr><td colspan="8" class="empty-cell">Đang tải dữ liệu...</td></tr>';
   const { data, error } = await supabase
     .from('classes')
-    .select('id, class_code, name, schedule_note, student_count, start_date, status, program_id, level_id, sublevel_id, teacher_id, programs(name), program_levels(name), program_sublevels(name), employees(full_name)')
+    .select('id, class_code, name, schedule_note, student_count, start_date, status, program_id, level_id, sublevel_id, course_id, teacher_id, programs(name), program_levels(name), program_sublevels(name), program_courses(name), employees(full_name)')
     .eq('center_id', PROFILE.centerId)
     .order('start_date', { ascending: false });
   if (error) { tbody.innerHTML = `<tr><td colspan="8" class="empty-cell">Lỗi: ${error.message}</td></tr>`; return; }
@@ -71,7 +77,7 @@ function render() {
     <tr>
       <td class="cell-code mono">${esc(r.class_code || '—')}</td>
       <td><strong>${esc(r.name)}</strong><div class="cell-muted">${esc(r.schedule_note || '')}</div></td>
-      <td class="cell-muted">${esc(r.programs?.name || '')} ${r.program_levels?.name ? '· ' + esc(r.program_levels.name) : ''} ${r.program_sublevels?.name ? '· ' + esc(r.program_sublevels.name) : ''}</td>
+      <td class="cell-muted">${esc(r.programs?.name || '')} ${r.program_levels?.name ? '· ' + esc(r.program_levels.name) : ''} ${r.program_sublevels?.name ? '· ' + esc(r.program_sublevels.name) : ''} ${r.program_courses?.name ? '· ' + esc(r.program_courses.name) : ''}</td>
       <td>${r.employees?.full_name ? esc(r.employees.full_name) : '<span class="cell-muted">Chưa phân công</span>'}</td>
       <td class="mono">${r.student_count}</td>
       <td class="cell-muted">${fmtDate(r.start_date)}</td>
@@ -105,6 +111,7 @@ document.getElementById('btnAdd').addEventListener('click', () => {
   document.getElementById('autoGenSchedule').closest('.field').style.display = 'block';
   fillSelect(document.getElementById('level'), [], { placeholder: '—' });
   fillSelect(document.getElementById('sublevel'), [], { placeholder: '—' });
+  fillSelect(document.getElementById('course'), [], { placeholder: '—' });
   formError.classList.remove('show');
   modal.classList.add('show');
 });
@@ -122,6 +129,8 @@ async function openEdit(id) {
   document.getElementById('level').value = row.level_id || '';
   fillSelect(document.getElementById('sublevel'), SUBLEVELS.filter((s) => s.level_id === row.level_id), { placeholder: '—' });
   document.getElementById('sublevel').value = row.sublevel_id || '';
+  fillSelect(document.getElementById('course'), COURSES.filter((c) => c.sublevel_id === row.sublevel_id), { placeholder: '—' });
+  document.getElementById('course').value = row.course_id || '';
   document.getElementById('teacher').value = row.teacher_id || '';
   document.getElementById('scheduleNote').value = row.schedule_note || '';
   document.querySelectorAll('.day-of-week').forEach((el) => { el.checked = (row.days_of_week || []).includes(Number(el.value)); });
@@ -148,6 +157,7 @@ form.addEventListener('submit', async (e) => {
     program_id: document.getElementById('program').value || null,
     level_id: document.getElementById('level').value || null,
     sublevel_id: document.getElementById('sublevel').value || null,
+    course_id: document.getElementById('course').value || null,
     teacher_id: document.getElementById('teacher').value || null,
     schedule_note: document.getElementById('scheduleNote').value || null,
     start_date: document.getElementById('startDate').value || null,

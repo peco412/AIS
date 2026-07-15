@@ -60,7 +60,7 @@
 
     <div class="data-table-wrap">
       <table class="data-table">
-        <thead><tr><th>Mã lớp</th><th>Tên lớp</th><th>Chương trình / Cấp độ</th><th>Giáo viên</th><th>Sĩ số</th><th>Khai giảng</th><th data-i18n="common.status">Trạng thái</th><th></th></tr></thead>
+        <thead><tr><th>Mã lớp</th><th>Tên lớp</th><th>Chương trình / Cấp độ / Khoá</th><th>Giáo viên</th><th>Sĩ số</th><th>Khai giảng</th><th data-i18n="common.status">Trạng thái</th><th></th></tr></thead>
         <tbody id="tableBody"><tr><td colspan="8" class="empty-cell">Đang tải dữ liệu...</td></tr></tbody>
       </table>
     </div>
@@ -81,8 +81,9 @@
       </div>
       <div class="field-grid-2">
         <div class="field"><label for="sublevel">Cấp độ con</label><select id="sublevel"><option value="">—</option></select></div>
-        <div class="field"><label for="teacher">Giáo viên phụ trách</label><select id="teacher"><option value="">— Chưa phân công —</option></select></div>
+        <div class="field"><label for="course">Khoá</label><select id="course"><option value="">—</option></select></div>
       </div>
+      <div class="field"><label for="teacher">Giáo viên phụ trách</label><select id="teacher"><option value="">— Chưa phân công —</option></select></div>
       <div class="field"><label for="scheduleNote">Lịch học (mô tả)</label><input type="text" id="scheduleNote" placeholder="VD: T2-4-6, 18h00-19h30" /></div>
       <div class="field">
         <label>Các ngày học trong tuần</label>
