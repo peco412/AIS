@@ -26,7 +26,7 @@ function updateOwnerLabel() {
 
 async function loadBalance() {
   updateOwnerLabel();
-  const { data: wallet } = await supabase.from('wallets').select('id').eq('student_id', SELECTED_ID).maybeSingle();
+  const { data: wallet } = await supabase.from('wallet_students').select('wallet_id').eq('student_id', SELECTED_ID).maybeSingle();
 
   if (!wallet) {
     document.getElementById('balanceValue').textContent = '0 AIScoins';
@@ -34,7 +34,20 @@ async function loadBalance() {
     return;
   }
 
-  const { data: batches } = await supabase.from('wallet_topup_batches').select('coin_remaining, conversion_rate').eq('wallet_id', wallet.id);
+  // Vi la vi CHUNG cua ca gia dinh - neu co nhieu con dang dung chung 1
+  // vi nay, hien ro ten tat ca de phu huynh biet so du nay dung chung
+  // cho nhung con nao (khong chi rieng con dang chon).
+  const { data: members } = await supabase
+    .from('wallet_students')
+    .select('students(full_name)')
+    .eq('wallet_id', wallet.wallet_id);
+  if (members && members.length > 1) {
+    const names = members.map((m) => m.students?.full_name).filter(Boolean).join(', ');
+    const el = document.getElementById('walletOwnerLabel');
+    if (el) el.textContent = `Ví chung — ${names}`;
+  }
+
+  const { data: batches } = await supabase.from('wallet_topup_batches').select('coin_remaining, conversion_rate').eq('wallet_id', wallet.wallet_id);
   const total = (batches || []).reduce((s, b) => s + Number(b.coin_remaining), 0);
   const totalVnd = (batches || []).reduce((s, b) => s + Number(b.coin_remaining) * Number(b.conversion_rate), 0);
   document.getElementById('balanceValue').textContent = `${fmtMoney(total)} AIScoins`;

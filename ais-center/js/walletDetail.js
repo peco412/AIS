@@ -6,7 +6,7 @@ import { supabase, esc, fmtMoney, fmtDate, bootParentShell, getSelectedStudentId
     if (students.length === 0) return;
     const studentId = getSelectedStudentId(students);
 
-    const { data: wallet } = await supabase.from('wallets').select('id').eq('student_id', studentId).maybeSingle();
+    const { data: wallet } = await supabase.from('wallet_students').select('wallet_id').eq('student_id', studentId).maybeSingle();
     const listEl = document.getElementById('batchList');
 
     if (!wallet) {
@@ -18,7 +18,7 @@ import { supabase, esc, fmtMoney, fmtDate, bootParentShell, getSelectedStudentId
     const { data: batches, error } = await supabase
       .from('wallet_topup_batches')
       .select('coin_amount, coin_remaining, discount_rate, conversion_rate, created_at')
-      .eq('wallet_id', wallet.id)
+      .eq('wallet_id', wallet.wallet_id)
       .gt('coin_remaining', 0)
       .order('created_at', { ascending: true }); // FIFO — cũ nhất trước, đúng thứ tự sẽ bị trừ
 
@@ -47,7 +47,7 @@ import { supabase, esc, fmtMoney, fmtDate, bootParentShell, getSelectedStudentId
       </div>
     `).join('');
 
-    await loadSpendHistory(wallet.id, studentId);
+    await loadSpendHistory(wallet.wallet_id, studentId);
   } catch (e) { /* bootParentShell tự điều hướng */ }
 })();
 

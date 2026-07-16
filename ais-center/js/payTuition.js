@@ -83,10 +83,10 @@ document.getElementById('btnPay').addEventListener('click', async () => {
     if (students.length === 0) return;
     STUDENT_ID = getSelectedStudentId(students);
 
-    const { data: wallet } = await supabase.from('wallets').select('id').eq('student_id', STUDENT_ID).maybeSingle();
+    const { data: wallet } = await supabase.from('wallet_students').select('wallet_id').eq('student_id', STUDENT_ID).maybeSingle();
     if (wallet) {
-      WALLET_ID = wallet.id;
-      const { data: batches } = await supabase.from('wallet_topup_batches').select('coin_remaining').eq('wallet_id', wallet.id);
+      WALLET_ID = wallet.wallet_id;
+      const { data: batches } = await supabase.from('wallet_topup_batches').select('coin_remaining').eq('wallet_id', wallet.wallet_id);
       WALLET_BALANCE = (batches || []).reduce((s, b) => s + Number(b.coin_remaining), 0);
     }
     document.getElementById('walletBalanceDisplay').textContent = `${fmtMoney(WALLET_BALANCE)} AIScoins`;

@@ -2,6 +2,7 @@ import { supabase, esc, fmtMoney, fmtDate, bootParentShell, getSelectedStudentId
 
 let PARENT_ID = null;
 let WALLET_ID = null;
+let STUDENT_ID_FOR_REQUEST = null;
 
 async function loadPreview() {
   const { data: batches } = await supabase.from('wallet_topup_batches').select('coin_remaining, conversion_rate, created_at').eq('wallet_id', WALLET_ID).gt('coin_remaining', 0).order('created_at');
@@ -73,7 +74,7 @@ document.getElementById('btnSubmitWithdraw').addEventListener('click', async () 
   btn.disabled = true; btn.textContent = 'Đang gửi...';
   try {
     const { error } = await supabase.from('wallet_withdrawal_requests').insert({
-      wallet_id: WALLET_ID, requested_by: PARENT_ID, preview_amount_vnd: previewAmount, status: 'pending',
+      wallet_id: WALLET_ID, student_id: STUDENT_ID_FOR_REQUEST, requested_by: PARENT_ID, preview_amount_vnd: previewAmount, status: 'pending',
     });
     if (error) throw error;
     alert('Đã gửi yêu cầu rút ví. Vui lòng chờ Kế toán duyệt.');
@@ -97,15 +98,30 @@ document.getElementById('btnSubmitWithdraw').addEventListener('click', async () 
     // truoc khi gui yeu cau rut vi - tranh nham vi giua cac con.
     const student = students.find((s) => s.id === studentId);
     const ownerLabel = document.getElementById('walletOwnerLabel');
-    if (ownerLabel) ownerLabel.textContent = student ? student.full_name : '—';
+    if (ownerLabel) ownerLabel.textContent = student ? `Ví của: ${student.full_name}` : '—';
 
-    const { data: wallet } = await supabase.from('wallets').select('id').eq('student_id', studentId).maybeSingle();
+    const { data: wallet } = await supabase.from('wallet_students').select('wallet_id').eq('student_id', studentId).maybeSingle();
     if (!wallet) {
       document.getElementById('batchBreakdown').innerHTML = '<div class="empty-state">Chưa có ví.</div>';
       document.getElementById('btnSubmitWithdraw').style.display = 'none';
       return;
     }
-    WALLET_ID = wallet.id;
+    WALLET_ID = wallet.wallet_id;
+    STUDENT_ID_FOR_REQUEST = studentId;
+
+    // Neu vi nay dang dung chung voi anh/chi/em khac, bao ro cho phu
+    // huynh biet TRUOC khi gui yeu cau rut - vi rut se tat toan CA quy
+    // chung, khong chi rieng phan cua con dang chon.
+    const { data: members } = await supabase.from('wallet_students').select('students(full_name)').eq('wallet_id', WALLET_ID);
+    if (members && members.length > 1) {
+      const names = members.map((m) => m.students?.full_name).filter(Boolean).join(', ');
+      if (ownerLabel) ownerLabel.textContent = `Ví chung — ${names}`;
+      const sharedNotice = document.getElementById('sharedWalletNotice');
+      if (sharedNotice) {
+        sharedNotice.style.display = 'block';
+        sharedNotice.textContent = `⚠️ Đây là ví chung của ${names}. Rút ví sẽ tất toán toàn bộ số dư chung, không chỉ riêng phần của 1 con.`;
+      }
+    }
 
     const blocksNewRequest = await checkPendingRequest();
     await loadPreview();
