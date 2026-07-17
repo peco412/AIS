@@ -47,7 +47,7 @@ async function loadPromotions() {
   // Dua uu dai GIAM NHIEU NHAT len banner dau trang, thay cho loi chao
   // mung mac dinh — chi khi thuc su co uu dai dang chay.
   const best = data.slice().sort((a, b) => b.discount_rate - a.discount_rate)[0];
-  document.getElementById('promoBannerTitle').textContent = `🎉 ${best.name}`;
+  document.getElementById('promoBannerTitle').textContent = best.name;
   document.getElementById('promoBannerSub').textContent =
     `Giảm ${(best.discount_rate * 100).toFixed(0)}% — áp dụng đến ${new Date(best.valid_to).toLocaleDateString('vi-VN')}`;
 }

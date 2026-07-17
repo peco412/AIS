@@ -175,7 +175,7 @@ document.getElementById('btnSubmitPo').addEventListener('click', async () => {
     const check = budgetCheck?.[0];
     if (check?.would_exceed) {
       const proceed = confirm(
-        `⚠️ CẢNH BÁO VƯỢT TRẦN NGÂN SÁCH\n\nHạng mục này đã chi ${Number(check.already_spent).toLocaleString('vi-VN')} đ / trần ${Number(check.monthly_cap).toLocaleString('vi-VN')} đ tháng này.\nPhiếu này (${totalAmount.toLocaleString('vi-VN')} đ) sẽ làm VƯỢT trần.\n\nVẫn muốn tiếp tục tạo phiếu?`
+        `CẢNH BÁO VƯỢT TRẦN NGÂN SÁCH\n\nHạng mục này đã chi ${Number(check.already_spent).toLocaleString('vi-VN')} đ / trần ${Number(check.monthly_cap).toLocaleString('vi-VN')} đ tháng này.\nPhiếu này (${totalAmount.toLocaleString('vi-VN')} đ) sẽ làm VƯỢT trần.\n\nVẫn muốn tiếp tục tạo phiếu?`
       );
       if (!proceed) return;
     }

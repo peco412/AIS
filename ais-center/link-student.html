@@ -6,17 +6,19 @@
 <title>Liên kết học sinh — AIS Center</title>
 <link rel="manifest" href="manifest.json" />
 <meta name="theme-color" content="#0094D9" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="css/parent.css" />
 </head>
 <body class="auth-body">
 
 <div class="auth-card">
-  <div class="auth-logo">🔗 <span>Liên kết học sinh</span></div>
+  <div class="auth-logo"><span>Liên kết học sinh</span></div>
   <p class="auth-sub">Nhập đúng thông tin học sinh để tự động liên kết ví với con của bạn. Hệ thống sẽ đối chiếu với số điện thoại bạn vừa đăng nhập.</p>
 
   <div class="form-error" id="linkError"></div>
-  <div class="cell-muted" id="linkSuccess" style="display:none; background:#e3f6e9; color:#1d8a4c; padding:10px 13px; border-radius:10px; margin-bottom:14px;"></div>
+  <div class="cell-muted" id="linkSuccess" style="display:none; background:var(--success-tint); color:var(--success); padding:10px 13px; border-radius:10px; margin-bottom:14px;"></div>
 
   <div class="field">
     <label for="studentName">Họ và tên học sinh (đúng như hồ sơ tại trung tâm)</label>

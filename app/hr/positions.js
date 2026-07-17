@@ -216,7 +216,7 @@ form.addEventListener('submit', async (e) => {
     const allowed = ['HR', 'TECH'].includes(PROFILE.departmentCode) || ['EXECUTIVE', 'TECH'].includes(PROFILE.roleCode);
     if (!allowed) {
       document.querySelector('.main').innerHTML =
-        '<div class="empty-cell">🔒 Chỉ Nhân sự, Ban điều hành, Kỹ thuật mới quản lý được chức vụ.</div>';
+        '<div class="empty-cell">Chỉ Nhân sự, Ban điều hành, Kỹ thuật mới quản lý được chức vụ.</div>';
       return;
     }
     await loadDepartments();

@@ -6,6 +6,18 @@
 // dòng employees tương ứng (mã AIS-000x tự sinh qua trigger DB).
 // Chỉ HR/Executive/Tech mới được gọi (kiểm tra qua JWT của người gọi).
 //
+// BẢN VÁ 16/07/2026 (xem AUDIT_ERP_AIS_2026-07-16.md mục B.4):
+// 1) MASS ASSIGNMENT: bản cũ dùng `{ ...employee, ... }` — spread thẳng
+//    body người gọi gửi lên vào insert, nghĩa là một HR Trưởng/phó phòng
+//    (đã được phép gọi hàm này) có thể gửi kèm các cột KHÔNG nằm trong
+//    form tạo nhân viên thật (id, employee_code, auth_user_id...) nếu họ
+//    biết tên cột. Sửa: WHITELIST rõ ràng đúng các trường mà
+//    app/hr/employees.js thực sự gửi lên, bỏ hết phần còn lại.
+// 2) RNG YẾU: randomTempPassword() cũ dùng Math.random() — không phải
+//    CSPRNG, độ dài/độ phức tạp không đảm bảo. Sửa: dùng
+//    crypto.getRandomValues (Deno có sẵn), sinh đủ 10 ký tự từ bảng chữ
+//    đã loại các ký tự dễ nhầm (0/O, 1/l/I).
+//
 // Deploy: supabase functions deploy create-employee-account
 // Env cần set (Supabase Dashboard → Edge Functions → Secrets):
 //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
@@ -18,9 +30,7 @@ const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 // ---------------------------------------------------------------------
 // CORS: cần thiết vì frontend (localhost:3000 / domain production) gọi
-// function này bằng fetch() từ trình duyệt. Trình duyệt sẽ gửi 1 request
-// OPTIONS "preflight" trước — nếu không trả về đúng header + status 2xx,
-// request POST thật sự sẽ KHÔNG bao giờ được gửi đi (lỗi hiện tại).
+// function này bằng fetch() từ trình duyệt.
 // ---------------------------------------------------------------------
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*', // production nên đổi thành domain cụ thể
@@ -35,13 +45,44 @@ function jsonResponse(body: unknown, status = 200) {
   });
 }
 
-function randomTempPassword() {
-  return Math.random().toString(36).slice(-6) + Math.floor(Math.random() * 90 + 10);
+// ---------------------------------------------------------------------
+// Danh sách CHÍNH XÁC các trường mà app/hr/employees.js gửi lên khi tạo
+// nhân viên mới (xem hàm submit của form Nhân viên). Bất kỳ trường nào
+// KHÔNG có trong danh sách này sẽ bị bỏ qua, dù client có gửi lên hay
+// không — chặn việc chèn thêm cột nhạy cảm (id, employee_code,
+// auth_user_id, temp_password_flag, status ép cứng riêng bên dưới).
+// ---------------------------------------------------------------------
+const ALLOWED_EMPLOYEE_FIELDS = [
+  'full_name', 'phone', 'email', 'dob',
+  'department_id', 'position_id', 'center_id', 'role_id',
+  'status', 'contract_type', 'hire_date',
+  'is_foreign_teacher', 'is_academic_board', 'can_teach',
+  'hometown', 'id_card_number', 'address',
+  'emergency_contact_name', 'emergency_contact_phone', 'note',
+] as const;
+
+function whitelistEmployeeFields(input: Record<string, unknown>) {
+  const out: Record<string, unknown> = {};
+  for (const key of ALLOWED_EMPLOYEE_FIELDS) {
+    if (input?.[key] !== undefined) out[key] = input[key];
+  }
+  return out;
+}
+
+// CSPRNG — thay cho Math.random(). 10 ký tự, loại bỏ ký tự dễ nhầm lẫn
+// khi HR đọc/gõ lại cho nhân viên (0/O, 1/l/I).
+const TEMP_PASSWORD_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+function randomTempPassword(length = 10): string {
+  const bytes = new Uint8Array(length);
+  crypto.getRandomValues(bytes);
+  let out = '';
+  for (let i = 0; i < length; i++) {
+    out += TEMP_PASSWORD_ALPHABET[bytes[i] % TEMP_PASSWORD_ALPHABET.length];
+  }
+  return out;
 }
 
 serve(async (req) => {
-  // Trả lời preflight request trước bất kỳ logic nào khác (kể cả auth),
-  // vì request OPTIONS của trình duyệt KHÔNG mang theo Authorization header.
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -79,6 +120,8 @@ serve(async (req) => {
       return jsonResponse({ error: 'Thiếu dữ liệu email hoặc họ tên.' }, 400);
     }
 
+    const safeEmployeeFields = whitelistEmployeeFields(employee);
+
     const tempPassword = randomTempPassword();
 
     const { data: created, error: createErr } = await admin.auth.admin.createUser({
@@ -92,7 +135,7 @@ serve(async (req) => {
 
     const { data: newEmployee, error: insertErr } = await admin
       .from('employees')
-      .insert({ ...employee, auth_user_id: created.user.id, temp_password_flag: true, status: 'active' })
+      .insert({ ...safeEmployeeFields, auth_user_id: created.user.id, temp_password_flag: true, status: 'active' })
       .select('id, employee_code')
       .single();
 

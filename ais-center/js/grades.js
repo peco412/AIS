@@ -40,7 +40,7 @@ async function loadGrades() {
         <span class="cell-muted">Điểm số</span>
         <strong class="mono" style="font-size:16px;">${g.score != null ? g.score : '—'}</strong>
       </div>
-      ${g.final_status ? `<div class="cell-muted" style="font-size:12px; margin-top:4px;">${g.final_status === 'graduated' ? '✅ Đã hoàn thành khoá' : '🔁 Chưa đạt, cần học lại'}</div>` : ''}
+      ${g.final_status ? `<div class="cell-muted" style="font-size:12px; margin-top:4px;">${g.final_status === 'graduated' ? 'Đã hoàn thành khoá' : 'Chưa đạt, cần học lại'}</div>` : ''}
       <div class="cell-muted" style="font-size:11px; margin-top:8px;">Cập nhật: ${fmtDate(g.created_at)}</div>
     </div>
   `).join('');

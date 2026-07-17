@@ -46,7 +46,7 @@ async function loadWalletRequests() {
       <td class="mono">${fmtMoney(r.preview_amount_vnd)} đ</td>
       <td>
         <span class="badge badge-${WALLET_STATUS_BADGE[r.status]}">${WALLET_STATUS_LABEL[r.status]}</span>
-        ${isStale ? `<div style="color:var(--danger); font-size:11px; font-weight:700; margin-top:3px;">⚠️ Đã chờ ${daysWaiting} ngày — đơn cũ, ưu tiên xử lý</div>` : ''}
+        ${isStale ? `<div style="color:var(--danger); font-size:11px; font-weight:700; margin-top:3px;">Đã chờ ${daysWaiting} ngày — đơn cũ, ưu tiên xử lý</div>` : ''}
       </td>
       <td class="cell-muted" style="font-size:12px;">${r.status === 'rejected' ? esc(r.reject_reason || '') : ''}</td>
       <td style="white-space:nowrap;">
@@ -162,7 +162,7 @@ document.getElementById('refundStudentSearch').addEventListener('input', (e) => 
     const { data } = await supabase.from('students').select('id, full_name').ilike('full_name', `%${q}%`).limit(1);
     if (data && data.length > 0) {
       SELECTED_STUDENT = data[0];
-      document.getElementById('refundStudentResult').innerHTML = `✅ <strong>${esc(data[0].full_name)}</strong>`;
+      document.getElementById('refundStudentResult').innerHTML = `<strong>${esc(data[0].full_name)}</strong>`;
     } else {
       SELECTED_STUDENT = null;
       document.getElementById('refundStudentResult').textContent = 'Không tìm thấy học sinh.';

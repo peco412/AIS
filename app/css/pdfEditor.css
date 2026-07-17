@@ -121,7 +121,9 @@
   background: var(--danger); color: #fff; border: 2px solid #fff;
   font-size: 10px; cursor: pointer; line-height: 1;
   box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+  display: flex; align-items: center; justify-content: center; padding: 0;
 }
+.pdfed-overlay-item .remove-btn .icon { width: 12px; height: 12px; stroke-width: 2.5; }
 .pdfed-overlay-item .resize-handle {
   position: absolute; bottom: -6px; right: -6px;
   width: 14px; height: 14px; border-radius: 4px;

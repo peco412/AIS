@@ -32,7 +32,7 @@ function watchPosition() {
       const dist = distanceMeters(pos.coords.latitude, pos.coords.longitude, CENTER.latitude, CENTER.longitude);
       const inRange = dist <= RADIUS_LIMIT_M;
       hint.textContent = inRange
-        ? `✅ Đang trong phạm vi — cách trung tâm ${fmtDistance(dist)}`
+        ? `Đang trong phạm vi — cách trung tâm ${fmtDistance(dist)}`
         : `❌ Ngoài phạm vi cho phép — cách trung tâm ${fmtDistance(dist)} (giới hạn 1km)`;
       hint.style.color = inRange ? 'var(--success)' : 'var(--danger)';
       document.getElementById('btnCheckIn').disabled = !inRange;
@@ -80,7 +80,7 @@ async function loadTodayHistory() {
   document.getElementById('btnCheckOut').style.display = hasIn && !hasOut ? 'block' : 'none';
   if (hasIn && hasOut) {
     document.getElementById('statusIn').style.display = 'block';
-    document.getElementById('statusIn').textContent = '✅ Đã hoàn tất chấm công hôm nay (vào & ra)';
+    document.getElementById('statusIn').textContent = 'Đã hoàn tất chấm công hôm nay (vào & ra)';
   }
 }
 

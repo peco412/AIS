@@ -63,7 +63,7 @@ function render() {
       const { error } = await supabase.from('employee_base_salary').upsert(payload, { onConflict: 'employee_id' });
       btn.disabled = false; btn.textContent = 'Lưu';
       if (error) { alert('Lỗi: ' + error.message); return; }
-      btn.textContent = '✓ Đã lưu';
+      btn.textContent = 'Đã lưu';
       setTimeout(() => { btn.textContent = 'Lưu'; }, 1500);
     });
   });

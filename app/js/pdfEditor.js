@@ -87,7 +87,7 @@ export async function openPdfEditor({
         <span class="hint" id="pdfedHint"></span>
       `}
       <button type="button" id="pdfedCancel">Đóng</button>
-      ${readOnly || isTemplateDesigner ? '' : '<button type="button" id="pdfedSave" class="primary">💾 Lưu</button>'}
+      ${readOnly || isTemplateDesigner ? '' : '<button type="button" id="pdfedSave" class="primary">Lưu</button>'}
     </div>
     <div class="pdfed-pagenav" id="pdfedPageNav" style="display:none;">
       <button type="button" id="pdfedPrevPage">‹ Trang trước</button>
@@ -189,7 +189,7 @@ export async function openPdfEditor({
     const removeBtn = document.createElement('button');
     removeBtn.className = 'remove-btn';
     removeBtn.type = 'button';
-    removeBtn.textContent = '✕';
+    removeBtn.innerHTML = '<svg class="icon icon--sm" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>';
     removeBtn.addEventListener('click', () => {
       el.remove();
       const idx = overlays.findIndex((o) => o.el === el);
@@ -427,7 +427,7 @@ export async function openPdfEditor({
       const reason = err?.message || err?.error_description || err?.error || 'Không rõ nguyên nhân — có thể do CORS bị chặn hoặc phiên làm việc đã hết hạn. Mở tab Console (F12) để xem chi tiết lỗi thật.';
       alert('Lỗi khi lưu PDF: ' + reason);
       saveBtn.disabled = false;
-      saveBtn.textContent = '💾 Lưu';
+      saveBtn.textContent = 'Lưu';
     }
   });
 }

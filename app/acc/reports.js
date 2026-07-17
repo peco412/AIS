@@ -1,5 +1,5 @@
 import { bootShell } from '/js/shell.js';
-import { supabase } from '/js/supabase.js';
+import { supabase, esc } from '/js/supabase.js';
 import { t } from '/js/i18n.js';
 
 let PROFILE = null;
@@ -140,8 +140,8 @@ function renderCashLog() {
       <td class="mono" style="color:${r.entry_type === 'inflow' ? 'var(--success)' : 'var(--danger)'};">${r.entry_type === 'inflow' ? '+' : '-'}${fmtMoney(r.amount)} đ</td>
       <td class="cell-muted">${r.category || '—'}</td>
       <td>${src.href ? `<a href="${src.href}" style="text-decoration:underline;">${src.label}</a>` : `<span class="cell-muted">${src.label}</span>`}</td>
-      <td class="cell-muted">${r.note || '—'}</td>
-      <td class="cell-muted">${r.employees?.full_name || '—'}</td>
+      <td class="cell-muted">${esc(r.note) || '—'}</td>
+      <td class="cell-muted">${esc(r.employees?.full_name) || '—'}</td>
     </tr>
   `;
   }).join('');

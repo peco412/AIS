@@ -67,7 +67,7 @@ async function searchStudents() {
         <td style="font-size:12.5px;">${parentsText}</td>
         <td>
           <button class="btn btn-accent btn-sm" data-link="${s.id}" data-name="${esc(s.full_name)}">+ Liên kết</button>
-          <a href="/edu/wallet-invoices.html" class="btn btn-outline btn-sm">💳 Ví</a>
+          <a href="/edu/wallet-invoices.html" class="btn btn-outline btn-sm">Ví</a>
         </td>
       </tr>
     `;
@@ -118,7 +118,7 @@ async function lookupParentByPhone(phone) {
 
   box.style.display = 'block';
   if (parent) {
-    box.textContent = `✅ Đã có tài khoản: ${parent.full_name} (${parent.phone})${parent.auth_user_id ? '' : ' — chưa từng đăng nhập App'}`;
+    box.textContent = `Đã có tài khoản: ${parent.full_name} (${parent.phone})${parent.auth_user_id ? '' : ' — chưa từng đăng nhập App'}`;
     nameFields.style.display = 'none';
   } else {
     box.textContent = 'Chưa có tài khoản với SĐT này — sẽ tự tạo hồ sơ mới khi bạn bấm "Liên kết".';

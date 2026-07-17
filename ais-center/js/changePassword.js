@@ -19,7 +19,7 @@ document.getElementById('btnChange').addEventListener('click', async () => {
   if (error) { errorBox.textContent = 'Không cập nhật được: ' + error.message; errorBox.classList.add('show'); return; }
 
   successBox.style.display = 'block';
-  successBox.textContent = '✅ Đã đổi mật khẩu thành công.';
+  successBox.textContent = 'Đã đổi mật khẩu thành công.';
   document.getElementById('newPassword').value = '';
   document.getElementById('confirmPassword').value = '';
 });

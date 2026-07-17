@@ -182,7 +182,7 @@ async function refreshPushUI() {
   }
 
   const enabled = await isPushEnabledOnThisDevice();
-  statusEl.textContent = enabled ? '✅ Đang bật trên thiết bị này.' : 'Chưa bật trên thiết bị này.';
+  statusEl.textContent = enabled ? 'Đang bật trên thiết bị này.' : 'Chưa bật trên thiết bị này.';
   btnEnable.style.display = enabled ? 'none' : 'inline-flex';
   btnDisable.style.display = enabled ? 'inline-flex' : 'none';
 }

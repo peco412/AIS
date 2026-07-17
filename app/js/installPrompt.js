@@ -77,7 +77,7 @@ function renderGuideTab(key) {
   const guide = PLATFORM_GUIDES[key];
   const stepsHtml = guide.steps.map((s) => `<li>${s}</li>`).join('');
   const nativeBtn = guide.showNativeButton
-    ? `<button class="btn btn-accent btn-sm" id="guideInstallNow" style="margin-top:14px;">📲 Cài ngay</button>`
+    ? `<button class="btn btn-accent btn-sm" id="guideInstallNow" style="margin-top:14px;">Cài ngay</button>`
     : '';
   return `<ol style="padding-left:20px; font-size:13.5px; line-height:1.9; color:var(--ink); margin:0;">${stepsHtml}</ol>${nativeBtn}`;
 }
@@ -88,8 +88,8 @@ function showInstallGuide() {
   modal.className = 'modal-overlay show';
   modal.innerHTML = `
     <div class="modal-box" style="max-width:440px;">
-      <button class="modal-close" id="guideClose">✕</button>
-      <h3>📲 Cài ứng dụng ERP AIS</h3>
+      <button class="modal-close" id="guideClose"><svg class="icon icon--sm" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      <h3>Cài ứng dụng ERP AIS</h3>
       <p class="modal-sub">Dùng như 1 app thật — mở nhanh hơn, không cần gõ lại địa chỉ web mỗi lần.</p>
       <div class="install-guide-tabs" id="guideTabs">
         ${Object.entries(PLATFORM_GUIDES).map(([key, g]) => `

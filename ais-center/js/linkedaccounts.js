@@ -15,7 +15,7 @@ function renderRow(link, myPhone) {
         <div class="cell-muted" style="font-size:12px; margin-top:2px;">${esc(s.centers?.name || '')}</div>
         <div class="cell-muted" style="font-size:12px; margin-top:2px;">Quan hệ: ${esc(link.relationship || 'Chưa xác định')}</div>
         <div class="cell-muted" style="font-size:12px; margin-top:2px;">Liên kết lúc: ${fmtDate(link.created_at)}</div>
-        ${phoneMatch.length ? `<div style="font-size:12px; margin-top:4px; color:#0094D9;">✓ Khớp theo: ${phoneMatch.join(', ')}</div>` : ''}
+        ${phoneMatch.length ? `<div style="font-size:12px; margin-top:4px; color:var(--accent-deep);">Khớp theo: ${phoneMatch.join(', ')}</div>` : ''}
       </div>
       <button class="btn-unlink" data-id="${s.id}" data-name="${esc(s.full_name)}"
         style="white-space:nowrap; border:1px solid #ff4d4f; color:#ff4d4f; background:none; border-radius:8px; padding:6px 10px; font-size:12px; cursor:pointer;">

@@ -82,7 +82,7 @@ function renderRow(cat, isParentWithChildren) {
       <td>
         <span class="mono ${cap > 0 && spent > cap ? 'recon-diff-bad' : ''}">${fmtMoney(spent)} đ</span>
         ${cap > 0 ? `<div class="progress-bar"><div class="progress-bar__fill" style="width:${pct}%; background:${barColor};"></div></div>` : ''}
-        ${cap > 0 && spent >= cap ? '<div style="color:var(--danger); font-size:11px; font-weight:700;">⚠️ Đã vượt trần</div>' : cap > 0 && spent >= cap * 0.8 ? '<div style="color:var(--warning); font-size:11px; font-weight:700;">⚠️ Sắp chạm trần</div>' : ''}
+        ${cap > 0 && spent >= cap ? '<div style="color:var(--danger); font-size:11px; font-weight:700;">Đã vượt trần</div>' : cap > 0 && spent >= cap * 0.8 ? '<div style="color:var(--warning); font-size:11px; font-weight:700;">Sắp chạm trần</div>' : ''}
       </td>
       <td>${CAN_EDIT ? `<button class="btn btn-outline btn-sm" data-save-cap="${cat.id}">Lưu</button>` : ''}</td>
     </tr>

@@ -53,7 +53,7 @@ async function updatePreview() {
   const nextTier = tiers.find((t) => t > amount);
   const hint = document.getElementById('previewHint');
   hint.textContent = (nextTier && nextTier - amount <= 2000000)
-    ? `💡 Chỉ cần nạp thêm ${fmtMoney(nextTier - amount)} nữa là đạt mốc chiết khấu cao hơn.`
+    ? `Chỉ cần nạp thêm ${fmtMoney(nextTier - amount)} nữa là đạt mốc chiết khấu cao hơn.`
     : '';
 }
 

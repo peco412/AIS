@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Thông tin liên kết — AIS Center</title>
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#0094D9" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/parent.css" />
+</head>
+<body>
+
+<header class="app-topbar">
+  <button class="app-topbar__back" onclick="location.href='account.html'" aria-label="Quay lại">
+    <svg class="icon" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
+  </button>
+  <div class="app-topbar__title">Thông tin liên kết</div>
+  <div class="app-topbar__right" style="width:22px;"></div>
+</header>
+
+<main class="app-main">
+  <p class="cell-muted" style="margin-bottom:14px;">Danh sách học sinh đang liên kết với tài khoản phụ huynh này. Nếu thấy học sinh không đúng, hãy gỡ liên kết ngay.</p>
+  <div id="linksList"></div>
+</main>
+
+<nav class="bottom-nav">
+  <div class="bottom-nav__inner">
+    <a href="home.html"><svg class="icon icon--nav" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10"/></svg>Trang chủ</a>
+    <a href="wallet.html"><svg class="icon icon--nav" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Ví AIScoins</a>
+    <a href="account.html" class="active"><svg class="icon icon--nav" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>Tài khoản</a>
+  </div>
+</nav>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="env.js"></script>
+<script type="module" src="js/linkedaccounts.js"></script>
+</body>
+</html>

@@ -98,7 +98,7 @@ function renderHub(profile) {
         el.innerHTML = `
           <div class="app-tile__icon ${hasAccess ? meta.color : ''}">${meta.icon}</div>
           <div class="app-tile__label">${esc(meta.label)}</div>
-          ${!hasAccess ? `<div class="app-tile__lock">🔒 ${esc(t('dashboard.noAccess', 'Không có quyền'))}</div>` : ''}
+          ${!hasAccess ? `<div class="app-tile__lock">${esc(t('dashboard.noAccess', 'Không có quyền'))}</div>` : ''}
         `;
         if (!hasAccess) {
           el.title = t('dashboard.noAccess', 'Bạn không có quyền truy cập mục này.');
@@ -120,7 +120,7 @@ function renderHub(profile) {
     el.innerHTML = `
       <div class="app-tile__icon ${hasAccess ? (HUB_COLOR_CLASS[group.sectionKey] || '') : ''}">${HUB_ICON[group.sectionKey] || '📁'}</div>
       <div class="app-tile__label">${esc(t(group.sectionKey, group.section || ''))}</div>
-      ${!hasAccess ? `<div class="app-tile__lock">🔒 ${esc(t('dashboard.noAccess', 'Không có quyền'))}</div>` : ''}
+      ${!hasAccess ? `<div class="app-tile__lock">${esc(t('dashboard.noAccess', 'Không có quyền'))}</div>` : ''}
     `;
     if (!hasAccess) {
       el.title = t('dashboard.noAccess', 'Bạn không có quyền truy cập phòng ban này.');

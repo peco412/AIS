@@ -24,7 +24,7 @@ document.getElementById('btnLink').addEventListener('click', async () => {
 
     if (data.success) {
       successBox.style.display = 'block';
-      successBox.textContent = '✅ ' + data.message;
+      successBox.textContent = data.message;
       setTimeout(() => { window.location.href = 'home.html'; }, 1500);
     } else {
       errorBox.textContent = data.message;

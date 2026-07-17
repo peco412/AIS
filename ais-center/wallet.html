@@ -6,20 +6,25 @@
 <title>Ví AIScoins — AIS Center</title>
 <link rel="manifest" href="manifest.json" />
 <meta name="theme-color" content="#0094D9" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="css/parent.css" />
 </head>
 <body>
 
 <header class="app-topbar">
-  <div class="app-topbar__title">💳 Ví AIScoins</div>
-  <div class="app-topbar__right"><button class="icon-btn" onclick="location.href='account.html'">👤</button></div>
+  <div class="app-topbar__title">Ví AIScoins</div>
+  <div class="app-topbar__right"><button class="icon-btn" onclick="location.href='account.html'" aria-label="Tài khoản"><svg class="icon icon--sm" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg></button></div>
 </header>
 
 <main class="app-main">
   <div id="noStudentNotice" class="empty-state" style="display:none;">
     <p>Chưa có học sinh nào được liên kết với tài khoản này.</p>
-    <a href="link-student.html" class="btn-primary" style="display:inline-block; width:auto; padding:10px 24px; text-decoration:none; margin-top:10px;">🔗 Liên kết ngay</a>
+    <a href="link-student.html" class="btn-primary" style="display:inline-flex; width:auto; padding:10px 24px; text-decoration:none; margin-top:10px;">
+      <svg class="icon icon--sm" viewBox="0 0 24 24"><path d="M9 15l6-6"/><path d="M11 6l1-1a4 4 0 0 1 6 6l-1 1"/><path d="M13 18l-1 1a4 4 0 0 1-6-6l1-1"/></svg>
+      Liên kết ngay
+    </a>
   </div>
 
   <div id="content" style="display:none;">
@@ -28,7 +33,7 @@
     <div class="balance-hero">
       <div class="balance-hero__top">
         <div class="balance-hero__label">Số dư ví AIScoins — <span id="walletOwnerLabel">–</span></div>
-        <div class="balance-hero__verified">✓ Đã xác thực</div>
+        <div class="balance-hero__verified"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg>Đã xác thực</div>
       </div>
       <div class="balance-hero__value" id="balanceValue">–</div>
       <div class="balance-hero__vnd" style="font-size:12px; opacity:0.85; margin-top:4px;" id="balanceValueVnd"></div>
@@ -36,24 +41,24 @@
     </div>
 
     <div class="action-grid">
-      <a href="topup.html" class="action-tile action-tile--topup">
-        <div class="action-tile__icon">💰</div>
+      <a href="topup.html" class="action-tile">
+        <div class="action-tile__icon"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg></div>
         <div class="action-tile__label">Nạp tiền</div>
       </a>
-      <a href="pay-tuition.html" class="action-tile action-tile--tuition">
-        <div class="action-tile__icon">📝</div>
+      <a href="pay-tuition.html" class="action-tile">
+        <div class="action-tile__icon"><svg class="icon" viewBox="0 0 24 24"><path d="M6 2h9l5 5v15a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h5"/></svg></div>
         <div class="action-tile__label">Đóng học phí</div>
       </a>
-      <a href="withdraw.html" class="action-tile action-tile--withdraw">
-        <div class="action-tile__icon">🔄</div>
+      <a href="withdraw.html" class="action-tile">
+        <div class="action-tile__icon"><svg class="icon" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg></div>
         <div class="action-tile__label">Hoàn tiền</div>
       </a>
-      <a href="shop.html" class="action-tile action-tile--shop">
-        <div class="action-tile__icon">🛍️</div>
+      <a href="shop.html" class="action-tile">
+        <div class="action-tile__icon"><svg class="icon" viewBox="0 0 24 24"><path d="M6 8h12l1 13H5L6 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg></div>
         <div class="action-tile__label">Mua sắm</div>
       </a>
-      <a href="wallet-detail.html" class="action-tile action-tile--history">
-        <div class="action-tile__icon">📋</div>
+      <a href="wallet-detail.html" class="action-tile">
+        <div class="action-tile__icon"><svg class="icon" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 2h6a1 1 0 0 1 1 1v2H8V3a1 1 0 0 1 1-1z"/><path d="M8 11h8M8 15h8"/></svg></div>
         <div class="action-tile__label">Lịch sử</div>
       </a>
     </div>
@@ -61,9 +66,11 @@
 </main>
 
 <nav class="bottom-nav">
-  <a href="home.html"><span class="icon">🏠</span>Trang chủ</a>
-  <a href="wallet.html" class="active"><span class="icon">💳</span>Ví AIScoins</a>
-  <a href="account.html"><span class="icon">👤</span>Tài khoản</a>
+  <div class="bottom-nav__inner">
+    <a href="home.html"><svg class="icon icon--nav" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10"/></svg>Trang chủ</a>
+    <a href="wallet.html" class="active"><svg class="icon icon--nav" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Ví AIScoins</a>
+    <a href="account.html"><svg class="icon icon--nav" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>Tài khoản</a>
+  </div>
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>

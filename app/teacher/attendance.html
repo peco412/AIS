@@ -11,18 +11,33 @@
 <meta name="apple-mobile-web-app-title" content="ERP AIS" />
 <link rel="apple-touch-icon" href="/assets/icon-192.png" />
 <meta name="theme-color" content="#0094D9" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="/css/tokens.css" />
 <link rel="stylesheet" href="/css/dashboard.css" />
 <link rel="stylesheet" href="/css/module.css" />
 <style>
-  .attendance-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+  .attendance-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
   .attendance-row:last-child { border-bottom: none; }
-  .attendance-toggle { display: inline-flex; border: 1.5px solid var(--border-strong); border-radius: 999px; overflow: hidden; }
-  .attendance-toggle button { border: none; background: #fff; padding: 6px 14px; font-size: 12.5px; font-weight: 700; cursor: pointer; color: var(--muted); }
+  .attendance-row > span { min-width: 0; overflow-wrap: break-word; flex: 1 1 140px; font-size: 14px; }
+  .attendance-toggle { display: flex; border: 1.5px solid var(--border-strong); border-radius: 999px; overflow: hidden; flex-shrink: 0; }
+  .attendance-toggle button {
+    border: none; background: #fff; cursor: pointer; color: var(--muted);
+    /* Mục tiêu chạm tối thiểu ~44px cao — trang này giáo viên bấm liên tục
+       ngay trong lớp học, thường trên điện thoại, cần bấm nhanh và chính
+       xác giữa 3 trạng thái mà không lỡ tay chọn nhầm. */
+    min-height: 44px; padding: 0 16px; font-size: 13px; font-weight: 700;
+  }
+  .attendance-toggle button + button { border-left: 1.5px solid var(--border-strong); }
   .attendance-toggle button.present.active { background: var(--success-tint); color: var(--success); }
   .attendance-toggle button.excused.active { background: var(--warning-tint); color: var(--warning); }
   .attendance-toggle button.absent.active { background: var(--danger-tint); color: var(--danger); }
+
+  @media (max-width: 480px) {
+    .attendance-row { padding: 12px; }
+    .attendance-toggle button { padding: 0 12px; font-size: 12px; min-width: 44px; }
+  }
 </style>
 </head>
 <body data-page="/teacher/attendance.html">
@@ -35,16 +50,16 @@
   </aside>
   <header class="topbar">
     <div class="topbar__left">
-      <button class="menu-toggle" id="menuToggle">☰</button>
-      <div class="search-box"><span>🔎</span><input type="text" placeholder="Tìm kiếm..." /></div>
+      <button class="menu-toggle" id="menuToggle"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg></button>
+      <div class="search-box"><svg class="icon icon--sm" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.8-4.8"/></svg><input type="text" placeholder="Tìm kiếm..." /></div>
     </div>
     <div class="topbar__right">
-      <button class="icon-btn" onclick="location.href='/notifications.html'">🔔<span class="badge" id="notifBadge" style="display:none;">0</span></button>
+      <button class="icon-btn" onclick="location.href='/notifications.html'"><svg class="icon" viewBox="0 0 24 24"><path d="M6 8a6 6 0 1 1 12 0c0 4 1.5 6 2 6.5H4c.5-.5 2-2.5 2-6.5z"/><path d="M9.5 18a2.5 2.5 0 0 0 5 0"/></svg><span class="badge" id="notifBadge" style="display:none;">0</span></button>
       <div class="user-chip" onclick="location.href='/profile.html'">
         <div class="user-chip__avatar" id="userChipAvatar">--</div>
         <div class="user-chip__meta"><div class="name" id="userChipName">Đang tải...</div><div class="role" id="userChipRole">—</div></div>
       </div>
-      <button class="icon-btn" id="logoutBtn">⎋</button>
+      <button class="icon-btn" id="logoutBtn"><svg class="icon" viewBox="0 0 24 24"><path d="M9 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h4"/><path d="M15 16l4-4-4-4"/><path d="M19 12H9"/></svg></button>
     </div>
   </header>
 
@@ -58,7 +73,7 @@
         <select class="select-input" id="classSelect"></select>
         <input type="date" class="select-input" id="sessionDate" />
       </div>
-      <button class="btn btn-accent btn-sm" id="btnSave">💾 Lưu điểm danh</button>
+      <button class="btn btn-accent btn-sm" id="btnSave">Lưu điểm danh</button>
     </div>
     <p class="cell-muted" id="sessionDateHint" style="margin:-8px 0 14px;"></p>
 

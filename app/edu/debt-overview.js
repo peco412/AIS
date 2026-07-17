@@ -94,7 +94,7 @@ function render() {
 
     return `
     <tr>
-      <td>${esc(r.studentName)}${r.isOverdue30d ? ' <span class="badge badge-rejected" title="Đã học quá 30 ngày kể từ ngày bắt đầu mà chưa đóng đủ">⚠️ Quá 30 ngày</span>' : ''}</td>
+      <td>${esc(r.studentName)}${r.isOverdue30d ? ' <span class="badge badge-rejected" title="Đã học quá 30 ngày kể từ ngày bắt đầu mà chưa đóng đủ">Quá 30 ngày</span>' : ''}</td>
       <td class="cell-muted" style="font-size:11.5px;">${esc(r.programName)} / ${esc(r.levelName)} / ${esc(r.courseName)}</td>
       <td class="cell-muted">${r.period_month}/${r.period_year}</td>
       <td class="mono">${fmtMoney(r.amount_vnd)} đ</td>

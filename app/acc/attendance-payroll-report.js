@@ -59,7 +59,7 @@ async function loadReport() {
     const inTime = day.in ? fmtTime(day.in) : '—';
     const outTime = day.out ? fmtTime(day.out) : '<span style="color:var(--danger);">chưa ra</span>';
     const isExcused = onTimeOverrides.has(`${empId}:${dateKey}`);
-    const badge = isExcused ? ' <span class="badge badge-active" style="font-size:9px;">✓ Đúng giờ (đã duyệt)</span>' : '';
+    const badge = isExcused ? ' <span class="badge badge-active" style="font-size:9px;">Đúng giờ (đã duyệt)</span>' : '';
     return `vào ${inTime} → ra ${outTime}${badge}`;
   }
 

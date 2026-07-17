@@ -32,8 +32,8 @@ async function loadRows() {
       <td class="cell-muted">${esc(r.parent_accounts?.full_name || '—')}<br>${esc(r.parent_accounts?.phone || '')}</td>
       <td>
         ${r.status === 'pending' ? `
-          <button class="btn btn-accent btn-sm" data-confirm="${r.id}">✅ Xác nhận</button>
-          <button class="btn btn-outline btn-sm" data-reject="${r.id}">✕ Từ chối</button>
+          <button class="btn btn-accent btn-sm" data-confirm="${r.id}">Xác nhận</button>
+          <button class="btn btn-outline btn-sm" data-reject="${r.id}">Từ chối</button>
         ` : ''}
       </td>
     </tr>

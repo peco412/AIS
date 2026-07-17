@@ -7,6 +7,7 @@
 import { bootShell } from '/js/shell.js';
 import { supabase, esc, uploadPrivateFile, resolveFileUrl, openFile } from '/js/supabase.js';
 import { openPdfEditor } from '/js/pdfEditor.js';
+import { openRichEditor } from '/js/richEditor.js';
 
 const DEPT_LABEL = { HR: 'Nhân sự', ACC: 'Kế toán', MKT: 'Truyền thông', FAC: 'Cơ sở vật chất', EDU: 'Học vụ' };
 
@@ -71,6 +72,52 @@ export async function initFreeSign(deptCode) {
     tbody.querySelectorAll('[data-open]').forEach((b) => b.addEventListener('click', () => openFile(b.dataset.open)));
   }
 
+  // Dùng chung cho cả 2 đường vào (tải file lên / soạn thảo mới) — sau khi
+  // đã có file PDF nguồn (dù là file người dùng chọn, hay PDF vừa xuất từ
+  // trình soạn thảo), phần MỞ RA ĐỂ KÝ + LƯU KHO đi chung 1 luồng duy nhất,
+  // không viết lại 2 lần.
+  async function signAndArchive(sourceBlob, fileName) {
+    const sourcePath = `free-sign/${deptCode}/${PROFILE.id}/${Date.now()}_source_${fileName}`;
+    await uploadPrivateFile(sourcePath, sourceBlob, { contentType: 'application/pdf' });
+    const sourceUrl = await resolveFileUrl(sourcePath, 1800);
+    const signatureUrl = await resolveFileUrl(PROFILE.signatureUrl, 1800);
+
+    await openPdfEditor({
+      pdfUrl: sourceUrl,
+      signatureUrl,
+      title: `Ký tự do — ${fileName} (kéo chữ ký/văn bản vào vị trí bất kỳ)`,
+      onSave: async (blob) => {
+        const signedPath = `free-sign/${deptCode}/${PROFILE.id}/${Date.now()}_signed_${fileName}`;
+        await uploadPrivateFile(signedPath, blob, { contentType: 'application/pdf' });
+
+        const now = new Date();
+        const { data: archiveRow, error: archiveErr } = await supabase.from('archive_files').insert({
+          department_id: DEPT_ID,
+          category: DEPT_ARCHIVE_CATEGORIES[deptCode]?.[0] || 'other',
+          year: now.getFullYear(),
+          month: now.getMonth() + 1,
+          file_name: fileName,
+          file_url: signedPath,
+          related_table: 'free_sign',
+          uploaded_by: PROFILE.id,
+        }).select('id').single();
+        if (archiveErr) throw archiveErr;
+
+        // Ghi log ký số — đúng thiết kế "signature_logs" cho việc tự nhập file rồi ký
+        await supabase.from('signature_logs').insert({
+          employee_id: PROFILE.id,
+          source_file_url: sourcePath,
+          signed_file_url: signedPath,
+          related_table: 'archive_files',
+          related_id: archiveRow.id,
+          saved_to_archive_id: archiveRow.id,
+        });
+
+        await loadRecent();
+      },
+    });
+  }
+
   document.getElementById('freeSignFile').addEventListener('change', async (e) => {
     const file = e.target.files[0];
     const errBox = document.getElementById('freeSignError');
@@ -85,45 +132,7 @@ export async function initFreeSign(deptCode) {
     }
 
     try {
-      const sourcePath = `free-sign/${deptCode}/${PROFILE.id}/${Date.now()}_source_${file.name}`;
-      await uploadPrivateFile(sourcePath, file);
-      const sourceUrl = await resolveFileUrl(sourcePath, 1800);
-      const signatureUrl = await resolveFileUrl(PROFILE.signatureUrl, 1800);
-
-      await openPdfEditor({
-        pdfUrl: sourceUrl,
-        signatureUrl,
-        title: `Ký tự do — ${file.name} (kéo chữ ký/văn bản vào vị trí bất kỳ)`,
-        onSave: async (blob) => {
-          const signedPath = `free-sign/${deptCode}/${PROFILE.id}/${Date.now()}_signed_${file.name}`;
-          await uploadPrivateFile(signedPath, blob, { contentType: 'application/pdf' });
-
-          const now = new Date();
-          const { data: archiveRow, error: archiveErr } = await supabase.from('archive_files').insert({
-            department_id: DEPT_ID,
-            category: DEPT_ARCHIVE_CATEGORIES[deptCode]?.[0] || 'other',
-            year: now.getFullYear(),
-            month: now.getMonth() + 1,
-            file_name: file.name,
-            file_url: signedPath,
-            related_table: 'free_sign',
-            uploaded_by: PROFILE.id,
-          }).select('id').single();
-          if (archiveErr) throw archiveErr;
-
-          // Ghi log ký số — đúng thiết kế "signature_logs" cho việc tự nhập file rồi ký
-          await supabase.from('signature_logs').insert({
-            employee_id: PROFILE.id,
-            source_file_url: sourcePath,
-            signed_file_url: signedPath,
-            related_table: 'archive_files',
-            related_id: archiveRow.id,
-            saved_to_archive_id: archiveRow.id,
-          });
-
-          await loadRecent();
-        },
-      });
+      await signAndArchive(file, file.name);
     } catch (err) {
       errBox.textContent = err.message || 'Có lỗi xảy ra.';
       errBox.classList.add('show');
@@ -131,6 +140,39 @@ export async function initFreeSign(deptCode) {
       e.target.value = '';
     }
   });
+
+  // MỚI — "Soạn thảo văn bản mới": không cần có sẵn file PDF mẫu, gõ trực
+  // tiếp trong trình soạn thảo (kiểu Word cơ bản: đậm/nghiêng/danh sách/
+  // tiêu đề), xuất PDF rồi đưa thẳng vào đúng luồng ký + lưu kho ở trên —
+  // không tạo luồng ký/lưu trữ riêng, tránh 2 nơi xử lý khác nhau cho cùng
+  // 1 việc.
+  function openComposeButton() {
+    const fileLabel = document.querySelector('label[for="freeSignFile"]');
+    if (!fileLabel || document.getElementById('btnComposeDoc')) return;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.id = 'btnComposeDoc';
+    btn.className = 'btn btn-outline';
+    btn.style.marginLeft = '10px';
+    btn.innerHTML = '<svg class="icon icon--sm" viewBox="0 0 24 24" style="margin-right:6px;"><path d="M4 20l1-4L16 5l3 3L8 19l-4 1z"/><path d="M14 7l3 3"/></svg>Soạn thảo văn bản mới';
+    btn.addEventListener('click', () => {
+      const errBox = document.getElementById('freeSignError');
+      errBox.classList.remove('show');
+      if (!PROFILE.signatureUrl) {
+        errBox.textContent = 'Bạn chưa có chữ ký cá nhân. Vào Hồ sơ cá nhân để tải lên trước.';
+        errBox.classList.add('show');
+        return;
+      }
+      openRichEditor({
+        title: `Soạn thảo — ${DEPT_LABEL[deptCode]}`,
+        onExportPdf: async (pdfBlob) => {
+          const fileName = `van-ban-${Date.now()}.pdf`;
+          await signAndArchive(pdfBlob, fileName);
+        },
+      });
+    });
+    fileLabel.insertAdjacentElement('afterend', btn);
+  }
 
   try {
     const { profile } = await bootShell();
@@ -142,10 +184,11 @@ export async function initFreeSign(deptCode) {
 
     if (!canUse(PROFILE)) {
       document.querySelector('.main').innerHTML =
-        `<div class="empty-cell">🔒 Chỉ trưởng/phó phòng ${esc(DEPT_LABEL[deptCode])}, Ban điều hành, Kỹ thuật mới dùng được trang này.</div>`;
+        `<div class="empty-cell">Chỉ trưởng/phó phòng ${esc(DEPT_LABEL[deptCode])}, Ban điều hành, Kỹ thuật mới dùng được trang này.</div>`;
       return;
     }
 
+    openComposeButton();
     await loadRecent();
   } catch (e) { /* bootShell tự điều hướng */ }
 }

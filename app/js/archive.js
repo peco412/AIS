@@ -35,7 +35,7 @@ function renderDeptList() {
   const ul = document.getElementById('deptList');
   ul.innerHTML = DEPARTMENTS.map((d) => `
     <li><button data-dept="${d.code}" class="${d.code === ACTIVE_DEPT ? 'active' : ''}">
-      ${d.name}${hasAccess(d.code) ? '' : '<span class="lock">🔒</span>'}
+      ${d.name}${hasAccess(d.code) ? '' : '<span class="lock"><svg class="icon icon--sm" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>'}
     </button></li>
   `).join('') + `<li><button data-dept="TEMPLATES" class="${ACTIVE_DEPT === 'TEMPLATES' ? 'active' : ''}">📁 Biểu mẫu</button></li>`;
 
@@ -78,7 +78,7 @@ async function selectDept(code) {
 
   if (!hasAccess(code)) {
     document.getElementById('tableBody').innerHTML =
-      '<tr><td colspan="6"><div class="denied-box"><div class="big">🔒</div>Bạn không có quyền thực hiện thao tác.</div></td></tr>';
+      '<tr><td colspan="6"><div class="denied-box"><div class="big"><svg class="icon icon--sm" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>Bạn không có quyền thực hiện thao tác.</div></td></tr>';
     document.getElementById('resultCount').textContent = '';
     document.getElementById('btnUpload').style.display = 'none';
     return;

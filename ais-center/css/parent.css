@@ -19,30 +19,55 @@
   --warning-tint: #fdf1dc;
   --danger: #d3352f;
   --danger-tint: #fce7e6;
-  /* Bo goc — dong bo dung bo 4 muc voi ERP (truoc day parent.css chi co
-     dung 1 muc --radius chung chung, khong phan biet duoc the/nut/modal). */
   --radius: 16px;
   --radius-sm: 8px;
   --radius-md: 14px;
   --radius-lg: 20px;
   --radius-pill: 999px;
-  /* Do bong — dong bo dung bo 4 cap voi ERP, thay cho 1 gia tri bong cung
-     hardcode rai rac truoc day (vd .auth-card tu viet rieng 0 20px 50px). */
   --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.04);
   --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
   --shadow-lg: 0 20px 48px rgba(0, 0, 0, 0.16), 0 4px 12px rgba(0, 0, 0, 0.06);
-  /* Chuyen dong — dong bo dung easing/thoi gian voi ERP de cam giac
-     "mem" giong nhau khi hover/an-hien, truoc day khong co gi ca. */
   --ease: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
   --dur-fast: 0.15s;
   --dur-base: 0.22s;
   --font: 'Be Vietnam Pro', -apple-system, sans-serif;
+  /* Bo tim mau icon phang, chuyen nghiep hon — thay cho 5 gradient sac
+     so voi truoc (moi "o" 1 mau gradient rieng nhin roi mat/thieu nhat
+     quan) — gio dung 1 tong mau thuong hieu + xam trung tinh, chi khac
+     nhau o DAM/NHAT de van phan biet duoc nhom chuc nang. */
+  --tile-1: var(--accent-deep);
+  --tile-2: #3a3a3c;
+  --tile-3: var(--accent-deep);
+  --tile-4: #3a3a3c;
+  --tile-5: var(--accent-deep);
+  --tile-6: #3a3a3c;
+  --tile-7: var(--accent-deep);
+  --tile-8: #3a3a3c;
+  /* Chieu rong noi dung — dung chung cho tat ca breakpoint de doi giao
+     dien Desktop/May tinh bang khong bi 1 cot hep bat thuong. */
+  --content-w: 480px;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; background: var(--surface); color: var(--ink); font-family: var(--font); -webkit-font-smoothing: antialiased; }
+body { min-height: 100vh; }
 h1, h2, h3 { font-weight: 700; letter-spacing: -0.01em; margin: 0; }
+img, svg { display: block; }
+a { -webkit-tap-highlight-color: transparent; }
+button { font-family: inherit; -webkit-tap-highlight-color: transparent; }
+
+/* ---------- Hệ icon SVG dùng chung (thay emoji) ----------
+   Icon dạng nét đơn giản (line-style), kế thừa màu qua currentColor —
+   nhất quán, gọn, chuyên nghiệp hơn emoji nhiều màu trước đây. Emoji chỉ
+   còn giữ lại ở nơi mang tính CẢM XÚC/PHẢN HỒI thực sự cần thiết (vd biểu
+   tượng thành công lớn sau khi hoàn tất 1 hành động), không dùng để
+   trang trí tiêu đề hay điều hướng nữa. */
+.icon { width: 22px; height: 22px; stroke: currentColor; stroke-width: 1.8; fill: none; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+.icon--sm { width: 17px; height: 17px; }
+.icon--lg { width: 28px; height: 28px; }
+.icon--nav { width: 22px; height: 22px; margin: 0 auto 3px; }
+.icon--tile { width: 22px; height: 22px; }
 
 /* ---------- Trang đăng nhập ---------- */
 .auth-body { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
@@ -59,12 +84,13 @@ h1, h2, h3 { font-weight: 700; letter-spacing: -0.01em; margin: 0; }
 .field input:focus, .field select:focus { background: #fff; outline: none; box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.18); }
 
 .btn-primary {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
   width: 100%; padding: 14px; background: var(--accent); color: #fff; border: none;
   border-radius: var(--radius-md); font-weight: 700; font-size: 15px; cursor: pointer; margin-top: 4px; transition: transform var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
 }
 .btn-primary:hover:not(:disabled) { box-shadow: var(--shadow-sm); transform: translateY(-1px); }
 .btn-primary:active:not(:disabled) { transform: translateY(0); }
-.btn-primary:disabled { opacity: 0.5; }
+.btn-primary:disabled { opacity: 0.5; cursor: default; }
 .btn-link { display: block; width: 100%; text-align: center; background: none; border: none; color: var(--accent-deep); font-size: 13px; padding: 12px; cursor: pointer; }
 
 .form-error { display: none; background: var(--danger-tint); color: var(--danger); border-radius: var(--radius-sm); padding: 10px 13px; font-size: 13px; margin-bottom: 14px; }
@@ -74,29 +100,41 @@ h1, h2, h3 { font-weight: 700; letter-spacing: -0.01em; margin: 0; }
 /* ---------- Khung app chính (sau đăng nhập) ---------- */
 .app-topbar {
   position: sticky; top: 0; z-index: 10;
-  display: flex; align-items: center; justify-content: space-between;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
   padding: 14px 18px; background: rgba(255,255,255,0.85); backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--border);
 }
-.app-topbar__title { font-size: 16px; font-weight: 800; }
-.app-topbar__right { display: flex; align-items: center; gap: 10px; }
-.icon-btn { border: none; background: var(--surface-fill); width: 36px; height: 36px; border-radius: var(--radius-pill); font-size: 16px; cursor: pointer; transition: background var(--dur-fast) var(--ease); }
+.app-topbar__title {
+  font-size: 16px; font-weight: 800; min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.app-topbar__title span { font-weight: 800; }
+.app-topbar__back { display: flex; align-items: center; gap: 6px; background: none; border: none; padding: 0; color: var(--ink); font-size: 16px; font-weight: 800; cursor: pointer; }
+.app-topbar__right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.icon-btn {
+  display: flex; align-items: center; justify-content: center;
+  border: none; background: var(--surface-fill); width: 36px; height: 36px; border-radius: var(--radius-pill);
+  cursor: pointer; transition: background var(--dur-fast) var(--ease); color: var(--ink-soft); flex-shrink: 0;
+}
+.icon-btn:active { background: var(--surface-sunken); }
 
-.app-main { max-width: 480px; margin: 0 auto; padding: 18px 16px 100px; }
+.app-main { max-width: var(--content-w); margin: 0 auto; padding: 18px 16px 100px; }
 
-.student-switcher { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 18px; }
+.student-switcher { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 18px; scrollbar-width: none; }
+.student-switcher::-webkit-scrollbar { display: none; }
 .student-chip {
-  flex-shrink: 0; padding: 9px 16px; border-radius: var(--radius-pill); background: var(--surface-fill);
+  flex-shrink: 0; max-width: 160px; padding: 9px 16px; border-radius: var(--radius-pill); background: var(--surface-fill);
   font-size: 13px; font-weight: 600; cursor: pointer; border: none; color: var(--ink-soft);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .student-chip.active { background: var(--accent); color: #fff; }
 
-/* The ngan hang — nang cap cam giac "uy tin" bang hoa tiet the vat ly
-   (van tinh, chip the, dai vien tron trang tri), chu so du lon ro rang,
-   them huy hieu "Da xac thuc" nho tao niem tin ve bao mat. */
+/* Thẻ ngân hàng — số dư lớn rõ ràng, huy hiệu "Đã xác thực" gọn, không
+   còn icon minh hoạ rời rạc — bản thân tấm thẻ đã đủ truyền tải "đây là
+   nơi quản lý tiền", không cần thêm biểu tượng trang trí. */
 .balance-hero {
   position: relative; overflow: hidden;
-  background: linear-gradient(135deg, var(--accent-deep) 0%, var(--accent) 55%, #00b8d4 100%);
+  background: linear-gradient(135deg, var(--accent-deep) 0%, var(--accent) 55%, #0072a8 100%);
   color: #fff; border-radius: 22px; padding: 24px 22px 22px; margin-bottom: 20px;
   box-shadow: 0 16px 32px rgba(var(--accent-rgb), 0.28), 0 4px 10px rgba(0,0,0,0.08);
 }
@@ -108,13 +146,14 @@ h1, h2, h3 { font-weight: 700; letter-spacing: -0.01em; margin: 0; }
   content: ''; position: absolute; bottom: -40%; left: 10%; width: 160px; height: 160px;
   background: rgba(255,255,255,0.06); border-radius: 50%;
 }
-.balance-hero__top { display: flex; align-items: center; justify-content: space-between; position: relative; z-index: 1; }
-.balance-hero__label { font-size: 12.5px; opacity: 0.9; font-weight: 600; letter-spacing: 0.01em; }
+.balance-hero__top { display: flex; align-items: center; justify-content: space-between; gap: 10px; position: relative; z-index: 1; }
+.balance-hero__label { font-size: 12.5px; opacity: 0.9; font-weight: 600; letter-spacing: 0.01em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .balance-hero__verified {
-  display: flex; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 700;
+  display: flex; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 700; flex-shrink: 0;
   background: rgba(255,255,255,0.18); padding: 4px 10px; border-radius: 999px; backdrop-filter: blur(4px);
 }
-.balance-hero__value { font-size: 34px; font-weight: 800; letter-spacing: -0.02em; margin-top: 10px; position: relative; z-index: 1; }
+.balance-hero__verified .icon { width: 12px; height: 12px; stroke-width: 2.4; }
+.balance-hero__value { font-size: 32px; font-weight: 800; letter-spacing: -0.02em; margin-top: 10px; position: relative; z-index: 1; overflow-wrap: anywhere; }
 .balance-hero__vnd { position: relative; z-index: 1; }
 .balance-hero__chip {
   width: 34px; height: 26px; border-radius: 6px; margin-top: 18px; position: relative; z-index: 1;
@@ -123,36 +162,33 @@ h1, h2, h3 { font-weight: 700; letter-spacing: -0.01em; margin: 0; }
 }
 .balance-hero__actions { display: flex; gap: 10px; margin-top: 16px; position: relative; z-index: 1; }
 .balance-hero__actions a {
-  flex: 1; text-align: center; padding: 11px; border-radius: var(--radius-md); background: rgba(255,255,255,0.16);
+  flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
+  text-align: center; padding: 11px; border-radius: var(--radius-md); background: rgba(255,255,255,0.16);
   color: #fff; font-size: 13px; font-weight: 700; text-decoration: none; backdrop-filter: blur(6px);
   border: 1px solid rgba(255,255,255,0.14);
   transition: background var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
 }
 .balance-hero__actions a:active { transform: scale(0.97); background: rgba(255,255,255,0.24); }
 
-/* Luoi icon chuc nang — thay danh sach the doc bang luoi 2x3 kieu vi
-   dien tu/ngan hang hien dai (Momo/ZaloPay-style), quet mat nhanh hon
-   nhieu so voi list truoc day. */
-.action-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 22px; }
+/* Lưới chức năng — icon nét đơn sắc trên nền màu nhạt (tint), thay cho
+   khối gradient nhiều màu + emoji to trước đây. Vẫn phân biệt được nhóm
+   chức năng qua 2 tông (thương hiệu / trung tính), nhưng nhìn gọn và
+   "nghiêm túc" hơn nhiều cho 1 ứng dụng liên quan đến tiền học phí. */
+.action-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 22px; }
 .action-tile {
   display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center;
   text-decoration: none; color: var(--ink); padding: 4px 0;
 }
 .action-tile__icon {
-  width: 54px; height: 54px; border-radius: 16px; display: flex; align-items: center; justify-content: center;
-  font-size: 24px; box-shadow: var(--shadow-sm);
+  width: 50px; height: 50px; border-radius: 15px; display: flex; align-items: center; justify-content: center;
+  background: var(--surface-card); box-shadow: var(--shadow-sm); color: var(--accent-deep);
   transition: transform var(--dur-fast) var(--ease-spring), box-shadow var(--dur-fast) var(--ease);
 }
 .action-tile:active .action-tile__icon { transform: scale(0.92); }
 .action-tile__label { font-size: 11.5px; font-weight: 600; line-height: 1.25; color: var(--ink-soft); }
-.action-tile--topup .action-tile__icon { background: linear-gradient(150deg, #34c759, #1d8a4c); color: #fff; }
-.action-tile--tuition .action-tile__icon { background: linear-gradient(150deg, #0094d9, #0072a8); color: #fff; }
-.action-tile--withdraw .action-tile__icon { background: linear-gradient(150deg, #ff9f0a, #c47600); color: #fff; }
-.action-tile--shop .action-tile__icon { background: linear-gradient(150deg, #af52de, #8033a8); color: #fff; }
-.action-tile--history .action-tile__icon { background: linear-gradient(150deg, #8a8f98, #5a5f66); color: #fff; }
 
-/* Banner khuyen mai — mac dinh hien loi chao mung neu chua co uu dai nao
-   dang chay, tu doi noi dung neu co uu dai that (xem home.js). */
+/* Banner khuyến mãi — bớt icon trang trí trong nội dung, để chữ tự nói,
+   trông đáng tin hơn cho 1 kênh thông báo của trung tâm. */
 .promo-banner {
   background: linear-gradient(135deg, #0094d9, #005f8f);
   color: #fff; border-radius: var(--radius-lg); padding: 18px 20px; margin-bottom: 18px;
@@ -165,46 +201,61 @@ h1, h2, h3 { font-weight: 700; letter-spacing: -0.01em; margin: 0; }
 .promo-banner__title { font-size: 16px; font-weight: 800; margin-bottom: 4px; }
 .promo-banner__sub { font-size: 12.5px; opacity: 0.92; }
 
-/* Hub icon — luoi 4 cot goi toi cac chuc nang chinh, thay cho danh sach
-   the "sap ra mat" khong hoat dong truoc day. */
-.hub-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px 8px; margin-bottom: 20px; }
-.hub-tile { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; text-decoration: none; color: var(--ink); }
+/* Hub icon — cùng hệ icon nét đơn sắc + nền tint nhạt, gọn và nhất quán
+   với action-grid ở trên thay vì mỗi nơi 1 kiểu. */
+.hub-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px 8px; margin-bottom: 20px; }
+.hub-tile { display: flex; flex-direction: column; align-items: center; gap: 7px; text-align: center; text-decoration: none; color: var(--ink); }
 .hub-tile__icon {
-  width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center;
-  font-size: 21px; background: var(--surface-card); box-shadow: var(--shadow-xs);
+  width: 46px; height: 46px; border-radius: 14px; display: flex; align-items: center; justify-content: center;
+  background: var(--accent-tint); color: var(--accent-deep);
   transition: transform var(--dur-fast) var(--ease-spring);
 }
+.hub-tile:nth-child(4n+2) .hub-tile__icon, .hub-tile:nth-child(4n+4) .hub-tile__icon { background: var(--surface-fill); color: var(--ink-soft); }
 .hub-tile:active .hub-tile__icon { transform: scale(0.9); }
-.hub-tile__label { font-size: 10.5px; font-weight: 600; color: var(--ink-soft); line-height: 1.2; }
+.hub-tile__label { font-size: 10.5px; font-weight: 600; color: var(--ink-soft); line-height: 1.25; overflow-wrap: break-word; }
 
 .card { background: var(--surface-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 18px; margin-bottom: 14px; box-shadow: var(--shadow-xs); }
-.card h3 { font-size: 14px; margin-bottom: 12px; }
+.card h3 { font-size: 14px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
 
-.batch-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.list-card {
+  display: flex; align-items: center; gap: 14px; text-decoration: none; color: inherit;
+  background: var(--surface-card); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  padding: 15px 16px; margin-bottom: 10px; box-shadow: var(--shadow-xs); cursor: pointer;
+  transition: background var(--dur-fast) var(--ease);
+}
+.list-card:active { background: var(--surface-sunken); }
+.list-card__icon {
+  width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center;
+  background: var(--surface-fill); color: var(--accent-deep); flex-shrink: 0;
+}
+.list-card__body { min-width: 0; flex: 1; }
+.list-card__body strong { display: block; font-size: 14px; }
+.list-card__chevron { color: var(--muted); flex-shrink: 0; }
+
+.batch-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--border); }
 .batch-row:last-child { border-bottom: none; }
-.batch-row__left { font-size: 13px; }
+.batch-row__left { font-size: 13px; min-width: 0; }
 .batch-row__left .date { font-weight: 600; color: var(--ink); }
 .batch-row__left .meta { color: var(--muted); font-size: 11.5px; margin-top: 2px; }
-.batch-row__right { text-align: right; }
+.batch-row__right { text-align: right; flex-shrink: 0; }
 .batch-row__right .coin { font-weight: 700; font-family: monospace; }
 .batch-row__right .vnd { color: var(--muted); font-size: 11px; }
 
 .invoice-row { padding: 14px 0; border-bottom: 1px solid var(--border); }
 .invoice-row:last-child { border-bottom: none; }
-.invoice-row__top { display: flex; justify-content: space-between; font-size: 13.5px; font-weight: 600; }
+.invoice-row__top { display: flex; justify-content: space-between; gap: 10px; font-size: 13.5px; font-weight: 600; }
+.invoice-row__top > span:first-child { min-width: 0; overflow-wrap: break-word; }
 .invoice-row__sub { color: var(--muted); font-size: 12px; margin-top: 4px; }
-.badge { display: inline-flex; padding: 3px 10px; border-radius: var(--radius-pill); font-size: 11px; font-weight: 700; }
+.badge { display: inline-flex; flex-shrink: 0; padding: 3px 10px; border-radius: var(--radius-pill); font-size: 11px; font-weight: 700; }
 .badge.unpaid { background: var(--danger-tint); color: var(--danger); }
 .badge.partial { background: var(--warning-tint); color: var(--warning); }
 .badge.paid { background: var(--success-tint); color: var(--success); }
 
 .topup-preview { background: var(--accent-tint); border-radius: var(--radius-md); padding: 16px; margin-top: 4px; }
-.topup-preview__row { display: flex; justify-content: space-between; font-size: 13px; padding: 4px 0; }
+.topup-preview__row { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; padding: 4px 0; }
 .topup-preview__row strong { color: var(--accent-deep); }
 .topup-preview__hint { font-size: 11.5px; color: var(--muted); margin-top: 8px; }
 
-/* Nut chon nhanh so tien nap — dung theo dung yeu cau "giong app ngan
-   hang, co san so tien goi y" thay vi chi go tay tu do nhu truoc. */
 .amount-presets { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0 4px; }
 .amount-chip {
   flex: 1; min-width: 70px; padding: 10px 6px; border-radius: var(--radius-md);
@@ -215,22 +266,72 @@ h1, h2, h3 { font-weight: 700; letter-spacing: -0.01em; margin: 0; }
 .amount-chip:active { transform: scale(0.95); }
 .amount-chip.active { border-color: var(--accent); background: var(--accent-tint); color: var(--accent-deep); }
 
+/* Trạng thái rỗng / kết quả — icon tròn viền mảnh thay cho emoji to, giữ
+   cảm giác nhẹ nhàng nhưng nghiêm túc hơn khi báo thành công/cảnh báo. */
 .empty-state { text-align: center; padding: 40px 16px; color: var(--muted); font-size: 13.5px; }
+.result-icon {
+  width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 14px;
+}
+.result-icon .icon { width: 30px; height: 30px; stroke-width: 2.2; }
+.result-icon--success { background: var(--success-tint); color: var(--success); }
+.result-icon--warning { background: var(--warning-tint); color: var(--warning); }
+.result-icon--danger { background: var(--danger-tint); color: var(--danger); }
 
-/* Bottom Nav — them "vien vo hinh" quanh tab dang active dang pill mem,
-   giong cam giac cac app ngan hang/vi dien tu hien dai, thay vi chi doi
-   mau chu don gian nhu truoc. */
+.note-inline {
+  display: flex; gap: 8px; align-items: flex-start; font-size: 12.5px; color: var(--ink-soft);
+  background: var(--surface-fill); border-radius: var(--radius-sm); padding: 10px 12px; margin-top: 12px;
+}
+.note-inline .icon { width: 16px; height: 16px; margin-top: 1px; color: var(--muted); }
+
+/* Bottom Nav — icon nét đơn thay emoji, cùng 1 hệ với phần còn lại của
+   app thay vì mượn icon bàn phím Apple/Android không đồng bộ. */
 .bottom-nav {
   position: fixed; bottom: 0; left: 0; right: 0; z-index: 20;
-  display: flex; background: rgba(255,255,255,0.94); backdrop-filter: blur(20px);
+  display: flex; justify-content: center;
+  background: rgba(255,255,255,0.94); backdrop-filter: blur(20px);
   border-top: 1px solid var(--border); padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
   box-shadow: 0 -4px 16px rgba(0,0,0,0.04);
 }
+.bottom-nav__inner { display: flex; width: 100%; max-width: var(--content-w); }
 .bottom-nav a {
   flex: 1; text-align: center; text-decoration: none; color: var(--muted); font-size: 10.5px;
   padding: 7px 4px; border-radius: 14px; font-weight: 600;
   transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
 }
-.bottom-nav a .icon { display: block; font-size: 20px; margin-bottom: 3px; transition: transform var(--dur-fast) var(--ease-spring); }
 .bottom-nav a.active { color: var(--accent); background: var(--accent-tint); }
 .bottom-nav a.active .icon { transform: translateY(-1px); }
+
+/* ---------- Responsive — trước đây KHÔNG có breakpoint nào, giao diện
+   dùng chung 1 kích thước cố định cho mọi màn hình. Bổ sung 2 mốc: màn
+   rất nhỏ (thu gọn khoảng cách/cỡ chữ để không bị chật) và màn rộng hơn
+   điện thoại (máy tính bảng/desktop mở PWA qua trình duyệt) để nội dung
+   không chỉ là 1 dải hẹp trôi nổi giữa màn hình trống. ---------- */
+@media (max-width: 359px) {
+  .app-main { padding: 14px 12px 96px; }
+  .hub-grid { gap: 10px 6px; }
+  .hub-tile__icon { width: 42px; height: 42px; border-radius: 12px; }
+  .hub-tile__label { font-size: 10px; }
+  .action-grid { gap: 8px; }
+  .action-tile__icon { width: 46px; height: 46px; }
+  .balance-hero__value { font-size: 28px; }
+  .balance-hero { padding: 20px 18px 18px; }
+}
+
+@media (min-width: 600px) {
+  :root { --content-w: 560px; }
+  body { background: var(--surface-sunken); }
+  .app-topbar {
+    max-width: var(--content-w); margin: 0 auto; background: rgba(255,255,255,0.9);
+    border-left: 1px solid var(--border); border-right: 1px solid var(--border);
+  }
+  .app-main { padding-top: 22px; }
+  .auth-card { box-shadow: var(--shadow-lg), 0 0 0 1px var(--border); }
+  .bottom-nav { border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
+  .hub-grid { gap: 16px 10px; }
+  .action-grid { gap: 16px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+}

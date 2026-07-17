@@ -42,8 +42,8 @@ async function loadSessionDates() {
   const isTodaySession = SESSION_DATES.includes(today);
   dateInput.value = isTodaySession ? today : SESSION_DATES[0];
   hint.textContent = isTodaySession
-    ? '✅ Hôm nay có lịch học — điểm danh bình thường.'
-    : '⚠️ Hôm nay KHÔNG có lịch học của lớp này theo kế hoạch.';
+    ? 'Hôm nay có lịch học — điểm danh bình thường.'
+    : 'Hôm nay KHÔNG có lịch học của lớp này theo kế hoạch.';
 }
 
 async function loadStudents() {
@@ -111,7 +111,7 @@ document.getElementById('btnSave').addEventListener('click', async () => {
   }));
 
   const { error } = await supabase.from('class_attendance').upsert(rows, { onConflict: 'class_id,student_id,session_date' });
-  btn.disabled = false; btn.textContent = '💾 Lưu điểm danh';
+  btn.disabled = false; btn.textContent = 'Lưu điểm danh';
   if (error) {
     // Lỗi phổ biến nhất ở đây là chặn điểm danh lùi ngày (xem trigger DB) —
     // hiện thẳng thông báo gốc vì nó đã giải thích rõ cách xin quyền.
@@ -138,7 +138,7 @@ async function notifyUnexcusedAbsence(classId, date, students) {
   const { data: managers } = await supabase.from('employees').select('id').eq('center_id', classInfo.center_id).eq('role_id', role.id);
 
   const names = students.map((s) => s.full_name).join(', ');
-  const title = `⚠️ ${students.length} học viên vắng không phép hôm ${new Date(date).toLocaleDateString('vi-VN')}`;
+  const title = `${students.length} học viên vắng không phép hôm ${new Date(date).toLocaleDateString('vi-VN')}`;
   const content = `Lớp ${classInfo.name}: ${names} — vắng không phép, cần liên hệ ngay với phụ huynh.`;
 
   for (const manager of managers || []) {

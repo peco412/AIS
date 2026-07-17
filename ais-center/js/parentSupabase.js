@@ -53,8 +53,8 @@ export async function bootParentShell() {
     console.error('bootParentShell lỗi:', e);
     const main = document.querySelector('main') || document.body;
     const banner = document.createElement('div');
-    banner.style.cssText = 'background:#fce7e6; color:#d3352f; padding:16px; border-radius:12px; margin:16px; font-size:14px; line-height:1.5;';
-    banner.innerHTML = `⚠️ <strong>Không tải được dữ liệu.</strong><br>${e.message || 'Có lỗi xảy ra, vui lòng thử lại.'}<br><button onclick="location.reload()" style="margin-top:8px; padding:8px 16px; border-radius:8px; border:none; background:#d3352f; color:#fff; font-weight:600;">Tải lại trang</button>`;
+    banner.style.cssText = 'background:var(--danger-tint); color:var(--danger); padding:16px; border-radius:12px; margin:16px; font-size:14px; line-height:1.5;';
+    banner.innerHTML = `<strong>Không tải được dữ liệu.</strong><br>${e.message || 'Có lỗi xảy ra, vui lòng thử lại.'}<br><button onclick="location.reload()" style="margin-top:8px; padding:8px 16px; border-radius:8px; border:none; background:var(--danger); color:#fff; font-weight:600;">Tải lại trang</button>`;
     main.prepend(banner);
     throw e;
   }

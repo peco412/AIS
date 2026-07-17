@@ -266,7 +266,7 @@ document.getElementById('retailStudentSearch').addEventListener('input', (e) => 
     const { data } = await supabase.from('students').select('id, full_name, parent_name, phone').eq('center_id', WORKING_CENTER_ID).ilike('full_name', `%${q}%`).limit(1);
     if (data && data.length > 0) {
       RETAIL_STUDENT = data[0];
-      document.getElementById('retailStudentResult').innerHTML = `✅ <strong>${esc(data[0].full_name)}</strong> — tự điền PH/SĐT`;
+      document.getElementById('retailStudentResult').innerHTML = `<strong>${esc(data[0].full_name)}</strong> — tự điền PH/SĐT`;
       document.getElementById('retailCustomerName').value = data[0].full_name;
       document.getElementById('retailPhone').value = data[0].phone || '';
     } else {

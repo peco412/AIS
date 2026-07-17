@@ -84,7 +84,7 @@ function renderProgram(prog) {
             ? `<span class="course-row__actions">
                  ${arrowButtons('course', c.id, cIdx === 0, cIdx === courses.length - 1)}
                  <input type="number" class="price-input" data-course="${c.id}" data-original="${c.price_vnd || 0}" value="${c.price_vnd || 0}" />
-                 <button type="button" class="chip-del" data-del-course="${c.id}" title="Xoá khoá này">✕</button>
+                 <button type="button" class="chip-del" data-del-course="${c.id}" title="Xoá khoá này"><svg class="icon icon--sm" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
                </span>`
             : `<strong class="mono">${fmtMoney(c.price_vnd)} đ</strong>`}
         </div>
@@ -225,7 +225,7 @@ async function saveAllPrices() {
   ));
   const failed = results.filter((r) => r.error);
 
-  btn.disabled = false; btn.textContent = '💾 Lưu tất cả thay đổi';
+  btn.disabled = false; btn.textContent = 'Lưu tất cả thay đổi';
   if (failed.length > 0) {
     alert(`Lỗi khi lưu (${failed.length}/${dirtyInputs.length} thất bại): ${failed[0].error.message}`);
   }

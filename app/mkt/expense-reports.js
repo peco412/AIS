@@ -171,7 +171,7 @@ document.getElementById('expenseForm').addEventListener('submit', async (e) => {
     });
     const check = budgetCheck?.[0];
     if (check?.would_exceed) {
-      const proceed = confirm(`⚠️ CẢNH BÁO VƯỢT TRẦN NGÂN SÁCH\n\nHạng mục này đã chi ${fmtMoney(check.already_spent)} đ / trần ${fmtMoney(check.monthly_cap)} đ tháng này.\nKhoản này (${fmtMoney(amount)} đ) sẽ làm VƯỢT trần.\n\nVẫn muốn tiếp tục gửi duyệt?`);
+      const proceed = confirm(`CẢNH BÁO VƯỢT TRẦN NGÂN SÁCH\n\nHạng mục này đã chi ${fmtMoney(check.already_spent)} đ / trần ${fmtMoney(check.monthly_cap)} đ tháng này.\nKhoản này (${fmtMoney(amount)} đ) sẽ làm VƯỢT trần.\n\nVẫn muốn tiếp tục gửi duyệt?`);
       if (!proceed) return;
     }
   }

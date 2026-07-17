@@ -137,3 +137,10 @@ button { font-family: inherit; }
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
 }
+
+/* ---------- Hệ icon SVG dùng chung (thay emoji) ----------
+   Icon nét đơn giản, kế thừa màu qua currentColor — dùng thống nhất ở
+   topbar/menu thay cho emoji nhiều màu trước đây (🔔🔎☰⎋🏠...). */
+.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; fill: none; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; vertical-align: middle; }
+.icon--sm { width: 16px; height: 16px; }
+.icon--lg { width: 26px; height: 26px; }

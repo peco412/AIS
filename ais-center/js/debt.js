@@ -15,7 +15,7 @@ import { supabase, esc, fmtMoney, fmtDate, bootParentShell, getSelectedStudentId
 
     const listEl = document.getElementById('invoiceList');
     if (error) { listEl.innerHTML = `<div class="empty-state">Lỗi: ${esc(error.message)}</div>`; return; }
-    if (!invoices || invoices.length === 0) { listEl.innerHTML = '<div class="empty-state">🎉 Không có khoản nợ nào.</div>'; return; }
+    if (!invoices || invoices.length === 0) { listEl.innerHTML = '<div class="empty-state">Không có khoản nợ nào.</div>'; return; }
 
     // Với mỗi hoá đơn, lấy đúng đơn vị đã dùng để đóng phần dở (nếu có) để
     // hiển thị đúng đơn vị theo mục 5.3 (AIScoins nếu qua ví, VNĐ nếu tại quầy)

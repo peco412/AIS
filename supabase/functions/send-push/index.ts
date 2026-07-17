@@ -4,6 +4,18 @@
 // đúng phạm vi thông báo (hệ thống / trung tâm / phòng ban / cá nhân) —
 // khớp với cấu trúc bảng "notifications" đã có.
 //
+// BẢN VÁ 16/07/2026 (xem AUDIT_ERP_AIS_2026-07-16.md mục B.3):
+// Bản cũ KHÔNG kiểm tra người gọi là ai cả — bất kỳ nhân viên nào đã
+// đăng nhập (kể cả vai trò thấp nhất) đều có thể gọi thẳng function này
+// với scope:'system' để đẩy push notification tuỳ ý (tiêu đề/nội dung/
+// link) tới TOÀN BỘ nhân viên đang hoạt động, hoặc scope:'personal' nhắm
+// vào bất kỳ target_employee_id nào — mở đường cho spam/lừa đảo nội bộ
+// (phishing) qua đúng kênh thông báo chính thức của công ty.
+// Sửa: mirror ĐÚNG quy tắc đã áp dụng cho bảng notifications (file 07 +
+// 09) — scope 'personal' thì ai cũng gọi được, còn scope 'system'/
+// 'center'/'department' bắt buộc phải là Trưởng/phó phòng trở lên
+// (is_dept_head_or_above()), xác thực qua JWT của chính người gọi.
+//
 // CÁCH DÙNG (gọi từ frontend ngay sau khi insert vào bảng notifications):
 //   await supabase.functions.invoke('send-push', {
 //     body: { scope, center_id, department_id, target_employee_id, title, content, url }
@@ -11,10 +23,8 @@
 //
 // CẤU HÌNH BẮT BUỘC trước khi dùng (Supabase Dashboard -> Edge Functions
 // -> send-push -> Secrets, hoặc `supabase secrets set`):
-//   VAPID_PUBLIC_KEY   = khoá public (đã có sẵn trong js/pushNotifications.js)
-//   VAPID_PRIVATE_KEY  = khoá private TƯƠNG ỨNG — giữ bí mật tuyệt đối
-//   VAPID_SUBJECT      = "mailto:admin@yourcompany.com" (bắt buộc theo chuẩn Web Push)
-//   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (đã có sẵn cho mọi Edge Function)
+//   VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT
+//   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 // =====================================================================
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import webpush from 'npm:web-push@3.6.7';
@@ -40,13 +50,37 @@ Deno.serve(async (req) => {
     }
     webpush.setVapidDetails(vapidSubject, vapidPublic, vapidPrivate);
 
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL'),
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'),
-    );
+    const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
+    const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
+    // MỚI — Xác thực người gọi qua chính JWT của họ (không phải service
+    // role), rồi kiểm tra quyền phát thông báo theo đúng phạm vi yêu cầu.
+    const authHeader = req.headers.get('Authorization') ?? '';
+    const callerClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: userData, error: userErr } = await callerClient.auth.getUser();
+    if (userErr || !userData.user) {
+      return jsonResponse({ error: 'Không xác thực được người gọi.' }, 401);
+    }
 
     const { scope, center_id, department_id, target_employee_id, title, content, url } = await req.json();
     if (!scope || !title) return jsonResponse({ error: 'Thiếu scope hoặc title.' }, 400);
+
+    if (scope !== 'personal') {
+      // Giống hệt quy tắc RLS của bảng notifications: chỉ Trưởng/phó
+      // phòng trở lên mới được phát thông báo phạm vi rộng (system/
+      // center/department). Gọi qua callerClient để hàm chạy đúng theo
+      // quyền/JWT của người gọi thật, không phải service role.
+      const { data: isElevated, error: roleErr } = await callerClient.rpc('is_dept_head_or_above');
+      if (roleErr || !isElevated) {
+        return jsonResponse({ error: 'Bạn không có quyền gửi thông báo ở phạm vi này.' }, 403);
+      }
+    } else if (!target_employee_id) {
+      return jsonResponse({ error: 'Thiếu target_employee_id cho thông báo cá nhân.' }, 400);
+    }
+
+    const supabaseAdmin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
     // Xác định danh sách employee_id cần nhận, đúng theo phạm vi thông báo
     let employeeIds = [];

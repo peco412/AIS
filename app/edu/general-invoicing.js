@@ -66,7 +66,7 @@ async function openCreateModal(studentId) {
   document.getElementById('fieldsMonthly').style.display = 'none';
 
   if (!plan) {
-    document.getElementById('modalPlanInfo').innerHTML = `<span style="color:var(--danger);">⚠️ Học sinh này CHƯA được Tư vấn viên chốt hình thức đóng học phí — vào "Danh sách học viên" cập nhật trước khi tạo hoá đơn.</span>`;
+    document.getElementById('modalPlanInfo').innerHTML = `<span style="color:var(--danger);">Học sinh này CHƯA được Tư vấn viên chốt hình thức đóng học phí — vào "Danh sách học viên" cập nhật trước khi tạo hoá đơn.</span>`;
     document.getElementById('submitCreate').disabled = true;
     modal.classList.add('show');
     return;

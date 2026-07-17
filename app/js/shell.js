@@ -98,10 +98,10 @@ export const WORLD_LAYERS = {
   personal: ['personal'],
 };
 export const WORLD_META = {
-  erp: { label: 'ERP — Vận hành nội bộ', icon: '🏢', color: '#0094D9' },
-  crm: { label: 'CRM — Khối trung tâm', icon: '🎓', color: '#22a06b' },
-  database: { label: 'Database — Dữ liệu gốc', icon: '🗄️', color: '#6c5ce7' },
-  personal: { label: 'Cá nhân', icon: '👤', color: '#8a8f98' },
+  erp: { label: 'ERP — Vận hành nội bộ', icon: '<svg class="icon icon--sm" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M9 21v-4h6v4"/><path d="M8 7h2M14 7h2M8 11h2M14 11h2M8 15h2M14 15h2"/></svg>', color: '#0094D9' },
+  crm: { label: 'CRM — Khối trung tâm', icon: '<svg class="icon icon--sm" viewBox="0 0 24 24"><path d="M2 9l10-5 10 5-10 5-10-5z"/><path d="M6 11v5c0 1.5 2.5 3 6 3s6-1.5 6-3v-5"/><path d="M22 9v6"/></svg>', color: '#22a06b' },
+  database: { label: 'Database — Dữ liệu gốc', icon: '<svg class="icon icon--sm" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>', color: '#6c5ce7' },
+  personal: { label: 'Cá nhân', icon: '<svg class="icon icon--sm" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>', color: '#8a8f98' },
 };
 const WORLD_STORAGE_KEY = 'ais_current_world';
 
@@ -259,7 +259,7 @@ function injectHubLauncher(profile, currentWorld, currentPage) {
       homeBtn.id = 'homeBtn';
       homeBtn.className = 'icon-btn';
       homeBtn.title = t('common.backToHome', 'Về trang chủ');
-      homeBtn.textContent = '🏠';
+      homeBtn.innerHTML = '<svg class="icon" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10"/></svg>';
       homeBtn.onclick = () => { window.location.href = '/dashboard.html'; };
       topbarRight.insertBefore(homeBtn, topbarRight.firstChild);
     }
@@ -276,7 +276,7 @@ function injectHubLauncher(profile, currentWorld, currentPage) {
     menuToggle.className = 'menu-toggle';
     anchor.insertBefore(menuToggle, anchor.firstChild);
   }
-  menuToggle.textContent = '⊞';
+  menuToggle.innerHTML = '<svg class="icon" viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg>';
   menuToggle.title = t('common.openHub', 'Mở danh mục điều hướng');
   menuToggle.style.display = '';
   menuToggle.onclick = () => openHubOverlay(profile, currentWorld, currentPage);
@@ -319,7 +319,7 @@ function openOverlayPanel({ icon, color, label, bodyHtml }) {
     <div class="hub-overlay__panel">
       <div class="hub-overlay__header" style="--world-color:${color};">
         <div class="hub-overlay__header-title"><span>${icon}</span> ${esc(label)}</div>
-        <button type="button" class="icon-btn" id="hubOverlayClose">✕</button>
+        <button type="button" class="icon-btn" id="hubOverlayClose"><svg class="icon icon--sm" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
       </div>
       <div class="hub-overlay__body">
         ${bodyHtml || '<div class="empty-cell">Không có mục nào khả dụng.</div>'}
@@ -426,7 +426,7 @@ function injectInstallButton() {
   btn.id = 'installAppBtn';
   btn.className = 'icon-btn';
   btn.title = t('common.installApp', 'Cài đặt ứng dụng');
-  btn.textContent = '📲';
+  btn.innerHTML = '<svg class="icon icon--sm" viewBox="0 0 24 24"><path d="M12 3v13"/><path d="M7 11l5 5 5-5"/><path d="M4 19h16"/></svg>';
   btn.style.display = 'none';
   topbarRight.insertBefore(btn, topbarRight.firstChild);
   attachInstallButton(btn);
@@ -445,8 +445,8 @@ export async function bootShell() {
     const nameEl = document.getElementById('userChipName');
     if (nameEl && nameEl.textContent === 'Đang tải...') {
       const banner = document.createElement('div');
-      banner.style.cssText = 'position:fixed; top:0; left:0; right:0; z-index:9999; background:#d3352f; color:#fff; padding:10px 16px; font-size:13px; text-align:center; font-weight:600;';
-      banner.textContent = '⚠️ Tải trang lâu hơn bình thường — có thể do mất mạng. Bấm để tải lại trang.';
+      banner.style.cssText = 'position:fixed; top:0; left:0; right:0; z-index:9999; background:var(--danger); color:#fff; padding:10px 16px; font-size:13px; text-align:center; font-weight:600;';
+      banner.textContent = 'Tải trang lâu hơn bình thường — có thể do mất mạng. Bấm để tải lại trang.';
       banner.style.cursor = 'pointer';
       banner.addEventListener('click', () => window.location.reload());
       document.body.prepend(banner);
@@ -513,7 +513,7 @@ export async function bootShell() {
     isCenterManager: employee.system_roles?.code === 'CENTER_MANAGER',
     // Dùng cờ is_teacher_eligible (không phải so tên chức vụ) để đúng nghiệp vụ
     // "kiêm nhiệm": nhân viên khối văn phòng vẫn có thể dạy nếu chức vụ được
-    // đánh dấu is_teacher_eligible = true (khớp với app/edu/teachers.js).
+    // đánh dấu is_teacher_eligible = true.
     // "Giáo viên linh hoạt": true nếu chức vụ mặc định cho phép dạy, HOẶC
     // nhân sự khối văn phòng được tick riêng "Có thể đứng lớp giảng dạy"
     // (employees.can_teach) — không cần đổi cả phòng ban/chức vụ chính.
@@ -585,9 +585,6 @@ export async function bootShell() {
   document.getElementById('logoutBtn')?.addEventListener('click', async () => {
     await supabase.auth.signOut();
     window.location.href = '/index.html';
-  });
-  document.getElementById('menuToggle')?.addEventListener('click', () => {
-    document.querySelector('.sidebar')?.classList.toggle('open');
   });
 
   return { profile, supabase };

@@ -64,7 +64,7 @@ async function loadReconciliation() {
         <div class="mono">${fmtMoney(r.glBalance)} đ</div>
         <div><input type="number" class="text-input actual-input" data-account="${r.code}" value="${r.actualBalance ?? ''}" placeholder="Nhập số thực tế..." /></div>
         <div class="${diff === null ? 'cell-muted' : diff === 0 ? 'recon-diff-ok' : 'recon-diff-bad'}" id="diff-${r.code}">
-          ${diff === null ? 'Chưa đối soát' : diff === 0 ? '✓ Khớp' : `Lệch ${fmtMoney(diff)} đ`}
+          ${diff === null ? 'Chưa đối soát' : diff === 0 ? 'Khớp' : `Lệch ${fmtMoney(diff)} đ`}
         </div>
         <div><button class="btn btn-outline btn-sm" data-save-recon="${r.code}">Lưu</button></div>
       </div>
@@ -95,7 +95,7 @@ async function loadPeriodStatus() {
   const actionArea = document.getElementById('closeActionArea');
 
   if (data?.is_closed) {
-    badge.innerHTML = `<span class="period-status period-status--closed">🔒 Đã khoá</span>`;
+    badge.innerHTML = `<span class="period-status period-status--closed">Đã khoá</span>`;
     actionArea.innerHTML = `
       <p class="cell-muted">Kỳ này đã khoá lúc ${new Date(data.closed_at).toLocaleString('vi-VN')}. Không thể ghi thêm bút toán.</p>
       ${IS_TECH_OR_EXEC ? `
@@ -116,8 +116,8 @@ async function loadPeriodStatus() {
     badge.innerHTML = `<span class="period-status period-status--open">🔓 Đang mở</span>`;
     const unreconciled = document.querySelectorAll('.recon-diff-bad').length;
     actionArea.innerHTML = `
-      ${unreconciled > 0 ? `<p style="color:var(--danger); font-size:13px;">⚠️ Còn ${unreconciled} tài khoản chưa khớp số đối soát — nên xử lý trước khi khoá.</p>` : ''}
-      <button class="btn btn-accent" id="btnClose">🔒 Khoá sổ kỳ ${month}/${year}</button>
+      ${unreconciled > 0 ? `<p style="color:var(--danger); font-size:13px;">Còn ${unreconciled} tài khoản chưa khớp số đối soát — nên xử lý trước khi khoá.</p>` : ''}
+      <button class="btn btn-accent" id="btnClose">Khoá sổ kỳ ${month}/${year}</button>
     `;
     document.getElementById('btnClose')?.addEventListener('click', async () => {
       if (!confirm(`Xác nhận KHOÁ SỔ kỳ ${month}/${year}? Sau khi khoá, không ai ghi thêm bút toán cho kỳ này được nữa (trừ khi BĐH/Kỹ thuật mở khoá lại).`)) return;

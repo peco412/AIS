@@ -67,15 +67,15 @@ async function loadSpendHistory(walletId, studentId) {
   const events = [];
   (tuitionPayments || []).forEach((r) => {
     events.push({
-      date: r.created_at, icon: '🎓', label: `Đóng học phí${r.invoices ? ` tháng ${r.invoices.period_month}/${r.invoices.period_year}` : ''}`,
+      date: r.created_at, label: `Đóng học phí${r.invoices ? ` tháng ${r.invoices.period_month}/${r.invoices.period_year}` : ''}`,
       amount: -Number(r.amount_coin || 0),
     });
   });
   (purchases || []).forEach((r) => {
-    events.push({ date: r.confirmed_at || r.created_at, icon: '🛍️', label: `Mua sắm — ${r.code}`, amount: -Number(r.total_coin_amount || 0) });
+    events.push({ date: r.confirmed_at || r.created_at, label: `Mua sắm — ${r.code}`, amount: -Number(r.total_coin_amount || 0) });
   });
   (withdrawals || []).forEach((r) => {
-    events.push({ date: r.approved_at || r.created_at, icon: '↩️', label: 'Hoàn tiền (rút ví)', amount: -Number(r.actual_amount_vnd || r.preview_amount_vnd || 0) });
+    events.push({ date: r.approved_at || r.created_at, label: 'Hoàn tiền (rút ví)', amount: -Number(r.actual_amount_vnd || r.preview_amount_vnd || 0) });
   });
 
   events.sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -85,11 +85,11 @@ async function loadSpendHistory(walletId, studentId) {
     : events.slice(0, 30).map((e) => `
       <div class="batch-row">
         <div class="batch-row__left">
-          <div class="date">${e.icon} ${e.label}</div>
+          <div class="date">${e.label}</div>
           <div class="meta">${fmtDate(e.date)}</div>
         </div>
         <div class="batch-row__right">
-          <div class="coin" style="color:var(--danger, #e53e3e);">${fmtMoney(e.amount)}</div>
+          <div class="coin" style="color:var(--danger);">${fmtMoney(e.amount)}</div>
         </div>
       </div>
     `).join('');

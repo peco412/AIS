@@ -180,7 +180,7 @@ function render() {
       <td><input type="number" class="insurance-input" value="${insurance_deduction}" ${CAN_EDIT ? '' : 'disabled'} style="width:100px;" title="Mặc định 10.5% x 5.310.000, sửa được nếu mức tham chiếu thay đổi" /></td>
       <td><input type="number" class="tax-input" value="${tax_deduction}" ${CAN_EDIT ? '' : 'disabled'} style="width:90px;" placeholder="Nhập tay" /></td>
       <td class="mono net-display" style="font-weight:700;">${fmtMoney(net)} đ</td>
-      <td>${paidAt ? `<span class="badge badge-active" title="${new Date(paidAt).toLocaleString('vi-VN')}">✓ Đã chi</span>` : '<span class="cell-muted" style="font-size:11px;">Chưa chi</span>'}</td>
+      <td>${paidAt ? `<span class="badge badge-active" title="${new Date(paidAt).toLocaleString('vi-VN')}">Đã chi</span>` : '<span class="cell-muted" style="font-size:11px;">Chưa chi</span>'}</td>
       <td>${CAN_EDIT ? `<button class="btn btn-accent btn-sm" data-save="${employee.id}">Lưu</button>` : ''}</td>
     </tr>`;
   }).join('');
@@ -223,7 +223,7 @@ function render() {
       const { error } = await supabase.from('payroll').upsert(payload, { onConflict: 'employee_id,year,month' });
       btn.disabled = false; btn.textContent = 'Lưu';
       if (error) { alert('Lỗi lưu: ' + error.message); return; }
-      btn.textContent = '✓ Đã lưu';
+      btn.textContent = 'Đã lưu';
       setTimeout(() => { btn.textContent = 'Lưu'; }, 1500);
     });
   });
@@ -267,7 +267,7 @@ document.getElementById('submitConfirmPayment').addEventListener('click', async 
 
   confirmPaymentModal.classList.remove('show');
   const result = data;
-  alert(`Đã xác nhận chi lương cho ${result.success} nhân viên.${result.failed > 0 ? `\n\n⚠️ ${result.failed} người bị lỗi: ${result.errors}` : ''}`);
+  alert(`Đã xác nhận chi lương cho ${result.success} nhân viên.${result.failed > 0 ? `\n\n${result.failed} người bị lỗi: ${result.errors}` : ''}`);
   await loadTable();
 });
 

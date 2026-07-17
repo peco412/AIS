@@ -48,10 +48,10 @@ async function checkPendingRequest() {
   if (!data) { notice.style.display = 'none'; return false; }
 
   const STATUS_MSG = {
-    pending: `⏳ Yêu cầu rút ${fmtMoney(data.preview_amount_vnd)} VNĐ đang chờ Trung tâm xác nhận (gửi lúc ${fmtDate(data.created_at)}).`,
-    center_confirmed: `⏳ Yêu cầu rút ${fmtMoney(data.preview_amount_vnd)} VNĐ đã được Trung tâm xác nhận, đang chờ Kế toán duyệt cuối.`,
-    approved: `✅ Yêu cầu rút ${fmtMoney(data.preview_amount_vnd)} VNĐ đã được duyệt xong — Kế toán sẽ chuyển khoản hoàn tiền trong thời gian sớm nhất.`,
-    rejected: `❌ Yêu cầu rút ví trước đó đã bị từ chối${data.reject_reason ? ` — Lý do: "${esc(data.reject_reason)}"` : ''}. Bạn có thể gửi yêu cầu mới nếu cần.`,
+    pending: `Yêu cầu rút ${fmtMoney(data.preview_amount_vnd)} VNĐ đang chờ Trung tâm xác nhận (gửi lúc ${fmtDate(data.created_at)}).`,
+    center_confirmed: `Yêu cầu rút ${fmtMoney(data.preview_amount_vnd)} VNĐ đã được Trung tâm xác nhận, đang chờ Kế toán duyệt cuối.`,
+    approved: `Yêu cầu rút ${fmtMoney(data.preview_amount_vnd)} VNĐ đã được duyệt xong — Kế toán sẽ chuyển khoản hoàn tiền trong thời gian sớm nhất.`,
+    rejected: `Yêu cầu rút ví trước đó đã bị từ chối${data.reject_reason ? ` — Lý do: "${esc(data.reject_reason)}"` : ''}. Bạn có thể gửi yêu cầu mới nếu cần.`,
   };
 
   notice.style.display = 'block';
@@ -119,7 +119,7 @@ document.getElementById('btnSubmitWithdraw').addEventListener('click', async () 
       const sharedNotice = document.getElementById('sharedWalletNotice');
       if (sharedNotice) {
         sharedNotice.style.display = 'block';
-        sharedNotice.textContent = `⚠️ Đây là ví chung của ${names}. Rút ví sẽ tất toán toàn bộ số dư chung, không chỉ riêng phần của 1 con.`;
+        sharedNotice.textContent = `Đây là ví chung của ${names}. Rút ví sẽ tất toán toàn bộ số dư chung, không chỉ riêng phần của 1 con.`;
       }
     }
 

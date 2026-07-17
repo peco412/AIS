@@ -21,7 +21,7 @@ async function suggestSize() {
     return;
   }
   SUGGESTED_SIZE = data;
-  hint.innerHTML = `✓ Gợi ý size: <strong>${esc(data)}</strong> (có thể sửa tay nếu muốn chọn size khác)`;
+  hint.innerHTML = `Gợi ý size: <strong>${esc(data)}</strong> (có thể sửa tay nếu muốn chọn size khác)`;
 
   // Tu dien vao MOI o size con TRONG (chua duoc phu huynh tu go tay
   // truoc do) — khong ghi de neu ho da tu chinh size rieng cho san

@@ -28,7 +28,7 @@ function render() {
         <td>${esc(r.name)}</td>
         <td class="cell-muted">${esc(GROUP_LABEL[r.product_group] || r.product_group)}</td>
         <td class="cell-muted">${esc(r.unit || '—')}</td>
-        <td>${r.has_size ? '✓' : '—'}</td>
+        <td>${r.has_size ? 'Có' : '—'}</td>
         <td class="mono">${Number(r.price_vnd || 0).toLocaleString('vi-VN')} đ</td>
         <td>${CAN_EDIT ? `<button class="btn btn-outline btn-sm" data-edit="${r.id}">Sửa</button>` : ''}</td>
       </tr>

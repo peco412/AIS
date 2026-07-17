@@ -73,7 +73,7 @@ document.getElementById('btnPay').addEventListener('click', async () => {
     errBox.textContent = err.message || 'Có lỗi xảy ra.';
     errBox.classList.add('show');
   } finally {
-    btn.disabled = false; btn.textContent = '💳 Thanh toán ngay';
+    btn.disabled = false; btn.textContent = 'Thanh toán ngay';
   }
 });
 

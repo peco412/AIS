@@ -6,15 +6,19 @@
 <title>Bảng điểm — AIS Center</title>
 <link rel="manifest" href="manifest.json" />
 <meta name="theme-color" content="#0094D9" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="css/parent.css" />
 </head>
 <body>
 
 <header class="app-topbar">
-  <button class="icon-btn" onclick="location.href='account.html'">←</button>
-  <div class="app-topbar__title">📊 Bảng điểm của con</div>
-  <div style="width:36px;"></div>
+  <button class="app-topbar__back" onclick="location.href='account.html'" aria-label="Quay lại">
+    <svg class="icon" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
+  </button>
+  <div class="app-topbar__title">Bảng điểm của con</div>
+  <div class="app-topbar__right" style="width:22px;"></div>
 </header>
 
 <main class="app-main">

@@ -112,6 +112,8 @@ const DICT = {
   'nav.edu.teachers': { vi: 'Danh sách giáo viên', en: 'Teacher directory' },
   'nav.edu.classes': { vi: 'Danh sách lớp', en: 'Classes' },
   'nav.edu.students': { vi: 'Danh sách học viên', en: 'Students' },
+  'nav.edu.teachers': { vi: 'Danh sách giáo viên', en: 'Teachers' },
+  'nav.edu.parentLinks': { vi: 'Liên kết Phụ huynh — Học sinh', en: 'Parent-Student Links' },
   'nav.edu.classAssignment': { vi: 'Phân lớp học viên', en: 'Class assignment' },
   'nav.edu.grades': { vi: 'Bảng điểm học viên', en: 'Student grades' },
 

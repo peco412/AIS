@@ -90,7 +90,7 @@ document.getElementById('btnSave').addEventListener('click', async () => {
   const btn = document.getElementById('btnSave');
   btn.disabled = true; btn.textContent = 'Đang lưu...';
   const { error } = await supabase.from('student_grades').insert(rows);
-  btn.disabled = false; btn.textContent = '💾 Lưu bảng điểm';
+  btn.disabled = false; btn.textContent = 'Lưu bảng điểm';
   if (error) { alert('Lỗi lưu bảng điểm: ' + error.message); return; }
   alert('Đã lưu bảng điểm. Dữ liệu sẽ tự hiển thị ở Bảng điểm học viên của trung tâm.');
   await loadStudentsAndGrades();

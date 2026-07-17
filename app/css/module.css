@@ -207,7 +207,13 @@ table.data-table { width: 100%; min-width: 640px; border-collapse: collapse; fon
      khoảng cách như bản desktop. */
   .topbar__right { gap: 6px; }
   #langSwitcher button { padding: 4px 8px; font-size: 10.5px; }
-  .icon-btn { width: 32px; height: 32px; font-size: 15px; }
+  /* SỬA LỖI THẬT: dòng cũ ở đây thu icon-btn về CÒN 32px trên điện thoại
+     (<640px) — NGƯỢC với mục tiêu "tối thiểu 40px dễ bấm trên di động"
+     đã đặt ở dashboard.css (@960px). Vì file này load SAU dashboard.css
+     nên quy tắc 32px thắng thế đúng trên chính màn hình điện thoại thật
+     (nơi cần chạm chính xác nhất) — giờ chỉ giảm cỡ icon bên trong
+     (font-size), giữ nguyên khung nút 40px kế thừa từ dashboard.css. */
+  .icon-btn { font-size: 15px; }
 
   .field-grid-2 { grid-template-columns: 1fr; gap: 0; } /* co về 1 cột, tránh ô nhập bị bóp chật trên điện thoại */
   .toolbar { flex-direction: column; align-items: stretch; }
