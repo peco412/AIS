@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Chương trình ưu đãi nạp ví — AIS OFFICE</title>
+<title>Chương trình ưu đãi học phí & nạp ví — AIS OFFICE</title>
 <link rel="manifest" href="/manifest.json" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="mobile-web-app-capable" content="yes" />
@@ -40,7 +40,7 @@
 
   <main class="main">
     <div class="page-header">
-      <div><h1>Chương trình ưu đãi nạp ví</h1><div class="sub">Chỉ Kế toán trưởng mới tạo/bật/tắt được. Toàn hệ thống và Trung tâm loại trừ lẫn nhau — không thể cùng active.</div></div>
+      <div><h1>Chương trình ưu đãi học phí &amp; nạp ví</h1><div class="sub">Áp dụng được cho Thu học phí tại trung tâm, Nạp ví, hoặc cả hai — chọn ở mục "Phương thức áp dụng" khi tạo. Chỉ Kế toán trưởng mới tạo/bật/tắt được. Toàn hệ thống và Trung tâm loại trừ lẫn nhau — không thể cùng active.</div></div>
       <button class="btn btn-accent" id="btnAdd">+ Tạo chương trình mới</button>
     </div>
 
@@ -84,9 +84,10 @@
       <div class="field">
         <label for="progAppliesVia">Phương thức áp dụng *</label>
         <select id="progAppliesVia" required>
-          <option value="both">Cả hai (Tại trung tâm + Tại ví)</option>
+          <option value="" disabled selected>— Chọn phương thức áp dụng —</option>
           <option value="counter">Chỉ Thu học phí tại trung tâm</option>
           <option value="wallet">Chỉ Nạp ví</option>
+          <option value="both">Cả hai (Tại trung tâm + Tại ví)</option>
         </select>
       </div>
       <div class="field">

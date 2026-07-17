@@ -1,35 +1,13 @@
-import { supabase, esc, fmtDate, bootParentShell, getSelectedStudentId, setSelectedStudentId } from './parentSupabase.js';
+import { supabase, esc, fmtDate, bootParentShell } from './parentSupabase.js';
 
-let STUDENTS = [];
-let SELECTED_ID = null;
-
-function renderSwitcher() {
-  const el = document.getElementById('studentSwitcher');
-  if (STUDENTS.length <= 1) { el.style.display = 'none'; return; }
-  el.innerHTML = STUDENTS.map((s) => `
-    <button class="student-chip ${s.id === SELECTED_ID ? 'active' : ''}" data-id="${s.id}">${esc(s.full_name)}</button>
-  `).join('');
-  el.querySelectorAll('[data-id]').forEach((btn) => {
-    btn.addEventListener('click', () => { setSelectedStudentId(btn.dataset.id); SELECTED_ID = btn.dataset.id; renderSwitcher(); loadGrades(); });
-  });
-}
+// MỚI: gộp bảng điểm của TẤT CẢ con vào 1 màn hình, nhóm theo tên con —
+// không cần bấm qua lại giữa từng con nữa (đồng bộ với Ví AIScoins đã
+// dùng chung 1 ví gia đình, và trang Công nợ & Học vụ cũng đã gộp tương tự).
 
 const RANKING_COLOR = { 'Xuất sắc': 'paid', 'Giỏi': 'paid', 'Khá': 'partial', 'Trung bình': 'partial', 'Yếu': 'unpaid' };
 
-async function loadGrades() {
-  const listEl = document.getElementById('gradesList');
-  listEl.innerHTML = '<div class="empty-state">Đang tải dữ liệu...</div>';
-
-  const { data, error } = await supabase
-    .from('student_grades')
-    .select('term, score, ranking, final_status, created_at, classes(name, programs(name), program_sublevels(name))')
-    .eq('student_id', SELECTED_ID)
-    .order('created_at', { ascending: false });
-
-  if (error) { listEl.innerHTML = `<div class="empty-state">Lỗi: ${esc(error.message)}</div>`; return; }
-  if (!data || data.length === 0) { listEl.innerHTML = '<div class="empty-state">Chưa có bảng điểm nào được ghi nhận.</div>'; return; }
-
-  listEl.innerHTML = data.map((g) => `
+function gradeCardHtml(g) {
+  return `
     <div class="card">
       <div class="invoice-row__top">
         <span>${esc(g.classes?.programs?.name || '—')} — ${esc(g.classes?.program_sublevels?.name || '')}</span>
@@ -43,16 +21,39 @@ async function loadGrades() {
       ${g.final_status ? `<div class="cell-muted" style="font-size:12px; margin-top:4px;">${g.final_status === 'graduated' ? 'Đã hoàn thành khoá' : 'Chưa đạt, cần học lại'}</div>` : ''}
       <div class="cell-muted" style="font-size:11px; margin-top:8px;">Cập nhật: ${fmtDate(g.created_at)}</div>
     </div>
-  `).join('');
+  `;
 }
 
 (async () => {
   try {
     const { students } = await bootParentShell();
-    STUDENTS = students;
-    if (STUDENTS.length === 0) return;
-    SELECTED_ID = getSelectedStudentId(STUDENTS);
-    renderSwitcher();
-    await loadGrades();
+    const listEl = document.getElementById('gradesList');
+    if (students.length === 0) return;
+
+    const studentIds = students.map((s) => s.id);
+    const { data, error } = await supabase
+      .from('student_grades')
+      .select('student_id, term, score, ranking, final_status, created_at, classes(name, programs(name), program_sublevels(name))')
+      .in('student_id', studentIds)
+      .order('created_at', { ascending: false });
+
+    if (error) { listEl.innerHTML = `<div class="empty-state">Lỗi: ${esc(error.message)}</div>`; return; }
+    if (!data || data.length === 0) { listEl.innerHTML = '<div class="empty-state">Chưa có bảng điểm nào được ghi nhận.</div>'; return; }
+
+    if (students.length === 1) {
+      listEl.innerHTML = data.map(gradeCardHtml).join('');
+      return;
+    }
+
+    // Nhiều hơn 1 con -> nhóm theo tên con, mỗi nhóm có tiêu đề riêng để dễ
+    // phân biệt mà không cần bấm chuyển qua lại.
+    listEl.innerHTML = students.map((s) => {
+      const rows = data.filter((g) => g.student_id === s.id);
+      if (rows.length === 0) return '';
+      return `
+        <h3 style="margin:18px 0 10px; font-size:14px;">${esc(s.full_name)}</h3>
+        ${rows.map(gradeCardHtml).join('')}
+      `;
+    }).join('') || '<div class="empty-state">Chưa có bảng điểm nào được ghi nhận.</div>';
   } catch (e) { /* bootParentShell tự điều hướng / tự hiện lỗi */ }
 })();

@@ -1,20 +1,20 @@
-import { supabase, esc, fmtMoney, bootParentShell, getSelectedStudentId } from './parentSupabase.js';
+import { supabase, esc, fmtMoney, bootParentShell } from './parentSupabase.js';
 
-let STUDENT_ID = null;
 let WALLET_ID = null;
 let WALLET_BALANCE = 0;
 let ALL_INVOICES = [];
 let ACTIVE_INVOICE = null;
+let STUDENT_NAMES = {};
 
 const STATUS_LABEL = { unpaid: 'Chưa đóng', partially_paid: 'Đã đóng một phần', paid: 'Đã đóng đủ' };
 const STATUS_BADGE_CLASS = { unpaid: 'unpaid', partially_paid: 'partial', paid: 'paid' };
 const PLAN_LABEL = { none: 'Theo tháng', case: 'Theo trường hợp', program: 'Ưu đãi chương trình', special: 'Diện đặc biệt' };
 
-async function loadInvoices() {
+async function loadInvoices(studentIds) {
   const { data: invoices } = await supabase
     .from('invoices')
-    .select('id, period_year, period_month, amount_vnd, manual_discount_vnd, discount_type, status, due_date')
-    .eq('student_id', STUDENT_ID)
+    .select('id, student_id, period_year, period_month, amount_vnd, manual_discount_vnd, discount_type, status, due_date')
+    .in('student_id', studentIds)
     .in('status', ['unpaid', 'partially_paid'])
     .order('due_date', { ascending: true });
 
@@ -26,8 +26,11 @@ async function loadInvoices() {
   }
   document.getElementById('content').style.display = 'block';
 
+  // Gộp hoá đơn của TẤT CẢ con vào 1 danh sách chọn, ghi rõ tên con trên
+  // mỗi dòng — phụ huynh không cần rời trang để đổi "con đang chọn" nữa,
+  // vì dù chọn hoá đơn của con nào, tiền đóng cũng trừ từ đúng 1 ví chung.
   document.getElementById('invoiceSelect').innerHTML = ALL_INVOICES.map((inv) =>
-    `<option value="${inv.id}">Học phí ${inv.period_month}/${inv.period_year} — hạn ${new Date(inv.due_date).toLocaleDateString('vi-VN')}</option>`
+    `<option value="${inv.id}">${esc(STUDENT_NAMES[inv.student_id] || '')} — Học phí ${inv.period_month}/${inv.period_year} — hạn ${new Date(inv.due_date).toLocaleDateString('vi-VN')}</option>`
   ).join('');
 
   await selectInvoice(ALL_INVOICES[0].id);
@@ -81,9 +84,12 @@ document.getElementById('btnPay').addEventListener('click', async () => {
   try {
     const { students } = await bootParentShell();
     if (students.length === 0) return;
-    STUDENT_ID = getSelectedStudentId(students);
+    const studentIds = students.map((s) => s.id);
+    STUDENT_NAMES = Object.fromEntries(students.map((s) => [s.id, s.full_name]));
 
-    const { data: wallet } = await supabase.from('wallet_students').select('wallet_id').eq('student_id', STUDENT_ID).maybeSingle();
+    // Ví đã là ví CHUNG của cả gia đình — lấy qua con bất kỳ cũng ra đúng
+    // 1 ví, dùng con đầu tiên là đủ.
+    const { data: wallet } = await supabase.from('wallet_students').select('wallet_id').eq('student_id', studentIds[0]).maybeSingle();
     if (wallet) {
       WALLET_ID = wallet.wallet_id;
       const { data: batches } = await supabase.from('wallet_topup_batches').select('coin_remaining').eq('wallet_id', wallet.wallet_id);
@@ -91,6 +97,6 @@ document.getElementById('btnPay').addEventListener('click', async () => {
     }
     document.getElementById('walletBalanceDisplay').textContent = `${fmtMoney(WALLET_BALANCE)} AIScoins`;
 
-    await loadInvoices();
+    await loadInvoices(studentIds);
   } catch (e) { /* bootParentShell tự điều hướng */ }
 })();
