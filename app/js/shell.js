@@ -140,7 +140,59 @@ function renderNav(profile, currentPage) {
   const currentWorld = resolveCurrentWorld(currentPage, profile);
   injectWorldSwitcher(profile, currentWorld, currentPage);
   injectHubLauncher(profile, currentWorld, currentPage);
+  injectMobileBottomNav(profile, currentWorld, currentPage);
   if (!currentPage?.endsWith('/dashboard.html')) injectSiblingStrip(profile, currentPage);
+}
+
+/**
+ * Thanh điều hướng dưới (Material Design bottom navigation) — CHỈ hiện
+ * trên điện thoại (CSS ẩn ở màn rộng hơn). Gom 4 điểm đến chính (Trang
+ * chủ/Menu/Thông báo/Tài khoản) thay vì rải rác nhiều icon trên thanh
+ * trên cùng như trước — đúng yêu cầu "tránh nav quá nhiều", vì các icon
+ * tương ứng (mở menu, chuông, avatar) được ẩn bớt trên điện thoại (xem
+ * CSS @media 640px), tránh lặp 2 nơi cùng dẫn tới 1 chỗ.
+ */
+function injectMobileBottomNav(profile, currentWorld, currentPage) {
+  document.getElementById('mobileBottomNav')?.remove();
+
+  const isOn = (path) => currentPage && currentPage.endsWith(path);
+  const nav = document.createElement('nav');
+  nav.id = 'mobileBottomNav';
+  nav.className = 'mobile-bottom-nav';
+  nav.innerHTML = `
+    <a href="/dashboard.html" class="${isOn('/dashboard.html') ? 'active' : ''}">
+      <svg class="icon icon--nav" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10"/></svg>
+      <span>Trang chủ</span>
+    </a>
+    <button type="button" id="mobileBottomNavMenu">
+      <svg class="icon icon--nav" viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg>
+      <span>Menu</span>
+    </button>
+    <a href="/notifications.html" class="${isOn('/notifications.html') ? 'active' : ''}">
+      <svg class="icon icon--nav" viewBox="0 0 24 24"><path d="M6 8a6 6 0 1 1 12 0c0 4 1.5 6 2 6.5H4c.5-.5 2-2.5 2-6.5z"/><path d="M9.5 18a2.5 2.5 0 0 0 5 0"/></svg>
+      <span class="mobile-bottom-nav__badge" id="mobileBottomNavBadge" style="display:none;">0</span>
+      <span>Thông báo</span>
+    </a>
+    <a href="/profile.html" class="${isOn('/profile.html') ? 'active' : ''}">
+      <svg class="icon icon--nav" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>
+      <span>Tài khoản</span>
+    </a>
+  `;
+  document.body.appendChild(nav);
+  nav.querySelector('#mobileBottomNavMenu').addEventListener('click', () => openHubOverlay(profile, currentWorld, currentPage));
+
+  // Đồng bộ số thông báo chưa đọc với chuông ở topbar (nếu trang có sẵn).
+  const topbarBadge = document.getElementById('notifBadge');
+  if (topbarBadge) {
+    const syncBadge = () => {
+      const navBadge = document.getElementById('mobileBottomNavBadge');
+      if (!navBadge) return;
+      navBadge.style.display = topbarBadge.style.display;
+      navBadge.textContent = topbarBadge.textContent;
+    };
+    syncBadge();
+    new MutationObserver(syncBadge).observe(topbarBadge, { childList: true, attributes: true });
+  }
 }
 
 /**
@@ -284,7 +336,13 @@ function injectHubLauncher(profile, currentWorld, currentPage) {
 
 const SUBGROUP_LABEL = { tuition: 'Thu học phí', warehouse: 'Kho & Chi phí vận hành', role: 'Chức năng riêng' };
 
-function renderSectionHtml(group, profile, currentPage) {
+// MỚI — Material Design Navigation Drawer: các nhóm (phòng ban) giờ đóng
+// lại theo mặc định, bấm vào tiêu đề mới mở ra — thay vì hiện hết mọi
+// icon của mọi phòng ban cùng lúc (rất rối, nhất là trên điện thoại khi
+// 1 người có quyền truy cập nhiều phòng ban). Chỉ nhóm chứa TRANG ĐANG MỞ
+// (nếu có) được mở sẵn, còn lại đóng — đúng tinh thần "chỉ hiện đúng cái
+// đang cần", giống ngăn kéo điều hướng (navigation drawer) chuẩn Material.
+function renderSectionHtml(group, profile, currentPage, forceOpen) {
   const items = group.items.filter((item) => canAccess(item, profile));
   if (items.length === 0) return '';
   const hasSub = items.some((i) => i.subgroup);
@@ -301,11 +359,17 @@ function renderSectionHtml(group, profile, currentPage) {
   } else {
     bodyHtml = `<div class="hub-overlay__grid">${items.map((item) => hubTileHtml(item, profile, currentPage)).join('')}</div>`;
   }
+  const containsCurrent = items.some((item) => currentPage && currentPage.endsWith(item.href));
+  const isOpen = forceOpen || containsCurrent;
   return `
-    <div class="hub-overlay__section">
-      <h3 class="hub-overlay__section-title">${esc(t(group.sectionKey, group.section))}</h3>
+    <details class="hub-overlay__section" ${isOpen ? 'open' : ''}>
+      <summary class="hub-overlay__section-title">
+        <span>${esc(t(group.sectionKey, group.section))}</span>
+        <span class="hub-overlay__section-count">${items.length}</span>
+        <svg class="icon icon--sm hub-overlay__section-chevron" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+      </summary>
       ${bodyHtml}
-    </div>
+    </details>
   `;
 }
 
@@ -344,7 +408,18 @@ function openHubOverlay(profile, currentWorld, currentPage) {
   const personalGroup = NAV_CONFIG.find((g) => g.alwaysShow);
   const effectiveGroups = currentWorld === 'personal' && personalGroup ? [personalGroup] : groups;
 
-  const bodyHtml = effectiveGroups.map((group) => renderSectionHtml(group, profile, currentPage)).join('');
+  // Neu khong nhom nao khop trang hien tai (vd dang o dashboard.html) ->
+  // tu mo san nhom DAU TIEN co the hien thi duoc, tranh ngan keo trong
+  // rong khi vua mo ra.
+  const anyMatchesCurrent = effectiveGroups.some((g) => g.items.some((item) => canAccess(item, profile) && currentPage && currentPage.endsWith(item.href)));
+  let forcedFirst = false;
+  const bodyHtml = effectiveGroups.map((group) => {
+    const visibleCount = group.items.filter((item) => canAccess(item, profile)).length;
+    if (visibleCount === 0) return '';
+    const forceOpen = !anyMatchesCurrent && !forcedFirst;
+    if (forceOpen) forcedFirst = true;
+    return renderSectionHtml(group, profile, currentPage, forceOpen);
+  }).join('');
   openOverlayPanel({ icon: meta.icon, color: meta.color, label: meta.label, bodyHtml });
 }
 
@@ -355,7 +430,7 @@ function openHubOverlay(profile, currentWorld, currentPage) {
  * nhay thang vao 1 trang dau tien nhu truoc.
  */
 export function openSectionHub(profile, group, currentPage) {
-  const bodyHtml = renderSectionHtml(group, profile, currentPage);
+  const bodyHtml = renderSectionHtml(group, profile, currentPage, true);
   const meta = WORLD_META[layerToWorld(group.layer)] || WORLD_META.erp;
   openOverlayPanel({ icon: group.items[0]?.icon || meta.icon, color: meta.color, label: t(group.sectionKey, group.section), bodyHtml });
 }

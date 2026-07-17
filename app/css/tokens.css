@@ -144,3 +144,4 @@ button { font-family: inherit; }
 .icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; fill: none; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; vertical-align: middle; }
 .icon--sm { width: 16px; height: 16px; }
 .icon--lg { width: 26px; height: 26px; }
+.icon--nav { width: 22px; height: 22px; margin: 0 auto 2px; }

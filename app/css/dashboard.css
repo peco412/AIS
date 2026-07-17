@@ -646,23 +646,56 @@ body.hub-body { background: var(--surface); }
   position: absolute; inset: 0; background: rgba(0,0,0,0.32); backdrop-filter: blur(2px);
 }
 .hub-overlay__panel {
-  position: relative; width: min(560px, 92vw); height: 100%;
-  background: var(--surface-base); box-shadow: var(--shadow-lg);
+  position: relative; width: min(400px, 92vw); height: 100%;
+  background: var(--surface-base);
+  /* Material elevation (level 16dp) — bóng đổ theo đúng 2 lớp key+ambient
+     shadow của Material Design thay vì 1 bóng phẳng đơn giản trước đây. */
+  box-shadow: 0 8px 10px -5px rgba(0,0,0,0.2), 0 16px 24px 2px rgba(0,0,0,0.14), 0 6px 30px 5px rgba(0,0,0,0.12);
   display: flex; flex-direction: column;
   transform: translateX(24px); transition: transform var(--dur-med) var(--ease);
 }
 .hub-overlay.show .hub-overlay__panel { transform: translateX(0); }
 .hub-overlay__header {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 20px 22px; border-bottom: 1px solid var(--border);
+  padding: 18px 20px; border-bottom: 1px solid var(--border);
   background: color-mix(in srgb, var(--world-color) 8%, var(--surface-base));
+  flex-shrink: 0;
 }
 .hub-overlay__header-title { font-size: 17px; font-weight: 800; color: var(--ink); display: flex; align-items: center; gap: 10px; }
-.hub-overlay__body { flex: 1; overflow-y: auto; padding: 20px 22px 40px; }
-.hub-overlay__section { margin-bottom: 26px; }
-.hub-overlay__section-title { font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; margin: 0 0 12px; }
-.hub-overlay__subgroup-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; margin: 14px 0 8px; }
-.hub-overlay__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px; }
+.hub-overlay__body { flex: 1; overflow-y: auto; padding: 8px 10px 40px; }
+
+/* Nhóm phòng ban dạng "ngăn kéo điều hướng" (navigation drawer) chuẩn
+   Material — đóng lại mặc định, bấm vào mới mở, chỉ nhóm chứa trang đang
+   xem (hoặc nhóm đầu tiên nếu không có) được mở sẵn. Dùng <details>/
+   <summary> có sẵn của trình duyệt — không cần thêm JS xử lý đóng/mở. */
+.hub-overlay__section {
+  border-radius: var(--radius-md);
+  margin-bottom: 4px;
+}
+.hub-overlay__section-title {
+  display: flex; align-items: center; gap: 8px;
+  padding: 13px 12px;
+  font-size: 13.5px; font-weight: 700; color: var(--ink);
+  cursor: pointer; user-select: none; list-style: none;
+  border-radius: var(--radius-md);
+  transition: background var(--dur-fast) var(--ease);
+}
+.hub-overlay__section-title::-webkit-details-marker { display: none; }
+.hub-overlay__section-title:hover { background: var(--surface-fill); }
+.hub-overlay__section-title:active { background: var(--surface-sunken); }
+.hub-overlay__section-title span:first-child { flex: 1; }
+.hub-overlay__section-count {
+  font-size: 11px; font-weight: 700; color: var(--muted);
+  background: var(--surface-fill); border-radius: 999px; padding: 1px 8px;
+}
+.hub-overlay__section-chevron { color: var(--muted); transition: transform var(--dur-fast) var(--ease); }
+.hub-overlay__section[open] > .hub-overlay__section-title .hub-overlay__section-chevron { transform: rotate(90deg); }
+.hub-overlay__section[open] > .hub-overlay__section-title { color: var(--accent-deep); }
+
+.hub-overlay__subgroup-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; margin: 14px 0 8px 12px; }
+
+/* Desktop/tablet: lưới icon như cũ, đủ chỗ để hiện đẹp. */
+.hub-overlay__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px; padding: 4px 4px 14px; }
 .hub-overlay__tile {
   display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center;
   padding: 14px 8px; border-radius: var(--radius-md); background: var(--surface-card);
@@ -671,12 +704,66 @@ body.hub-body { background: var(--surface); }
 }
 .hub-overlay__tile:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
 .hub-overlay__tile.active { border-color: var(--accent); background: var(--accent-tint); }
-.hub-overlay__tile-icon { font-size: 24px; }
+.hub-overlay__tile-icon { font-size: 24px; display: flex; }
 .hub-overlay__tile-label { font-size: 11.5px; font-weight: 600; line-height: 1.3; }
+
+/* =====================================================================
+   MOBILE BOTTOM NAVIGATION (Material Design) — chỉ hiện trên điện thoại.
+   Gom Trang chủ/Menu/Thông báo/Tài khoản vào 1 thanh cố định đáy màn hình
+   — các icon tương ứng ở thanh trên cùng được ẩn bớt trên điện thoại
+   (xem @media 640px bên dưới) để không lặp 2 nơi cùng dẫn 1 chỗ, đúng
+   yêu cầu "tránh nav quá nhiều/rối" trên di động.
+   ===================================================================== */
+.mobile-bottom-nav {
+  display: none; /* chỉ bật ở @media max-width:640px bên dưới */
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 400;
+  background: rgba(255,255,255,0.94);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-top: 1px solid var(--border);
+  /* Material elevation (level 8dp) cho thanh điều hướng đáy */
+  box-shadow: 0 -2px 4px -1px rgba(0,0,0,0.06), 0 -4px 8px 0 rgba(0,0,0,0.05);
+  padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+  align-items: stretch;
+  justify-content: space-around;
+}
+.mobile-bottom-nav a, .mobile-bottom-nav button {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 1px; position: relative;
+  border: none; background: none; text-decoration: none;
+  color: var(--muted); font-size: 10px; font-weight: 600;
+  padding: 6px 2px; border-radius: 12px; cursor: pointer;
+  transition: color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+}
+.mobile-bottom-nav a:active, .mobile-bottom-nav button:active { background: var(--surface-fill); }
+.mobile-bottom-nav a.active { color: var(--accent); }
+.mobile-bottom-nav__badge {
+  position: absolute; top: 2px; right: calc(50% - 16px);
+  min-width: 15px; height: 15px; padding: 0 3px; border-radius: 999px;
+  background: var(--danger); color: #fff; font-size: 9px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
 
 @media (max-width: 640px) {
   .world-switcher__label { display: none; }
-  .hub-overlay__grid { grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); }
+  /* SỬA — Material Design: trên điện thoại, đổi từ LƯỚI Ô VUÔNG (mỗi mục
+     to, chỉ thấy 6-8 mục/màn hình, phải cuộn nhiều) sang DANH SÁCH DÒNG
+     NGANG (icon + tên trên cùng 1 dòng, kiểu List đúng chuẩn Material cho
+     menu điều hướng nhiều mục) — thấy được nhiều mục hơn hẳn trong cùng 1
+     màn hình, đúng tinh thần "tránh nav quá nhiều/rối". */
+  .hub-overlay__panel { width: 100vw; }
+  .hub-overlay__grid { grid-template-columns: 1fr; gap: 0; padding: 4px 0 10px; }
+  .hub-overlay__tile {
+    flex-direction: row; justify-content: flex-start; text-align: left;
+    padding: 11px 12px; border-radius: var(--radius-sm);
+    border: none; background: transparent; gap: 14px;
+  }
+  .hub-overlay__tile:active { background: var(--surface-fill); transform: none; }
+  .hub-overlay__tile.active { background: var(--accent-tint); }
+  .hub-overlay__tile-icon { flex-shrink: 0; }
+  .hub-overlay__tile-label { font-size: 13.5px; }
+  .hub-overlay__subgroup-label { margin-left: 12px; }
+
   /* SỬA: trên màn hẹp, "AIS OFFICE" + phụ đề dài bị bóp chật tới mức tự
      xuống dòng thành nhiều dòng (2-3 dòng), đẩy cả 2 phía topbar bị vỡ bố
      cục — ẩn phụ đề, giữ đúng 1 dòng tên thương hiệu, đủ hiểu ngữ cảnh mà
@@ -686,6 +773,15 @@ body.hub-body { background: var(--surface); }
   .hub-topbar__brand > div { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .hub-topbar__brand small { display: none; }
   .hub-topbar__right { gap: 4px; flex-shrink: 0; }
+
+  /* Bật thanh điều hướng đáy, ẩn bớt các icon giờ đã trùng chức năng ở đó
+     (mở menu, chuông thông báo, avatar tài khoản) — chỉ giữ nút đăng xuất
+     vì đây là 1 thao tác riêng, không phải điều hướng. */
+  .mobile-bottom-nav { display: flex; }
+  #menuToggle, .topbar__right #notifBadge, .topbar .icon-btn[onclick*="notifications"],
+  .hub-topbar__right .icon-btn[onclick*="notifications"], .user-chip, #homeBtn { display: none !important; }
+  .main, .hub-main { padding-bottom: 76px; }
+  body { padding-bottom: env(safe-area-inset-bottom); }
 }
 
 /* Dai "cac chuc nang cung nhom" — hien ngay dau moi trang, cuon ngang
