@@ -10,14 +10,14 @@ const notifBadge = document.getElementById('notifBadge');
 // Icon + màu riêng cho từng nhóm phòng ban trên lưới App Hub — mỗi phòng
 // ban 1 màu gradient khác nhau, giống mẫu ứng dụng di động.
 const HUB_ICON = {
-  'nav.section.masterdata': '🗄️',
-  'nav.section.personal': '👤',
-  'nav.section.hr': '🧑‍💼',
-  'nav.section.acc': '💰',
-  'nav.section.mkt': '📣',
-  'nav.section.fac': '🛠',
-  'nav.section.center': '🏫',
-  'nav.section.exec': '🏛',
+  'nav.section.masterdata': '<svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9"/><path d="M10 13h4"/></svg>',
+  'nav.section.personal': '<svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>',
+  'nav.section.hr': '<svg class="icon" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="11" r="2"/><path d="M5.5 17c.3-2 1.5-3 3-3s2.7 1 3 3"/><path d="M14 9h4M14 13h4"/></svg>',
+  'nav.section.acc': '<svg class="icon" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M6 9v.01M18 15v.01"/></svg>',
+  'nav.section.mkt': '<svg class="icon" viewBox="0 0 24 24"><path d="M3 10v4h3l5 4V6l-5 4H3z"/><path d="M14 8a4 4 0 0 1 0 8"/><path d="M17 5a8 8 0 0 1 0 14"/></svg>',
+  'nav.section.fac': '<svg class="icon" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 1-5.4 5.4L4 17l3 3 5.3-5.3a4 4 0 0 1 5.4-5.4l-3-3z"/></svg>',
+  'nav.section.center': '<svg class="icon" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M9 21v-4h6v4"/><path d="M8 7h2M14 7h2M8 11h2M14 11h2M8 15h2M14 15h2"/></svg>',
+  'nav.section.exec': '<svg class="icon" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M2 13h20"/></svg>',
 };
 const HUB_COLOR_CLASS = {
   'nav.section.masterdata': 'tile-masterdata',
@@ -83,9 +83,9 @@ function renderHub(profile) {
     const hasSubgroups = group.items.some((item) => item.subgroup);
     if (hasSubgroups) {
       const SUBGROUP_META = {
-        tuition: { icon: '💳', label: 'Thu học phí', color: 'tile-center' },
-        warehouse: { icon: '📦', label: 'Kho Trung tâm & Vận hành', color: 'tile-fac' },
-        role: { icon: '🧑‍🏫', label: 'Chức năng riêng', color: 'tile-hr' },
+        tuition: { icon: '<svg class="icon" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>', label: 'Thu học phí', color: 'tile-center' },
+        warehouse: { icon: '<svg class="icon" viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>', label: 'Kho Trung tâm & Vận hành', color: 'tile-fac' },
+        role: { icon: '<svg class="icon" viewBox="0 0 24 24"><path d="M2 9l10-5 10 5-10 5-10-5z"/><path d="M6 11v5c0 1.5 2.5 3 6 3s6-1.5 6-3v-5"/><path d="M22 9v6"/></svg>', label: 'Chức năng riêng', color: 'tile-hr' },
       };
       Object.keys(SUBGROUP_META).forEach((sgKey) => {
         const sgItems = group.items.filter((item) => item.subgroup === sgKey);
@@ -118,7 +118,7 @@ function renderHub(profile) {
     if (hasAccess) el.type = 'button';
     el.className = 'app-tile' + (hasAccess ? '' : ' disabled');
     el.innerHTML = `
-      <div class="app-tile__icon ${hasAccess ? (HUB_COLOR_CLASS[group.sectionKey] || '') : ''}">${HUB_ICON[group.sectionKey] || '📁'}</div>
+      <div class="app-tile__icon ${hasAccess ? (HUB_COLOR_CLASS[group.sectionKey] || '') : ''}">${HUB_ICON[group.sectionKey] || '<svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9"/><path d="M10 13h4"/></svg>'}</div>
       <div class="app-tile__label">${esc(t(group.sectionKey, group.section || ''))}</div>
       ${!hasAccess ? `<div class="app-tile__lock">${esc(t('dashboard.noAccess', 'Không có quyền'))}</div>` : ''}
     `;
@@ -213,7 +213,7 @@ function renderGreeting(profile) {
   // day 1 loi o day se chan luon renderHub/loadStats/loadNoticeBoard,
   // gay hien tuong "co thanh tren nhung noi dung trong").
   const titleEl = document.querySelector('.hero-greeting__title');
-  if (titleEl) titleEl.innerHTML = `${timeGreeting}, <span id="heroName">${esc(firstName)}</span> 👋`;
+  if (titleEl) titleEl.innerHTML = `${timeGreeting}, <span id="heroName">${esc(firstName)}</span>`;
   const dateEl = document.getElementById('heroDate');
   if (dateEl) dateEl.textContent = new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 }

@@ -14,7 +14,25 @@
 
 @media (max-width: 860px) {
   .login-shell { grid-template-columns: 1fr; }
-  .login-brand { min-height: 280px; }
+  /* SỬA: trước đây giữ nguyên toàn bộ khối thương hiệu cao 280px (tiêu đề
+     lớn + đoạn mô tả dài + hoạ tiết động) TRÊN CÙNG màn hình điện thoại —
+     đẩy form đăng nhập xuống dưới, phải cuộn mới thấy được ô nhập tài
+     khoản. Trên di động, ưu tiên vào được form đăng nhập ngay — chỉ giữ
+     lại 1 dải gọn (logo + tên + bộ chọn phân hệ), bỏ tiêu đề lớn/đoạn mô
+     tả dài/watermark, tắt hoạt ảnh nền để đỡ giật trên máy cũ. */
+  .login-brand {
+    min-height: 0;
+    padding: 20px 20px 24px;
+    animation: none;
+    background: linear-gradient(135deg, var(--accent-deep), var(--accent) 80%);
+  }
+  .login-brand__orb, .login-brand__shape, .login-brand__sparkle, .login-brand__watermark { display: none; }
+  .login-brand__headline, .login-brand__footer { display: none; }
+  .login-brand__top { gap: 10px; }
+  .login-brand__mark { font-size: 16px; }
+  .login-brand__mark-logo { width: 24px; height: 24px; }
+  .division-switch button { padding: 6px 12px; font-size: 12px; }
+  .login-form-col { padding: 24px 20px 40px; }
 }
 
 /* ---------- Cột thương hiệu ---------- */

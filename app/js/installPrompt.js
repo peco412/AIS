@@ -89,7 +89,7 @@ function showInstallGuide() {
   modal.innerHTML = `
     <div class="modal-box" style="max-width:440px;">
       <button class="modal-close" id="guideClose"><svg class="icon icon--sm" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
-      <h3>Cài ứng dụng ERP AIS</h3>
+      <h3>Cài ứng dụng AIS OFFICE</h3>
       <p class="modal-sub">Dùng như 1 app thật — mở nhanh hơn, không cần gõ lại địa chỉ web mỗi lần.</p>
       <div class="install-guide-tabs" id="guideTabs">
         ${Object.entries(PLATFORM_GUIDES).map(([key, g]) => `

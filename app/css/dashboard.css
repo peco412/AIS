@@ -677,6 +677,15 @@ body.hub-body { background: var(--surface); }
 @media (max-width: 640px) {
   .world-switcher__label { display: none; }
   .hub-overlay__grid { grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); }
+  /* SỬA: trên màn hẹp, "AIS OFFICE" + phụ đề dài bị bóp chật tới mức tự
+     xuống dòng thành nhiều dòng (2-3 dòng), đẩy cả 2 phía topbar bị vỡ bố
+     cục — ẩn phụ đề, giữ đúng 1 dòng tên thương hiệu, đủ hiểu ngữ cảnh mà
+     không cần cả câu mô tả trên màn hình vốn đã rất hẹp. */
+  .hub-topbar { flex-wrap: nowrap; gap: 8px; }
+  .hub-topbar__brand { font-size: 14px; gap: 6px; min-width: 0; flex-shrink: 1; }
+  .hub-topbar__brand > div { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .hub-topbar__brand small { display: none; }
+  .hub-topbar__right { gap: 4px; flex-shrink: 0; }
 }
 
 /* Dai "cac chuc nang cung nhom" — hien ngay dau moi trang, cuon ngang

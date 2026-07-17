@@ -87,7 +87,7 @@ self.addEventListener('fetch', (event) => {
 // màn hình / đóng tab trình duyệt, đúng yêu cầu "dùng như app thật".
 // =====================================================================
 self.addEventListener('push', (event) => {
-  let payload = { title: 'ERP AIS', body: 'Bạn có thông báo mới.' };
+  let payload = { title: 'AIS OFFICE', body: 'Bạn có thông báo mới.' };
   try {
     if (event.data) payload = { ...payload, ...event.data.json() };
   } catch (e) {

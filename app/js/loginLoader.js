@@ -16,7 +16,7 @@ export function showLoginLoader({ division = 'aloha', message = 'Đang vào hệ
   el.innerHTML = `
     <div class="login-loader__glow"></div>
     <div class="login-loader__logo-wrap">
-      <img class="login-loader__logo" src="${logoSrc}" alt="ERP AIS" />
+      <img class="login-loader__logo" src="${logoSrc}" alt="AIS OFFICE" />
     </div>
     <div class="login-loader__text">${message}</div>
     <div class="login-loader__bar"><div class="login-loader__bar-fill"></div></div>
