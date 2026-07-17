@@ -132,7 +132,7 @@ async function selectStudent(student) {
   // trang nay) cung khong tai duoc theo — 2 viec khong lien quan gi
   // nhau bi troi vao 1. Gio CHI DOC (khong tao), va KHONG BAO GIO chan
   // loadInvoices() du vi co loi gi di nua.
-  const { data: wallet, error: walletErr } = await supabase.from('wallets').select('id').eq('student_id', student.id).maybeSingle();
+  const { data: wallet, error: walletErr } = await supabase.from('wallet_students').select('wallet_id').eq('student_id', student.id).maybeSingle();
   if (walletErr) {
     document.getElementById('walletBalance').textContent = '—';
     console.warn('Không tải được số dư ví (không ảnh hưởng thu học phí tại chỗ):', walletErr.message);
@@ -140,8 +140,8 @@ async function selectStudent(student) {
     document.getElementById('walletBalance').textContent = 'Chưa có ví';
     ACTIVE_WALLET_ID = null;
   } else {
-    ACTIVE_WALLET_ID = wallet.id;
-    const { data: batches } = await supabase.from('wallet_topup_batches').select('coin_remaining').eq('wallet_id', wallet.id);
+    ACTIVE_WALLET_ID = wallet.wallet_id;
+    const { data: batches } = await supabase.from('wallet_topup_batches').select('coin_remaining').eq('wallet_id', wallet.wallet_id);
     const balance = (batches || []).reduce((s, b) => s + Number(b.coin_remaining), 0);
     document.getElementById('walletBalance').textContent = `${fmtMoney(balance)} coin`;
   }

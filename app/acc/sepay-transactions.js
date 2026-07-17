@@ -53,13 +53,13 @@ async function openReconcile(txId) {
 
   const { data: pending } = await supabase
     .from('wallet_topup_requests')
-    .select('id, transfer_content, coin_amount, wallets(students(full_name))')
+    .select('id, transfer_content, coin_amount, students(full_name)')
     .eq('status', 'pending')
     .order('created_at', { ascending: false });
 
   const sel = document.getElementById('reconcileRequestSelect');
   sel.innerHTML = (pending || []).map((r) => `
-    <option value="${r.id}">${esc(r.transfer_content)} — ${esc(r.wallets?.students?.full_name || '—')} — ${Number(r.coin_amount).toLocaleString('vi-VN')} coin</option>
+    <option value="${r.id}">${esc(r.transfer_content)} — ${esc(r.students?.full_name || '—')} — ${Number(r.coin_amount).toLocaleString('vi-VN')} coin</option>
   `).join('') || '<option value="">Không có yêu cầu nào đang chờ</option>';
 
   modal.classList.add('show');

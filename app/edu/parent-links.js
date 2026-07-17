@@ -38,12 +38,12 @@ async function searchStudents() {
   const studentIds = students.map((s) => s.id);
   const [{ data: links }, { data: wallets }] = await Promise.all([
     supabase.from('parent_student_links').select('student_id, relationship, parent_accounts(full_name, phone)').in('student_id', studentIds),
-    supabase.from('wallets').select('id, student_id').in('student_id', studentIds),
+    supabase.from('wallet_students').select('wallet_id, student_id').in('student_id', studentIds),
   ]);
 
   const walletByStudent = {};
-  (wallets || []).forEach((w) => { walletByStudent[w.student_id] = w.id; });
-  const walletIds = Object.values(walletByStudent);
+  (wallets || []).forEach((w) => { walletByStudent[w.student_id] = w.wallet_id; });
+  const walletIds = [...new Set(Object.values(walletByStudent))];
   let balanceByWallet = {};
   if (walletIds.length > 0) {
     const { data: batches } = await supabase.from('wallet_topup_batches').select('wallet_id, coin_remaining').in('wallet_id', walletIds);

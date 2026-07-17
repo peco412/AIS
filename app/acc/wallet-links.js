@@ -23,10 +23,10 @@ async function loadRows() {
   if (!links || links.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="empty-cell">Chưa có liên kết nào.</td></tr>'; return; }
 
   const studentIds = links.map((l) => l.students?.id).filter(Boolean);
-  const { data: wallets } = await supabase.from('wallets').select('id, student_id').in('student_id', studentIds.length ? studentIds : ['00000000-0000-0000-0000-000000000000']);
+  const { data: walletLinks } = await supabase.from('wallet_students').select('wallet_id, student_id').in('student_id', studentIds.length ? studentIds : ['00000000-0000-0000-0000-000000000000']);
   const walletByStudent = {};
-  (wallets || []).forEach((w) => { walletByStudent[w.student_id] = w.id; });
-  const walletIds = Object.values(walletByStudent);
+  (walletLinks || []).forEach((w) => { walletByStudent[w.student_id] = w.wallet_id; });
+  const walletIds = [...new Set(Object.values(walletByStudent))];
 
   let balanceByWallet = {};
   if (walletIds.length > 0) {
