@@ -29,16 +29,16 @@ window.addEventListener('appinstalled', () => {
 
 const PLATFORM_GUIDES = {
   ios: {
-    label: 'iPhone / iPad', icon: '📱',
+    label: 'iPhone / iPad',
     steps: [
       'Mở trang này bằng <strong>Safari</strong> (bắt buộc — Chrome/Facebook trên iOS không cài được).',
-      'Bấm biểu tượng <strong>Chia sẻ</strong> (hình vuông có mũi tên ↑) ở thanh dưới màn hình.',
+      'Bấm biểu tượng <strong>Chia sẻ</strong> (hình vuông có mũi tên hướng lên) ở thanh dưới màn hình.',
       'Cuộn xuống, chọn <strong>"Thêm vào MH chính"</strong> (Add to Home Screen).',
       'Bấm <strong>"Thêm"</strong> ở góc trên bên phải — icon app sẽ xuất hiện ở màn hình chính.',
     ],
   },
   android: {
-    label: 'Android', icon: '🤖',
+    label: 'Android',
     steps: [
       'Mở trang này bằng <strong>Chrome</strong>.',
       'Bấm nút <strong>"Cài ngay"</strong> bên dưới — hộp thoại cài đặt sẽ hiện ra.',
@@ -47,7 +47,7 @@ const PLATFORM_GUIDES = {
     showNativeButton: true,
   },
   windows: {
-    label: 'Windows', icon: '🖥️',
+    label: 'Windows',
     steps: [
       'Mở trang này bằng <strong>Chrome</strong> hoặc <strong>Edge</strong>.',
       'Nhìn vào thanh địa chỉ, bấm icon <strong>cài đặt</strong> (hình máy tính có dấu +) ở bên phải ô địa chỉ.',
@@ -56,7 +56,7 @@ const PLATFORM_GUIDES = {
     ],
   },
   mac: {
-    label: 'macOS', icon: '🍎',
+    label: 'macOS',
     steps: [
       '<strong>Với Safari:</strong> vào menu <strong>File</strong> (Tệp) → <strong>"Add to Dock"</strong> (Thêm vào Dock).',
       '<strong>Với Chrome/Edge:</strong> bấm icon cài đặt ở thanh địa chỉ, hoặc menu <strong>⋮</strong> → <strong>"Cài đặt ứng dụng này"</strong>.',
@@ -94,7 +94,7 @@ function showInstallGuide() {
       <div class="install-guide-tabs" id="guideTabs">
         ${Object.entries(PLATFORM_GUIDES).map(([key, g]) => `
           <button type="button" class="install-guide-tab ${key === defaultTab ? 'active' : ''}" data-tab="${key}">
-            <span>${g.icon}</span><span>${g.label}</span>
+            <span>${g.label}</span>
           </button>
         `).join('')}
       </div>

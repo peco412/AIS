@@ -31,7 +31,8 @@ async function loadRows() {
   let query = supabase
     .from('payment_requests')
     .select('id, code, amount, content, status, draft_file_url, final_file_url, original_document_urls, updated_at, requester_id, employees!payment_requests_requester_id_fkey(full_name, employee_code, department_id, center_id)')
-    .order('updated_at', { ascending: false });
+    .order('updated_at', { ascending: false })
+    .limit(300);
   if (scope === 'mine') query = query.eq('requester_id', PROFILE.id);
   const { data, error } = await query;
   if (error) { tbody.innerHTML = `<tr><td colspan="7" class="empty-cell">Lỗi: ${esc(error.message)}</td></tr>`; return; }

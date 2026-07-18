@@ -87,7 +87,7 @@ export async function initTaskAssignments(deptCode) {
     if (!tbody) return;
 
     if (PENDING_REQUESTS.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="3" class="empty-cell">🎉 Không có yêu cầu nào đang chờ phân công.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="3" class="empty-cell">Không có yêu cầu nào đang chờ phân công.</td></tr>';
       return;
     }
 

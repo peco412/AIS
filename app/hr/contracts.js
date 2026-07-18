@@ -26,7 +26,8 @@ async function loadRows() {
   const { data, error } = await supabase
     .from('contracts')
     .select('id, code, status, draft_file_url, final_file_url, updated_at, employee_id, employees!contracts_employee_id_fkey(full_name, employee_code, contract_type)')
-    .order('updated_at', { ascending: false });
+    .order('updated_at', { ascending: false })
+    .limit(300);
 
   if (error) { tbody.innerHTML = `<tr><td colspan="6" class="empty-cell">Lỗi: ${error.message}</td></tr>`; return; }
   ALL_ROWS = data || [];

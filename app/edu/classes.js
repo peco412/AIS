@@ -84,7 +84,7 @@ function render() {
       <td><span class="badge badge-${r.status}">${esc(STATUS_LABEL[r.status] || r.status)}</span></td>
       <td>
         <button class="btn btn-outline btn-sm" data-edit="${r.id}">Sửa</button>
-        <a href="/edu/class-attendance-matrix.html?class=${r.id}" class="btn btn-outline btn-sm">📋 Điểm danh</a>
+        <a href="/edu/class-attendance-matrix.html?class=${r.id}" class="btn btn-outline btn-sm">Điểm danh</a>
       </td>
     </tr>
   `).join('');

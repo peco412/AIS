@@ -138,6 +138,7 @@ function renderNav(profile, currentPage) {
   document.querySelector('.app-shell')?.classList.add('app-shell--no-sidebar');
 
   const currentWorld = resolveCurrentWorld(currentPage, profile);
+  injectBrandName();
   injectWorldSwitcher(profile, currentWorld, currentPage);
   injectHubLauncher(profile, currentWorld, currentPage);
   injectMobileBottomNav(profile, currentWorld, currentPage);
@@ -232,6 +233,23 @@ function worldsWithAccess(profile) {
       && group.items.some((item) => canAccess(item, profile))
     );
   });
+}
+
+/**
+ * Tên thương hiệu "AIS OFFICE" — trước đây CHỈ hiện ở trang Trang chủ
+ * (dashboard.html có khung riêng .hub-topbar__brand), còn 90 trang khác
+ * hoàn toàn KHÔNG có tên hệ thống nào hiện trên thanh trên cùng (sidebar
+ * cũ có nhưng đã ẩn vĩnh viễn). Thêm lại ở đây — LUÔN hiện, mọi trang.
+ */
+function injectBrandName() {
+  const anchor = document.querySelector('.topbar__left');
+  if (!anchor || document.getElementById('topbarBrand')) return;
+  const brand = document.createElement('div');
+  brand.id = 'topbarBrand';
+  brand.className = 'topbar-brand';
+  brand.innerHTML = '<span class="dot"></span><span>AIS OFFICE</span>';
+  brand.addEventListener('click', () => { window.location.href = '/dashboard.html'; });
+  anchor.insertBefore(brand, anchor.firstChild);
 }
 
 /**
@@ -490,7 +508,7 @@ function injectLangSwitcher(profileId) {
 }
 
 /**
- * Chèn nút "📲 Cài đặt ứng dụng" vào topbar bằng JS — trước đây không có
+ * Chèn nút "Cài đặt ứng dụng" vào topbar bằng JS — trước đây không có
  * nơi nào để tải ứng dụng về máy, người dùng không biết là cài được.
  */
 function injectInstallButton() {

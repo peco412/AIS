@@ -28,7 +28,8 @@ async function loadRows() {
   let query = supabase
     .from('event_proposals')
     .select('id, code, status, draft_file_url, final_file_url, updated_at, center_manager_id, center_id, centers(name), employees:center_manager_id(full_name)')
-    .order('updated_at', { ascending: false });
+    .order('updated_at', { ascending: false })
+    .limit(300);
   if (scope === 'mine') query = query.eq('center_manager_id', PROFILE.id);
 
   const { data, error } = await query;

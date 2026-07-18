@@ -208,11 +208,26 @@
 }
 
 .topbar__left { display: flex; align-items: center; gap: 14px; }
+/* SUA LOI NGHIEM TRONG: truoc day nut nay CHI hien duoi 960px (ke thua tu
+   thoi con sidebar desktop luon mo san, menu-toggle chi de BAT/TAT sidebar
+   tren mobile). Nhung sidebar gio da AN VINH VIEN o moi kich thuoc man
+   hinh (thay bang he Hub Overlay) — nghia la tren DESKTOP (cach dung chinh
+   cua nhieu nhan vien van phong), nut MO MENU DUY NHAT bi an hoan toan,
+   khong co cach nao mo duoc menu dieu huong ca. Sua: hien nut nay o MOI
+   kich thuoc man hinh. */
 .menu-toggle {
-  display: none;
-  border: none; background: transparent; font-size: 18px; cursor: pointer; color: var(--ink);
+  display: flex; align-items: center; justify-content: center;
+  border: none; background: transparent; cursor: pointer; color: var(--ink);
+  width: 34px; height: 34px; border-radius: var(--radius-pill);
+  transition: background var(--dur-fast) var(--ease);
 }
-@media (max-width: 960px) { .menu-toggle { display: block; } }
+.menu-toggle:hover { background: var(--surface-fill); }
+
+/* Tên thương hiệu luôn hiện trên thanh trên cùng, mọi trang (trước đây
+   chỉ hiện ở Trang chủ). */
+.topbar-brand { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 14.5px; color: var(--ink); cursor: pointer; white-space: nowrap; }
+.topbar-brand .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.15); flex-shrink: 0; }
+@media (max-width: 360px) { .topbar-brand { font-size: 13px; } }
 
 .search-box {
   display: flex;

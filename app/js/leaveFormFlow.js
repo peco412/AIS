@@ -71,7 +71,8 @@ export async function initLeaveFormFlow() {
     let query = supabase
       .from('leave_requests')
       .select('id, code, form_code, start_date, days, return_date, reason_note, status, file_url, employee_id, employees!leave_requests_employee_id_fkey(full_name, employee_code, department_id, center_id, departments(code))')
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(300);
     if (scope === 'mine') query = query.eq('employee_id', PROFILE.id);
 
     const { data, error } = await query;

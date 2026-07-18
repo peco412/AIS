@@ -13,7 +13,7 @@ async function loadRequests() {
 
   const { data, error } = await supabase
     .from('wallet_topup_requests')
-    .select('id, transfer_content, coin_amount, status, created_at, wallets(student_id, students(full_name))')
+    .select('id, transfer_content, coin_amount, status, created_at, students(full_name)')
     .order('created_at', { ascending: false })
     .limit(100);
 
@@ -29,7 +29,7 @@ function renderRequests() {
   const rows = ALL_REQUESTS.filter((r) => {
     if (statusFilter && r.status !== statusFilter) return false;
     if (search) {
-      const hay = `${r.transfer_content} ${r.wallets?.students?.full_name || ''}`.toLowerCase();
+      const hay = `${r.transfer_content} ${r.students?.full_name || ''}`.toLowerCase();
       if (!hay.includes(search)) return false;
     }
     return true;
@@ -44,7 +44,7 @@ function renderRequests() {
     : rows.map((r) => `
       <tr>
         <td class="mono cell-code">${esc(r.transfer_content)}</td>
-        <td>${esc(r.wallets?.students?.full_name || '—')}</td>
+        <td>${esc(r.students?.full_name || '—')}</td>
         <td class="mono">${Number(r.coin_amount).toLocaleString('vi-VN')} coin</td>
         <td class="cell-muted" style="font-size:12px;">${new Date(r.created_at).toLocaleString('vi-VN')}</td>
         <td><span class="badge badge-${STATUS_BADGE[r.status]}">${STATUS_LABEL[r.status]}</span></td>

@@ -113,7 +113,7 @@ function row(type, code, requester, stepLabel, href) {
 
 function render(rows) {
   document.getElementById('tableBody').innerHTML = rows.length === 0
-    ? '<tr><td colspan="5" class="empty-cell">🎉 Không có hồ sơ nào đang chờ bạn xử lý.</td></tr>'
+    ? '<tr><td colspan="5" class="empty-cell">Không có hồ sơ nào đang chờ bạn xử lý.</td></tr>'
     : rows.map((r) => `
       <tr>
         <td>${esc(r.type)}</td>

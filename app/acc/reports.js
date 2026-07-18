@@ -37,9 +37,9 @@ async function loadTuitionBySource() {
   const grandTotal = totals.tuition_cash + totals.tuition_transfer + totals.tuition_wallet;
 
   document.getElementById('tuitionSourceCards').innerHTML = `
-    <div class="stat-card"><div class="label">💵 Tiền mặt</div><div class="value mono" style="font-size:18px;">${fmtMoney(totals.tuition_cash)} đ</div></div>
-    <div class="stat-card"><div class="label">🏦 Chuyển khoản</div><div class="value mono" style="font-size:18px;">${fmtMoney(totals.tuition_transfer)} đ</div></div>
-    <div class="stat-card"><div class="label">💳 Ví AIScoins</div><div class="value mono" style="font-size:18px;">${fmtMoney(totals.tuition_wallet)} đ</div></div>
+    <div class="stat-card"><div class="label">Tiền mặt</div><div class="value mono" style="font-size:18px;">${fmtMoney(totals.tuition_cash)} đ</div></div>
+    <div class="stat-card"><div class="label">Chuyển khoản</div><div class="value mono" style="font-size:18px;">${fmtMoney(totals.tuition_transfer)} đ</div></div>
+    <div class="stat-card"><div class="label">Ví AIScoins</div><div class="value mono" style="font-size:18px;">${fmtMoney(totals.tuition_wallet)} đ</div></div>
     <div class="stat-card"><div class="label">Tổng thu học phí tháng này</div><div class="value mono" style="font-size:18px; font-weight:700;">${fmtMoney(grandTotal)} đ</div></div>
   `;
 }
@@ -153,7 +153,7 @@ function renderCashLog() {
 
 async function loadReceivables() {
   const tbody = document.getElementById('receivablesBody');
-  const { data, error } = await supabase.from('receivables').select('*').order('due_date', { ascending: true });
+  const { data, error } = await supabase.from('receivables').select('*').order('due_date', { ascending: true }).limit(500);
   if (error) { tbody.innerHTML = `<tr><td colspan="4" class="empty-cell">Lỗi: ${error.message}</td></tr>`; return; }
   if (!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="empty-cell">Không có công nợ nào.</td></tr>'; return; }
 

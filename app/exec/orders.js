@@ -37,9 +37,9 @@ async function loadOrders() {
   ]);
 
   const rows = [
-    ...(pay || []).map((r) => ({ kind: '💳 Thanh toán', label: r.code, status: r.status, created_at: r.created_at, href: '/acc/payment-requests.html' })),
-    ...(comm || []).map((r) => ({ kind: '📣 Truyền thông', label: `${r.code} — ${r.title}`, status: r.status, created_at: r.created_at, href: '/mkt/requests.html' })),
-    ...(fac || []).map((r) => ({ kind: '🛠 CSVC', label: `${r.code} — ${r.title}`, status: r.status, created_at: r.created_at, href: '/fac/requests.html' })),
+    ...(pay || []).map((r) => ({ kind: 'Thanh toán', label: r.code, status: r.status, created_at: r.created_at, href: '/acc/payment-requests.html' })),
+    ...(comm || []).map((r) => ({ kind: 'Truyền thông', label: `${r.code} — ${r.title}`, status: r.status, created_at: r.created_at, href: '/mkt/requests.html' })),
+    ...(fac || []).map((r) => ({ kind: 'CSVC', label: `${r.code} — ${r.title}`, status: r.status, created_at: r.created_at, href: '/fac/requests.html' })),
   ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
   if (rows.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="empty-cell">Chưa có lệnh yêu cầu nào.</td></tr>'; return; }

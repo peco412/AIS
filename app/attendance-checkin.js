@@ -33,7 +33,7 @@ function watchPosition() {
       const inRange = dist <= RADIUS_LIMIT_M;
       hint.textContent = inRange
         ? `Đang trong phạm vi — cách trung tâm ${fmtDistance(dist)}`
-        : `❌ Ngoài phạm vi cho phép — cách trung tâm ${fmtDistance(dist)} (giới hạn 1km)`;
+        : `Ngoài phạm vi cho phép — cách trung tâm ${fmtDistance(dist)} (giới hạn 1km)`;
       hint.style.color = inRange ? 'var(--success)' : 'var(--danger)';
       document.getElementById('btnCheckIn').disabled = !inRange;
       document.getElementById('btnCheckOut').disabled = !inRange;
@@ -111,7 +111,7 @@ async function doCheckin(type) {
     errBox.classList.add('show');
   } finally {
     btn.disabled = false;
-    btn.textContent = type === 'in' ? '📍 Chấm công vào' : '📍 Chấm công ra';
+    btn.textContent = type === 'in' ? 'Chấm công vào' : 'Chấm công ra';
   }
 }
 

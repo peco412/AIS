@@ -117,7 +117,7 @@ document.getElementById('btnCalcDistance').addEventListener('click', async (e) =
 
   btn.disabled = true; btn.textContent = 'Đang tính...';
   const { km, error } = await computeDrivingDistanceKm(origin, destination);
-  btn.disabled = false; btn.textContent = '📍 Tính tự động';
+  btn.disabled = false; btn.textContent = 'Tính tự động';
 
   if (km == null) { alert(`Không tính được quãng đường tự động:\n${error || 'không rõ lý do'}\n\nVui lòng nhập tay.`); return; }
   document.getElementById('distance').value = km;

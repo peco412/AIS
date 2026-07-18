@@ -99,7 +99,7 @@ function renderProgram(prog) {
               ${CAN_EDIT ? `
                 ${arrowButtons('sublevel', sl.id, slIdx === 0, slIdx === sublevels.length - 1)}
                 <button type="button" class="btn-mini" data-add-course="${sl.id}">+ Khoá</button>
-                <button type="button" class="btn-mini btn-mini--danger" data-del-sublevel="${sl.id}" data-name="${esc(sl.name)}">🗑️ Xoá cấp độ con</button>
+                <button type="button" class="btn-mini btn-mini--danger" data-del-sublevel="${sl.id}" data-name="${esc(sl.name)}">Xoá cấp độ con</button>
               ` : ''}
             </span>
           </div>
@@ -118,7 +118,7 @@ function renderProgram(prog) {
             <span>
               ${arrowButtons('level', level.id, levelIdx === 0, levelIdx === levels.length - 1)}
               <button type="button" class="btn-mini" data-add-sublevel="${level.id}">+ Cấp độ con</button>
-              <button type="button" class="btn-mini btn-mini--danger" data-del-level="${level.id}" data-name="${esc(level.name)}">🗑️ Xoá cấp độ</button>
+              <button type="button" class="btn-mini btn-mini--danger" data-del-level="${level.id}" data-name="${esc(level.name)}">Xoá cấp độ</button>
             </span>
           ` : ''}
         </div>
@@ -138,7 +138,7 @@ function renderProgram(prog) {
           ${CAN_EDIT ? `
             ${arrowButtons('program', prog.id, progIdx === 0, progIdx === LOADED_PROGRAMS.length - 1)}
             <button type="button" class="btn-mini" data-add-level="${prog.id}">+ Cấp độ</button>
-            <button type="button" class="btn-mini btn-mini--danger" data-del-program="${prog.id}" data-name="${esc(prog.name)}">🗑️ Xoá chương trình</button>
+            <button type="button" class="btn-mini btn-mini--danger" data-del-program="${prog.id}" data-name="${esc(prog.name)}">Xoá chương trình</button>
           ` : ''}
         </span>
       </summary>

@@ -37,7 +37,7 @@ function renderDeptList() {
     <li><button data-dept="${d.code}" class="${d.code === ACTIVE_DEPT ? 'active' : ''}">
       ${d.name}${hasAccess(d.code) ? '' : '<span class="lock"><svg class="icon icon--sm" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>'}
     </button></li>
-  `).join('') + `<li><button data-dept="TEMPLATES" class="${ACTIVE_DEPT === 'TEMPLATES' ? 'active' : ''}">📁 Biểu mẫu</button></li>`;
+  `).join('') + `<li><button data-dept="TEMPLATES" class="${ACTIVE_DEPT === 'TEMPLATES' ? 'active' : ''}">Biểu mẫu</button></li>`;
 
   ul.querySelectorAll('[data-dept]').forEach((btn) => {
     btn.addEventListener('click', () => selectDept(btn.dataset.dept));
@@ -111,10 +111,17 @@ async function loadFiles() {
   if (category) query = query.eq('category', category);
   if (search) query = query.ilike('file_name', `%${search}%`);
 
+  // SUA HIEU NANG: kho luu tru chi tang theo thoi gian, khong bao gio
+  // giam - neu khong loc gi ca se tai het toan bo lich su, cang dung lau
+  // cang cham. Gioi han an toan 300 dong khi chua loc, kem goi y thu hep.
+  const hasFilter = Boolean(year || month || category || search);
+  query = query.limit(hasFilter ? 1000 : 300);
+
   const { data, error } = await query;
   if (error) { tbody.innerHTML = `<tr><td colspan="6" class="empty-cell">Lỗi: ${error.message}</td></tr>`; return; }
 
-  document.getElementById('resultCount').textContent = `${data.length} tài liệu`;
+  document.getElementById('resultCount').textContent = `${data.length} tài liệu` +
+    (!hasFilter && data.length === 300 ? ' (đang giới hạn 300 mới nhất — lọc theo năm/tháng để xem đầy đủ hơn)' : '');
   if (data.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="empty-cell">Không có tài liệu phù hợp.</td></tr>'; return; }
 
   tbody.innerHTML = data.map((f) => `
@@ -152,7 +159,7 @@ async function loadTemplates() {
       <td class="cell-muted">${fmtDate(t.updated_at)}</td>
       <td>
         <button class="btn btn-outline btn-sm" data-open="${esc(t.file_url)}">Xem / tải</button>
-        ${canDesign ? `<button class="btn btn-outline btn-sm" data-design="${t.id}" data-url="${esc(t.file_url)}">📐 Thiết kế vị trí</button>` : ''}
+        ${canDesign ? `<button class="btn btn-outline btn-sm" data-design="${t.id}" data-url="${esc(t.file_url)}">Thiết kế vị trí</button>` : ''}
       </td>
     </tr>
   `).join('') || '<tr><td colspan="6" class="empty-cell">Chưa có biểu mẫu.</td></tr>';

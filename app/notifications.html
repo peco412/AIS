@@ -18,14 +18,39 @@
 <link rel="stylesheet" href="/css/dashboard.css" />
 <link rel="stylesheet" href="/css/module.css" />
 <style>
-  .notif-item { display: flex; align-items: flex-start; gap: 14px; padding: 16px 20px; border-bottom: 1px solid var(--border); background: var(--surface-card); }
+  .notif-item { display: flex; align-items: flex-start; gap: 14px; padding: 16px 20px; border-bottom: 1px solid var(--border); background: var(--surface-card); cursor: pointer; transition: background var(--dur-fast) var(--ease); }
+  .notif-item:hover { background: var(--surface-fill); }
   .notif-item.unread { background: var(--accent-tint); }
+  .notif-item.unread:hover { background: color-mix(in srgb, var(--accent-tint) 80%, var(--surface-fill)); }
   .notif-item:last-child { border-bottom: none; }
   .notif-scope-icon { color: var(--muted); margin-top: 2px; }
-  .notif-body { flex: 1; }
+  .notif-body { flex: 1; min-width: 0; }
   .notif-title { font-weight: 700; font-size: 14px; margin-bottom: 3px; }
-  .notif-content { font-size: 13px; color: var(--ink-soft); }
+  .notif-content { font-size: 13px; color: var(--ink-soft); overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
   .notif-meta { font-size: 11.5px; color: var(--muted); margin-top: 6px; }
+
+  /* Tab Thông tin / Hệ thống — 2 luồng khác hẳn nhau về bản chất (người
+     chủ động soạn để thông báo, và hệ thống tự sinh ra theo nghiệp vụ)
+     nên tách hẳn 2 tab thay vì trộn chung 1 danh sách như trước. */
+  .notif-type-tabs { display: flex; gap: 6px; margin-bottom: 14px; border-bottom: 1px solid var(--border); }
+  .notif-type-tabs button {
+    padding: 10px 18px; border: none; background: none; font-size: 13.5px; font-weight: 700;
+    color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px;
+    transition: color var(--dur-fast) var(--ease);
+  }
+  .notif-type-tabs button.active { color: var(--accent-deep); border-bottom-color: var(--accent); }
+  .notif-type-tabs button .count { font-weight: 600; color: var(--muted); margin-left: 4px; }
+
+  /* Modal xem chi tiết kiểu đọc blog — tiêu đề lớn, nội dung đầy đủ
+     không cắt, có chữ ký người gửi ở cuối nếu là thông báo Thông tin. */
+  .notif-detail-box { max-width: 620px; }
+  .notif-detail-meta { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12.5px; margin-bottom: 18px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+  .notif-detail-title { font-size: 20px; font-weight: 800; line-height: 1.35; margin-bottom: 10px; }
+  .notif-detail-content { font-size: 14.5px; line-height: 1.75; color: var(--ink); white-space: pre-wrap; }
+  .notif-signature { margin-top: 28px; padding-top: 18px; border-top: 1px dashed var(--border); text-align: right; }
+  .notif-signature .line1 { font-size: 12.5px; font-style: italic; color: var(--muted); margin-bottom: 10px; }
+  .notif-signature .name { font-size: 14.5px; font-weight: 800; color: var(--ink); }
+  .notif-signature .title { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
 </style>
 </head>
 <body data-page="/notifications.html">
@@ -39,7 +64,6 @@
   <header class="topbar">
     <div class="topbar__left">
       <button class="menu-toggle" id="menuToggle"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg></button>
-      <div class="search-box"><svg class="icon icon--sm" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.8-4.8"/></svg><input type="text" placeholder="Tìm kiếm..." /></div>
     </div>
     <div class="topbar__right">
       <button class="icon-btn" onclick="location.href='/notifications.html'"><svg class="icon" viewBox="0 0 24 24"><path d="M6 8a6 6 0 1 1 12 0c0 4 1.5 6 2 6.5H4c.5-.5 2-2.5 2-6.5z"/><path d="M9.5 18a2.5 2.5 0 0 0 5 0"/></svg><span class="badge" id="notifBadge" style="display:none;">0</span></button>
@@ -57,6 +81,11 @@
       <button class="btn btn-outline btn-sm" id="btnMarkAll">Đánh dấu tất cả đã đọc</button>
     </div>
 
+    <div class="notif-type-tabs" id="notifTypeTabs">
+      <button type="button" data-type="info" class="active">Thông báo thông tin<span class="count" id="countInfo"></span></button>
+      <button type="button" data-type="system">Thông báo hệ thống<span class="count" id="countSystem"></span></button>
+    </div>
+
     <div class="toolbar">
       <select class="select-input" id="filterScope">
         <option value="">Tất cả</option>
@@ -67,12 +96,12 @@
       </select>
       <select class="select-input" id="filterCategory">
         <option value="">Tất cả nghiệp vụ</option>
-        <option value="Nhân sự">👥 Nhân sự</option>
-        <option value="Kế toán">💰 Kế toán</option>
-        <option value="CSVC">🔧 CSVC</option>
-        <option value="Truyền thông">📣 Truyền thông</option>
-        <option value="Học vụ / Học phí">🎓 Học vụ / Học phí</option>
-        <option value="Ban điều hành">🏛️ Ban điều hành</option>
+        <option value="Nhân sự">Nhân sự</option>
+        <option value="Kế toán">Kế toán</option>
+        <option value="CSVC">CSVC</option>
+        <option value="Truyền thông">Truyền thông</option>
+        <option value="Học vụ / Học phí">Học vụ / Học phí</option>
+        <option value="Ban điều hành">Ban điều hành</option>
         <option value="Khác">Khác</option>
       </select>
       <div class="cell-muted" id="resultCount"></div>
@@ -82,6 +111,22 @@
       <div class="empty-cell">Đang tải dữ liệu...</div>
     </div>
   </main>
+</div>
+
+<!-- Modal xem chi tiết 1 thông báo — kiểu đọc bài viết đầy đủ, không cắt
+     ngắn, có chữ ký người gửi ở cuối nếu là thông báo "Thông tin". -->
+<div class="modal-overlay" id="notifDetailModal">
+  <div class="modal-box notif-detail-box">
+    <button class="modal-close" id="notifDetailClose"><svg class="icon icon--sm" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    <div class="notif-detail-meta" id="notifDetailMeta"></div>
+    <div class="notif-detail-title" id="notifDetailTitle"></div>
+    <div class="notif-detail-content" id="notifDetailContent"></div>
+    <div class="notif-signature" id="notifDetailSignature" style="display:none;">
+      <div class="line1">Trân trọng,</div>
+      <div class="name" id="notifSigName"></div>
+      <div class="title" id="notifSigTitle"></div>
+    </div>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>

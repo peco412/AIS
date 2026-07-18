@@ -551,7 +551,7 @@ document.getElementById('btnCollectWallet').addEventListener('click', async () =
     collectError.textContent = err.message || 'Có lỗi xảy ra.';
     collectError.classList.add('show');
   } finally {
-    btn.disabled = false; btn.textContent = '💳 Thu qua Ví';
+    btn.disabled = false; btn.textContent = 'Thu qua Ví';
   }
 });
 
@@ -573,7 +573,7 @@ document.getElementById('btnCollectCounter').addEventListener('click', async () 
     collectError.textContent = err.message || 'Có lỗi xảy ra.';
     collectError.classList.add('show');
   } finally {
-    btn.disabled = false; btn.textContent = '🧾 Thu tại quầy';
+    btn.disabled = false; btn.textContent = 'Thu tại quầy';
   }
 });
 

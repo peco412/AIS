@@ -100,7 +100,7 @@ async function loadPeriodStatus() {
       <p class="cell-muted">Kỳ này đã khoá lúc ${new Date(data.closed_at).toLocaleString('vi-VN')}. Không thể ghi thêm bút toán.</p>
       ${IS_TECH_OR_EXEC ? `
         <div class="field"><label for="reopenReason">Lý do mở khoá lại (bắt buộc)</label><textarea id="reopenReason" rows="2" placeholder="VD: Phát hiện sai sót cần điều chỉnh hoá đơn XYZ..."></textarea></div>
-        <button class="btn btn-outline" id="btnReopen" style="border-color:var(--danger); color:var(--danger);">🔓 Mở khoá lại (chỉ BĐH/Kỹ thuật)</button>
+        <button class="btn btn-outline" id="btnReopen" style="border-color:var(--danger); color:var(--danger);">Mở khoá lại (chỉ BĐH/Kỹ thuật)</button>
       ` : '<p class="cell-muted" style="font-size:12px;">Chỉ Ban điều hành/Kỹ thuật mới được mở khoá lại.</p>'}
     `;
     document.getElementById('btnReopen')?.addEventListener('click', async () => {
@@ -113,7 +113,7 @@ async function loadPeriodStatus() {
       await loadHistory();
     });
   } else {
-    badge.innerHTML = `<span class="period-status period-status--open">🔓 Đang mở</span>`;
+    badge.innerHTML = `<span class="period-status period-status--open">Đang mở</span>`;
     const unreconciled = document.querySelectorAll('.recon-diff-bad').length;
     actionArea.innerHTML = `
       ${unreconciled > 0 ? `<p style="color:var(--danger); font-size:13px;">Còn ${unreconciled} tài khoản chưa khớp số đối soát — nên xử lý trước khi khoá.</p>` : ''}

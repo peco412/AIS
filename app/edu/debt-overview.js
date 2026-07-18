@@ -81,7 +81,7 @@ function render() {
   `;
 
   const tbody = document.getElementById('tableBody');
-  if (rows.length === 0) { tbody.innerHTML = '<tr><td colspan="8" class="empty-cell">🎉 Không có hoá đơn nào đang nợ.</td></tr>'; return; }
+  if (rows.length === 0) { tbody.innerHTML = '<tr><td colspan="8" class="empty-cell">Không có hoá đơn nào đang nợ.</td></tr>'; return; }
 
   tbody.innerHTML = rows.map((r) => {
     const debtBadges = [];

@@ -103,7 +103,7 @@ function renderBody(weekStart) {
         return `<td>
           <div class="week-cell ${sched ? 'has-shift' : ''}" data-teacher="${t.id}" data-day="${dayOfWeek}" data-sched="${sched?.id || ''}">
             ${sched
-              ? `<span class="shift-label">${esc(sched.classes?.name || '—')}${sched.start_time ? '<br>' + fmtTime(sched.start_time) : ''}${sched.is_substitute ? ' 🔁' : ''}</span>`
+              ? `<span class="shift-label">${esc(sched.classes?.name || '—')}${sched.start_time ? '<br>' + fmtTime(sched.start_time) : ''}${sched.is_substitute ? ' (dạy thay)' : ''}</span>`
               : (CAN_EDIT ? '<span class="shift-empty">+</span>' : '')}
           </div>
         </td>`;

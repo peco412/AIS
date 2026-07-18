@@ -62,7 +62,13 @@ async function loadMeetings() {
   const { data: participantRows } = await supabase.from('meeting_participants').select('meeting_id').eq('employee_id', PROFILE.id);
   const myMeetingIds = (participantRows || []).map((r) => r.meeting_id);
 
-  let query = supabase.from('meetings').select('*').order('meeting_date', { ascending: true });
+  // SUA HIEU NANG: truoc day tai TOAN BO cuoc hop TU TRUOC DEN GIO (khong
+  // gioi han) - bang nay chi tang, khong bao gio giam. Gioi han trong
+  // khoang 90 ngay truoc -> 180 ngay sau (du dung cho "sap toi"/"da qua"),
+  // ai can xem cu hon thi loc rieng sau.
+  const windowStart = new Date(Date.now() - 90 * 86400000).toISOString().slice(0, 10);
+  const windowEnd = new Date(Date.now() + 180 * 86400000).toISOString().slice(0, 10);
+  let query = supabase.from('meetings').select('*').gte('meeting_date', windowStart).lte('meeting_date', windowEnd).order('meeting_date', { ascending: true });
   const { data, error } = await query;
   if (error) { list.innerHTML = `<div class="empty-cell">Lỗi: ${error.message}</div>`; return; }
 
@@ -83,8 +89,8 @@ function render() {
 
   list.innerHTML = ALL_MEETINGS.map((m) => `
     <div class="meeting-card">
-      <h4>${esc(m.title)} ${m.kind === 'online' ? '🌐' : ''}</h4>
-      <div class="meta">${fmtDate(m.meeting_date)} · ${esc(m.start_time?.slice(0,5))} - ${esc(m.end_time?.slice(0,5))} ${m.location ? '· 📍 ' + esc(m.location) : ''}</div>
+      <h4>${esc(m.title)} ${m.kind === 'online' ? '<svg class="icon icon--sm" viewBox="0 0 24 24" style="display:inline;vertical-align:-2px;"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.5 2.5 4 5.5 4 9s-1.5 6.5-4 9c-2.5-2.5-4-5.5-4-9s1.5-6.5 4-9z"/></svg>' : ''}</h4>
+      <div class="meta">${fmtDate(m.meeting_date)} · ${esc(m.start_time?.slice(0,5))} - ${esc(m.end_time?.slice(0,5))} ${m.location ? '· ' + esc(m.location) : ''}</div>
       ${m.description ? `<div class="desc">${esc(m.description)}</div>` : ''}
       ${m.google_meet_link ? `<div style="margin-top:8px;"><a href="${esc(m.google_meet_link)}" target="_blank" class="btn btn-outline btn-sm">Vào Google Meet →</a></div>` : ''}
     </div>

@@ -81,9 +81,9 @@ export async function openPdfEditor({
     <div class="pdfed-toolbar">
       <span class="title">${title}</span>
       ${readOnly ? '' : `
-        <button type="button" id="pdfedAddText">📝 Thêm văn bản</button>
-        <button type="button" id="pdfedAddSig" ${signatureUrl ? '' : 'disabled title="Bạn chưa có chữ ký cá nhân — cập nhật ở Hồ sơ cá nhân"'}>✍️ Chèn chữ ký</button>
-        ${isTemplateDesigner ? '<button type="button" id="pdfedSaveFieldMap">📐 Lưu vị trí mẫu</button>' : ''}
+        <button type="button" id="pdfedAddText">Thêm văn bản</button>
+        <button type="button" id="pdfedAddSig" ${signatureUrl ? '' : 'disabled title="Bạn chưa có chữ ký cá nhân — cập nhật ở Hồ sơ cá nhân"'}>Chèn chữ ký</button>
+        ${isTemplateDesigner ? '<button type="button" id="pdfedSaveFieldMap">Lưu vị trí mẫu</button>' : ''}
         <span class="hint" id="pdfedHint"></span>
       `}
       <button type="button" id="pdfedCancel">Đóng</button>

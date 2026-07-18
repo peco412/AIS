@@ -14,7 +14,7 @@ async function loadRows() {
 
   const { data, error } = await supabase
     .from('wallet_topup_requests')
-    .select('id, coin_amount, transfer_content, status, created_at, wallets(student_id, students(full_name)), parent_accounts(full_name, phone)')
+    .select('id, coin_amount, transfer_content, status, created_at, students(full_name), parent_accounts(full_name, phone)')
     .eq('status', status)
     .order('created_at', { ascending: status === 'pending' });
 
@@ -26,7 +26,7 @@ async function loadRows() {
   tbody.innerHTML = data.map((r) => `
     <tr>
       <td class="cell-muted">${fmtDateTime(r.created_at)}</td>
-      <td>${esc(r.wallets?.students?.full_name || '—')}</td>
+      <td>${esc(r.students?.full_name || '—')}</td>
       <td class="mono" style="font-weight:700; color:var(--accent-deep);">${esc(r.transfer_content)}</td>
       <td class="mono">${fmtMoney(r.coin_amount)} coin</td>
       <td class="cell-muted">${esc(r.parent_accounts?.full_name || '—')}<br>${esc(r.parent_accounts?.phone || '')}</td>

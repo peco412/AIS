@@ -25,7 +25,7 @@ async function loadWalletRequests() {
   // tac de xem THEM ca lich su (da duyet/da tu choi).
   let query = supabase
     .from('wallet_withdrawal_requests')
-    .select('id, preview_amount_vnd, actual_amount_vnd, status, created_at, reject_reason, wallets(student_id, students(full_name))')
+    .select('id, preview_amount_vnd, actual_amount_vnd, status, created_at, reject_reason, students(full_name)')
     .order('created_at', { ascending: false });
   if (!showHistory) query = query.in('status', ['pending', 'center_confirmed']);
 
@@ -42,7 +42,7 @@ async function loadWalletRequests() {
     const isStale = ['pending', 'center_confirmed'].includes(r.status) && daysWaiting >= 3;
     return `
     <tr ${isStale ? 'style="background:var(--danger-tint);"' : ''}>
-      <td>${esc(r.wallets?.students?.full_name || '—')}</td>
+      <td>${esc(r.students?.full_name || '—')}</td>
       <td class="mono">${fmtMoney(r.preview_amount_vnd)} đ</td>
       <td>
         <span class="badge badge-${WALLET_STATUS_BADGE[r.status]}">${WALLET_STATUS_LABEL[r.status]}</span>

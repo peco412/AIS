@@ -28,7 +28,7 @@ function render() {
 
   const tbody = document.getElementById('tableBody');
   tbody.innerHTML = rows.length === 0
-    ? '<tr><td colspan="7" class="empty-cell">Không còn học sinh nào cần tạo hoá đơn tháng này 🎉</td></tr>'
+    ? '<tr><td colspan="7" class="empty-cell">Không còn học sinh nào cần tạo hoá đơn tháng này</td></tr>'
     : rows.map((r) => {
       const plan = r.agreed_payment_plan || 'none';
       return `

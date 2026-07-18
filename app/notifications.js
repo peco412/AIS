@@ -30,29 +30,64 @@ function categoryOf(row) {
 let PROFILE = null;
 let ALL_ROWS = [];
 let READ_IDS = new Set();
+let PAGE_OFFSET = 0;
+let HAS_MORE = true;
+let ACTIVE_TYPE = 'info';
+const PAGE_SIZE = 50;
 
 function fmtDate(d) { return d ? new Date(d).toLocaleString('vi-VN') : ''; }
+function fmtDateLong(d) { return d ? new Date(d).toLocaleString('vi-VN', { dateStyle: 'long', timeStyle: 'short' }) : ''; }
 
-async function loadRows() {
+// MỚI — tách hẳn 2 loại: "Thông tin" (con người chủ động soạn — vd Ban
+// hành thông báo, có chữ ký cuối bài) và "Hệ thống" (tự sinh theo nghiệp
+// vụ — duyệt đơn, phân việc...). Lọc ngay ở tầng truy vấn (không lọc phía
+// trình duyệt như 2 mục con Phạm vi/Nghiệp vụ bên dưới) để đúng cho cả
+// khi tải thêm theo trang.
+// SUA HIEU NANG: van giu phan trang 50 dong/lan da lam truoc do.
+async function loadRows(reset = true) {
   const list = document.getElementById('notifList');
-  list.innerHTML = '<div class="empty-cell">Đang tải dữ liệu...</div>';
+  if (reset) {
+    PAGE_OFFSET = 0;
+    HAS_MORE = true;
+    ALL_ROWS = [];
+    list.innerHTML = '<div class="empty-cell">Đang tải dữ liệu...</div>';
+  }
 
   const [{ data: notifs, error }, { data: reads }] = await Promise.all([
-    supabase.from('notifications').select('*').order('created_at', { ascending: false }),
-    supabase.from('notification_reads').select('notification_id').eq('employee_id', PROFILE.id),
+    supabase.from('notifications')
+      .select('id, scope, title, content, link_url, created_at, notification_type, employees!created_by(full_name, positions(name))')
+      .eq('notification_type', ACTIVE_TYPE)
+      .order('created_at', { ascending: false })
+      .range(PAGE_OFFSET, PAGE_OFFSET + PAGE_SIZE - 1),
+    reset ? supabase.from('notification_reads').select('notification_id').eq('employee_id', PROFILE.id) : Promise.resolve({ data: null }),
   ]);
 
   if (error) { list.innerHTML = `<div class="empty-cell">Lỗi: ${error.message}</div>`; return; }
-  ALL_ROWS = notifs || [];
-  READ_IDS = new Set((reads || []).map((r) => r.notification_id));
+  HAS_MORE = (notifs || []).length === PAGE_SIZE;
+  PAGE_OFFSET += (notifs || []).length;
+  ALL_ROWS = reset ? (notifs || []) : ALL_ROWS.concat(notifs || []);
+  if (reads) READ_IDS = new Set((reads || []).map((r) => r.notification_id));
+  await updateTabCounts();
   render();
+}
+
+// Đếm số chưa đọc riêng cho từng tab để hiện cạnh tên tab — đếm bằng 1
+// truy vấn count riêng (không lấy hết dữ liệu) để không ảnh hưởng phần
+// phân trang chính ở trên.
+async function updateTabCounts() {
+  const [{ count: infoCount }, { count: sysCount }] = await Promise.all([
+    supabase.from('notifications').select('id', { count: 'exact', head: true }).eq('notification_type', 'info'),
+    supabase.from('notifications').select('id', { count: 'exact', head: true }).eq('notification_type', 'system'),
+  ]);
+  document.getElementById('countInfo').textContent = infoCount != null ? ` (${infoCount})` : '';
+  document.getElementById('countSystem').textContent = sysCount != null ? ` (${sysCount})` : '';
 }
 
 function render() {
   const scope = document.getElementById('filterScope').value;
   const category = document.getElementById('filterCategory').value;
   const rows = ALL_ROWS.filter((r) => (!scope || r.scope === scope) && (!category || categoryOf(r).label === category));
-  document.getElementById('resultCount').textContent = `${rows.length} thông báo`;
+  document.getElementById('resultCount').textContent = `${rows.length} thông báo${HAS_MORE ? ' (đã tải, còn thêm)' : ''}`;
 
   const list = document.getElementById('notifList');
   if (rows.length === 0) { list.innerHTML = '<div class="empty-cell">Không có thông báo nào.</div>'; return; }
@@ -60,35 +95,80 @@ function render() {
   list.innerHTML = rows.map((n) => {
     const cat = categoryOf(n);
     return `
-    <div class="notif-item ${READ_IDS.has(n.id) ? '' : 'unread'}" data-id="${n.id}" ${n.link_url ? `data-goto="${esc(n.link_url)}" style="cursor:pointer;"` : ''}>
+    <div class="notif-item ${READ_IDS.has(n.id) ? '' : 'unread'}" data-id="${n.id}">
       <div class="notif-scope-icon">${cat.icon}</div>
       <div class="notif-body">
         <div class="notif-title">${esc(n.title)}</div>
         <div class="notif-content">${esc(n.content || '')}</div>
         <div class="notif-meta"><span class="badge badge-submitted" style="font-size:10px;">${cat.label}</span> · ${SCOPE_LABEL[n.scope]} · ${fmtDate(n.created_at)}</div>
       </div>
-      ${!READ_IDS.has(n.id) ? '<button class="btn btn-outline btn-sm" data-mark>Đánh dấu đã đọc</button>' : ''}
     </div>
   `;
-  }).join('');
+  }).join('') + (HAS_MORE ? '<button class="btn btn-outline" id="btnLoadMoreNotif" style="width:100%; margin-top:10px;">Tải thêm</button>' : '');
 
-  // Bam vao thong bao (ngoai nut "Danh dau da doc") -> dieu huong toi
-  // dung trang lien quan, dung du lieu link_url moi sua/them.
-  list.querySelectorAll('[data-goto]').forEach((el) => {
-    el.addEventListener('click', (e) => {
-      if (e.target.closest('[data-mark]')) return;
-      window.location.href = el.dataset.goto;
-    });
+  document.getElementById('btnLoadMoreNotif')?.addEventListener('click', (e) => {
+    e.target.textContent = 'Đang tải...';
+    e.target.disabled = true;
+    loadRows(false);
   });
 
-  list.querySelectorAll('[data-mark]').forEach((btn) => {
-    btn.addEventListener('click', async () => {
-      const id = btn.closest('.notif-item').dataset.id;
-      await markRead(id);
-      await loadRows();
-    });
+  // MỚI — bấm vào 1 thông báo để ĐỌC ĐẦY ĐỦ như đọc 1 bài viết (mở modal
+  // chi tiết), thay vì trước đây bấm là điều hướng đi luôn — nội dung dài
+  // bị cắt ngắn trong danh sách, không đọc trọn được. Mở modal cũng tự
+  // đánh dấu đã đọc luôn (đọc = đã đọc), không cần nút riêng mỗi dòng nữa.
+  list.querySelectorAll('.notif-item').forEach((el) => {
+    el.addEventListener('click', () => openDetail(el.dataset.id));
   });
 }
+
+function openDetail(id) {
+  const n = ALL_ROWS.find((r) => r.id === id);
+  if (!n) return;
+  const cat = categoryOf(n);
+
+  document.getElementById('notifDetailMeta').innerHTML =
+    `<span class="badge badge-submitted" style="font-size:10px;">${cat.label}</span><span>${SCOPE_LABEL[n.scope]}</span><span>·</span><span>${fmtDateLong(n.created_at)}</span>`;
+  document.getElementById('notifDetailTitle').textContent = n.title;
+  document.getElementById('notifDetailContent').textContent = n.content || '';
+
+  const sigBox = document.getElementById('notifDetailSignature');
+  if (n.notification_type === 'info' && n.employees?.full_name) {
+    document.getElementById('notifSigName').textContent = n.employees.full_name;
+    document.getElementById('notifSigTitle').textContent = n.employees.positions?.name || '';
+    sigBox.style.display = 'block';
+  } else {
+    sigBox.style.display = 'none';
+  }
+
+  document.getElementById('notifDetailModal').classList.add('show');
+
+  if (!READ_IDS.has(id)) {
+    markRead(id).then(() => {
+      READ_IDS.add(id);
+      render();
+    });
+  }
+
+  // Nếu thông báo có link_url (thường là loại Hệ thống, gắn với 1 yêu
+  // cầu/phiếu cụ thể) thì cho phép nhấn đi tới đúng chỗ đó từ trong modal.
+  const goBtn = document.getElementById('notifDetailGoto');
+  if (goBtn) goBtn.remove();
+  if (n.link_url) {
+    const btn = document.createElement('a');
+    btn.id = 'notifDetailGoto';
+    btn.href = n.link_url;
+    btn.className = 'btn btn-accent btn-sm';
+    btn.style.marginTop = '18px';
+    btn.style.display = 'inline-block';
+    btn.textContent = 'Xem yêu cầu liên quan →';
+    document.getElementById('notifDetailContent').insertAdjacentElement('afterend', btn);
+  }
+}
+
+document.getElementById('notifDetailClose').addEventListener('click', () => document.getElementById('notifDetailModal').classList.remove('show'));
+document.getElementById('notifDetailModal').addEventListener('click', (e) => {
+  if (e.target.id === 'notifDetailModal') document.getElementById('notifDetailModal').classList.remove('show');
+});
 
 async function markRead(notificationId) {
   await supabase.from('notification_reads').upsert(
@@ -99,6 +179,15 @@ async function markRead(notificationId) {
 
 document.getElementById('filterScope').addEventListener('change', render);
 document.getElementById('filterCategory').addEventListener('change', render);
+
+document.getElementById('notifTypeTabs').addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-type]');
+  if (!btn || btn.classList.contains('active')) return;
+  document.querySelectorAll('#notifTypeTabs button').forEach((b) => b.classList.remove('active'));
+  btn.classList.add('active');
+  ACTIVE_TYPE = btn.dataset.type;
+  loadRows(true);
+});
 
 document.getElementById('btnMarkAll').addEventListener('click', async () => {
   const unread = ALL_ROWS.filter((r) => !READ_IDS.has(r.id));

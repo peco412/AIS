@@ -46,17 +46,16 @@ document.getElementById('broadcastForm').addEventListener('submit', async (e) =>
   formError.classList.remove('show');
 
   const scope = document.getElementById('scope').value;
-  const payload = {
-    scope, title: document.getElementById('title').value.trim(),
-    content: document.getElementById('content').value || null,
-    created_by: PROFILE.id,
-  };
-  if (scope === 'center') payload.center_id = document.getElementById('centerSelect').value;
-  if (scope === 'department') payload.department_id = document.getElementById('deptSelect').value;
+  const title = document.getElementById('title').value.trim();
+  const content = document.getElementById('content').value || null;
+  const centerId = scope === 'center' ? document.getElementById('centerSelect').value : null;
+  const deptId = scope === 'department' ? document.getElementById('deptSelect').value : null;
 
   const btn = e.target.querySelector('button[type=submit]');
   btn.disabled = true; btn.textContent = 'Đang gửi...';
-  const { error } = await supabase.from('notifications').insert(payload);
+  const { error } = await supabase.rpc('create_broadcast_notification', {
+    p_scope: scope, p_title: title, p_content: content, p_center_id: centerId, p_department_id: deptId,
+  });
   btn.disabled = false; btn.textContent = 'Ban hành thông báo';
 
   if (error) { formError.textContent = error.message; formError.classList.add('show'); return; }

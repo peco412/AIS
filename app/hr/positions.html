@@ -32,12 +32,8 @@
 
   <header class="topbar">
     <div class="topbar__left">
-      <button class="menu-toggle" id="menuToggle" aria-label="Mở menu">☰</button>
-      <div class="search-box">
-        <span aria-hidden="true">🔎</span>
-        <input type="text" id="searchInput" placeholder="Tìm theo tên chức vụ..." />
+      <button class="menu-toggle" id="menuToggle" aria-label="Mở menu"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg></button>
       </div>
-    </div>
     <div class="topbar__right">
       <button class="icon-btn" title="Thông báo" onclick="location.href='/notifications.html'">
         <svg class="icon" viewBox="0 0 24 24"><path d="M6 8a6 6 0 1 1 12 0c0 4 1.5 6 2 6.5H4c.5-.5 2-2.5 2-6.5z"/><path d="M9.5 18a2.5 2.5 0 0 0 5 0"/></svg>
@@ -65,6 +61,7 @@
 
     <div class="toolbar">
       <div class="toolbar__filters">
+        <input type="text" class="text-input" id="searchInput" placeholder="Tìm theo tên chức vụ..." style="max-width:260px;" />
         <select class="select-input" id="filterDept"><option value="">Tất cả phòng ban</option></select>
       </div>
       <div class="cell-muted" id="resultCount"></div>
