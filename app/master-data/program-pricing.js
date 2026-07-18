@@ -26,7 +26,7 @@ async function loadPricing() {
         id, name, display_order,
         program_sublevels (
           id, name, display_order,
-          program_courses ( id, name, price_vnd, display_order )
+          program_courses ( id, name, price_vnd, weeks, sessions_per_week, periods_per_session, total_sessions, display_order )
         )
       )
     `)
@@ -83,10 +83,17 @@ function renderProgram(prog) {
           ${CAN_EDIT
             ? `<span class="course-row__actions">
                  ${arrowButtons('course', c.id, cIdx === 0, cIdx === courses.length - 1)}
+                 <input type="number" class="qty-input" data-course-weeks="${c.id}" data-original="${c.weeks ?? ''}" value="${c.weeks ?? ''}" min="1" placeholder="Tuần" title="Số tuần" />
+                 <input type="number" class="qty-input" data-course-spw="${c.id}" data-original="${c.sessions_per_week ?? ''}" value="${c.sessions_per_week ?? ''}" min="1" placeholder="Buổi/tuần" title="Số buổi mỗi tuần" />
+                 <input type="number" class="qty-input" data-course-pps="${c.id}" data-original="${c.periods_per_session ?? 1}" value="${c.periods_per_session ?? 1}" min="1" placeholder="Tiết/buổi" title="Số tiết mỗi buổi" />
+                 <span class="qty-total" title="Tổng số buổi — tự tính từ Tuần × Buổi/tuần, dùng cho Ví buổi học">${c.total_sessions != null ? c.total_sessions + ' buổi' : '—'}</span>
                  <input type="number" class="price-input" data-course="${c.id}" data-original="${c.price_vnd || 0}" value="${c.price_vnd || 0}" />
                  <button type="button" class="chip-del" data-del-course="${c.id}" title="Xoá khoá này"><svg class="icon icon--sm" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
                </span>`
-            : `<strong class="mono">${fmtMoney(c.price_vnd)} đ</strong>`}
+            : `<span style="display:flex; align-items:center; gap:10px;">
+                 ${c.total_sessions != null ? `<span class="cell-muted" style="font-size:11px;">${c.total_sessions} buổi</span>` : ''}
+                 <strong class="mono">${fmtMoney(c.price_vnd)} đ</strong>
+               </span>`}
         </div>
       `).join('');
 
@@ -196,33 +203,47 @@ async function moveItem(type, id, direction) {
   await loadPricing();
 }
 
-// Thanh "Luu thay doi" TONG THE cho GIA — hien khi co it nhat 1 o gia da
-// sua so voi gia tri goc (data-original), an di khi khong con gi thay doi.
+// Thanh "Luu thay doi" TONG THE cho GIA + dinh luong (tuan/buoi/tiet) —
+// hien khi co it nhat 1 o da sua so voi gia tri goc (data-original), an
+// di khi khong con gi thay doi.
 function updateSaveBarVisibility() {
-  const dirtyInputs = Array.from(document.querySelectorAll('.price-input')).filter(
-    (i) => Number(i.value) !== Number(i.dataset.original)
+  const dirtyInputs = Array.from(document.querySelectorAll('.price-input, .qty-input')).filter(
+    (i) => String(i.value) !== String(i.dataset.original)
   );
   const bar = document.getElementById('saveBar');
   if (dirtyInputs.length > 0) {
     bar.style.display = 'flex';
-    document.getElementById('saveBarCount').textContent = `${dirtyInputs.length} giá đã sửa, chưa lưu`;
+    document.getElementById('saveBarCount').textContent = `${dirtyInputs.length} ô đã sửa, chưa lưu`;
   } else {
     bar.style.display = 'none';
   }
 }
 
 async function saveAllPrices() {
-  const dirtyInputs = Array.from(document.querySelectorAll('.price-input')).filter(
-    (i) => Number(i.value) !== Number(i.dataset.original)
+  const dirtyInputs = Array.from(document.querySelectorAll('.price-input, .qty-input')).filter(
+    (i) => String(i.value) !== String(i.dataset.original)
   );
   if (dirtyInputs.length === 0) return;
 
   const btn = document.getElementById('btnSaveAll');
   btn.disabled = true; btn.textContent = 'Đang lưu...';
 
-  const results = await Promise.all(dirtyInputs.map((input) =>
-    supabase.from('program_courses').update({ price_vnd: Number(input.value) || 0 }).eq('id', input.dataset.course)
-  ));
+  // Gom theo course_id — 1 khoá có thể sửa nhiều ô cùng lúc (giá + tuần +
+  // buổi/tuần + tiết/buổi), gộp thành 1 lệnh update duy nhất/khoá thay vì
+  // nhiều lệnh rời rạc.
+  const byCourseId = {};
+  dirtyInputs.forEach((input) => {
+    const courseId = input.dataset.course || input.dataset.courseWeeks || input.dataset.courseSpw || input.dataset.coursePps;
+    byCourseId[courseId] = byCourseId[courseId] || {};
+    if (input.dataset.course) byCourseId[courseId].price_vnd = Number(input.value) || 0;
+    if (input.dataset.courseWeeks) byCourseId[courseId].weeks = input.value ? Number(input.value) : null;
+    if (input.dataset.courseSpw) byCourseId[courseId].sessions_per_week = input.value ? Number(input.value) : null;
+    if (input.dataset.coursePps) byCourseId[courseId].periods_per_session = input.value ? Number(input.value) : 1;
+  });
+
+  const results = await Promise.all(
+    Object.entries(byCourseId).map(([courseId, patch]) => supabase.from('program_courses').update(patch).eq('id', courseId))
+  );
   const failed = results.filter((r) => r.error);
 
   btn.disabled = false; btn.textContent = 'Lưu tất cả thay đổi';
@@ -238,7 +259,7 @@ function wireEvents(container) {
   container.querySelectorAll('[data-move-up]').forEach((btn) => btn.addEventListener('click', () => moveItem(btn.dataset.moveType, btn.dataset.moveUp, -1)));
   container.querySelectorAll('[data-move-down]').forEach((btn) => btn.addEventListener('click', () => moveItem(btn.dataset.moveType, btn.dataset.moveDown, 1)));
 
-  container.querySelectorAll('.price-input').forEach((input) => {
+  container.querySelectorAll('.price-input, .qty-input').forEach((input) => {
     input.addEventListener('input', updateSaveBarVisibility);
   });
 

@@ -40,7 +40,7 @@
 
   <main class="main">
     <div class="page-header">
-      <div><h1>Bảng giá chương trình học</h1><div class="sub">Bấm vào từng chương trình để xem chi tiết — học phí gốc từng khoá, tự cộng dồn ra giá trọn cấp độ con/cấp độ/chương trình.</div></div>
+      <div><h1>Bảng giá chương trình học</h1><div class="sub">Bấm vào từng chương trình để xem chi tiết — học phí gốc từng khoá, tự cộng dồn ra giá trọn cấp độ con/cấp độ/chương trình. Ô "Tuần/Buổi-tuần/Tiết-buổi" dùng để tính đúng Ví buổi học của học sinh — điền càng đủ, hệ thống cộng buổi học càng chính xác.</div></div>
       <button class="btn btn-accent" id="btnAddProgram" style="display:none;">+ Chương trình mới</button>
     </div>
 
@@ -73,6 +73,8 @@
   .course-row__name { display: flex; align-items: center; }
   .course-row__actions { display: flex; align-items: center; gap: 4px; }
   .course-row .price-input { width: 110px; font-size: 12px; padding: 4px 8px; }
+  .course-row .qty-input { width: 56px; font-size: 12px; padding: 4px 6px; text-align: center; }
+  .course-row .qty-total { font-size: 11px; color: var(--muted); white-space: nowrap; min-width: 58px; text-align: right; }
   .chip-del { border: none; background: none; color: var(--danger); cursor: pointer; font-size: 11px; padding: 0 2px; }
   .btn-arrow {
     border: 1px solid var(--border); background: var(--surface-fill); color: var(--ink-soft);

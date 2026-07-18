@@ -73,7 +73,7 @@
       <table class="data-table">
         <thead>
           <tr>
-            <th>Chức vụ</th><th>Phòng ban</th><th>Cấp duyệt</th>
+            <th>Chức vụ</th><th>Phòng ban</th><th title="Chỉ mang tính mô tả — không tự cấp quyền duyệt thật, xem Vai trò hệ thống của nhân viên">Cấp duyệt <svg class="icon icon--sm" viewBox="0 0 24 24" style="vertical-align:-3px; opacity:0.5;"><circle cx="12" cy="12" r="9"/><path d="M12 16v-5M12 8h.01"/></svg></th>
             <th>Có thể kiêm dạy</th><th>Số NV đang giữ</th><th></th>
           </tr>
         </thead>
@@ -105,13 +105,14 @@
           <select id="positionDept" required></select>
         </div>
         <div class="field">
-          <label for="approvalLevel">Cấp duyệt *</label>
+          <label for="approvalLevel">Cấp duyệt (chỉ mang tính mô tả/tham khảo) *</label>
           <select id="approvalLevel" required>
             <option value="0">0 — Nhân viên thường</option>
             <option value="1">1 — Trưởng/phó phòng (duyệt cấp 1)</option>
             <option value="2">2 — Ban điều hành (duyệt cấp 2)</option>
             <option value="9">9 — Nhân viên kỹ thuật (toàn quyền)</option>
           </select>
+          <p class="cell-muted" style="font-size:11.5px; margin-top:4px;">Lưu ý: ô này CHỈ để ghi chú/tham khảo, KHÔNG tự cấp quyền duyệt thật. Quyền duyệt thật của 1 nhân viên do "Vai trò hệ thống" quyết định — chỉnh ở màn Nhân viên, mục Vai trò.</p>
         </div>
       </div>
       <div class="field">
