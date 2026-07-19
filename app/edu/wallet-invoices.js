@@ -189,6 +189,12 @@ async function loadInvoices() {
       actions += `<button class="btn btn-outline btn-sm" data-adjust="${inv.id}" data-current="${inv.manual_discount_vnd || 0}">Ưu đãi</button>`;
       actions += `<button class="btn btn-accent btn-sm" data-collect="${inv.id}" data-remaining="${remaining}">Thu tiền</button>`;
     }
+    // MOI — chi cho xoa khi CHUA co dong nao ca (paid === 0) — hoa don da
+    // co giao dich se bi database tu chan xoa (khoa toan ven du lieu), nen
+    // chi hien nut khi chac chan xoa duoc, tranh bam vao roi bao loi.
+    if (paid === 0) {
+      actions += `<button class="btn btn-outline btn-sm" data-delete="${inv.id}" data-code="${esc(inv.invoice_code || '')}" title="Xoá hoá đơn"><svg class="icon icon--sm" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"/></svg></button>`;
+    }
 
     return `
       <tr>
@@ -208,6 +214,12 @@ async function loadInvoices() {
   tbody.querySelectorAll('[data-collect]').forEach((btn) => btn.addEventListener('click', () => openCollectModal(invoices.find((i) => i.id === btn.dataset.collect), Number(btn.dataset.remaining))));
   tbody.querySelectorAll('[data-adjust]').forEach((btn) => btn.addEventListener('click', () => openAdjustDiscount(btn.dataset.adjust, Number(btn.dataset.current))));
   tbody.querySelectorAll('[data-refund]').forEach((btn) => btn.addEventListener('click', () => openPlanRefund(btn.dataset.refund, Number(btn.dataset.total), Number(btn.dataset.amount))));
+  tbody.querySelectorAll('[data-delete]').forEach((btn) => btn.addEventListener('click', async () => {
+    if (!confirm(`Xoá hoá đơn ${btn.dataset.code || ''}? Không thể hoàn tác.`)) return;
+    const { error } = await supabase.from('invoices').delete().eq('id', btn.dataset.delete);
+    if (error) { alert('Không xoá được — hoá đơn này đã có giao dịch gắn với nó:\n' + error.message); return; }
+    await loadInvoices();
+  }));
 }
 
 // ---------------------------------------------------------------------

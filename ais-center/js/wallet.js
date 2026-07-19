@@ -1,51 +1,38 @@
-import { supabase, esc, fmtMoney, bootParentShell, getSelectedStudentId, setSelectedStudentId } from './parentSupabase.js';
+import { supabase, esc, fmtMoney, bootParentShell } from './parentSupabase.js';
 
 let STUDENTS = [];
-let SELECTED_ID = null;
 
-function renderSwitcher() {
-  const el = document.getElementById('studentSwitcher');
-  if (STUDENTS.length <= 1) { el.style.display = 'none'; return; }
-  el.innerHTML = STUDENTS.map((s) => `
-    <button class="student-chip ${s.id === SELECTED_ID ? 'active' : ''}" data-id="${s.id}">${esc(s.full_name)}</button>
-  `).join('');
-  el.querySelectorAll('[data-id]').forEach((btn) => {
-    btn.addEventListener('click', () => { setSelectedStudentId(btn.dataset.id); SELECTED_ID = btn.dataset.id; renderSwitcher(); loadBalance(); });
-  });
-}
-
-function updateOwnerLabel() {
-  // Luon hien ten hoc sinh (ke ca khi chi co 1 con) de phu huynh yen tam
-  // dung la vi cua con minh - truoc day chi hien qua studentSwitcher,
-  // ma switcher lai bi an khi STUDENTS.length <= 1.
+// SUA: bo nut chuyen doi con — vi la vi CHUNG ca gia dinh tu truoc, bam
+// chuyen qua lai giua cac con truoc day KHONG lam doi gi ca (van ra dung
+// 1 vi, 1 so du) — chi gay roi vi tuong la co the xem rieng tung con.
+// Nhan ten TAT CA con dang dung chung vi ngay tu dau, khong can chon gi.
+function updateOwnerLabel(names) {
   const el = document.getElementById('walletOwnerLabel');
   if (!el) return;
-  const student = STUDENTS.find((s) => s.id === SELECTED_ID);
-  el.textContent = student ? student.full_name : '—';
+  el.textContent = names.length > 1 ? `Ví chung — ${names.join(', ')}` : (names[0] || '—');
 }
 
 async function loadBalance() {
-  updateOwnerLabel();
-  const { data: wallet } = await supabase.from('wallet_students').select('wallet_id').eq('student_id', SELECTED_ID).maybeSingle();
+  if (STUDENTS.length === 0) return;
+  const { data: wallet } = await supabase.from('wallet_students').select('wallet_id').eq('student_id', STUDENTS[0].id).maybeSingle();
 
   if (!wallet) {
+    updateOwnerLabel(STUDENTS.map((s) => s.full_name));
     document.getElementById('balanceValue').textContent = '0 AIScoins';
     document.getElementById('balanceValueVnd').textContent = '';
     return;
   }
 
-  // Vi la vi CHUNG cua ca gia dinh - neu co nhieu con dang dung chung 1
-  // vi nay, hien ro ten tat ca de phu huynh biet so du nay dung chung
-  // cho nhung con nao (khong chi rieng con dang chon).
+  // Vi la vi CHUNG cua ca gia dinh - lay dung danh sach TAT CA con dang
+  // dung chung vi nay tu wallet_students (khong chi dua vao STUDENTS o
+  // trang nay, phong truong hop co con chua duoc bootParentShell tra ve
+  // vi ly do khac nhưng van chung vi).
   const { data: members } = await supabase
     .from('wallet_students')
     .select('students(full_name)')
     .eq('wallet_id', wallet.wallet_id);
-  if (members && members.length > 1) {
-    const names = members.map((m) => m.students?.full_name).filter(Boolean).join(', ');
-    const el = document.getElementById('walletOwnerLabel');
-    if (el) el.textContent = `Ví chung — ${names}`;
-  }
+  const names = (members || []).map((m) => m.students?.full_name).filter(Boolean);
+  updateOwnerLabel(names.length > 0 ? names : STUDENTS.map((s) => s.full_name));
 
   const { data: batches } = await supabase.from('wallet_topup_batches').select('coin_remaining, conversion_rate').eq('wallet_id', wallet.wallet_id);
   const total = (batches || []).reduce((s, b) => s + Number(b.coin_remaining), 0);
@@ -64,8 +51,6 @@ async function loadBalance() {
     }
 
     document.getElementById('content').style.display = 'block';
-    SELECTED_ID = getSelectedStudentId(STUDENTS);
-    renderSwitcher();
     await loadBalance();
   } catch (e) { /* bootParentShell tự điều hướng nếu chưa đăng nhập */ }
 })();

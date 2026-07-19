@@ -13,8 +13,23 @@ let ALL_MEETINGS = [];
 
 function fmtDate(d) { return d ? new Date(d).toLocaleDateString('vi-VN') : ''; }
 
+// Bang mau co dinh, gan theo ma phong ban (hash don gian) -> moi phong ban
+// luon ra 1 mau nhat quan moi lan mo lai trang, giup quet mat nhanh ai
+// thuoc phong nao thay vi tat ca cung 1 mau nhu truoc.
+const AVATAR_PALETTE = ['#0094D9', '#E4572E', '#17A398', '#8E44AD', '#D4A017', '#C0392B', '#2C7873', '#5D5D81'];
+function colorForDept(code) {
+  if (!code) return AVATAR_PALETTE[AVATAR_PALETTE.length - 1];
+  let hash = 0;
+  for (let i = 0; i < code.length; i++) hash = (hash * 31 + code.charCodeAt(i)) >>> 0;
+  return AVATAR_PALETTE[hash % AVATAR_PALETTE.length];
+}
+
 async function loadEmployees() {
-  const { data } = await supabase.from('employees').select('id, full_name, email').neq('id', PROFILE.id).order('full_name');
+  const { data } = await supabase
+    .from('employees')
+    .select('id, full_name, email, departments(name, code), positions(name)')
+    .neq('id', PROFILE.id)
+    .order('full_name');
   ALL_EMPLOYEES = data || [];
   renderPicker();
 }
@@ -24,27 +39,98 @@ function initials(name) {
   return (parts[parts.length - 1]?.[0] || '?').toUpperCase();
 }
 
+function rowHtml(e) {
+  const dept = e.departments;
+  const color = colorForDept(dept?.code);
+  const roleLine = [e.positions?.name, dept?.name].filter(Boolean).join(' · ');
+  return `
+    <label class="participant-row ${SELECTED_PARTICIPANTS.has(e.id) ? 'is-selected' : ''}" data-row="${e.id}">
+      <input type="checkbox" value="${e.id}" ${SELECTED_PARTICIPANTS.has(e.id) ? 'checked' : ''} />
+      <span class="participant-row__avatar" style="background:${color};">${esc(initials(e.full_name))}</span>
+      <span class="participant-row__body">
+        <div class="participant-row__name">${esc(e.full_name)}</div>
+        ${roleLine ? `<div class="participant-row__role">${esc(roleLine)}</div>` : ''}
+      </span>
+    </label>
+  `;
+}
+
+// MOI — nhom theo phong ban, dang "ngan keo" dong/mo duoc (giong Menu
+// dieu huong chinh) — thay vi 1 danh sach dai phang khong phan nhom,
+// giup "de chon" hon han khi can moi ca 1 phong ban (tick 1 o la chon
+// het), va "de nhin" hon vi khong con phai cuon qua hang chuc dong tim
+// dung nguoi.
 function renderPicker() {
   const filter = document.getElementById('participantFilter').value.trim().toLowerCase();
   const box = document.getElementById('participantPicker');
-  const list = ALL_EMPLOYEES.filter((e) => !filter || e.full_name.toLowerCase().includes(filter));
+  const list = ALL_EMPLOYEES.filter((e) =>
+    !filter || e.full_name.toLowerCase().includes(filter) || (e.departments?.name || '').toLowerCase().includes(filter)
+  );
 
-  box.innerHTML = list.map((e) => `
-    <label class="participant-row ${SELECTED_PARTICIPANTS.has(e.id) ? 'is-selected' : ''}" data-row="${e.id}">
-      <input type="checkbox" value="${e.id}" ${SELECTED_PARTICIPANTS.has(e.id) ? 'checked' : ''} />
-      <span class="participant-row__avatar">${esc(initials(e.full_name))}</span>
-      <span class="participant-row__name">${esc(e.full_name)}</span>
-      <span class="participant-row__email">${esc(e.email || '')}</span>
-    </label>
-  `).join('') || '<div class="empty-cell">Không tìm thấy nhân viên nào.</div>';
+  if (list.length === 0) {
+    box.innerHTML = '<div class="empty-cell">Không tìm thấy nhân viên nào.</div>';
+    updateSelectedCount();
+    return;
+  }
 
-  box.querySelectorAll('input[type=checkbox]').forEach((cb) => {
+  const groups = {};
+  list.forEach((e) => {
+    const key = e.departments?.name || 'Khác';
+    groups[key] = groups[key] || [];
+    groups[key].push(e);
+  });
+
+  const hasActiveFilter = Boolean(filter);
+  box.innerHTML = Object.entries(groups).sort(([a], [b]) => a.localeCompare(b)).map(([deptName, emps]) => {
+    const allSelected = emps.every((e) => SELECTED_PARTICIPANTS.has(e.id));
+    return `
+      <details class="participant-group" ${hasActiveFilter ? 'open' : ''}>
+        <summary class="participant-group__header">
+          <input type="checkbox" data-select-group="${esc(deptName)}" ${allSelected ? 'checked' : ''} title="Chọn tất cả ${esc(deptName)}" />
+          <span class="dept-name">${esc(deptName)}</span>
+          <span class="dept-count">${emps.length}</span>
+          <svg class="icon icon--sm chevron" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+        </summary>
+        ${emps.map(rowHtml).join('')}
+      </details>
+    `;
+  }).join('');
+
+  box.querySelectorAll('input[type=checkbox][value]').forEach((cb) => {
     cb.addEventListener('change', () => {
       if (cb.checked) SELECTED_PARTICIPANTS.add(cb.value); else SELECTED_PARTICIPANTS.delete(cb.value);
       cb.closest('.participant-row').classList.toggle('is-selected', cb.checked);
       updateSelectedCount();
+      // Chi cap nhat lai dung o "chon tat ca" cua nhom chua checkbox nay —
+      // KHONG ve lai toan bo (se lam sap cac <details> dang mo dang do,
+      // rat kho chiu khi dang tick chon tung nguoi trong 1 phong ban dai).
+      const group = cb.closest('.participant-group');
+      const groupCb = group?.querySelector('[data-select-group]');
+      const deptName = groupCb?.dataset.selectGroup;
+      if (groupCb && deptName) {
+        const emps = groups[deptName] || [];
+        groupCb.checked = emps.length > 0 && emps.every((e) => SELECTED_PARTICIPANTS.has(e.id));
+      }
     });
   });
+
+  box.querySelectorAll('[data-select-group]').forEach((cb) => {
+    cb.addEventListener('click', (e) => e.stopPropagation()); // dung click checkbox lam dong/mo luon <details>
+    cb.addEventListener('change', () => {
+      const deptName = cb.dataset.selectGroup;
+      const group = cb.closest('.participant-group');
+      (groups[deptName] || []).forEach((emp) => {
+        if (cb.checked) SELECTED_PARTICIPANTS.add(emp.id); else SELECTED_PARTICIPANTS.delete(emp.id);
+        const row = group.querySelector(`.participant-row[data-row="${emp.id}"]`);
+        if (row) {
+          row.classList.toggle('is-selected', cb.checked);
+          row.querySelector('input[type=checkbox]').checked = cb.checked;
+        }
+      });
+      updateSelectedCount();
+    });
+  });
+
   updateSelectedCount();
 }
 
@@ -53,6 +139,7 @@ function updateSelectedCount() {
   if (counter) counter.textContent = SELECTED_PARTICIPANTS.size > 0 ? `Đã chọn ${SELECTED_PARTICIPANTS.size} người` : '';
 }
 document.getElementById('participantFilter').addEventListener('input', renderPicker);
+
 
 async function loadMeetings() {
   const list = document.getElementById('meetingList');

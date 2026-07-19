@@ -30,7 +30,14 @@
       <div class="field"><select id="invoiceSelect"></select></div>
     </div>
 
-    <div class="card">
+    <div class="card" id="planChoiceCard" style="display:none;">
+      <h3>Chọn hình thức đóng học phí</h3>
+      <p class="cell-muted" style="font-size:12.5px; margin-bottom:12px;">Bạn có thể chọn hình thức phù hợp nhất — không bắt buộc theo đúng hình thức tư vấn viên đã trao đổi ban đầu.</p>
+      <div id="planOptionsList"></div>
+      <div class="form-error" id="planChoiceError"></div>
+    </div>
+
+    <div class="card" id="paymentDetailCard">
       <h3>Chi tiết thanh toán</h3>
       <div class="batch-row"><span class="cell-muted">Hình thức thu</span><span id="planTypeDisplay">—</span></div>
       <div class="batch-row"><span class="cell-muted">Tổng tiền</span><strong id="totalAmount">—</strong></div>
@@ -40,7 +47,7 @@
       <div class="batch-row"><span class="cell-muted">Trạng thái</span><span id="statusBadge" class="badge unpaid">—</span></div>
     </div>
 
-    <div class="card">
+    <div class="card" id="paymentActionCard">
       <h3>Thanh toán qua Ví</h3>
       <div class="cell-muted" style="margin-bottom:10px;">Số dư ví hiện tại: <strong id="walletBalanceDisplay">—</strong></div>
       <div class="field"><label for="payAmount">Số tiền đóng (VNĐ)</label><input type="number" id="payAmount" min="0" /></div>

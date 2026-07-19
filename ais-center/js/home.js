@@ -1,33 +1,22 @@
-import { supabase, esc, fmtMoney, bootParentShell, getSelectedStudentId, setSelectedStudentId } from './parentSupabase.js';
+import { supabase, esc, fmtMoney, bootParentShell } from './parentSupabase.js';
 
 let STUDENTS = [];
-let SELECTED_ID = null;
 
-function renderSwitcher() {
-  const el = document.getElementById('studentSwitcher');
-  if (STUDENTS.length <= 1) { el.style.display = 'none'; return; }
-  el.innerHTML = STUDENTS.map((s) => `
-    <button class="student-chip ${s.id === SELECTED_ID ? 'active' : ''}" data-id="${s.id}">${esc(s.full_name)}</button>
-  `).join('');
-  el.querySelectorAll('[data-id]').forEach((btn) => {
-    btn.addEventListener('click', () => { setSelectedStudentId(btn.dataset.id); SELECTED_ID = btn.dataset.id; renderSwitcher(); loadPromotions(); });
-  });
-}
-
-// "Chương trình ưu đãi" — hiện các chương trình giảm giá đang áp dụng cho
-// đúng trung tâm học sinh đang học. Ưu đãi TOT NHAT (giam nhieu nhat)
-// cung duoc dua len BANNER dau trang — neu khong co uu dai nao dang
-// chay, banner tu dong hien loi chao mung MAC DINH (khong de trong).
+// SUA: bo nut chuyen doi con — khac voi Vi (dung chung 1 vi nen chuyen
+// qua lai khong doi gi), uu dai co the khac nhau THAT theo tung trung
+// tam neu cac con hoc o trung tam khac nhau — nen thay vi bat chuyen tung
+// con, GOP LUON uu dai cua TAT CA trung tam cac con dang hoc vao 1 danh
+// sach, ghi ro ten con/trung tam o moi dong khi có từ 2 trung tâm trở lên.
 async function loadPromotions() {
-  const student = STUDENTS.find((s) => s.id === SELECTED_ID);
-  const centerId = student?.center_id;
+  const centerIds = [...new Set(STUDENTS.map((s) => s.center_id).filter(Boolean))];
   const now = new Date().toISOString();
 
+  const orParts = ['scope.eq.system', ...centerIds.map((id) => `center_id.eq.${id}`)];
   const { data } = await supabase.from('discount_programs_view')
-    .select('name, discount_rate, scope, valid_from, valid_to')
+    .select('name, discount_rate, scope, center_id, valid_from, valid_to')
     .eq('status', 'active')
     .lte('valid_from', now).gte('valid_to', now)
-    .or(`scope.eq.system${centerId ? `,center_id.eq.${centerId}` : ''}`);
+    .or(orParts.join(','));
 
   const promoBox = document.getElementById('promoList');
   if (!data || data.length === 0) {
@@ -37,10 +26,11 @@ async function loadPromotions() {
     return;
   }
 
+  const centerNameOf = (centerId) => STUDENTS.find((s) => s.center_id === centerId)?.centers?.name || 'Trung tâm của bạn';
   promoBox.innerHTML = data.map((p) => `
     <div class="invoice-row">
       <div class="invoice-row__top"><span>${esc(p.name)}</span><span style="color:var(--accent-deep); font-weight:700;">-${(p.discount_rate * 100).toFixed(0)}%</span></div>
-      <div class="invoice-row__sub">Áp dụng đến ${new Date(p.valid_to).toLocaleDateString('vi-VN')}${p.scope === 'system' ? ' · Toàn hệ thống' : ' · Trung tâm của bạn'}</div>
+      <div class="invoice-row__sub">Áp dụng đến ${new Date(p.valid_to).toLocaleDateString('vi-VN')}${p.scope === 'system' ? ' · Toàn hệ thống' : ` · ${esc(centerNameOf(p.center_id))}`}</div>
     </div>
   `).join('');
 
@@ -62,7 +52,6 @@ async function loadPromotions() {
     }
 
     document.getElementById('content').style.display = 'block';
-    SELECTED_ID = getSelectedStudentId(STUDENTS);
     renderSwitcher();
     await loadPromotions();
   } catch (e) { /* bootParentShell tự điều hướng nếu chưa đăng nhập */ }

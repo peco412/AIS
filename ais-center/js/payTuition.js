@@ -13,9 +13,9 @@ const PLAN_LABEL = { none: 'Theo tháng', case: 'Theo trường hợp', program:
 async function loadInvoices(studentIds) {
   const { data: invoices } = await supabase
     .from('invoices')
-    .select('id, student_id, period_year, period_month, amount_vnd, manual_discount_vnd, discount_type, status, due_date')
+    .select('id, student_id, period_year, period_month, amount_vnd, manual_discount_vnd, discount_type, status, due_date, draft_options')
     .in('student_id', studentIds)
-    .in('status', ['unpaid', 'partially_paid'])
+    .in('status', ['draft', 'unpaid', 'partially_paid'])
     .order('due_date', { ascending: true });
 
   ALL_INVOICES = invoices || [];
@@ -30,7 +30,7 @@ async function loadInvoices(studentIds) {
   // mỗi dòng — phụ huynh không cần rời trang để đổi "con đang chọn" nữa,
   // vì dù chọn hoá đơn của con nào, tiền đóng cũng trừ từ đúng 1 ví chung.
   document.getElementById('invoiceSelect').innerHTML = ALL_INVOICES.map((inv) =>
-    `<option value="${inv.id}">${esc(STUDENT_NAMES[inv.student_id] || '')} — Học phí ${inv.period_month}/${inv.period_year} — hạn ${new Date(inv.due_date).toLocaleDateString('vi-VN')}</option>`
+    `<option value="${inv.id}">${esc(STUDENT_NAMES[inv.student_id] || '')} — Học phí ${inv.period_month}/${inv.period_year}${inv.status === 'draft' ? ' — cần chọn hình thức đóng' : ` — hạn ${new Date(inv.due_date).toLocaleDateString('vi-VN')}`}</option>`
   ).join('');
 
   await selectInvoice(ALL_INVOICES[0].id);
@@ -39,6 +39,25 @@ async function loadInvoices(studentIds) {
 async function selectInvoice(invoiceId) {
   ACTIVE_INVOICE = ALL_INVOICES.find((i) => i.id === invoiceId);
   if (!ACTIVE_INVOICE) return;
+
+  const planCard = document.getElementById('planChoiceCard');
+  const detailCard = document.getElementById('paymentDetailCard');
+  const actionCard = document.getElementById('paymentActionCard');
+
+  // MOI — hoa don dang 'draft' (cron tu dong tao khi sap het buoi) CHUA
+  // co gia cu the, phai chon 1 trong so cac hinh thuc dong hoc phi truoc
+  // — đúng yêu cầu "phụ huynh có quyền chọn hình thức đóng", không còn bị
+  // co cung theo dung 1 hinh thuc tu van vien da chon luc dau.
+  if (ACTIVE_INVOICE.status === 'draft') {
+    planCard.style.display = 'block';
+    detailCard.style.display = 'none';
+    actionCard.style.display = 'none';
+    renderPlanOptions();
+    return;
+  }
+  planCard.style.display = 'none';
+  detailCard.style.display = 'block';
+  actionCard.style.display = 'block';
 
   const { data: ledgerRows } = await supabase.from('debt_ledger').select('amount_vnd').eq('invoice_id', invoiceId);
   const paid = (ledgerRows || []).reduce((s, l) => s + Number(l.amount_vnd), 0);
@@ -54,6 +73,51 @@ async function selectInvoice(invoiceId) {
   document.getElementById('statusBadge').className = 'badge ' + STATUS_BADGE_CLASS[ACTIVE_INVOICE.status];
   document.getElementById('payAmount').value = Math.min(remaining, WALLET_BALANCE);
   document.getElementById('payAmount').max = remaining;
+}
+
+function renderPlanOptions() {
+  const box = document.getElementById('planOptionsList');
+  const options = ACTIVE_INVOICE.draft_options || [];
+  if (options.length === 0) {
+    box.innerHTML = '<div class="empty-state">Chưa có lựa chọn nào, vui lòng liên hệ trung tâm.</div>';
+    return;
+  }
+  box.innerHTML = options.map((opt) => `
+    <label class="plan-option-card" data-plan="${esc(opt.plan_type)}">
+      <div class="plan-option-card__top">
+        <span class="plan-option-card__label">${esc(opt.label)}</span>
+        <span class="plan-option-card__price">${fmtMoney(opt.amount_vnd)} đ</span>
+      </div>
+      <div class="plan-option-card__note">Bấm để chọn hình thức này</div>
+    </label>
+  `).join('');
+
+  box.querySelectorAll('[data-plan]').forEach((card) => {
+    card.addEventListener('click', () => choosePlan(card.dataset.plan, card));
+  });
+}
+
+async function choosePlan(planType, cardEl) {
+  const errBox = document.getElementById('planChoiceError');
+  errBox.classList.remove('show');
+  document.querySelectorAll('.plan-option-card').forEach((c) => c.classList.remove('is-chosen'));
+  cardEl.classList.add('is-chosen');
+
+  try {
+    const { data, error } = await supabase.rpc('choose_draft_invoice_plan', {
+      p_invoice_id: ACTIVE_INVOICE.id, p_plan_type: planType,
+    });
+    if (error) throw error;
+    // Cap nhat lai dung hoa don trong danh sach dang giu o bo nho, roi
+    // chuyen thang sang man thanh toan binh thuong — khong can tai lai
+    // ca trang.
+    const idx = ALL_INVOICES.findIndex((i) => i.id === ACTIVE_INVOICE.id);
+    if (idx >= 0) ALL_INVOICES[idx] = data;
+    await selectInvoice(ACTIVE_INVOICE.id);
+  } catch (err) {
+    errBox.textContent = err.message || 'Có lỗi xảy ra, vui lòng thử lại.';
+    errBox.classList.add('show');
+  }
 }
 
 document.getElementById('invoiceSelect').addEventListener('change', (e) => selectInvoice(e.target.value));

@@ -19,24 +19,37 @@
 <link rel="stylesheet" href="/css/module.css" />
 <style>
   .participant-picker {
-    max-height: 260px; overflow-y: auto; border: 1px solid var(--border);
+    max-height: 320px; overflow-y: auto; border: 1px solid var(--border);
     border-radius: var(--radius-md); background: var(--surface-card);
   }
-  .participant-row {
-    display: flex; align-items: center; gap: 12px; padding: 10px 14px;
-    cursor: pointer; border-bottom: 1px solid var(--separator); transition: background 0.12s;
+  .participant-group { border-bottom: 1px solid var(--separator); }
+  .participant-group:last-child { border-bottom: none; }
+  .participant-group__header {
+    display: flex; align-items: center; gap: 10px; padding: 9px 14px;
+    cursor: pointer; user-select: none; list-style: none;
+    background: var(--surface-fill); position: sticky; top: 0; z-index: 1;
   }
-  .participant-row:last-child { border-bottom: none; }
+  .participant-group__header::-webkit-details-marker { display: none; }
+  .participant-group__header .dept-name { font-size: 12px; font-weight: 700; color: var(--ink-soft); flex: 1; }
+  .participant-group__header .dept-count { font-size: 10.5px; color: var(--muted); background: var(--surface-sunken); border-radius: 999px; padding: 1px 7px; }
+  .participant-group__header .chevron { color: var(--muted); transition: transform 0.15s; width: 14px; height: 14px; }
+  .participant-group[open] .chevron { transform: rotate(90deg); }
+  .participant-group__header input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--accent); cursor: pointer; }
+  .participant-row {
+    display: flex; align-items: center; gap: 12px; padding: 8px 14px 8px 30px;
+    cursor: pointer; transition: background 0.12s;
+  }
   .participant-row:hover { background: var(--surface-sunken); }
   .participant-row.is-selected { background: var(--accent-tint); }
   .participant-row input[type="checkbox"] { width: 17px; height: 17px; accent-color: var(--accent); flex-shrink: 0; cursor: pointer; }
   .participant-row__avatar {
-    width: 30px; height: 30px; border-radius: 50%; background: var(--accent);
-    color: #fff; display: flex; align-items: center; justify-content: center;
+    width: 30px; height: 30px; border-radius: 50%; color: #fff;
+    display: flex; align-items: center; justify-content: center;
     font-size: 12px; font-weight: 700; flex-shrink: 0;
   }
-  .participant-row__name { font-size: 13.5px; font-weight: 500; color: var(--ink); flex: 1; }
-  .participant-row__email { font-size: 11.5px; color: var(--muted); }
+  .participant-row__body { flex: 1; min-width: 0; }
+  .participant-row__name { font-size: 13.5px; font-weight: 600; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .participant-row__role { font-size: 11px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .meeting-card { background: var(--surface-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px 20px; margin-bottom: 12px; }
   .meeting-card h4 { font-size: 15px; margin-bottom: 4px; }
   .meeting-card .meta { font-size: 12.5px; color: var(--muted); margin-bottom: 6px; }
@@ -116,10 +129,12 @@
         </div>
       </div>
       <div class="field">
-        <label>Mời người tham gia</label>
-        <input type="text" class="text-input" id="participantFilter" placeholder="Lọc theo tên..." style="margin-bottom:8px; width:100%;" />
+        <label style="display:flex; justify-content:space-between; align-items:center;">
+          <span>Mời người tham gia</span>
+          <span class="cell-muted" id="participantCount" style="font-size:11.5px; font-weight:400;"></span>
+        </label>
+        <input type="text" class="text-input" id="participantFilter" placeholder="Lọc theo tên hoặc phòng ban..." style="margin-bottom:8px; width:100%;" />
         <div class="participant-picker" id="participantPicker"></div>
-        <div class="cell-muted" id="participantCount" style="margin-top:6px; font-size:11.5px;"></div>
       </div>
       <div class="modal-actions">
         <button type="button" class="btn btn-outline" id="cancelModal"><span data-i18n="common.cancel">Huỷ</span></button>
