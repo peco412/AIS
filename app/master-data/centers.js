@@ -30,11 +30,20 @@ function render() {
         <td class="cell-muted">${esc(r.divisions?.name || '—')}</td>
         <td class="cell-muted">${esc(r.address || '—')}</td>
         <td><span class="badge badge-${r.is_active ? 'active' : 'archived'}">${r.is_active ? 'Đang hoạt động' : 'Ngừng hoạt động'}</span></td>
-        <td><button class="btn btn-outline btn-sm" data-edit="${r.id}">Sửa</button></td>
+        <td style="display:flex; gap:6px;">
+          <button class="btn btn-outline btn-sm" data-edit="${r.id}">Sửa</button>
+          <button class="btn btn-outline btn-sm" data-delete="${r.id}" data-name="${esc(r.name)}" title="Chỉ xoá được nếu chưa có học sinh/nhân viên/lớp nào gắn với trung tâm này"><svg class="icon icon--sm" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"/></svg></button>
+        </td>
       </tr>
     `).join('');
 
   tbody.querySelectorAll('[data-edit]').forEach((btn) => btn.addEventListener('click', () => openEdit(btn.dataset.edit)));
+  tbody.querySelectorAll('[data-delete]').forEach((btn) => btn.addEventListener('click', async () => {
+    if (!confirm(`Xoá trung tâm "${btn.dataset.name}"? Chỉ xoá được nếu KHÔNG còn học sinh/nhân viên/lớp học nào gắn với trung tâm này — nếu tạo nhầm và chưa dùng gì thì xoá được ngay, còn nếu đã có dữ liệu thì nên "Ngừng hoạt động" thay vì xoá.`)) return;
+    const { error } = await supabase.from('centers').delete().eq('id', btn.dataset.delete);
+    if (error) { alert('Không xoá được — trung tâm này vẫn còn dữ liệu gắn với nó, dùng "Ngừng hoạt động" thay vì xoá:\n' + error.message); return; }
+    await loadRows();
+  }));
 }
 
 const modal = document.getElementById('createModal');

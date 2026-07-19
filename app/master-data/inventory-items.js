@@ -30,11 +30,17 @@ function render() {
         <td class="cell-muted">${esc(r.unit || '—')}</td>
         <td>${r.has_size ? 'Có' : '—'}</td>
         <td class="mono">${Number(r.price_vnd || 0).toLocaleString('vi-VN')} đ</td>
-        <td>${CAN_EDIT ? `<button class="btn btn-outline btn-sm" data-edit="${r.id}">Sửa</button>` : ''}</td>
+        <td>${CAN_EDIT ? `<button class="btn btn-outline btn-sm" data-edit="${r.id}">Sửa</button> <button class="btn btn-outline btn-sm" data-delete="${r.id}" data-name="${esc(r.name)}" title="Xoá sản phẩm"><svg class="icon icon--sm" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"/></svg></button>` : ''}</td>
       </tr>
     `).join('');
 
   tbody.querySelectorAll('[data-edit]').forEach((btn) => btn.addEventListener('click', () => openEdit(btn.dataset.edit)));
+  tbody.querySelectorAll('[data-delete]').forEach((btn) => btn.addEventListener('click', async () => {
+    if (!confirm(`Xoá sản phẩm "${btn.dataset.name}"? Chỉ xoá được nếu sản phẩm này chưa từng phát sinh giao dịch kho/mua hàng nào — nếu đã dùng rồi, hệ thống sẽ báo lỗi và không xoá.`)) return;
+    const { error } = await supabase.from('inventory_items').delete().eq('id', btn.dataset.delete);
+    if (error) { alert('Không xoá được — sản phẩm này đã có giao dịch gắn với nó:\n' + error.message); return; }
+    await loadRows();
+  }));
 }
 
 document.getElementById('filterGroup').addEventListener('change', render);

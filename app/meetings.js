@@ -88,13 +88,23 @@ function render() {
   if (ALL_MEETINGS.length === 0) { list.innerHTML = '<div class="empty-cell">Không có cuộc họp nào.</div>'; return; }
 
   list.innerHTML = ALL_MEETINGS.map((m) => `
-    <div class="meeting-card">
-      <h4>${esc(m.title)} ${m.kind === 'online' ? '<svg class="icon icon--sm" viewBox="0 0 24 24" style="display:inline;vertical-align:-2px;"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.5 2.5 4 5.5 4 9s-1.5 6.5-4 9c-2.5-2.5-4-5.5-4-9s1.5-6.5 4-9z"/></svg>' : ''}</h4>
+    <div class="meeting-card" data-id="${m.id}">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+        <h4>${esc(m.title)} ${m.kind === 'online' ? '<svg class="icon icon--sm" viewBox="0 0 24 24" style="display:inline;vertical-align:-2px;"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.5 2.5 4 5.5 4 9s-1.5 6.5-4 9c-2.5-2.5-4-5.5-4-9s1.5-6.5 4-9z"/></svg>' : ''}</h4>
+        ${(m.created_by === PROFILE.id || ['EXECUTIVE', 'TECH'].includes(PROFILE.roleCode)) ? `<button class="btn btn-outline btn-sm" data-delete="${m.id}" title="Xoá cuộc họp"><svg class="icon icon--sm" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"/></svg></button>` : ''}
+      </div>
       <div class="meta">${fmtDate(m.meeting_date)} · ${esc(m.start_time?.slice(0,5))} - ${esc(m.end_time?.slice(0,5))} ${m.location ? '· ' + esc(m.location) : ''}</div>
       ${m.description ? `<div class="desc">${esc(m.description)}</div>` : ''}
       ${m.google_meet_link ? `<div style="margin-top:8px;"><a href="${esc(m.google_meet_link)}" target="_blank" class="btn btn-outline btn-sm">Vào Google Meet →</a></div>` : ''}
     </div>
   `).join('');
+
+  list.querySelectorAll('[data-delete]').forEach((btn) => btn.addEventListener('click', async () => {
+    if (!confirm('Xoá cuộc họp này? Không thể hoàn tác.')) return;
+    const { error } = await supabase.from('meetings').delete().eq('id', btn.dataset.delete);
+    if (error) { alert('Lỗi: ' + error.message); return; }
+    await loadMeetings();
+  }));
 }
 
 document.getElementById('viewScope').addEventListener('change', loadMeetings);

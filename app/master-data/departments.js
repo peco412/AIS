@@ -19,7 +19,10 @@ function render() {
     <tr data-id="${r.id}">
       <td class="mono"><strong>${esc(r.code)}</strong></td>
       <td><input type="text" class="text-input name-input" data-id="${r.id}" data-original="${esc(r.name)}" value="${esc(r.name)}" style="max-width:320px;" /></td>
-      <td><button class="btn btn-outline btn-sm" data-save="${r.id}" style="display:none;">Lưu tên</button></td>
+      <td style="display:flex; gap:6px;">
+        <button class="btn btn-outline btn-sm" data-save="${r.id}" style="display:none;">Lưu tên</button>
+        <button class="btn btn-outline btn-sm" data-delete="${r.id}" data-code="${esc(r.code)}" title="Chỉ xoá được nếu chưa có nhân viên/dữ liệu nào gắn với phòng ban này"><svg class="icon icon--sm" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"/></svg></button>
+      </td>
     </tr>
   `).join('');
 
@@ -38,6 +41,13 @@ function render() {
     const { error } = await supabase.from('departments').update({ name: newName }).eq('id', btn.dataset.save);
     btn.disabled = false; btn.textContent = 'Lưu tên';
     if (error) { alert('Lỗi: ' + error.message); return; }
+    await loadRows();
+  }));
+
+  tbody.querySelectorAll('[data-delete]').forEach((btn) => btn.addEventListener('click', async () => {
+    if (!confirm(`Xoá phòng ban "${btn.dataset.code}"? Chỉ xoá được nếu KHÔNG còn nhân viên/menu/dữ liệu nào gắn với phòng ban này — nếu còn, hệ thống sẽ báo lỗi và không xoá.`)) return;
+    const { error } = await supabase.from('departments').delete().eq('id', btn.dataset.delete);
+    if (error) { alert('Không xoá được — phòng ban này vẫn còn dữ liệu gắn với nó:\n' + error.message); return; }
     await loadRows();
   }));
 }
