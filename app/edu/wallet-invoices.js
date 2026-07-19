@@ -589,11 +589,77 @@ document.getElementById('btnCollectCounter').addEventListener('click', async () 
   }
 });
 
+// ---------------------------------------------------------------------
+// MỚI — Xem theo lớp: duyệt nhanh cả 1 lớp thay vì phải tìm từng học sinh
+// — dễ quản lý hơn khi cần rà cả lớp xem ai đã đóng/chưa đóng.
+// ---------------------------------------------------------------------
+async function loadClassListForRoster() {
+  let query = supabase.from('classes').select('id, name').order('name');
+  if (PROFILE.centerId && !['EXECUTIVE', 'TECH'].includes(PROFILE.roleCode) && PROFILE.departmentCode !== 'ACC') {
+    query = query.eq('center_id', PROFILE.centerId);
+  }
+  const { data } = await query;
+  const select = document.getElementById('rosterClassSelect');
+  select.innerHTML = '<option value="">— Xem theo lớp —</option>' + (data || []).map((c) => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
+}
+
+async function loadRoster(classId) {
+  const panel = document.getElementById('rosterPanel');
+  const tbody = document.getElementById('rosterBody');
+  if (!classId) { panel.style.display = 'none'; return; }
+  panel.style.display = 'block';
+  tbody.innerHTML = '<tr><td colspan="4" class="empty-cell">Đang tải dữ liệu...</td></tr>';
+
+  const { data: students } = await supabase
+    .from('students').select('id, full_name, center_id, class_id, phone, parent_name, centers(name)')
+    .eq('class_id', classId).eq('status', 'studying').order('full_name');
+
+  if (!students || students.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" class="empty-cell">Lớp này chưa có học sinh nào.</td></tr>';
+    return;
+  }
+
+  const now = new Date();
+  const { data: invoices } = await supabase
+    .from('invoices').select('student_id, status, amount_vnd, manual_discount_vnd')
+    .in('student_id', students.map((s) => s.id))
+    .eq('period_year', now.getFullYear()).eq('period_month', now.getMonth() + 1)
+    .neq('status', 'void');
+  const invoiceByStudent = {};
+  (invoices || []).forEach((i) => { invoiceByStudent[i.student_id] = i; });
+
+  tbody.innerHTML = students.map((s) => {
+    const inv = invoiceByStudent[s.id];
+    const statusHtml = !inv
+      ? '<span class="badge rejected">Chưa có hoá đơn</span>'
+      : inv.status === 'draft'
+        ? '<span class="badge submitted">Chờ chọn hình thức</span>'
+        : `<span class="badge ${STATUS_BADGE[inv.status]}">${STATUS_LABEL[inv.status]} — ${fmtMoney(inv.amount_vnd - (inv.manual_discount_vnd || 0))} đ</span>`;
+    return `
+      <tr>
+        <td><strong>${esc(s.full_name)}</strong></td>
+        <td class="cell-muted">${esc(s.parent_name || '—')} ${s.phone ? '· ' + esc(s.phone) : ''}</td>
+        <td>${statusHtml}</td>
+        <td><button class="btn btn-outline btn-sm" data-roster-view="${s.id}">Xem</button></td>
+      </tr>
+    `;
+  }).join('');
+
+  tbody.querySelectorAll('[data-roster-view]').forEach((btn) => btn.addEventListener('click', () => {
+    const s = students.find((x) => x.id === btn.dataset.rosterView);
+    document.getElementById('rosterPanel').style.display = 'none';
+    document.getElementById('rosterClassSelect').value = '';
+    selectStudent(s);
+  }));
+}
+document.getElementById('rosterClassSelect').addEventListener('change', (e) => loadRoster(e.target.value));
+
 (async () => {
   try {
     const { profile } = await bootShell();
     const { data: emp } = await supabase.from('employees').select('department_id, center_id, departments(code)').eq('id', profile.id).single();
     PROFILE = { ...profile, centerId: emp?.center_id, departmentCode: emp?.departments?.code };
+    await loadClassListForRoster();
 
     // Ma tran: Thu hoc phi tai cho la nghiep vu hang ngay cua Quan ly
     // trung tam/Ke toan/Tu van vien - BDH/Ky thuat chi con quyen xem (R),
