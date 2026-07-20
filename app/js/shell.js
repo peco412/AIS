@@ -176,7 +176,7 @@ function injectMobileBottomNav(profile, currentWorld, currentPage) {
     </a>
     <a href="/profile.html" class="${isOn('/profile.html') ? 'active' : ''}">
       <svg class="icon icon--nav" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>
-      <span>Tài khoản</span>
+      <span>Cá nhân</span>
     </a>
   `;
   document.body.appendChild(nav);
