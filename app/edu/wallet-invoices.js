@@ -179,7 +179,12 @@ async function loadInvoices() {
     const plan = planByInvoice[inv.id];
     const healthBadge = inv.health_status ? `<div style="margin-top:3px;"><span class="badge badge-${HEALTH_BADGE[inv.health_status]}" style="font-size:10px;">${HEALTH_LABEL[inv.health_status]}</span></div>` : '';
     const discountTypeLabel = { program: 'ưu đãi chương trình', special: 'diện đặc biệt', case: 'theo trường hợp' }[inv.discount_type] || 'theo trường hợp';
-    const discountNote = inv.manual_discount_vnd > 0 ? `<div class="cell-muted" style="font-size:11px;">- ${fmtMoney(inv.manual_discount_vnd)} đ (${discountTypeLabel})</div>` : '';
+    // SUA: hien DUNG TEN chuong trinh uu dai da ap dung (vd "Ưu đãi hè
+    // 2026") thay vi chi hien nhan chung chung "ưu đãi chương trình" —
+    // theo dung gop y tranh nham lan khong biet dang ap dung uu dai nao.
+    const discountNote = inv.manual_discount_vnd > 0
+      ? `<div class="cell-muted" style="font-size:11px;">- ${fmtMoney(inv.manual_discount_vnd)} đ (${inv.applied_discount_program_name ? esc(inv.applied_discount_program_name) : discountTypeLabel})</div>`
+      : '';
 
     let actions = '';
     if (plan && plan.status === 'active' && CAN_REFUND) {
