@@ -120,6 +120,7 @@ export const NAV_CONFIG = [
       { subgroup: 'tuition', labelKey: 'nav.edu.programPricing', label: 'Bảng giá chương trình học', href: '/edu/program-pricing.html', icon: '<svg class="icon" viewBox="0 0 24 24"><path d="M20 12l-8 8-9-9V4h7l10 8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>', visible: (p) => p.isCenterManager || p.roleCode === 'CONSULTANT' || inDept(p, 'ACC') },
       // ========== Phần 2: Kho Trung tâm & Quản lý Chi phí vận hành ==========
       { subgroup: 'warehouse', labelKey: 'nav.edu.inventory', label: 'Kho trung tâm', href: '/edu/inventory.html', icon: '<svg class="icon" viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>', visible: (p) => true },
+      { subgroup: 'warehouse', labelKey: 'nav.edu.retailSale', label: 'Phiếu bán lẻ', href: '/edu/retail-sale.html', icon: '<svg class="icon" viewBox="0 0 24 24"><path d="M3 21V10l6 4v-4l6 4V8l6 4v9H3z"/><path d="M3 21h18"/></svg>', visible: (p) => true },
       { subgroup: 'warehouse', labelKey: 'nav.acc.purchaseOrders', label: 'Phiếu thanh toán chi phí (mua hàng)', href: '/acc/purchase-orders.html', icon: '<svg class="icon" viewBox="0 0 24 24"><path d="M6 2h12v19l-2-1-2 1-2-1-2 1-2-1-2 1V2z"/><path d="M9 7h6M9 11h6M9 15h4"/></svg>', visible: (p) => p.isCenterManager },
       // ========== Phần 3: Chức năng riêng từng vai trò ==========
       // -- Vai trò: Quản lý Trung tâm --

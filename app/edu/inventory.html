@@ -44,7 +44,7 @@
       <div style="display:flex; gap:8px;">
         <button class="btn btn-outline" id="btnStockIn">+ Phiếu nhập</button>
         <button class="btn btn-outline" id="btnStockOut">+ Phiếu xuất (nội bộ)</button>
-        <button class="btn btn-accent" id="btnRetailSale">Phiếu bán lẻ</button>
+        <a class="btn btn-accent" href="/edu/retail-sale.html">Phiếu bán lẻ</a>
       </div>
     </div>
 
@@ -98,35 +98,6 @@
   </div>
 </div>
 
-<div class="modal-overlay" id="retailModal">
-  <div class="modal-box" style="max-width:560px;">
-    <button class="modal-close" id="closeRetailModal"><svg class="icon icon--sm" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
-    <h3>Phiếu bán lẻ tại quầy</h3>
-    <div class="form-error" id="retailFormError"></div>
-
-    <div class="field"><label for="retailStudentSearch">Tìm học viên (để trống nếu khách vãng lai)</label><input type="text" id="retailStudentSearch" placeholder="Nhập tên..." /></div>
-    <div id="retailStudentResult" class="cell-muted" style="margin-bottom:10px;"></div>
-    <div class="field-grid-2">
-      <div class="field"><label for="retailCustomerName">Tên khách hàng *</label><input type="text" id="retailCustomerName" required /></div>
-      <div class="field"><label for="retailPhone">Số điện thoại</label><input type="tel" id="retailPhone" /></div>
-    </div>
-    <div class="field-grid-2">
-      <div class="field"><label for="retailMethod">Hình thức thu *</label><select id="retailMethod"><option value="CASH">Tiền mặt</option><option value="BANK_TRANSFER">Chuyển khoản</option></select></div>
-      <div class="field"><label for="retailReason">Lý do</label><input type="text" id="retailReason" placeholder="Bán sách/quà tặng..." /></div>
-    </div>
-
-    <h4 style="margin:14px 0 8px; font-size:13px;">Chi tiết đơn hàng</h4>
-    <div id="retailItemsList"></div>
-    <button type="button" class="btn btn-outline btn-sm" id="btnAddRetailItem" style="margin-bottom:14px;">+ Thêm dòng</button>
-
-    <p style="text-align:right; font-weight:700; font-size:15px;">Tổng cộng: <span id="retailTotalPreview">0 đ</span></p>
-
-    <div class="modal-actions">
-      <button type="button" class="btn btn-outline" id="cancelRetailModal"><span data-i18n="common.cancel">Huỷ</span></button>
-      <button type="button" class="btn btn-accent" id="btnSubmitRetail">Hoàn thành & Xuất kho</button>
-    </div>
-  </div>
-</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="/env.js"></script>
