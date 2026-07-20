@@ -109,7 +109,6 @@ async function openEdit(id) {
   document.getElementById('currentSchool').value = row.current_school || '';
   document.getElementById('entryLevel').value = row.entry_level_id || '';
   document.getElementById('sourceConsultant').value = row.source_consultant_id || '';
-  document.getElementById('agreedPaymentPlan').value = row.agreed_payment_plan || '';
   document.getElementById('classSelect').value = row.class_id || '';
   document.getElementById('parentName').value = row.parent_name || '';
   document.getElementById('email').value = row.email || '';
@@ -131,7 +130,6 @@ form.addEventListener('submit', async (e) => {
     current_school: document.getElementById('currentSchool').value || null,
     entry_level_id: document.getElementById('entryLevel').value || null,
     source_consultant_id: document.getElementById('sourceConsultant').value || null,
-    agreed_payment_plan: document.getElementById('agreedPaymentPlan').value || null,
     class_id: document.getElementById('classSelect').value || null,
     parent_name: document.getElementById('parentName').value || null,
     email: document.getElementById('email').value || null,

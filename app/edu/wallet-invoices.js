@@ -531,6 +531,24 @@ const collectError = document.getElementById('collectError');
 async function openCollectModal(invoice, remaining) {
   ACTIVE_INVOICE = invoice;
   collectError.classList.remove('show');
+
+  const planBox = document.getElementById('planChoiceBox');
+  const paymentSection = document.getElementById('paymentCollectSection');
+
+  // MOI — hoa don dang 'draft' (chua chon hinh thuc) va phu huynh dang o
+  // truc tiep tai quay (khong qua app) — cho nhan vien chon giup hinh
+  // thuc dong hoc phi ngay tai day, thay vi bat phu huynh tu vao app.
+  if (invoice.status === 'draft') {
+    document.getElementById('collectInfo').textContent = `Kỳ ${invoice.period_month}/${invoice.period_year} — chưa chọn hình thức đóng`;
+    planBox.style.display = 'block';
+    paymentSection.style.display = 'none';
+    renderCounterPlanOptions(invoice);
+    collectModal.classList.add('show');
+    return;
+  }
+  planBox.style.display = 'none';
+  paymentSection.style.display = 'block';
+
   document.getElementById('collectInfo').textContent = `Kỳ ${invoice.period_month}/${invoice.period_year} — còn nợ ${fmtMoney(remaining)} đ`;
 
   const { data: batches } = await supabase.from('wallet_topup_batches').select('coin_remaining').eq('wallet_id', ACTIVE_WALLET_ID);
@@ -548,6 +566,33 @@ async function openCollectModal(invoice, remaining) {
 
   document.getElementById('collectVndCounter').value = remaining;
   collectModal.classList.add('show');
+}
+
+function renderCounterPlanOptions(invoice) {
+  const box = document.getElementById('counterPlanOptionsList');
+  const options = invoice.draft_options || [];
+  if (options.length === 0) {
+    box.innerHTML = '<div class="empty-cell">Chưa có lựa chọn nào — kiểm tra lại Khoá học của lớp.</div>';
+    return;
+  }
+  box.innerHTML = options.map((opt) => `
+    <label class="plan-option-card" data-plan="${esc(opt.plan_type)}">
+      <div class="plan-option-card__top">
+        <span class="plan-option-card__label">${esc(opt.label)}</span>
+        <span class="plan-option-card__price">${fmtMoney(opt.amount_vnd)} đ</span>
+      </div>
+    </label>
+  `).join('');
+  box.querySelectorAll('[data-plan]').forEach((card) => {
+    card.addEventListener('click', async () => {
+      card.style.opacity = '0.6';
+      const { data, error } = await supabase.rpc('choose_draft_invoice_plan', { p_invoice_id: invoice.id, p_plan_type: card.dataset.plan });
+      if (error) { collectError.textContent = error.message; collectError.classList.add('show'); card.style.opacity = '1'; return; }
+      // Chon xong -> chuyen thang sang man thu tien binh thuong voi dung
+      // so tien vua chon, khong can dong modal roi mo lai.
+      await openCollectModal(data, Number(data.amount_vnd) - Number(data.manual_discount_vnd || 0));
+    });
+  });
 }
 document.getElementById('closeCollectModal').addEventListener('click', () => collectModal.classList.remove('show'));
 
