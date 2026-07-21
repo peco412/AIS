@@ -22,7 +22,7 @@ async function loadInvoiceSummary() {
   tbody.innerHTML = '<tr><td colspan="6" class="empty-cell">Đang tải dữ liệu...</td></tr>';
 
   let query = supabase.from('invoices_health_view')
-    .select('id, student_id, class_id, period_year, period_month, amount_vnd, manual_discount_vnd, status, due_date, students(full_name, center_id, centers(name)), classes(name)')
+    .select('id, student_id, class_id, period_year, period_month, amount_vnd, manual_discount_vnd, status, due_date, invoice_code, students!inner(full_name, center_id, centers(name)), classes(name)')
     .order('due_date', { ascending: false })
     .limit(500);
   if (PROFILE.centerId && !['EXECUTIVE', 'TECH'].includes(PROFILE.roleCode) && PROFILE.departmentCode !== 'ACC') {
@@ -77,12 +77,12 @@ function renderSummary() {
         const net = Number(inv.amount_vnd) - Number(inv.manual_discount_vnd || 0);
         return `
           <tr>
-            <td><strong>${esc(inv.students?.full_name || '—')}</strong></td>
+            <td><strong>${esc(inv.students?.full_name || '—')}</strong><div class="cell-muted mono" style="font-size:10.5px;">${esc(inv.invoice_code || '—')}</div></td>
             <td class="cell-muted">${esc(inv.classes?.name || '—')} · ${esc(inv.students?.centers?.name || '—')}</td>
             <td class="cell-muted">${inv.period_month}/${inv.period_year}</td>
             <td class="mono">${fmtMoney(net)} đ</td>
             <td><span class="badge badge-${STATUS_BADGE[inv.status]}">${STATUS_LABEL[inv.status] || inv.status}</span></td>
-            <td><a href="/edu/wallet-invoices.html" class="btn btn-outline btn-sm">Xem chi tiết</a></td>
+            <td><a href="/edu/invoice-print.html?id=${inv.id}" target="_blank" class="btn btn-outline btn-sm">Xem hoá đơn</a></td>
           </tr>
         `;
       }).join('');

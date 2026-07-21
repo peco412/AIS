@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Phiếu bán lẻ — AIS OFFICE</title>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/css/tokens.css" />
+<style>
+  body { font-family: 'Be Vietnam Pro', sans-serif; background: #e9ecef; margin: 0; padding: 24px; color: #1a1a1a; }
+  .print-toolbar { max-width: 760px; margin: 0 auto 16px; display: flex; justify-content: flex-end; gap: 10px; }
+  .print-toolbar button {
+    padding: 9px 18px; border-radius: 8px; border: 1px solid #ccc; background: #fff; cursor: pointer;
+    font-weight: 600; font-size: 13.5px;
+  }
+  .print-toolbar button.primary { background: #0094D9; color: #fff; border-color: #0094D9; }
+  .doc { max-width: 760px; margin: 0 auto; background: #fff; padding: 44px 52px; border-radius: 6px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+  .doc__header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #1a1a1a; padding-bottom: 16px; margin-bottom: 20px; }
+  .doc__brand { font-weight: 800; font-size: 18px; }
+  .doc__center { font-size: 12.5px; color: #555; margin-top: 4px; }
+  .doc__meta { text-align: right; }
+  .doc__title { font-size: 20px; font-weight: 800; letter-spacing: 0.5px; }
+  .doc__code { font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #555; margin-top: 4px; }
+  .doc__date { font-size: 12px; color: #777; margin-top: 2px; }
+  .doc__row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13.5px; border-bottom: 1px dashed #e0e0e0; }
+  .doc__row .label { color: #666; }
+  .doc__row .value { font-weight: 600; }
+  .doc__section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #888; margin: 20px 0 8px; }
+  table.doc__items { width: 100%; border-collapse: collapse; margin: 10px 0; }
+  table.doc__items th { text-align: left; font-size: 11.5px; color: #888; text-transform: uppercase; padding: 6px 4px; border-bottom: 1px solid #ccc; }
+  table.doc__items td { padding: 10px 4px; font-size: 13.5px; border-bottom: 1px solid #f0f0f0; }
+  .doc__total-row { display: flex; justify-content: space-between; padding: 14px 0; font-size: 16px; font-weight: 800; border-top: 2px solid #1a1a1a; margin-top: 6px; }
+  .doc__sign-row { display: flex; justify-content: space-between; margin-top: 56px; text-align: center; }
+  .doc__sign-col { width: 45%; }
+  .doc__sign-col .role { font-weight: 700; font-size: 13px; }
+  .doc__sign-col .note { font-size: 11px; color: #888; margin-top: 2px; }
+  .doc__sign-col .line { margin-top: 70px; border-top: 1px solid #999; padding-top: 6px; font-size: 11.5px; color: #888; }
+  @media print {
+    body { background: #fff; padding: 0; }
+    .print-toolbar { display: none; }
+    .doc { box-shadow: none; padding: 0; max-width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="print-toolbar">
+  <button onclick="location.href='/edu/inventory.html'">← Về Kho trung tâm</button>
+  <button class="primary" onclick="window.print()">In phiếu</button>
+</div>
+
+<div class="doc" id="docBox">
+  <div class="doc__header">
+    <div>
+      <div class="doc__brand">AIS OFFICE</div>
+      <div class="doc__center" id="centerName">—</div>
+      <div class="doc__center" id="centerAddress"></div>
+    </div>
+    <div class="doc__meta">
+      <div class="doc__title">PHIẾU BÁN LẺ</div>
+      <div class="doc__code" id="saleCode">—</div>
+      <div class="doc__date" id="saleDate">—</div>
+    </div>
+  </div>
+
+  <div class="doc__section-title">Thông tin khách hàng</div>
+  <div class="doc__row"><span class="label">Khách hàng</span><span class="value" id="customerName">—</span></div>
+  <div class="doc__row"><span class="label">Số điện thoại</span><span class="value" id="customerPhone">—</span></div>
+  <div class="doc__row"><span class="label">Lý do</span><span class="value" id="saleReason">—</span></div>
+
+  <div class="doc__section-title">Chi tiết đơn hàng</div>
+  <table class="doc__items">
+    <thead><tr><th>Sản phẩm</th><th>Size</th><th>SL</th><th style="text-align:right;">Ưu đãi</th><th style="text-align:right;">Thành tiền</th></tr></thead>
+    <tbody id="itemsBody"></tbody>
+  </table>
+  <div class="doc__total-row"><span>Tổng cộng</span><span id="totalAmount">—</span></div>
+
+  <div class="doc__row" style="margin-top:14px;"><span class="label">Hình thức thanh toán</span><span class="value" id="paymentMethod">—</span></div>
+
+  <div class="doc__sign-row">
+    <div class="doc__sign-col">
+      <div class="role">Khách hàng</div>
+      <div class="note">(Ký, ghi rõ họ tên)</div>
+      <div class="line"></div>
+    </div>
+    <div class="doc__sign-col">
+      <div class="role">Người bán</div>
+      <div class="note">(Ký, ghi rõ họ tên)</div>
+      <div class="line" id="sellerName"></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="/env.js"></script>
+<script type="module" src="/edu/retail-sale-print.js"></script>
+</body>
+</html>

@@ -121,8 +121,9 @@ document.getElementById('btnSubmitRetail').addEventListener('click', async () =>
     const { error: finalizeErr } = await supabase.rpc('finalize_retail_sale', { p_sale_id: sale.id });
     if (finalizeErr) throw finalizeErr;
 
-    alert('Đã hoàn thành phiếu bán lẻ — đã trừ kho và ghi nhận doanh thu.');
-    window.location.href = '/edu/inventory.html';
+    // Chuyen thang sang phieu in — nhan vien xem/in ngay, co ma phieu +
+    // 2 cho ky ten, khong can quay lai trang kho roi tu di tim.
+    window.location.href = `/edu/retail-sale-print.html?id=${sale.id}`;
   } catch (err) {
     errBox.textContent = err.message || 'Có lỗi xảy ra.';
     errBox.classList.add('show');
