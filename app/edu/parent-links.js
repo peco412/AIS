@@ -6,6 +6,7 @@ let PROFILE_READY = false;
 let ACTIVE_STUDENT = null;
 let SEARCH_PARENT_TIMER;
 let LOOKED_UP_PARENT = null; // kết quả tra cứu SĐT gần nhất trong modal — null nếu chưa tra hoặc không tìm thấy
+let CAN_SEE_BALANCE = false; // MOI — chi Ke toan/Ban dieu hanh/Ky thuat moi thay so du vi that
 
 function fmtMoney(n) { return Number(n || 0).toLocaleString('vi-VN'); }
 
@@ -45,7 +46,7 @@ async function searchStudents() {
   (wallets || []).forEach((w) => { walletByStudent[w.student_id] = w.wallet_id; });
   const walletIds = [...new Set(Object.values(walletByStudent))];
   let balanceByWallet = {};
-  if (walletIds.length > 0) {
+  if (walletIds.length > 0 && CAN_SEE_BALANCE) {
     const { data: batches } = await supabase.from('wallet_topup_batches').select('wallet_id, coin_remaining').in('wallet_id', walletIds);
     (batches || []).forEach((b) => { balanceByWallet[b.wallet_id] = (balanceByWallet[b.wallet_id] || 0) + Number(b.coin_remaining); });
   }
@@ -57,7 +58,18 @@ async function searchStudents() {
       : studentLinks.map((l) => `${esc(l.parent_accounts?.full_name || '—')} (${esc(l.relationship || '')}) — ${esc(l.parent_accounts?.phone || '')}`).join('<br>');
 
     const walletId = walletByStudent[s.id];
-    const balanceText = walletId ? `${fmtMoney(balanceByWallet[walletId] || 0)} coin` : '<span class="cell-muted">Chưa có ví</span>';
+    // SUA: chi Ke toan/Ban dieu hanh/Ky thuat moi thay dung so du — vai
+    // tro khac (vd Quan ly trung tam) chi biet "co vi hay chua", khong
+    // can biet chinh xac con bao nhieu tien, tranh lo thong tin tai
+    // chinh khong can thiet.
+    let balanceText;
+    if (!walletId) {
+      balanceText = '<span class="cell-muted">Chưa có ví</span>';
+    } else if (CAN_SEE_BALANCE) {
+      balanceText = `${fmtMoney(balanceByWallet[walletId] || 0)} coin`;
+    } else {
+      balanceText = '<span class="cell-muted">Đã có ví — chỉ Kế toán xem được số dư</span>';
+    }
 
     return `
       <tr>
@@ -166,12 +178,57 @@ document.getElementById('btnConfirmLink').addEventListener('click', async () => 
   }
 });
 
+// ---------------------------------------------------------------------
+// MỚI — Tổng hợp liên kết ví: nhóm học sinh đang dùng CHUNG 1 ví (anh chị
+// em ruột) — chỉ hiện nhóm có từ 2 học sinh trở lên (ví 1 học sinh không
+// cần xem lại ở đây), giúp phát hiện nhanh trường hợp ví bị thiếu liên
+// kết (đã gặp và sửa nhiều lần trước đây).
+// ---------------------------------------------------------------------
+async function loadWalletGroups() {
+  const tbody = document.getElementById('walletGroupsBody');
+  let query = supabase.from('wallet_students').select('wallet_id, students!inner(full_name, center_id, centers(name))');
+  if (PROFILE.centerId && !['EXECUTIVE', 'TECH'].includes(PROFILE.roleCode) && PROFILE.departmentCode !== 'ACC') {
+    query = query.eq('students.center_id', PROFILE.centerId);
+  }
+  const { data, error } = await query;
+  if (error) { tbody.innerHTML = `<tr><td colspan="2" class="empty-cell">Lỗi: ${esc(error.message)}</td></tr>`; return; }
+
+  const groups = {};
+  (data || []).forEach((row) => {
+    if (!row.students) return; // bi loc boi inner filter tren, hoac du lieu mo coi
+    groups[row.wallet_id] = groups[row.wallet_id] || [];
+    groups[row.wallet_id].push(row.students);
+  });
+  const sharedGroups = Object.entries(groups).filter(([, students]) => students.length > 1);
+
+  if (sharedGroups.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="2" class="empty-cell">Chưa có nhóm anh/chị em nào dùng chung ví.</td></tr>';
+    return;
+  }
+
+  let balanceByWallet = {};
+  if (CAN_SEE_BALANCE) {
+    const { data: batches } = await supabase.from('wallet_topup_batches').select('wallet_id, coin_remaining').in('wallet_id', sharedGroups.map(([id]) => id));
+    (batches || []).forEach((b) => { balanceByWallet[b.wallet_id] = (balanceByWallet[b.wallet_id] || 0) + Number(b.coin_remaining); });
+  }
+
+  tbody.innerHTML = sharedGroups.map(([walletId, students]) => `
+    <tr>
+      <td>${students.map((s) => `${esc(s.full_name)} <span class="cell-muted" style="font-size:11px;">(${esc(s.centers?.name || '—')})</span>`).join(', ')}</td>
+      <td class="mono">${CAN_SEE_BALANCE ? `${fmtMoney(balanceByWallet[walletId] || 0)} coin` : ''}</td>
+    </tr>
+  `).join('');
+}
+
 (async () => {
   try {
     const { profile } = await bootShell();
     const { data: emp } = await supabase.from('employees').select('department_id, center_id, departments(code)').eq('id', profile.id).single();
     PROFILE = { ...profile, centerId: emp?.center_id, departmentCode: emp?.departments?.code };
     PROFILE_READY = true;
+    CAN_SEE_BALANCE = PROFILE.departmentCode === 'ACC' || ['EXECUTIVE', 'TECH'].includes(profile.roleCode);
+    document.getElementById('balanceColHeader').textContent = CAN_SEE_BALANCE ? 'Số dư ví' : 'Tình trạng ví';
+    document.getElementById('groupBalanceColHeader').textContent = CAN_SEE_BALANCE ? 'Số dư' : '';
 
     const canUse = PROFILE.isCenterManager || PROFILE.departmentCode === 'ACC' || ['EXECUTIVE', 'TECH'].includes(profile.roleCode);
     if (!canUse) {
@@ -181,5 +238,6 @@ document.getElementById('btnConfirmLink').addEventListener('click', async () => 
     // Nếu người dùng đã gõ sẵn nội dung tìm kiếm trong lúc chờ tải (trường
     // hợp gây bug trước đây), tự chạy tìm kiếm lại ngay bây giờ.
     if (document.getElementById('searchStudent').value.trim()) searchStudents();
+    await loadWalletGroups();
   } catch (e) { /* bootShell tự điều hướng */ }
 })();

@@ -179,30 +179,10 @@ async function openTransfer(id) {
   document.getElementById('transferStudentName').textContent = row.full_name;
   document.getElementById('transferCurrentClass').textContent = row.classes?.name || '—';
   fillSelect(document.getElementById('transferNewClass'), CLASSES.filter((c) => c.id !== row.class_id), { placeholder: '— Chọn lớp mới —' });
-  document.getElementById('transferPaymentOption').value = '';
-  document.getElementById('transferPricePreview').textContent = '';
   document.getElementById('transferOverride').checked = false;
   document.getElementById('transferOverrideRow').style.display = ['EXECUTIVE', 'TECH', 'CENTER_MANAGER'].includes(PROFILE.roleCode) ? 'flex' : 'none';
   document.getElementById('transferModal').classList.add('show');
 }
-
-async function previewTransferPrice() {
-  const previewEl = document.getElementById('transferPricePreview');
-  const option = document.getElementById('transferPaymentOption').value;
-  const newClassId = document.getElementById('transferNewClass').value;
-  if (!option || !newClassId) { previewEl.textContent = ''; return; }
-
-  const newClass = CLASSES.find((c) => c.id === newClassId);
-  if (!newClass?.course_id) { previewEl.textContent = 'Lớp này chưa gắn Khoá học cụ thể — không tính được giá.'; return; }
-
-  previewEl.textContent = 'Đang tính...';
-  const { data: amount, error } = await supabase.rpc('calculate_payment_option_amount_for_course', {
-    p_course_id: newClass.course_id, p_option: option,
-  });
-  previewEl.textContent = error ? `Không tính được: ${error.message}` : `${new Intl.NumberFormat('vi-VN').format(amount)} đ`;
-}
-document.getElementById('transferPaymentOption').addEventListener('change', previewTransferPrice);
-document.getElementById('transferNewClass').addEventListener('change', previewTransferPrice);
 
 document.getElementById('closeTransferModal').addEventListener('click', () => document.getElementById('transferModal').classList.remove('show'));
 document.getElementById('cancelTransferModal').addEventListener('click', () => document.getElementById('transferModal').classList.remove('show'));
@@ -211,17 +191,19 @@ document.getElementById('submitTransfer').addEventListener('click', async () => 
   const errBox = document.getElementById('transferError');
   errBox.classList.remove('show');
   const newClassId = document.getElementById('transferNewClass').value;
-  const option = document.getElementById('transferPaymentOption').value;
-  if (!newClassId || !option) {
-    errBox.textContent = 'Vui lòng chọn lớp mới và hình thức đóng học phí.';
+  if (!newClassId) {
+    errBox.textContent = 'Vui lòng chọn lớp mới.';
     errBox.classList.add('show');
     return;
   }
 
   const btn = document.getElementById('submitTransfer');
   btn.disabled = true; btn.textContent = 'Đang xử lý...';
+  // SUA: khong con truyen hinh thuc dong hoc phi o day nua — chi doi lop
+  // + tao hoa don nhap, hinh thuc chon sau (phu huynh qua app hoac nhan
+  // vien tai quay), dung theo dung gop y tach 2 viec khac ban chat.
   const { error } = await supabase.rpc('transfer_student_class', {
-    p_student_id: TRANSFER_STUDENT.id, p_new_class_id: newClassId, p_new_payment_option: option,
+    p_student_id: TRANSFER_STUDENT.id, p_new_class_id: newClassId,
     p_override_sequence: document.getElementById('transferOverride').checked,
   });
   btn.disabled = false; btn.textContent = 'Xác nhận đổi lớp';

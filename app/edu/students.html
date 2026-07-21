@@ -114,21 +114,10 @@
   <div class="modal-box">
     <button class="modal-close" id="closeTransferModal"><svg class="icon icon--sm" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     <h3>Đổi lớp — <span id="transferStudentName"></span></h3>
-    <p class="cell-muted" style="font-size:12.5px; margin-bottom:14px;">Hệ thống sẽ tự huỷ hoá đơn cũ, tính học phí lớp mới, và đối soát: đóng dư thì cộng vào Ví AIScoins, đóng thiếu thì lên hoá đơn mới đúng phần còn lại.</p>
+    <p class="cell-muted" style="font-size:12.5px; margin-bottom:14px;">Hệ thống sẽ tự huỷ hoá đơn cũ và tạo hoá đơn nháp cho lớp mới — hình thức đóng học phí sẽ được chọn sau (phụ huynh tự chọn qua app Ví, hoặc nhân viên chọn giúp lúc thu tiền tại quầy), không cần chọn ngay ở đây. Số tiền đã đóng ở lớp cũ sẽ tự động được cộng bù đúng lúc đó.</p>
     <div class="form-error" id="transferError"></div>
     <div class="field"><label>Lớp hiện tại</label><div class="cell-muted" id="transferCurrentClass" style="padding:8px 0;">—</div></div>
     <div class="field"><label for="transferNewClass">Lớp mới *</label><select id="transferNewClass" required></select></div>
-    <div class="field">
-      <label for="transferPaymentOption">Hình thức đóng học phí cho lớp mới *</label>
-      <select id="transferPaymentOption" required>
-        <option value="">— Chọn hình thức —</option>
-        <option value="BY_MONTH">Theo tháng</option>
-        <option value="BY_COURSE">Theo khoá hiện tại</option>
-        <option value="COMBO_2_COURSES">Đóng 2 khoá liền</option>
-        <option value="FULL_SUB_LEVEL">Trọn cấp độ con</option>
-      </select>
-    </div>
-    <div class="field"><label>Học phí lớp mới (xem trước)</label><div class="cell-muted mono" id="transferPricePreview" style="padding:8px 0; font-size:15px; font-weight:700; color:var(--ink);">—</div></div>
     <div class="field" id="transferOverrideRow" style="display:none; align-items:center; gap:8px;">
       <label style="display:flex; align-items:center; gap:8px; font-weight:400;"><input type="checkbox" id="transferOverride" /> Xử lý ngoại lệ (bỏ qua kiểm tra lộ trình vượt cấp)</label>
     </div>

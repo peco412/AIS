@@ -38,7 +38,7 @@
 
   <main class="main">
     <div class="page-header">
-      <div><h1>Liên kết Phụ huynh — Học sinh</h1><div class="sub">Tìm học sinh, liên kết với tài khoản phụ huynh (App AIS Center) để phụ huynh xem được ví/công nợ.</div></div>
+      <div><h1>Liên kết Phụ huynh & Ví</h1><div class="sub">Tìm học sinh, liên kết với tài khoản phụ huynh (App AIS Center) để phụ huynh xem được ví/công nợ.</div></div>
     </div>
 
     <div class="toolbar">
@@ -49,10 +49,21 @@
 
     <div class="data-table-wrap">
       <table class="data-table">
-        <thead><tr><th>Học sinh</th><th>Trung tâm</th><th>Số dư ví</th><th>Phụ huynh đã liên kết</th><th></th></tr></thead>
+        <thead><tr><th>Học sinh</th><th>Trung tâm</th><th id="balanceColHeader">Số dư ví</th><th>Phụ huynh đã liên kết</th><th></th></tr></thead>
         <tbody id="tableBody"><tr><td colspan="5" class="empty-cell">Nhập tên học sinh để tìm kiếm...</td></tr></tbody>
       </table>
     </div>
+
+    <details style="margin-top:32px;">
+      <summary style="cursor:pointer; font-weight:700; font-size:13.5px; color:var(--ink-soft); padding:8px 0;">Tổng hợp liên kết ví — nhóm học sinh đang dùng chung 1 ví</summary>
+      <p class="cell-muted" style="font-size:12.5px; margin:6px 0 14px;">Xem nhanh anh/chị em nào đang được gộp đúng vào 1 ví chung — hữu ích để kiểm tra khi có ví bị thiếu liên kết.</p>
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Các học sinh dùng chung ví</th><th id="groupBalanceColHeader">Số dư</th></tr></thead>
+          <tbody id="walletGroupsBody"><tr><td colspan="2" class="empty-cell">Đang tải dữ liệu...</td></tr></tbody>
+        </table>
+      </div>
+    </details>
   </main>
 </div>
 
