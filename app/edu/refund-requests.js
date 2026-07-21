@@ -146,6 +146,7 @@ document.getElementById('btnNewCounterRefund').addEventListener('click', () => {
   document.getElementById('refundCoursesCompleted').value = '';
   document.getElementById('refundCourseFee').value = '';
   document.getElementById('refundPromoRate').value = '0';
+  document.getElementById('refundGiftValue').value = '0';
   document.getElementById('refundReason').value = '';
   document.getElementById('refundPreview').textContent = '';
   counterModal.classList.add('show');
@@ -175,12 +176,14 @@ function updateRefundPreview() {
   const completed = Number(document.getElementById('refundCoursesCompleted').value) || 0;
   const fee = Number(document.getElementById('refundCourseFee').value) || 0;
   const promo = Number(document.getElementById('refundPromoRate').value) || 0;
-  // So tien hoan = So tien thuc nap - (So khoa da hoc x Hoc phi don khoa goc x (1 - % khuyen mai))
-  const refund = paid - (completed * fee * (1 - promo / 100));
+  const giftValue = Number(document.getElementById('refundGiftValue').value) || 0;
+  // So tien hoan = So tien thuc nap - (So khoa da hoc x Hoc phi don khoa
+  // goc x (1 - % khuyen mai)) - Gia tri qua tang da dung.
+  const refund = paid - (completed * fee * (1 - promo / 100)) - giftValue;
   document.getElementById('refundPreview').textContent = `Số tiền hoàn dự kiến: ${fmtMoney(Math.max(0, refund))} đ`;
   return refund;
 }
-['refundAmountPaid', 'refundCoursesCompleted', 'refundCourseFee', 'refundPromoRate'].forEach((id) => {
+['refundAmountPaid', 'refundCoursesCompleted', 'refundCourseFee', 'refundPromoRate', 'refundGiftValue'].forEach((id) => {
   document.getElementById(id).addEventListener('input', updateRefundPreview);
 });
 
@@ -197,9 +200,9 @@ document.getElementById('btnSubmitCounterRefund').addEventListener('click', asyn
     courses_completed: Number(document.getElementById('refundCoursesCompleted').value) || 0,
     course_fee: Number(document.getElementById('refundCourseFee').value) || 0,
     promo_rate: (Number(document.getElementById('refundPromoRate').value) || 0) / 100,
+    gift_value_used: Number(document.getElementById('refundGiftValue').value) || 0,
     refund_amount: Math.max(0, refund),
     reason: document.getElementById('refundReason').value || null,
-    requested_by: PROFILE.id,
   };
   if (!payload.amount_paid) { errBox.textContent = 'Vui lòng nhập số tiền thực đã nạp.'; errBox.classList.add('show'); return; }
 

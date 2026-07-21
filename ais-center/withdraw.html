@@ -25,10 +25,10 @@
   <div class="form-error" id="withdrawError"></div>
 
   <div class="card">
-    <h3>Số tiền dự kiến hoàn lại — <span id="walletOwnerLabel">–</span></h3>
+    <h3>Số dư khả dụng trong ví — <span id="walletOwnerLabel">–</span></h3>
     <div id="sharedWalletNotice" style="display:none; margin-top:8px; padding:10px 12px; background:var(--warning-tint); border:1px solid rgba(185,116,10,0.3); border-radius:8px; font-size:13px; color:var(--warning);"></div>
     <div class="balance-hero" style="margin-top:8px; margin-bottom:0;">
-      <div class="balance-hero__label">Tổng hoàn dự kiến</div>
+      <div class="balance-hero__label">Số tiền có thể rút</div>
       <div class="balance-hero__value" id="previewRefund">–</div>
     </div>
   </div>
@@ -40,8 +40,9 @@
 
   <div id="pendingNotice" class="card" style="display:none; text-align:center; color:var(--muted);"></div>
 
-  <button class="btn-primary" id="btnSubmitWithdraw">Gửi yêu cầu rút toàn bộ ví</button>
-  <p class="cell-muted" style="text-align:center; margin-top:10px;">Yêu cầu sẽ được Kế toán xem xét và duyệt trước khi hoàn tiền thực tế.</p>
+  <button class="btn-primary" id="btnSubmitWithdraw">Gửi yêu cầu rút toàn bộ số dư</button>
+  <p class="cell-muted" style="text-align:center; margin-top:10px;">Yêu cầu sẽ được Trung tâm xác nhận rồi Kế toán duyệt trước khi hoàn tiền thực tế.</p>
+  <p class="cell-muted" style="text-align:center; margin-top:6px; font-size:12px;">Nếu bé đang đóng học phí theo gói "2 khoá liền"/"Trọn cấp độ con" và cần nghỉ giữa chừng, vui lòng liên hệ trực tiếp trung tâm để được hỗ trợ hoàn phí đúng chính sách.</p>
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>

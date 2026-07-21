@@ -190,12 +190,12 @@ async function loadInvoices() {
     if (plan && plan.status === 'active' && CAN_REFUND) {
       actions = `<button class="btn btn-outline btn-sm" data-refund="${plan.id}" data-total="${plan.total_courses}" data-amount="${plan.total_amount_vnd}">Hoàn phí</button>`;
     }
-    // MOI — hoan phi cho 2 hinh thuc gop moi (Combo 2 khoa/Tron cap do
-    // con) — khac co che voi "Hoan phi" cu o tren (dua tren
-    // payment_plan_purchases, he thong CU), dung dung cong thuc chong
-    // truc loi moi (tru gia le khoa da hoc + gia tri qua tang).
-    if (inv.status === 'paid' && ['COMBO_2_COURSES', 'FULL_SUB_LEVEL'].includes(inv.chosen_plan_type) && CAN_REFUND) {
-      actions += `<button class="btn btn-outline btn-sm" data-bulk-refund="${inv.id}">Hoàn phí</button>`;
+    // SUA — bo nut thao tac TRUC TIEP (huy hoa don ngay, khong qua
+    // duyet) da lam nham o dot truoc — hoan phi gop phai di qua dung
+    // trang "Yeu cau hoan phi" da co san (co buoc duyet dang hoang),
+    // khong lam rieng 1 nut tat cong o day nua.
+    if (inv.status === 'paid' && ['COMBO_2_COURSES', 'FULL_SUB_LEVEL'].includes(inv.chosen_plan_type)) {
+      actions += `<a href="/edu/refund-requests.html" class="btn btn-outline btn-sm">Hoàn phí</a>`;
     }
     if (inv.status !== 'paid') {
       actions += `<button class="btn btn-outline btn-sm" data-adjust="${inv.id}" data-current="${inv.manual_discount_vnd || 0}">Ưu đãi</button>`;
@@ -226,7 +226,6 @@ async function loadInvoices() {
   tbody.querySelectorAll('[data-collect]').forEach((btn) => btn.addEventListener('click', () => openCollectModal(invoices.find((i) => i.id === btn.dataset.collect), Number(btn.dataset.remaining))));
   tbody.querySelectorAll('[data-adjust]').forEach((btn) => btn.addEventListener('click', () => openAdjustDiscount(btn.dataset.adjust, Number(btn.dataset.current))));
   tbody.querySelectorAll('[data-refund]').forEach((btn) => btn.addEventListener('click', () => openPlanRefund(btn.dataset.refund, Number(btn.dataset.total), Number(btn.dataset.amount))));
-  tbody.querySelectorAll('[data-bulk-refund]').forEach((btn) => btn.addEventListener('click', () => openBulkRefund(btn.dataset.bulkRefund)));
   tbody.querySelectorAll('[data-delete]').forEach((btn) => btn.addEventListener('click', async () => {
     if (!confirm(`Xoá hoá đơn ${btn.dataset.code || ''}? Không thể hoàn tác.`)) return;
     const { error } = await supabase.from('invoices').delete().eq('id', btn.dataset.delete);
@@ -527,46 +526,6 @@ async function openPlanRefund(purchaseId, totalCourses, totalAmount) {
   const { error } = await supabase.rpc('process_plan_refund', { p_purchase_id: purchaseId, p_courses_completed: completed, p_approver_id: PROFILE.id });
   if (error) { alert('Lỗi: ' + error.message); return; }
   alert('Đã ghi nhận hoàn phí. Vui lòng chuyển tiền hoàn thực tế cho phụ huynh theo đúng số tiền trên.');
-  await selectStudent(ACTIVE_STUDENT);
-}
-
-// ---------------------------------------------------------------------
-// MỚI — Hoàn phí cho "Đóng 2 khoá liền"/"Trọn cấp độ con" (hệ 4 hình
-// thức mới) — công thức: Tổng đã đóng - (Giá lẻ 1 khoá x Số khoá đã
-// học) - Giá trị quà tặng đã dùng. Số khoá đã học + giá trị quà tặng do
-// Kế toán tự nhập tay (hệ thống không tự đếm được — cần xét nghỉ có
-// phép/học dở dang, và chưa có cơ chế theo dõi quà tặng gắn với từng
-// gói), hệ thống chỉ đảm nhiệm tính đúng công thức + ghi sổ.
-// ---------------------------------------------------------------------
-async function openBulkRefund(invoiceId) {
-  const completedStr = prompt('Học sinh đã học xong bao nhiêu khoá trong gói này? (nhập số nguyên)', '0');
-  if (completedStr === null) return;
-  const completed = Number(completedStr);
-  if (isNaN(completed) || completed < 0 || !Number.isInteger(completed)) { alert('Số khoá không hợp lệ.'); return; }
-
-  const giftStr = prompt('Giá trị quà tặng/khuyến mãi đã dùng (VNĐ) — để 0 nếu không có:', '0');
-  if (giftStr === null) return;
-  const giftValue = Number(giftStr);
-  if (isNaN(giftValue) || giftValue < 0) { alert('Giá trị quà tặng không hợp lệ.'); return; }
-
-  const { data: previewAmount, error: previewErr } = await supabase.rpc('calculate_bulk_plan_refund', {
-    p_invoice_id: invoiceId, p_courses_completed: completed, p_gift_value_used: giftValue,
-  });
-  if (previewErr) { alert('Lỗi tính hoàn phí: ' + previewErr.message); return; }
-
-  const methodStr = prompt(`Số tiền hoàn: ${fmtMoney(previewAmount)} đ.\n\nHoàn qua kênh nào? Gõ đúng 1 trong 3: VI / TIENMAT / CHUYENKHOAN`, 'TIENMAT');
-  if (methodStr === null) return;
-  const methodMap = { VI: 'WALLET', TIENMAT: 'CASH', CHUYENKHOAN: 'BANK_TRANSFER' };
-  const method = methodMap[methodStr.trim().toUpperCase()];
-  if (!method) { alert('Kênh hoàn không hợp lệ — gõ đúng VI, TIENMAT, hoặc CHUYENKHOAN.'); return; }
-
-  if (!confirm(`Xác nhận hoàn ${fmtMoney(previewAmount)} đ qua ${methodStr}? Hoá đơn sẽ chuyển thành "Đã huỷ". Không hoàn tác được.`)) return;
-
-  const { error } = await supabase.rpc('process_bulk_plan_refund', {
-    p_invoice_id: invoiceId, p_courses_completed: completed, p_gift_value_used: giftValue, p_refund_method: method,
-  });
-  if (error) { alert('Lỗi: ' + error.message); return; }
-  alert(method === 'WALLET' ? 'Đã cộng tiền hoàn vào Ví AIScoins.' : 'Đã ghi nhận hoàn phí — vui lòng chuyển tiền hoàn thực tế cho phụ huynh theo đúng số tiền trên.');
   await selectStudent(ACTIVE_STUDENT);
 }
 

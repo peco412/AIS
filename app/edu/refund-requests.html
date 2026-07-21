@@ -40,8 +40,8 @@
 
   <main class="main">
     <div class="page-header">
-      <div><h1>Yêu cầu hoàn phí</h1><div class="sub">Ví: Quản lý trung tâm/Tư vấn viên xác nhận trước → Kế toán duyệt cuối. Tiền mặt/CK: Kế toán duyệt trực tiếp.</div></div>
-      <button class="btn btn-accent" id="btnNewCounterRefund">+ Tạo yêu cầu hoàn (tiền mặt/CK)</button>
+      <div><h1>Yêu cầu hoàn phí</h1><div class="sub">Rút Ví: hoàn lại đúng số dư CHƯA DÙNG trong ví, không trừ gì thêm. Hoàn phí gói học (nghỉ giữa chừng gói "2 khoá liền"/"Trọn cấp độ con"): tính theo công thức chống trục lợi bên dưới, hoàn được cả Ví/Tiền mặt/CK — Ví: Quản lý trung tâm/Tư vấn viên xác nhận trước → Kế toán duyệt cuối. Tiền mặt/CK: Kế toán duyệt trực tiếp.</div></div>
+      <button class="btn btn-accent" id="btnNewCounterRefund">+ Tạo yêu cầu hoàn phí gói học</button>
     </div>
 
     <div class="page-header" style="margin-top:8px;">
@@ -57,7 +57,7 @@
       </table>
     </div>
 
-    <div class="page-header" style="margin-top:8px;"><div><h1 style="font-size:15px;">Yêu cầu hoàn tiền mặt/Chuyển khoản</h1></div></div>
+    <div class="page-header" style="margin-top:8px;"><div><h1 style="font-size:15px;">Yêu cầu hoàn phí gói học (Ví/Tiền mặt/Chuyển khoản)</h1></div></div>
     <div class="data-table-wrap">
       <table class="data-table">
         <thead><tr><th>Mã đơn</th><th>Học sinh</th><th>Đã nộp</th><th>Số tiền hoàn</th><th data-i18n="common.status">Trạng thái</th><th></th></tr></thead>
@@ -70,17 +70,18 @@
 <div class="modal-overlay" id="counterRefundModal">
   <div class="modal-box">
     <button class="modal-close" id="closeCounterModal"><svg class="icon icon--sm" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
-    <h3>Tạo yêu cầu hoàn phí (tiền mặt/CK)</h3>
+    <h3>Tạo yêu cầu hoàn phí gói học</h3>
     <div class="form-error" id="counterFormError"></div>
     <div class="field"><label for="refundStudentSearch">Tìm học sinh *</label><input type="text" id="refundStudentSearch" placeholder="Nhập tên..." /></div>
     <div id="refundStudentResult" class="cell-muted" style="margin-bottom:12px;"></div>
     <div class="field"><label for="refundSource">Nguồn đã đóng *</label>
-      <select id="refundSource"><option value="CASH">Tiền mặt</option><option value="BANK_TRANSFER">Chuyển khoản</option></select>
+      <select id="refundSource"><option value="CASH">Tiền mặt</option><option value="BANK_TRANSFER">Chuyển khoản</option><option value="WALLET">Ví AIScoins</option></select>
     </div>
     <div class="field"><label for="refundAmountPaid">Số tiền thực đã nạp (VNĐ) *</label><input type="number" id="refundAmountPaid" min="0" /></div>
     <div class="field"><label for="refundCoursesCompleted">Số khoá đã học *</label><input type="number" id="refundCoursesCompleted" min="0" /></div>
     <div class="field"><label for="refundCourseFee">Học phí đơn khoá gốc (VNĐ) *</label><input type="number" id="refundCourseFee" min="0" /></div>
     <div class="field"><label for="refundPromoRate">% Khuyến mãi đã áp dụng lúc đóng</label><input type="number" id="refundPromoRate" min="0" max="100" value="0" /></div>
+    <div class="field"><label for="refundGiftValue">Giá trị quà tặng/khuyến mãi đã dùng (VNĐ)</label><input type="number" id="refundGiftValue" min="0" value="0" /></div>
     <div class="field"><label for="refundReason">Lý do</label><textarea id="refundReason" rows="2"></textarea></div>
     <p class="cell-muted" id="refundPreview" style="font-weight:600;"></p>
     <div class="modal-actions">

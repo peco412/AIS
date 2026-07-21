@@ -1,17 +1,21 @@
-import { supabase, esc, fmtMoney, fmtDate, bootParentShell, getSelectedStudentId } from './parentSupabase.js';
+import { supabase, esc, fmtMoney, fmtDate, bootParentShell } from './parentSupabase.js';
 
 let PARENT_ID = null;
 let WALLET_ID = null;
 let STUDENT_ID_FOR_REQUEST = null;
 
+// SUA LOI THAT: truoc day dung 1 cong thuc phuc tap "tru theo so khoa da
+// hoc" cho CA VI — ap dung SAI cho moi coin trong vi, ke ca coin tu nap
+// vi thong thuong (khong lien quan gi toi goi "Dong 2 khoa lien/Tron cap
+// do con"). "Rut vi" gio CHI la rut lai dung so du con lai CHUA DUNG toi
+// — don gian, chinh xac, dung ban chat thao tac. Hoan phi gia goi hoc
+// khi nghi giua chung dung dung nut "Hoan phi" tren hoa don, do Ke toan
+// xu ly rieng.
 async function loadPreview() {
   const { data: batches } = await supabase.from('wallet_topup_batches').select('coin_remaining, conversion_rate, created_at').eq('wallet_id', WALLET_ID).gt('coin_remaining', 0).order('created_at');
 
-  // Dùng ĐÚNG công thức chính thức (tính cả số khoá đã học) thay vì chỉ
-  // cộng số dư còn lại như trước — tránh phụ huynh thấy 1 số lúc gửi yêu
-  // cầu, rồi Kế toán duyệt ra số khác hẳn gây hiểu lầm.
-  const { data: total, error } = await supabase.rpc('calculate_wallet_refund', { p_wallet_id: WALLET_ID });
-  document.getElementById('previewRefund').textContent = error ? '—' : `${fmtMoney(Number(total) || 0)} VNĐ`;
+  const total = (batches || []).reduce((s, b) => s + Number(b.coin_remaining) * Number(b.conversion_rate), 0);
+  document.getElementById('previewRefund').textContent = `${fmtMoney(total)} VNĐ`;
 
   const el = document.getElementById('batchBreakdown');
   el.innerHTML = (batches || []).length === 0
@@ -29,12 +33,9 @@ async function loadPreview() {
   return total;
 }
 
-// SUA LOI THAT: truoc day CHI kiem tra status='pending' — neu yeu cau da
-// bi TU CHOI, dang cho Ke toan (center_confirmed), hoac da hoan xong
-// (approved), trang nay KHONG HIEN GI CA, phu huynh tuong nhu chua tung
-// gui yeu cau — day chinh la ly do "co cho hien co cho khong" giua ERP
-// (da sua du 4 trang thai) va App phu huynh (truoc day chi biet 1 trang
-// thai). Gio kiem tra YEU CAU GAN NHAT bat ke trang thai nao.
+// Kiem tra yeu cau GAN NHAT bat ke trang thai nao — bao du 4 trang thai
+// (pending/center_confirmed/approved/rejected), tranh phu huynh tuong
+// nhu chua tung gui yeu cau khi thuc ra dang co 1 yeu cau dang xu ly.
 async function checkPendingRequest() {
   const { data } = await supabase
     .from('wallet_withdrawal_requests')
@@ -57,9 +58,6 @@ async function checkPendingRequest() {
   notice.style.display = 'block';
   notice.textContent = STATUS_MSG[data.status] || '';
 
-  // Chi CHO PHEP gui yeu cau MOI khi yeu cau gan nhat da bi TU CHOI hoac
-  // DA HOAN XONG (approved) — con dang pending/center_confirmed thi phai
-  // cho xu ly xong yeu cau hien tai truoc, tranh gui trung.
   return data.status === 'pending' || data.status === 'center_confirmed';
 }
 
@@ -83,7 +81,7 @@ document.getElementById('btnSubmitWithdraw').addEventListener('click', async () 
     errorBox.textContent = err.message || 'Có lỗi xảy ra.';
     errorBox.classList.add('show');
   } finally {
-    btn.disabled = false; btn.textContent = 'Gửi yêu cầu rút toàn bộ ví';
+    btn.disabled = false; btn.textContent = 'Gửi yêu cầu rút toàn bộ số dư';
   }
 });
 
@@ -92,34 +90,33 @@ document.getElementById('btnSubmitWithdraw').addEventListener('click', async () 
     const { parent, students } = await bootParentShell();
     if (students.length === 0) return;
     PARENT_ID = parent.id;
-    const studentId = getSelectedStudentId(students);
 
-    // Luon hien ten hoc sinh de phu huynh xac nhan dung la con minh
-    // truoc khi gui yeu cau rut vi - tranh nham vi giua cac con.
-    const student = students.find((s) => s.id === studentId);
-    const ownerLabel = document.getElementById('walletOwnerLabel');
-    if (ownerLabel) ownerLabel.textContent = student ? `Ví của: ${student.full_name}` : '—';
+    // SUA: vi la vi CHUNG — dung con dau tien trong danh sach de tra vi
+    // (ket qua giong het nhau du chon con nao), khong con phu thuoc vao
+    // co che "chon con" da bo (xem sua o trang Vi/Trang chu truoc do).
+    const studentId = students[0].id;
+    STUDENT_ID_FOR_REQUEST = studentId;
 
     const { data: wallet } = await supabase.from('wallet_students').select('wallet_id').eq('student_id', studentId).maybeSingle();
+    const ownerLabel = document.getElementById('walletOwnerLabel');
     if (!wallet) {
+      if (ownerLabel) ownerLabel.textContent = students.map((s) => s.full_name).join(', ');
       document.getElementById('batchBreakdown').innerHTML = '<div class="empty-state">Chưa có ví.</div>';
       document.getElementById('btnSubmitWithdraw').style.display = 'none';
       return;
     }
     WALLET_ID = wallet.wallet_id;
-    STUDENT_ID_FOR_REQUEST = studentId;
 
-    // Neu vi nay dang dung chung voi anh/chi/em khac, bao ro cho phu
-    // huynh biet TRUOC khi gui yeu cau rut - vi rut se tat toan CA quy
-    // chung, khong chi rieng phan cua con dang chon.
+    // Luon hien du ten TAT CA con dang dung chung vi nay — khong chi con
+    // dau tien — de phu huynh biet ro dang rut dung vi cua ai.
     const { data: members } = await supabase.from('wallet_students').select('students(full_name)').eq('wallet_id', WALLET_ID);
-    if (members && members.length > 1) {
-      const names = members.map((m) => m.students?.full_name).filter(Boolean).join(', ');
-      if (ownerLabel) ownerLabel.textContent = `Ví chung — ${names}`;
+    const names = (members || []).map((m) => m.students?.full_name).filter(Boolean);
+    if (ownerLabel) ownerLabel.textContent = names.length > 1 ? `Ví chung — ${names.join(', ')}` : (names[0] || '—');
+    if (names.length > 1) {
       const sharedNotice = document.getElementById('sharedWalletNotice');
       if (sharedNotice) {
         sharedNotice.style.display = 'block';
-        sharedNotice.textContent = `Đây là ví chung của ${names}. Rút ví sẽ tất toán toàn bộ số dư chung, không chỉ riêng phần của 1 con.`;
+        sharedNotice.textContent = `Đây là ví chung của ${names.join(', ')}. Rút ví sẽ tất toán toàn bộ số dư chung, không chỉ riêng phần của 1 con.`;
       }
     }
 
