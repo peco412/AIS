@@ -103,7 +103,7 @@
 </div>
 
 <div class="ws-stage">
-  <svg viewBox="60 140 900 620" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Con đường khuôn viên — chọn thế giới">
+  <svg viewBox="0 140 960 620" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Con đường khuôn viên — chọn thế giới">
     <defs>
       <radialGradient id="moonGlow" cx="50%" cy="50%" r="50%">
         <stop offset="0%" stop-color="#f0d9a8" stop-opacity="0.85"/>
@@ -148,19 +148,33 @@
     <!-- Vach ke duong dut quang tinh te -->
     <path d="M140,560 L860,260" stroke="rgba(227,198,138,0.28)" stroke-width="2" stroke-dasharray="10 12"/>
 
-    <!-- ================= Cong khuon vien — DIEM BAT DAU, ben trai ================= -->
+    <!-- ================= Cong khuon vien — DIEM BAT DAU, ben trai (don gian, thang dung, tranh chong lan) ================= -->
     <g id="gateGroup" class="ws-building ws-b-appear" style="animation-delay:0.3s" tabindex="0" role="button" aria-label="Chấm công nhanh tại cổng">
-      <ellipse cx="115" cy="595" rx="15" ry="6" fill="#000000" opacity="0.3"/>
-      <ellipse cx="165" cy="577" rx="15" ry="6" fill="#000000" opacity="0.3"/>
+      <ellipse cx="58" cy="640" rx="15" ry="6" fill="#000000" opacity="0.3" filter="url(#softBlur)"/>
+      <ellipse cx="118" cy="640" rx="15" ry="6" fill="#000000" opacity="0.3" filter="url(#softBlur)"/>
       <g class="ws-b-shape">
-        <rect x="106" y="500" width="14" height="95" rx="6" fill="#e9dfc9" transform="rotate(-27 113 500)"/>
-        <rect x="156" y="482" width="14" height="95" rx="6" fill="#e9dfc9" transform="rotate(-27 163 482)"/>
-        <path d="M115,470 L172,455 L182,470 L125,486 Z" fill="#181512" stroke="#181512" stroke-width="4" stroke-linejoin="round"/>
-        <path d="M115,470 L172,455" stroke="#e3c68a" stroke-width="2.5" stroke-linecap="round" opacity="0.7"/>
-        <rect x="132" y="452" width="12" height="16" rx="4" fill="url(#lanternGlow)" transform="rotate(-16 138 452)"/>
-        <circle cx="140" cy="462" r="17" fill="#ffe7b0" opacity="0.28"/>
+        <rect x="51" y="545" width="14" height="95" rx="6" fill="#e9dfc9"/>
+        <rect x="58" y="545" width="7" height="95" fill="#c9b98f"/>
+        <rect x="111" y="545" width="14" height="95" rx="6" fill="#e9dfc9"/>
+        <rect x="118" y="545" width="7" height="95" fill="#c9b98f"/>
+        <rect x="43" y="527" width="90" height="14" rx="6" fill="#181512"/>
+        <rect x="43" y="527" width="90" height="5" rx="2.5" fill="#e3c68a" opacity="0.6"/>
+        <rect x="82" y="503" width="12" height="18" rx="4" fill="url(#lanternGlow)"/>
+        <circle cx="88" cy="512" r="18" fill="#ffe7b0" opacity="0.3"/>
       </g>
-      <text class="ws-label-sub" x="140" y="430" style="font-weight:700; fill:#e3c68a; font-size:11px; letter-spacing:0.07em;">CHẤM CÔNG NHANH</text>
+      <text class="ws-label-sub" x="88" y="497" style="font-weight:700; fill:#e3c68a; font-size:11px; letter-spacing:0.06em;">CHẤM CÔNG NHANH</text>
+    </g>
+
+    <!-- Cay tinh te 2 ben cong (than + tan la tron, ro rang la cay) -->
+    <g opacity="0.95">
+      <rect x="12" y="612" width="6" height="20" fill="#3a2e20" rx="2"/>
+      <circle cx="15" cy="600" r="16" fill="#1d4a35"/>
+      <circle cx="6" cy="606" r="11" fill="#245940"/>
+      <circle cx="24" cy="606" r="11" fill="#173d2b"/>
+      <rect x="145" y="605" width="6" height="20" fill="#3a2e20" rx="2"/>
+      <circle cx="148" cy="593" r="15" fill="#1d4a35"/>
+      <circle cx="140" cy="599" r="10" fill="#245940"/>
+      <circle cx="156" cy="599" r="10" fill="#173d2b"/>
     </g>
 
     <!-- Cot den doc duong -->
