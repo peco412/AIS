@@ -1,73 +1,263 @@
 <!doctype html>
-<html lang="vi" data-division="aloha">
+<html lang="vi">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Chọn thế giới — AIS OFFICE</title>
+<title>AIS OFFICE — Cổng vào hệ thống</title>
 <link rel="manifest" href="/manifest.json" />
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<meta name="apple-mobile-web-app-title" content="AIS OFFICE" />
-<link rel="apple-touch-icon" href="/assets/icon-192.png" />
-<meta name="theme-color" content="#0094D9" />
+<meta name="theme-color" content="#1a1530" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="/css/tokens.css" />
-<link rel="stylesheet" href="/css/dashboard.css" />
-<link rel="stylesheet" href="/css/world-select.css" />
+<style>
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: 'Be Vietnam Pro', sans-serif;
+    background:
+      radial-gradient(ellipse 900px 500px at 50% 0%, rgba(212,175,110,0.16) 0%, transparent 65%),
+      linear-gradient(180deg, #1c1730 0%, #2c2140 22%, #4a3450 42%, #8a5a52 64%, #d69a5e 84%, #f0bf7d 100%);
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+    min-height: 100vh; padding: 40px 16px 28px;
+    overflow-x: hidden;
+  }
+
+  .ws-header { text-align: center; margin-bottom: 4px; opacity: 0; animation: ws-fade-up 0.7s var(--ease-spring) 0.05s forwards; }
+  .ws-eyebrow { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.22em; text-transform: uppercase; color: #e3c68a; margin-bottom: 10px; }
+  .ws-title { font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 700; color: #fbf3e4; }
+  .ws-title span { color: #e3c68a; font-style: italic; }
+  .ws-sub { font-size: 13px; color: #d8c9c2; margin-top: 8px; }
+
+  .ws-stage { width: 100%; max-width: 760px; margin-top: 4px; opacity: 0; animation: ws-fade-up 0.8s var(--ease-spring) 0.15s forwards; position: relative; }
+  .ws-stage svg { width: 100%; height: auto; display: block; overflow: visible; }
+
+  #buildingScene { transition: opacity 0.5s var(--ease), transform 0.5s var(--ease-spring); transform-origin: 500px 460px; }
+  #buildingScene.is-entering { opacity: 0; transform: scale(0.92) translateY(-10px); pointer-events: none; }
+
+  #doorGroup { cursor: pointer; }
+  #doorGroup .door-glow { transition: opacity 0.4s var(--ease); }
+  #doorGroup:hover .door-glow { opacity: 0.55; }
+  #doorGroup:hover #doorRect { filter: brightness(1.25); }
+  #doorRect { transition: filter 0.3s var(--ease); }
+  .ws-entry-hint { font-family: 'Be Vietnam Pro', sans-serif; font-weight: 600; font-size: 13px; fill: #e3c68a; text-anchor: middle; animation: ws-pulse 2.2s ease-in-out infinite; }
+  @keyframes ws-pulse { 0%,100% { opacity: 0.55; } 50% { opacity: 1; } }
+
+  .ws-checkin-trigger { cursor: pointer; }
+  .ws-checkin-trigger:hover .ci-lamp-glow { opacity: 0.5; }
+
+  .ws-branches {
+    position: absolute; inset: 0; display: none; grid-template-columns: repeat(2, 1fr); gap: 16px;
+    align-content: center; justify-items: center; padding: 20px;
+  }
+  .ws-branches.is-visible { display: grid; }
+  .ws-branch-card {
+    width: 100%; max-width: 220px; background: rgba(28,22,40,0.85); backdrop-filter: blur(10px);
+    border: 1px solid rgba(227,198,138,0.22); border-radius: 18px; padding: 22px 18px; text-align: center;
+    cursor: pointer; opacity: 0; transform: translateY(16px) scale(0.94);
+    animation: ws-branch-in 0.5s var(--ease-spring) forwards;
+    transition: border-color 0.25s var(--ease), transform 0.25s var(--ease-spring), box-shadow 0.25s var(--ease);
+  }
+  .ws-branch-card:hover { border-color: rgba(227,198,138,0.55); transform: translateY(-4px) scale(1.02); box-shadow: 0 16px 32px rgba(0,0,0,0.35); }
+  .ws-branch-card--locked { cursor: not-allowed; opacity: 0.45 !important; filter: grayscale(0.7); }
+  .ws-branch-card--locked:hover { transform: none; border-color: rgba(227,198,138,0.22); box-shadow: none; }
+  .ws-branch-card__icon { font-size: 30px; margin-bottom: 10px; }
+  .ws-branch-card__name { font-family: 'Playfair Display', serif; font-weight: 700; font-size: 17px; color: #fbf3e4; }
+  .ws-branch-card__desc { font-size: 11px; color: #cfa96a; margin-top: 4px; letter-spacing: 0.02em; }
+  .ws-branch-card__lock { font-size: 10.5px; color: #c9b8ae; margin-top: 6px; }
+  @keyframes ws-branch-in { from { opacity: 0; transform: translateY(16px) scale(0.94); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+  .ws-back-btn {
+    display: none; margin: 6px auto 0; background: none; border: none; color: #cbb9ae; font-size: 12px;
+    cursor: pointer; text-decoration: underline;
+  }
+  .ws-back-btn.is-visible { display: block; }
+
+  .ws-footer { margin-top: 10px; font-size: 12px; color: #cbb9ae; text-align: center; opacity: 0; animation: ws-fade-up 0.6s var(--ease-spring) 0.4s forwards; }
+  .ws-footer button { background: none; border: none; color: #e3c68a; font-weight: 600; font-size: 12px; cursor: pointer; text-decoration: underline; padding: 0; }
+
+  .ws-checkin {
+    width: 100%; max-width: 380px; margin-top: 6px; background: rgba(28, 22, 40, 0.92); backdrop-filter: blur(12px);
+    border: 1px solid rgba(227, 198, 138, 0.25); border-radius: 18px; box-shadow: 0 20px 48px rgba(0,0,0,0.4);
+    padding: 20px 22px; animation: ws-settle 0.4s var(--ease-spring) forwards;
+  }
+  .ws-checkin__head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+  .ws-checkin__title { font-family: 'Playfair Display', serif; font-weight: 700; font-size: 16px; color: #fbf3e4; }
+  .ws-checkin__center { font-size: 11.5px; color: #cbb9ae; margin-top: 3px; }
+  .ws-checkin__close { background: none; border: none; color: #cbb9ae; font-size: 15px; cursor: pointer; padding: 2px 6px; }
+  .ws-checkin__hint { font-size: 12px; margin-bottom: 8px; color: #d8c9c2; }
+  .ws-checkin__error { font-size: 12px; color: #ffb4a8; background: rgba(255,90,70,0.14); border-radius: 10px; padding: 8px 10px; margin-bottom: 8px; }
+  .ws-checkin__status { font-size: 12.5px; font-weight: 600; margin-bottom: 12px; color: #f0d9a8; }
+  .ws-checkin__actions { display: flex; gap: 10px; }
+  .ws-checkin__btn { flex: 1; padding: 11px; border-radius: 12px; border: none; font-weight: 700; font-size: 13px; cursor: pointer; transition: opacity 0.15s, transform 0.15s; }
+  .ws-checkin__btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  .ws-checkin__btn:not(:disabled):active { transform: scale(0.97); }
+  .ws-checkin__btn--in { background: linear-gradient(135deg, #e3c68a, #c9a45f); color: #241c14; }
+  .ws-checkin__btn--out { background: rgba(255,255,255,0.08); color: #fbf3e4; border: 1px solid rgba(255,255,255,0.14); }
+  .ws-checkin__more { display: block; text-align: center; margin-top: 12px; font-size: 11px; color: #b8a89c; }
+
+  @keyframes ws-fade-up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes ws-settle { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ws-header, .ws-stage, .ws-footer, .ws-checkin, .ws-branch-card { animation: none !important; opacity: 1 !important; transform: none !important; }
+    #buildingScene, .ws-branch-card { transition: none !important; }
+  }
+</style>
 </head>
-<body data-page="world-select.html" class="hub-body">
+<body>
 
-<header class="hub-topbar">
-  <div class="hub-topbar__brand">
-    <span class="dot" aria-hidden="true"></span>
-    <div>AIS OFFICE<small>Chọn khu vực làm việc</small></div>
-  </div>
-</header>
+<div class="ws-header">
+  <div class="ws-eyebrow" id="greetingEyebrow">Chào buổi sáng</div>
+  <div class="ws-title">AIS OFFICE <span id="userNameSpan">...</span></div>
+  <div class="ws-sub" id="subText">Bấm vào cửa chính để vào hệ thống</div>
+</div>
 
-<main class="hub-main">
-  <div class="hero-greeting" id="heroGreeting">
-    <div class="hero-greeting__text">
-      <div class="hero-greeting__eyebrow" id="greetingEyebrow">Chào buổi sáng</div>
-      <h1 class="hero-greeting__title">AIS OFFICE, <span id="userNameSpan">bạn</span></h1>
-      <div class="hero-greeting__sub">Hôm nay bạn muốn bắt đầu từ đâu?</div>
+<div class="ws-stage" style="min-height: 560px;">
+  <svg id="buildingScene" viewBox="180 120 640 620" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Toà nhà AIS OFFICE — bấm cửa để vào hệ thống">
+    <defs>
+      <radialGradient id="moonGlow" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#f0d9a8" stop-opacity="0.85"/><stop offset="100%" stop-color="#f0d9a8" stop-opacity="0"/></radialGradient>
+      <linearGradient id="groundGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#5a4a52"/><stop offset="100%" stop-color="#3e3340"/></linearGradient>
+      <linearGradient id="lanternGlow" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ffe7b0"/><stop offset="100%" stop-color="#e3a94f"/></linearGradient>
+      <linearGradient id="gTowerTop" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#e8ecf0"/><stop offset="100%" stop-color="#c3cad3"/></linearGradient>
+      <linearGradient id="gTowerLeft" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#aab3bd"/><stop offset="100%" stop-color="#8b95a1"/></linearGradient>
+      <linearGradient id="gTowerRight" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#7d8794"/><stop offset="100%" stop-color="#5e6771"/></linearGradient>
+      <filter id="softBlur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6"/></filter>
+    </defs>
+
+    <circle cx="740" cy="190" r="90" fill="url(#moonGlow)"/>
+    <circle cx="740" cy="190" r="28" fill="#fbead0"/>
+
+    <!-- San -->
+    <ellipse cx="500" cy="700" rx="280" ry="48" fill="url(#groundGrad)" opacity="0.9"/>
+    <ellipse class="ws-b-shadow" cx="500" cy="700" rx="220" ry="30" fill="#000000" opacity="0.3" filter="url(#softBlur)"/>
+
+    <!-- ===== TOA NHA CHINH — mat tien co luoi cua so ===== -->
+    <!-- Tang ap mai (lui vao) -->
+    <path d="M500.0,165.0 L600.0,215.0 L500.0,265.0 L400.0,215.0 Z" fill="url(#gTowerTop)" stroke="#e3c68a" stroke-width="1.4" stroke-linejoin="round" opacity="0.95"/>
+    <path d="M400.0,215.0 L500.0,265.0 L500.0,320.0 L400.0,270.0 Z" fill="url(#gTowerLeft)"/>
+    <path d="M500.0,265.0 L600.0,215.0 L600.0,270.0 L500.0,320.0 Z" fill="url(#gTowerRight)"/>
+
+    <!-- Khoi chinh -->
+    <path d="M330.0,305.0 L500.0,390.0 L500.0,690.0 L330.0,605.0 Z" fill="url(#gTowerLeft)" stroke="url(#gTowerLeft)" stroke-width="6" stroke-linejoin="round"/>
+    <path d="M500.0,390.0 L670.0,305.0 L670.0,605.0 L500.0,690.0 Z" fill="url(#gTowerRight)" stroke="url(#gTowerRight)" stroke-width="6" stroke-linejoin="round"/>
+    <path d="M500.0,220.0 L670.0,305.0 L500.0,390.0 L330.0,305.0 Z" fill="url(#gTowerTop)" stroke="url(#gTowerTop)" stroke-width="6" stroke-linejoin="round"/>
+    <path d="M500.0,220.0 L670.0,305.0 L500.0,390.0 L330.0,305.0 Z" fill="none" stroke="#e3c68a" stroke-width="1.5" stroke-linejoin="round" opacity="0.7"/>
+
+    <!-- Luoi cua so 2 mat -->
+    <g>
+      <path d="M343.6,329.8 L369.3,342.7 L369.3,371.7 L343.6,358.8 Z" fill="#a8def0" opacity="0.5"/>
+      <path d="M379.3,347.6 L405.0,360.5 L405.0,389.5 L379.3,376.7 Z" fill="#a8def0" opacity="0.5"/>
+      <path d="M415.0,365.5 L440.7,378.4 L440.7,407.4 L415.0,394.5 Z" fill="#a8def0" opacity="0.5"/>
+      <path d="M450.7,383.4 L476.4,396.2 L476.4,425.2 L450.7,412.4 Z" fill="#a8def0" opacity="0.5"/>
+      <path d="M343.6,373.8 L369.3,386.7 L369.3,415.7 L343.6,402.8 Z" fill="#a8def0" opacity="0.5"/>
+      <path d="M379.3,391.6 L405.0,404.5 L405.0,433.5 L379.3,420.7 Z" fill="#a8def0" opacity="0.5"/>
+      <path d="M415.0,409.5 L440.7,422.4 L440.7,451.4 L415.0,438.5 Z" fill="#a8def0" opacity="0.5"/>
+      <path d="M450.7,427.4 L476.4,440.2 L476.4,469.2 L450.7,456.4 Z" fill="#a8def0" opacity="0.5"/>
+      <path d="M343.6,417.8 L369.3,430.7 L369.3,459.7 L343.6,446.8 Z" fill="#a8def0" opacity="0.5"/>
+      <path d="M379.3,435.6 L405.0,448.5 L405.0,477.5 L379.3,464.7 Z" fill="#a8def0" opacity="0.5"/>
+      <path d="M415.0,453.5 L440.7,466.4 L440.7,495.4 L415.0,482.5 Z" fill="#a8def0" opacity="0.5"/>
+      <path d="M450.7,471.4 L476.4,484.2 L476.4,513.2 L450.7,500.4 Z" fill="#a8def0" opacity="0.5"/>
+      <path d="M343.6,461.8 L369.3,474.7 L369.3,503.7 L343.6,490.8 Z" fill="#a8def0" opacity="0.5"/>
+      <path d="M379.3,479.6 L405.0,492.5 L405.0,521.5 L379.3,508.7 Z" fill="#a8def0" opacity="0.5"/>
+      <path d="M415.0,497.5 L440.7,510.4 L440.7,539.4 L415.0,526.5 Z" fill="#a8def0" opacity="0.5"/>
+      <path d="M450.7,515.4 L476.4,528.2 L476.4,557.2 L450.7,544.4 Z" fill="#a8def0" opacity="0.5"/>
+      <path d="M343.6,505.8 L369.3,518.7 L369.3,547.7 L343.6,534.8 Z" fill="#a8def0" opacity="0.5"/>
+      <path d="M379.3,523.6 L405.0,536.5 L405.0,565.5 L379.3,552.7 Z" fill="#a8def0" opacity="0.5"/>
+      <path d="M415.0,541.5 L440.7,554.4 L440.7,583.4 L415.0,570.5 Z" fill="#a8def0" opacity="0.5"/>
+      <path d="M450.7,559.4 L476.4,572.2 L476.4,601.2 L450.7,588.4 Z" fill="#a8def0" opacity="0.5"/>
+      <path d="M343.6,549.8 L369.3,562.7 L369.3,591.7 L343.6,578.8 Z" fill="#a8def0" opacity="0.5"/>
+      <path d="M379.3,567.6 L405.0,580.5 L405.0,609.5 L379.3,596.7 Z" fill="#a8def0" opacity="0.5"/>
+      <path d="M415.0,585.5 L440.7,598.4 L440.7,627.4 L415.0,614.5 Z" fill="#a8def0" opacity="0.5"/>
+      <path d="M450.7,603.4 L476.4,616.2 L476.4,645.2 L450.7,632.4 Z" fill="#a8def0" opacity="0.5"/>
+    </g>
+    <g>
+      <path d="M513.6,401.2 L539.3,388.3 L539.3,417.4 L513.6,430.2 Z" fill="#5fa8c9" opacity="0.55"/>
+      <path d="M549.3,383.4 L575.0,370.5 L575.0,399.5 L549.3,412.4 Z" fill="#5fa8c9" opacity="0.55"/>
+      <path d="M585.0,365.5 L610.7,352.6 L610.7,381.7 L585.0,394.5 Z" fill="#5fa8c9" opacity="0.55"/>
+      <path d="M620.7,347.6 L646.4,334.8 L646.4,363.8 L620.7,376.7 Z" fill="#5fa8c9" opacity="0.55"/>
+      <path d="M513.6,445.2 L539.3,432.3 L539.3,461.4 L513.6,474.2 Z" fill="#5fa8c9" opacity="0.55"/>
+      <path d="M549.3,427.4 L575.0,414.5 L575.0,443.5 L549.3,456.4 Z" fill="#5fa8c9" opacity="0.55"/>
+      <path d="M585.0,409.5 L610.7,396.6 L610.7,425.7 L585.0,438.5 Z" fill="#5fa8c9" opacity="0.55"/>
+      <path d="M620.7,391.6 L646.4,378.8 L646.4,407.8 L620.7,420.7 Z" fill="#5fa8c9" opacity="0.55"/>
+      <path d="M513.6,489.2 L539.3,476.3 L539.3,505.4 L513.6,518.2 Z" fill="#5fa8c9" opacity="0.55"/>
+      <path d="M549.3,471.4 L575.0,458.5 L575.0,487.5 L549.3,500.4 Z" fill="#5fa8c9" opacity="0.55"/>
+      <path d="M585.0,453.5 L610.7,440.6 L610.7,469.7 L585.0,482.5 Z" fill="#5fa8c9" opacity="0.55"/>
+      <path d="M620.7,435.6 L646.4,422.8 L646.4,451.8 L620.7,464.7 Z" fill="#5fa8c9" opacity="0.55"/>
+      <path d="M513.6,533.2 L539.3,520.3 L539.3,549.4 L513.6,562.2 Z" fill="#5fa8c9" opacity="0.55"/>
+      <path d="M549.3,515.4 L575.0,502.5 L575.0,531.5 L549.3,544.4 Z" fill="#5fa8c9" opacity="0.55"/>
+      <path d="M585.0,497.5 L610.7,484.6 L610.7,513.7 L585.0,526.5 Z" fill="#5fa8c9" opacity="0.55"/>
+      <path d="M620.7,479.6 L646.4,466.8 L646.4,495.8 L620.7,508.7 Z" fill="#5fa8c9" opacity="0.55"/>
+      <path d="M513.6,577.2 L539.3,564.3 L539.3,593.4 L513.6,606.2 Z" fill="#5fa8c9" opacity="0.55"/>
+      <path d="M549.3,559.4 L575.0,546.5 L575.0,575.5 L549.3,588.4 Z" fill="#5fa8c9" opacity="0.55"/>
+      <path d="M585.0,541.5 L610.7,528.6 L610.7,557.7 L585.0,570.5 Z" fill="#5fa8c9" opacity="0.55"/>
+      <path d="M620.7,523.6 L646.4,510.8 L646.4,539.8 L620.7,552.7 Z" fill="#5fa8c9" opacity="0.55"/>
+      <path d="M513.6,621.2 L539.3,608.3 L539.3,637.4 L513.6,650.2 Z" fill="#5fa8c9" opacity="0.55"/>
+      <path d="M549.3,603.4 L575.0,590.5 L575.0,619.5 L549.3,632.4 Z" fill="#5fa8c9" opacity="0.55"/>
+      <path d="M585.0,585.5 L610.7,572.6 L610.7,601.7 L585.0,614.5 Z" fill="#5fa8c9" opacity="0.55"/>
+      <path d="M620.7,567.6 L646.4,554.8 L646.4,583.8 L620.7,596.7 Z" fill="#5fa8c9" opacity="0.55"/>
+    </g>
+
+    <!-- ===== CUA CHINH — bam vao day de vao he thong ===== -->
+    <g id="doorGroup" tabindex="0" role="button" aria-label="Vào hệ thống">
+      <ellipse class="door-glow" cx="500" cy="655" rx="55" ry="55" fill="#ffe7b0" opacity="0.28"/>
+      <path d="M478,595 L522,595 L522,690 L478,690 Z" fill="#1c1712" stroke="#e3c68a" stroke-width="2" id="doorRect"/>
+      <path d="M478,595 L522,595" stroke="#e3c68a" stroke-width="2.5" stroke-linecap="round"/>
+      <circle cx="514" cy="645" r="3" fill="#e3c68a"/>
+      <text class="ws-entry-hint" x="500" y="580">Bấm vào cửa để vào</text>
+    </g>
+
+    <!-- ===== Cham cong nhanh — den long canh cua ===== -->
+    <g id="checkinTrigger" class="ws-checkin-trigger" tabindex="0" role="button" aria-label="Chấm công nhanh">
+      <rect x="330" y="640" width="6" height="55" fill="#1a1712"/>
+      <ellipse cx="333" cy="697" rx="11" ry="4" fill="#0d0b08" opacity="0.5"/>
+      <rect x="324" y="622" width="16" height="20" rx="4" fill="url(#lanternGlow)"/>
+      <circle class="ci-lamp-glow" cx="332" cy="632" r="24" fill="#ffe7b0" opacity="0.3"/>
+      <text class="ws-label-sub" x="332" y="612" style="font-family:'Be Vietnam Pro',sans-serif; font-weight:700; fill:#e3c68a; font-size:11px; letter-spacing:0.05em; text-anchor:middle;">CHẤM CÔNG</text>
+    </g>
+  </svg>
+
+  <div class="ws-branches" id="branchesOverlay">
+    <div class="ws-branch-card" data-world="erp" style="animation-delay:0.05s;">
+      <div class="ws-branch-card__icon">🏛️</div>
+      <div class="ws-branch-card__name">ERP</div>
+      <div class="ws-branch-card__desc">PHÒNG BAN</div>
+    </div>
+    <div class="ws-branch-card" data-world="crm" style="animation-delay:0.12s;">
+      <div class="ws-branch-card__icon">🌐</div>
+      <div class="ws-branch-card__name">CRM</div>
+      <div class="ws-branch-card__desc">TRUNG TÂM</div>
+    </div>
+    <div class="ws-branch-card" data-world="personal" style="animation-delay:0.19s;">
+      <div class="ws-branch-card__icon">🚪</div>
+      <div class="ws-branch-card__name">ROOM</div>
+      <div class="ws-branch-card__desc">CÁ NHÂN</div>
+    </div>
+    <div class="ws-branch-card" data-world="database" style="animation-delay:0.26s;">
+      <div class="ws-branch-card__icon">🗄️</div>
+      <div class="ws-branch-card__name">BANZONE</div>
+      <div class="ws-branch-card__desc">DỮ LIỆU GỐC</div>
     </div>
   </div>
+</div>
 
-  <div class="install-guide-card" id="checkinTrigger" role="button" tabindex="0" aria-label="Chấm công nhanh tại cổng">
-    <div class="install-guide-card__icon"><svg class="icon" viewBox="0 0 24 24"><path d="M12 21s-7-6.1-7-11a7 7 0 0 1 14 0c0 4.9-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg></div>
-    <div class="install-guide-card__text">
-      <strong>Chấm công nhanh tại cổng</strong>
-      <span>Không cần vào ERP — chấm công vào/ra ngay tại đây</span>
-    </div>
-    <div class="install-guide-card__arrow">›</div>
+<button class="ws-back-btn" id="btnBack">← Quay lại toà nhà</button>
+<div class="ws-footer" id="footerBar">Bấm vào cửa để bắt đầu · <button id="btnSkip">Vào thẳng ERP như mọi khi</button></div>
+
+<div class="ws-checkin" id="checkinCard" style="display:none;">
+  <div class="ws-checkin__head">
+    <div><div class="ws-checkin__title">Chấm công nhanh</div><div class="ws-checkin__center" id="ciCenterName">—</div></div>
+    <button class="ws-checkin__close" id="btnCloseCheckin" aria-label="Đóng">✕</button>
   </div>
-
-  <div class="checkin-panel" id="checkinCard" style="display:none;">
-    <div class="checkin-panel__head">
-      <div>
-        <div class="checkin-panel__title">Chấm công nhanh</div>
-        <div class="checkin-panel__center" id="ciCenterName">—</div>
-      </div>
-      <button class="checkin-panel__close" id="btnCloseCheckin" aria-label="Đóng">✕</button>
-    </div>
-    <div class="checkin-panel__hint" id="ciGpsHint">Đang xác định vị trí...</div>
-    <div class="checkin-panel__error" id="ciError" style="display:none;"></div>
-    <div class="checkin-panel__status" id="ciStatus"></div>
-    <div class="checkin-panel__actions">
-      <button class="checkin-panel__btn checkin-panel__btn--in" id="btnCiIn" disabled>Chấm công vào</button>
-      <button class="checkin-panel__btn checkin-panel__btn--out" id="btnCiOut" disabled style="display:none;">Chấm công ra</button>
-    </div>
-    <a href="/attendance-checkin.html" class="checkin-panel__more">Xem đầy đủ lịch sử chấm công →</a>
+  <div class="ws-checkin__hint" id="ciGpsHint">Đang xác định vị trí...</div>
+  <div class="ws-checkin__error" id="ciError" style="display:none;"></div>
+  <div class="ws-checkin__status" id="ciStatus"></div>
+  <div class="ws-checkin__actions">
+    <button class="ws-checkin__btn ws-checkin__btn--in" id="btnCiIn" disabled>Chấm công vào</button>
+    <button class="ws-checkin__btn ws-checkin__btn--out" id="btnCiOut" disabled style="display:none;">Chấm công ra</button>
   </div>
-
-  <h2 class="hub-section-title">Khu vực làm việc</h2>
-  <div class="app-hub app-hub--world" id="worldHub"><!-- render bởi js/worldSelect.js theo quyền, dùng chung WORLD_META với world-switcher --></div>
-
-  <div class="hub-footer" id="footerBar">Bấm vào 1 khu vực để bắt đầu · <button id="btnSkip">Vào thẳng ERP như mọi khi</button></div>
-</main>
+  <a href="/attendance-checkin.html" class="ws-checkin__more">Xem đầy đủ lịch sử chấm công →</a>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="/env.js"></script>

@@ -1,5 +1,5 @@
 import { supabase, esc } from './supabase.js';
-import { WORLD_META, worldsWithAccess } from './shell.js';
+import { worldsWithAccess } from './shell.js';
 
 const WORLD_STORAGE_KEY = 'ais_current_world';
 const RADIUS_LIMIT_M = 1000;
@@ -18,57 +18,56 @@ function enterWorld(world) {
 }
 
 // ---------------------------------------------------------------------
-// SUA: luoi chon The gioi gio render DONG tu WORLD_META (dung chung nguon
-// voi world-switcher tren topbar va renderHub cua dashboard.js), thay vi
-// 4 toa nha SVG ve tay rieng — vua dong bo mau/icon/nhan tu dong voi phan
-// con lai cua he thong, vua tranh phai sua 2 noi neu sau nay them/doi 1
-// the gioi moi.
+// MOI — Cua chinh mo ra 4 nhanh (ERP/CRM/ROOM/BANZONE) thay vi hien san 4
+// toa nha rieng le nhu truoc — dung dung 1 toa nha lon lam mat tien, bam
+// cua se "mo ra" hien 4 lua chon.
 // ---------------------------------------------------------------------
-function renderWorldHub(accessibleWorlds) {
-  const hub = document.getElementById('worldHub');
-  if (!hub) return;
-  hub.innerHTML = '';
+const buildingScene = document.getElementById('buildingScene');
+const branchesOverlay = document.getElementById('branchesOverlay');
+const btnBack = document.getElementById('btnBack');
+const subText = document.getElementById('subText');
+const footerBar = document.getElementById('footerBar');
 
-  Object.keys(WORLD_META).forEach((world) => {
-    const meta = WORLD_META[world];
-    const hasAccess = accessibleWorlds.has(world);
-    const [mainLabel, subLabel] = meta.label.split(' — ');
-
-    const el = document.createElement(hasAccess ? 'button' : 'div');
-    if (hasAccess) el.type = 'button';
-    el.className = 'app-tile' + (hasAccess ? '' : ' disabled');
-    if (hasAccess) {
-      el.style.setProperty('--tile-bg', `linear-gradient(150deg, ${meta.color}, color-mix(in srgb, ${meta.color} 55%, black))`);
-    }
-    el.innerHTML = `
-      <div class="app-tile__icon">${meta.icon}</div>
-      <div class="app-tile__label">${esc(mainLabel)}</div>
-      ${subLabel ? `<div class="app-tile__sub">${esc(subLabel)}</div>` : ''}
-      ${!hasAccess ? '<div class="app-tile__lock">🔒 Không có quyền truy cập</div>' : ''}
-    `;
-    if (hasAccess) {
-      el.setAttribute('aria-label', `Vào thế giới ${meta.label}`);
-      el.addEventListener('click', () => enterWorld(world));
-    } else {
-      el.title = 'Bạn không có quyền truy cập khu vực này.';
-    }
-    hub.appendChild(el);
-  });
+function openBranches() {
+  buildingScene.classList.add('is-entering');
+  setTimeout(() => { branchesOverlay.classList.add('is-visible'); }, 200);
+  btnBack.classList.add('is-visible');
+  subText.textContent = 'Chọn nơi bạn muốn bắt đầu';
+  footerBar.style.display = 'none';
+}
+function closeBranches() {
+  branchesOverlay.classList.remove('is-visible');
+  buildingScene.classList.remove('is-entering');
+  btnBack.classList.remove('is-visible');
+  subText.textContent = 'Bấm vào cửa chính để vào hệ thống';
+  footerBar.style.display = 'block';
 }
 
+document.getElementById('doorGroup').addEventListener('click', openBranches);
+document.getElementById('doorGroup').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openBranches(); }
+});
+btnBack.addEventListener('click', closeBranches);
+
+branchesOverlay.querySelectorAll('.ws-branch-card').forEach((card) => {
+  card.addEventListener('click', () => {
+    if (card.classList.contains('ws-branch-card--locked')) return;
+    // Ca 4 nhanh gio deu co man rieng truoc khi vao that.
+    if (card.dataset.world === 'erp') { window.location.href = '/erp-lobby.html'; return; }
+    if (card.dataset.world === 'crm') { window.location.href = '/crm-galaxy.html'; return; }
+    if (card.dataset.world === 'personal') { window.location.href = '/room-lobby.html'; return; }
+    if (card.dataset.world === 'database') { window.location.href = '/banzone-vault.html'; return; }
+    enterWorld(card.dataset.world);
+  });
+});
 document.getElementById('btnSkip').addEventListener('click', () => enterWorld('erp'));
 
 // ---------------------------------------------------------------------
-// Cham cong nhanh ngay tai cong, khong can roi man hinh chon the gioi —
-// logic core giong het attendance-checkin.html (dinh vi GPS, ban kinh
-// 1km) nhung gon lai thanh 1 the nho bung ra khi bam vao khoi "Cham cong
-// nhanh tai cong". Giu nguyen logic cu, chi doi sang khung .checkin-panel
-// dung tokens mau chung cua he thong thay vi mau vang/tim rieng truoc do.
+// Cham cong nhanh — tai den long canh cua, giong logic cu.
 // ---------------------------------------------------------------------
 let PROFILE = null;
 let CENTER = null;
 let LAST_POSITION = null;
-let watchId = null;
 
 function distanceMeters(lat1, lon1, lat2, lon2) {
   const R = 6371000;
@@ -83,7 +82,7 @@ function fmtDistance(m) { return m >= 1000 ? `${(m / 1000).toFixed(2)} km` : `${
 function watchPosition() {
   const hint = document.getElementById('ciGpsHint');
   if (!('geolocation' in navigator)) { hint.textContent = 'Trình duyệt không hỗ trợ định vị vị trí.'; return; }
-  watchId = navigator.geolocation.watchPosition(
+  navigator.geolocation.watchPosition(
     (pos) => {
       LAST_POSITION = pos.coords;
       const dist = distanceMeters(pos.coords.latitude, pos.coords.longitude, CENTER.latitude, CENTER.longitude);
@@ -177,14 +176,9 @@ async function toggleCheckin() {
   watchPosition();
   await loadTodayStatus();
 }
-
 const checkinTrigger = document.getElementById('checkinTrigger');
-checkinTrigger.addEventListener('click', () => toggleCheckin());
-checkinTrigger.addEventListener('keydown', (e) => {
-  if (e.key !== 'Enter' && e.key !== ' ') return;
-  e.preventDefault();
-  toggleCheckin();
-});
+checkinTrigger.addEventListener('click', toggleCheckin);
+checkinTrigger.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleCheckin(); } });
 
 (async () => {
   document.getElementById('greetingEyebrow').textContent = timeGreeting();
@@ -206,9 +200,6 @@ checkinTrigger.addEventListener('keydown', (e) => {
   document.getElementById('userNameSpan').textContent = employee.full_name || '';
   PROFILE = { id: employee.id, centerId: employee.center_id };
 
-  // Dung LAI dung logic phan quyen da co san cua he thong (worldsWithAccess,
-  // tu shell.js) — tranh viet lai luat rieng o day de roi bi lech voi menu
-  // that (vd 1 vai tro duoc them quyen sau nay ma quen sua ca 2 cho).
   const fullProfile = {
     id: employee.id,
     departmentCode: employee.departments?.code || null,
@@ -219,5 +210,14 @@ checkinTrigger.addEventListener('keydown', (e) => {
     isCenterManager: employee.system_roles?.code === 'CENTER_MANAGER',
   };
   const accessibleWorlds = new Set(worldsWithAccess(fullProfile));
-  renderWorldHub(accessibleWorlds);
+
+  branchesOverlay.querySelectorAll('.ws-branch-card[data-world]').forEach((card) => {
+    if (accessibleWorlds.has(card.dataset.world)) return;
+    card.classList.add('ws-branch-card--locked');
+    const desc = card.querySelector('.ws-branch-card__desc');
+    const lockNote = document.createElement('div');
+    lockNote.className = 'ws-branch-card__lock';
+    lockNote.textContent = '🔒 Không có quyền truy cập';
+    desc.after(lockNote);
+  });
 })();
