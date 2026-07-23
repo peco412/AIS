@@ -1,4 +1,4 @@
-import { supabase, esc } from './supabase.js';
+import { supabase } from './supabase.js';
 import { worldsWithAccess } from './shell.js';
 
 const WORLD_STORAGE_KEY = 'ais_current_world';
@@ -6,10 +6,10 @@ const RADIUS_LIMIT_M = 1000;
 
 function timeGreeting() {
   const h = new Date().getHours();
-  if (h < 11) return 'Chào buổi sáng';
-  if (h < 14) return 'Chào buổi trưa';
-  if (h < 18) return 'Chào buổi chiều';
-  return 'Chào buổi tối';
+  if (h < 11) return 'CHÀO BUỔI SÁNG';
+  if (h < 14) return 'CHÀO BUỔI TRƯA';
+  if (h < 18) return 'CHÀO BUỔI CHIỀU';
+  return 'CHÀO BUỔI TỐI';
 }
 
 function enterWorld(world) {
@@ -18,28 +18,59 @@ function enterWorld(world) {
 }
 
 // ---------------------------------------------------------------------
-// MOI — Cua chinh mo ra 4 nhanh (ERP/CRM/ROOM/BANZONE) thay vi hien san 4
-// toa nha rieng le nhu truoc — dung dung 1 toa nha lon lam mat tien, bam
-// cua se "mo ra" hien 4 lua chon.
+// MOI — Vet sang mo phia sau (trang tri, dung dung mau slate-blue +
+// cyan theo dac ta).
 // ---------------------------------------------------------------------
-const buildingScene = document.getElementById('buildingScene');
+function renderBackgroundStreaks() {
+  const svg = document.getElementById('bgStreak');
+  let html = '';
+  for (let i = 0; i < 5; i++) {
+    const y = 10 + i * 20 + Math.random() * 8;
+    const w = 30 + Math.random() * 40;
+    html += `<rect x="${Math.random() * 60}%" y="${y}%" width="${w}%" height="1" fill="#22D3EE" opacity="${(0.02 + Math.random() * 0.04).toFixed(2)}"/>`;
+  }
+  svg.innerHTML = html;
+}
+
+// ---------------------------------------------------------------------
+// MOI — Anh sang phan chieu tren mat kinh toa nha di chuyen theo con tro
+// chuot, dung "Interactive Lighting" trong dac ta.
+// ---------------------------------------------------------------------
+const stage = document.getElementById('wsStage');
+const cursorGlow = document.getElementById('cursorGlow');
+const buildingSvg = document.getElementById('buildingScene');
+stage.addEventListener('mousemove', (e) => {
+  const rect = stage.getBoundingClientRect();
+  const viewBox = buildingSvg.viewBox.baseVal;
+  const px = (e.clientX - rect.left) / rect.width;
+  const py = (e.clientY - rect.top) / rect.height;
+  const x = viewBox.x + px * viewBox.width;
+  const y = viewBox.y + py * viewBox.height;
+  cursorGlow.setAttribute('cx', x.toFixed(0));
+  cursorGlow.setAttribute('cy', y.toFixed(0));
+});
+
+// ---------------------------------------------------------------------
+// MOI — Cua chinh: hieu ung "Dolly Zoom" (phong to tien vao trong) truoc
+// khi hien Sanh chinh (4 nhanh) — dung dac ta yeu cau.
+// ---------------------------------------------------------------------
 const branchesOverlay = document.getElementById('branchesOverlay');
 const btnBack = document.getElementById('btnBack');
 const subText = document.getElementById('subText');
 const footerBar = document.getElementById('footerBar');
 
 function openBranches() {
-  buildingScene.classList.add('is-entering');
-  setTimeout(() => { branchesOverlay.classList.add('is-visible'); }, 200);
+  buildingSvg.classList.add('is-entering');
+  setTimeout(() => { branchesOverlay.classList.add('is-visible'); }, 700);
   btnBack.classList.add('is-visible');
   subText.textContent = 'Chọn nơi bạn muốn bắt đầu';
   footerBar.style.display = 'none';
 }
 function closeBranches() {
   branchesOverlay.classList.remove('is-visible');
-  buildingScene.classList.remove('is-entering');
+  buildingSvg.classList.remove('is-entering');
   btnBack.classList.remove('is-visible');
-  subText.textContent = 'Bấm vào cửa chính để vào hệ thống';
+  subText.textContent = 'Bấm vào cửa để bước vào sảnh chính';
   footerBar.style.display = 'block';
 }
 
@@ -52,7 +83,6 @@ btnBack.addEventListener('click', closeBranches);
 branchesOverlay.querySelectorAll('.ws-branch-card').forEach((card) => {
   card.addEventListener('click', () => {
     if (card.classList.contains('ws-branch-card--locked')) return;
-    // Ca 4 nhanh gio deu co man rieng truoc khi vao that.
     if (card.dataset.world === 'erp') { window.location.href = '/erp-lobby.html'; return; }
     if (card.dataset.world === 'crm') { window.location.href = '/crm-galaxy.html'; return; }
     if (card.dataset.world === 'personal') { window.location.href = '/room-lobby.html'; return; }
@@ -63,7 +93,7 @@ branchesOverlay.querySelectorAll('.ws-branch-card').forEach((card) => {
 document.getElementById('btnSkip').addEventListener('click', () => enterWorld('erp'));
 
 // ---------------------------------------------------------------------
-// Cham cong nhanh — tai den long canh cua, giong logic cu.
+// Tram cham cong kinh (Glass Kiosk) — logic giu nguyen nhu truoc.
 // ---------------------------------------------------------------------
 let PROFILE = null;
 let CENTER = null;
@@ -88,13 +118,13 @@ function watchPosition() {
       const dist = distanceMeters(pos.coords.latitude, pos.coords.longitude, CENTER.latitude, CENTER.longitude);
       const inRange = dist <= RADIUS_LIMIT_M;
       hint.textContent = inRange ? `Trong phạm vi — cách trung tâm ${fmtDistance(dist)}` : `Ngoài phạm vi — cách ${fmtDistance(dist)} (giới hạn 1km)`;
-      hint.style.color = inRange ? 'var(--success)' : 'var(--danger)';
+      hint.style.color = inRange ? '#67E8F9' : '#FCA5A5';
       const btnIn = document.getElementById('btnCiIn');
       const btnOut = document.getElementById('btnCiOut');
       if (btnIn.style.display !== 'none') btnIn.disabled = !inRange;
       if (btnOut.style.display !== 'none') btnOut.disabled = !inRange;
     },
-    (err) => { hint.textContent = 'Không lấy được vị trí: ' + (err.message || 'cần cho phép truy cập vị trí.'); hint.style.color = 'var(--danger)'; },
+    (err) => { hint.textContent = 'Không lấy được vị trí: ' + (err.message || 'cần cho phép truy cập vị trí.'); hint.style.color = '#FCA5A5'; },
     { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 }
   );
 }
@@ -181,6 +211,7 @@ checkinTrigger.addEventListener('click', toggleCheckin);
 checkinTrigger.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleCheckin(); } });
 
 (async () => {
+  renderBackgroundStreaks();
   document.getElementById('greetingEyebrow').textContent = timeGreeting();
 
   const { data: sessionData } = await supabase.auth.getSession();

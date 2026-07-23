@@ -15,7 +15,9 @@
   html, body { height: 100%; margin: 0; }
   body {
     font-family: 'Be Vietnam Pro', sans-serif;
-    background: radial-gradient(ellipse 1000px 800px at 50% 45%, #241a3d 0%, #140f26 45%, #0a0714 100%);
+    background:
+      radial-gradient(ellipse 900px 500px at 50% 0%, rgba(212,175,110,0.14) 0%, transparent 60%),
+      radial-gradient(ellipse 1100px 850px at 50% 50%, #241a3d 0%, #170f2c 50%, #120a20 100%);
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     min-height: 100vh; padding: 30px 16px; overflow: hidden; position: relative;
   }
@@ -23,7 +25,7 @@
   .bg-stars circle { fill: #fff; animation: twinkle 3s ease-in-out infinite; }
 
   .galaxy-header { text-align: center; margin-bottom: 6px; opacity: 0; animation: fu 0.6s var(--ease-spring) forwards; position: relative; z-index: 1; }
-  .galaxy-eyebrow { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.2em; text-transform: uppercase; color: #b89ee8; margin-bottom: 8px; }
+  .galaxy-eyebrow { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.2em; text-transform: uppercase; color: #e3c68a; margin-bottom: 8px; }
   .galaxy-title { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 700; color: #fbf3e4; }
   .galaxy-sub { font-size: 12.5px; color: #cbb9ae; margin-top: 6px; }
 
@@ -38,8 +40,8 @@
   .star-label { font-family: 'Be Vietnam Pro', sans-serif; font-weight: 600; font-size: 12px; fill: #fbf3e4; text-anchor: middle; pointer-events: none; }
   .star-lock { font-size: 9.5px; fill: #cbb9ae; text-anchor: middle; pointer-events: none; }
 
-  .orbit-line { fill: none; stroke: rgba(184,158,232,0.18); stroke-width: 1; stroke-dasharray: 3 5; }
-  .constellation-line { stroke: rgba(184,158,232,0.14); stroke-width: 1; }
+  .orbit-line { fill: none; stroke: rgba(227,198,138,0.18); stroke-width: 1; stroke-dasharray: 3 5; }
+  .constellation-line { stroke: rgba(227,198,138,0.16); stroke-width: 1; }
 
   .logo-badge { cursor: default; }
   .logo-badge__ring { animation: rotate-ring 30s linear infinite; transform-origin: center; }
