@@ -1,5 +1,5 @@
 import { supabase, esc } from './supabase.js';
-import { worldsWithAccess } from './shell.js';
+import { WORLD_META, worldsWithAccess } from './shell.js';
 
 const WORLD_STORAGE_KEY = 'ais_current_world';
 const RADIUS_LIMIT_M = 1000;
@@ -17,32 +17,53 @@ function enterWorld(world) {
   window.location.href = '/dashboard.html';
 }
 
-// SUA: cong truong ("gateGroup") dung CHUNG kieu dang voi cac toa nha
-// (.ws-building, tu nhac len khi tro chuot) nhung KHONG phai la 1 the
-// gioi de nhay toi — bam vao se mo the "Cham cong nhanh" thay vi dieu
-// huong, nen phai kiem tra rieng, tranh goi nham enterWorld(undefined).
-document.querySelectorAll('.ws-building').forEach((el) => {
-  const isGate = el.id === 'gateGroup';
-  el.addEventListener('click', (e) => {
-    e.preventDefault();
-    if (isGate) { toggleCheckin(); return; }
-    if (el.classList.contains('ws-building--locked')) return; // khong lam gi ca, da khoa
-    enterWorld(el.dataset.world);
+// ---------------------------------------------------------------------
+// SUA: luoi chon The gioi gio render DONG tu WORLD_META (dung chung nguon
+// voi world-switcher tren topbar va renderHub cua dashboard.js), thay vi
+// 4 toa nha SVG ve tay rieng — vua dong bo mau/icon/nhan tu dong voi phan
+// con lai cua he thong, vua tranh phai sua 2 noi neu sau nay them/doi 1
+// the gioi moi.
+// ---------------------------------------------------------------------
+function renderWorldHub(accessibleWorlds) {
+  const hub = document.getElementById('worldHub');
+  if (!hub) return;
+  hub.innerHTML = '';
+
+  Object.keys(WORLD_META).forEach((world) => {
+    const meta = WORLD_META[world];
+    const hasAccess = accessibleWorlds.has(world);
+    const [mainLabel, subLabel] = meta.label.split(' — ');
+
+    const el = document.createElement(hasAccess ? 'button' : 'div');
+    if (hasAccess) el.type = 'button';
+    el.className = 'app-tile' + (hasAccess ? '' : ' disabled');
+    if (hasAccess) {
+      el.style.setProperty('--tile-bg', `linear-gradient(150deg, ${meta.color}, color-mix(in srgb, ${meta.color} 55%, black))`);
+    }
+    el.innerHTML = `
+      <div class="app-tile__icon">${meta.icon}</div>
+      <div class="app-tile__label">${esc(mainLabel)}</div>
+      ${subLabel ? `<div class="app-tile__sub">${esc(subLabel)}</div>` : ''}
+      ${!hasAccess ? '<div class="app-tile__lock">🔒 Không có quyền truy cập</div>' : ''}
+    `;
+    if (hasAccess) {
+      el.setAttribute('aria-label', `Vào thế giới ${meta.label}`);
+      el.addEventListener('click', () => enterWorld(world));
+    } else {
+      el.title = 'Bạn không có quyền truy cập khu vực này.';
+    }
+    hub.appendChild(el);
   });
-  el.addEventListener('keydown', (e) => {
-    if (e.key !== 'Enter' && e.key !== ' ') return;
-    e.preventDefault();
-    if (isGate) { toggleCheckin(); return; }
-    if (el.classList.contains('ws-building--locked')) return;
-    enterWorld(el.dataset.world);
-  });
-});
+}
+
 document.getElementById('btnSkip').addEventListener('click', () => enterWorld('erp'));
 
 // ---------------------------------------------------------------------
-// MỚI — Chấm công nhanh ngay tại cổng, không cần rời màn hình chọn thế
-// giới — logic core giống hệt attendance-checkin.html (định vị GPS, bán
-// kính 1km) nhưng gọn lại thành 1 thẻ nhỏ bung ra khi bấm vào cổng.
+// Cham cong nhanh ngay tai cong, khong can roi man hinh chon the gioi —
+// logic core giong het attendance-checkin.html (dinh vi GPS, ban kinh
+// 1km) nhung gon lai thanh 1 the nho bung ra khi bam vao khoi "Cham cong
+// nhanh tai cong". Giu nguyen logic cu, chi doi sang khung .checkin-panel
+// dung tokens mau chung cua he thong thay vi mau vang/tim rieng truoc do.
 // ---------------------------------------------------------------------
 let PROFILE = null;
 let CENTER = null;
@@ -157,6 +178,14 @@ async function toggleCheckin() {
   await loadTodayStatus();
 }
 
+const checkinTrigger = document.getElementById('checkinTrigger');
+checkinTrigger.addEventListener('click', () => toggleCheckin());
+checkinTrigger.addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  e.preventDefault();
+  toggleCheckin();
+});
+
 (async () => {
   document.getElementById('greetingEyebrow').textContent = timeGreeting();
 
@@ -177,10 +206,9 @@ async function toggleCheckin() {
   document.getElementById('userNameSpan').textContent = employee.full_name || '';
   PROFILE = { id: employee.id, centerId: employee.center_id };
 
-  // MOI — khoa truy cap dung the gioi khong co quyen: dung LAI chinh xac
-  // logic phan quyen da co san cua he thong (worldsWithAccess, tu
-  // navConfig.js) — tranh viet lai luat rieng o day de roi bi lech voi
-  // menu that (vd 1 vai tro duoc them quyen sau nay ma quen sua ca 2 cho).
+  // Dung LAI dung logic phan quyen da co san cua he thong (worldsWithAccess,
+  // tu shell.js) — tranh viet lai luat rieng o day de roi bi lech voi menu
+  // that (vd 1 vai tro duoc them quyen sau nay ma quen sua ca 2 cho).
   const fullProfile = {
     id: employee.id,
     departmentCode: employee.departments?.code || null,
@@ -191,25 +219,5 @@ async function toggleCheckin() {
     isCenterManager: employee.system_roles?.code === 'CENTER_MANAGER',
   };
   const accessibleWorlds = new Set(worldsWithAccess(fullProfile));
-
-  document.querySelectorAll('.ws-building[data-world]').forEach((el) => {
-    const world = el.dataset.world;
-    if (accessibleWorlds.has(world)) return;
-    // Khoa lai: mo den xam, bo tro chuot/ban phim, hien khoa nho thay vi
-    // nhan ten the gioi — khong xoa han khoi man hinh de van thay du 4
-    // toa nha (dung that voi bo cuc san truong), chi ro rang la KHONG VAO
-    // DUOC thay vi im lang khong phan ung khi bam vao.
-    el.classList.add('ws-building--locked');
-    el.removeAttribute('tabindex');
-    el.removeAttribute('role');
-    const label = el.querySelector('.ws-label-sub') || el.querySelector('.ws-label');
-    if (label) {
-      const lockNote = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-      lockNote.setAttribute('x', label.getAttribute('x'));
-      lockNote.setAttribute('y', String(Number(label.getAttribute('y')) + 14));
-      lockNote.setAttribute('class', 'ws-label-lock');
-      lockNote.textContent = '🔒 Không có quyền truy cập';
-      el.appendChild(lockNote);
-    }
-  });
+  renderWorldHub(accessibleWorlds);
 })();

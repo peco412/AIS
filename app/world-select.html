@@ -1,282 +1,73 @@
 <!doctype html>
-<html lang="vi">
+<html lang="vi" data-division="aloha">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Chọn thế giới — AIS OFFICE</title>
 <link rel="manifest" href="/manifest.json" />
-<meta name="theme-color" content="#1a1530" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="AIS OFFICE" />
+<link rel="apple-touch-icon" href="/assets/icon-192.png" />
+<meta name="theme-color" content="#0094D9" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="/css/tokens.css" />
-<style>
-  * { box-sizing: border-box; }
-  html, body { height: 100%; margin: 0; }
-  body {
-    font-family: 'Be Vietnam Pro', sans-serif;
-    background:
-      radial-gradient(ellipse 900px 500px at 50% 0%, rgba(212,175,110,0.16) 0%, transparent 65%),
-      linear-gradient(180deg, #1c1730 0%, #2c2140 22%, #4a3450 42%, #8a5a52 64%, #d69a5e 84%, #f0bf7d 100%);
-    display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
-    min-height: 100vh; padding: 40px 16px 28px;
-    overflow-x: hidden;
-  }
-
-  .ws-header { text-align: center; margin-bottom: 4px; opacity: 0; animation: ws-fade-up 0.7s var(--ease-spring) 0.05s forwards; }
-  .ws-eyebrow {
-    font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.22em; text-transform: uppercase;
-    color: #e3c68a; margin-bottom: 10px;
-  }
-  .ws-title { font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 700; color: #fbf3e4; letter-spacing: 0.01em; }
-  .ws-title span { color: #e3c68a; font-style: italic; }
-  .ws-sub { font-size: 13px; color: #d8c9c2; margin-top: 8px; letter-spacing: 0.01em; }
-
-  .ws-stage { width: 100%; max-width: 1200px; margin-top: 6px; opacity: 0; animation: ws-fade-up 0.8s var(--ease-spring) 0.15s forwards; }
-  .ws-stage svg { width: 100%; height: auto; display: block; overflow: visible; }
-
-  .ws-building { cursor: pointer; outline: none; }
-  .ws-building .ws-b-shape { transition: transform 0.3s var(--ease-spring), filter 0.3s var(--ease); transform-origin: center; transform-box: fill-box; }
-  .ws-building:hover .ws-b-shape, .ws-building:focus-visible .ws-b-shape { transform: translateY(-8px); filter: brightness(1.16) drop-shadow(0 16px 20px rgba(0,0,0,0.45)); }
-  .ws-building:active .ws-b-shape { transform: translateY(-3px); }
-  .ws-building .ws-b-shadow { transition: opacity 0.3s var(--ease), transform 0.3s var(--ease); transform-origin: center; transform-box: fill-box; }
-  .ws-building:hover .ws-b-shadow { opacity: 0.35; transform: scale(1.14); }
-
-  .ws-building--locked { cursor: not-allowed; }
-  .ws-building--locked .ws-b-shape { filter: grayscale(0.9) brightness(0.5); opacity: 0.5; }
-  .ws-building--locked:hover .ws-b-shape { transform: none; filter: grayscale(0.9) brightness(0.5); }
-  .ws-building--locked .ws-b-shadow { opacity: 0.06 !important; }
-  .ws-label-lock { font-size: 12px; fill: #c9b8ae; text-anchor: middle; font-weight: 600; letter-spacing: 0.03em; }
-
-  .ws-b-appear { opacity: 0; transform: translateY(18px); animation: ws-settle 0.6s var(--ease-spring) forwards; }
-
-  .ws-label {
-    font-family: 'Playfair Display', serif; font-weight: 700; font-size: 20px; fill: #fbf3e4;
-    text-anchor: middle; pointer-events: none; letter-spacing: 0.01em;
-  }
-  .ws-label-sub {
-    font-family: 'Be Vietnam Pro', sans-serif; font-weight: 500; font-size: 12.5px; fill: #cfa96a;
-    text-anchor: middle; pointer-events: none; letter-spacing: 0.03em;
-  }
-
-  .ws-footer { margin-top: 2px; font-size: 12px; color: #cbb9ae; text-align: center; opacity: 0; animation: ws-fade-up 0.6s var(--ease-spring) 0.4s forwards; }
-  .ws-footer button { background: none; border: none; color: #e3c68a; font-weight: 600; font-size: 12px; cursor: pointer; text-decoration: underline; padding: 0; }
-
-  .ws-checkin {
-    width: 100%; max-width: 380px; margin-top: 6px; background: rgba(28, 22, 40, 0.92); backdrop-filter: blur(12px);
-    border: 1px solid rgba(227, 198, 138, 0.25); border-radius: 18px; box-shadow: 0 20px 48px rgba(0,0,0,0.4);
-    padding: 20px 22px; animation: ws-settle 0.4s var(--ease-spring) forwards;
-  }
-  .ws-checkin__head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
-  .ws-checkin__title { font-family: 'Playfair Display', serif; font-weight: 700; font-size: 16px; color: #fbf3e4; }
-  .ws-checkin__center { font-size: 11.5px; color: #cbb9ae; margin-top: 3px; }
-  .ws-checkin__close { background: none; border: none; color: #cbb9ae; font-size: 15px; cursor: pointer; padding: 2px 6px; }
-  .ws-checkin__hint { font-size: 12px; margin-bottom: 8px; color: #d8c9c2; }
-  .ws-checkin__error { font-size: 12px; color: #ffb4a8; background: rgba(255,90,70,0.14); border-radius: 10px; padding: 8px 10px; margin-bottom: 8px; }
-  .ws-checkin__status { font-size: 12.5px; font-weight: 600; margin-bottom: 12px; color: #f0d9a8; }
-  .ws-checkin__actions { display: flex; gap: 10px; }
-  .ws-checkin__btn {
-    flex: 1; padding: 11px; border-radius: 12px; border: none; font-weight: 700; font-size: 13px; cursor: pointer;
-    transition: opacity 0.15s, transform 0.15s;
-  }
-  .ws-checkin__btn:disabled { opacity: 0.35; cursor: not-allowed; }
-  .ws-checkin__btn:not(:disabled):active { transform: scale(0.97); }
-  .ws-checkin__btn--in { background: linear-gradient(135deg, #e3c68a, #c9a45f); color: #241c14; }
-  .ws-checkin__btn--out { background: rgba(255,255,255,0.08); color: #fbf3e4; border: 1px solid rgba(255,255,255,0.14); }
-  .ws-checkin__more { display: block; text-align: center; margin-top: 12px; font-size: 11px; color: #b8a89c; }
-
-  @keyframes ws-fade-up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-  @keyframes ws-settle { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
-
-  @media (prefers-reduced-motion: reduce) {
-    .ws-header, .ws-stage, .ws-footer, .ws-b-appear, .ws-checkin { animation: none !important; opacity: 1 !important; transform: none !important; }
-    .ws-building .ws-b-shape, .ws-building .ws-b-shadow { transition: none !important; }
-  }
-</style>
+<link rel="stylesheet" href="/css/dashboard.css" />
+<link rel="stylesheet" href="/css/world-select.css" />
 </head>
-<body>
+<body data-page="world-select.html" class="hub-body">
 
-<div class="ws-header">
-  <div class="ws-eyebrow" id="greetingEyebrow">Chào buổi sáng</div>
-  <div class="ws-title">AIS OFFICE <span id="userNameSpan">...</span></div>
-  <div class="ws-sub">Hôm nay bạn muốn bắt đầu từ đâu?</div>
-</div>
+<header class="hub-topbar">
+  <div class="hub-topbar__brand">
+    <span class="dot" aria-hidden="true"></span>
+    <div>AIS OFFICE<small>Chọn khu vực làm việc</small></div>
+  </div>
+</header>
 
-<div class="ws-stage">
-  <svg viewBox="-40 100 1160 780" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Sân trường — chọn thế giới">
-    <defs>
-      <radialGradient id="moonGlow" cx="50%" cy="50%" r="50%">
-        <stop offset="0%" stop-color="#f0d9a8" stop-opacity="0.85"/>
-        <stop offset="100%" stop-color="#f0d9a8" stop-opacity="0"/>
-      </radialGradient>
-      <linearGradient id="groundGrad" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#5a4a52"/>
-        <stop offset="100%" stop-color="#3e3340"/>
-      </linearGradient>
-      <linearGradient id="lanternGlow" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#ffe7b0"/>
-        <stop offset="100%" stop-color="#e3a94f"/>
-      </linearGradient>
-
-      <linearGradient id="gErpTop" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#3fa8d6"/><stop offset="100%" stop-color="#0e6a92"/></linearGradient>
-      <linearGradient id="gErpLeft" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#0a3a52"/><stop offset="100%" stop-color="#062639"/></linearGradient>
-      <linearGradient id="gErpRight" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#062639"/><stop offset="100%" stop-color="#031017"/></linearGradient>
-
-      <linearGradient id="gCrmTop" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#4fcf9a"/><stop offset="100%" stop-color="#158a5f"/></linearGradient>
-      <linearGradient id="gCrmLeft" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#0d3d2b"/><stop offset="100%" stop-color="#092e21"/></linearGradient>
-      <linearGradient id="gCrmRight" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#092e21"/><stop offset="100%" stop-color="#041711"/></linearGradient>
-
-      <linearGradient id="gDbTop" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#9d84e8"/><stop offset="100%" stop-color="#5b45a0"/></linearGradient>
-      <linearGradient id="gDbLeft" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#2e2350"/><stop offset="100%" stop-color="#261d42"/></linearGradient>
-      <linearGradient id="gDbRight" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#261d42"/><stop offset="100%" stop-color="#140f24"/></linearGradient>
-
-      <linearGradient id="gPerTop" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#8a8f98"/><stop offset="100%" stop-color="#5c6067"/></linearGradient>
-      <linearGradient id="gPerLeft" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#2c2f33"/><stop offset="100%" stop-color="#242629"/></linearGradient>
-      <linearGradient id="gPerRight" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#242629"/><stop offset="100%" stop-color="#131417"/></linearGradient>
-
-      <filter id="softBlur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="5"/></filter>
-    </defs>
-
-    <!-- Anh trang phia xa -->
-    <circle cx="1020" cy="200" r="105" fill="url(#moonGlow)"/>
-    <circle cx="1020" cy="200" r="32" fill="#fbead0"/>
-
-    <!-- San truong (nen da isometric lon) -->
-    <path d="M580.5,189.0 L1044.5,461.0 L580.5,733.0 L116.5,461.0 Z" fill="url(#groundGrad)" stroke="rgba(227,198,138,0.22)" stroke-width="1.5"/>
-    <path d="M580.5,189.0 L1044.5,461.0 M580.5,189.0 L116.5,461.0" stroke="rgba(227,198,138,0.10)" stroke-width="1"/>
-
-    <!-- Loi di lat da noi cac khu -->
-    <path d="M355,455 L500,505 M500,505 L780,470 M780,470 L900,420" stroke="rgba(227,198,138,0.18)" stroke-width="22" stroke-linecap="round" fill="none"/>
-    <path d="M500,505 L470,600" stroke="rgba(227,198,138,0.18)" stroke-width="20" stroke-linecap="round" fill="none"/>
-
-    <!-- ================= ERP (navy, co thap chuong) ================= -->
-    <a href="#" class="ws-building" data-world="erp" tabindex="0" role="button" aria-label="Vào thế giới ERP — Vận hành nội bộ">
-      <ellipse class="ws-b-shadow" cx="270" cy="493" rx="78" ry="17" fill="#000000" opacity="0.35" filter="url(#softBlur)"/>
-      <g class="ws-b-shape ws-b-appear" style="animation-delay:0.45s">
-        <path d="M270.0,364.5 L391.5,303.8 L391.5,438.8 L270.0,499.5 Z" fill="url(#gErpRight)" stroke="url(#gErpRight)" stroke-width="8" stroke-linejoin="round"/>
-        <path d="M148.5,303.8 L270.0,364.5 L270.0,499.5 L148.5,438.8 Z" fill="url(#gErpLeft)" stroke="url(#gErpLeft)" stroke-width="8" stroke-linejoin="round"/>
-        <path d="M270.0,243.0 L391.5,303.8 L270.0,364.5 L148.5,303.8 Z" fill="url(#gErpTop)" stroke="url(#gErpTop)" stroke-width="8" stroke-linejoin="round"/>
-        <path d="M270.0,243.0 L391.5,303.8 L270.0,364.5 L148.5,303.8 Z" fill="none" stroke="#e3c68a" stroke-width="1.8" stroke-linejoin="round" opacity="0.8"/>
-        <ellipse cx="250" cy="285" rx="34" ry="13" fill="#ffffff" opacity="0.22"/>
-        <path d="M270.0,202.5 L305.1,185.0 L305.1,263.3 L270.0,280.8 Z" fill="url(#gErpRight)" stroke="url(#gErpRight)" stroke-width="5" stroke-linejoin="round"/>
-        <path d="M234.9,185.0 L270.0,202.5 L270.0,280.8 L234.9,263.3 Z" fill="url(#gErpLeft)" stroke="url(#gErpLeft)" stroke-width="5" stroke-linejoin="round"/>
-        <path d="M270.0,167.4 L305.1,185.0 L270.0,202.5 L234.9,185.0 Z" fill="url(#gErpTop)" stroke="url(#gErpTop)" stroke-width="5" stroke-linejoin="round"/>
-        <path d="M270.0,167.4 L305.1,185.0 L270.0,202.5 L234.9,185.0 Z" fill="none" stroke="#e3c68a" stroke-width="1.4" stroke-linejoin="round" opacity="0.8"/>
-        <circle cx="270" cy="184" r="8" fill="#fbf3e4" stroke="#e3c68a" stroke-width="1.4"/>
-      </g>
-      <text class="ws-label" x="270" y="530">ERP</text>
-      <text class="ws-label-sub" x="270" y="548">VẬN HÀNH NỘI BỘ</text>
-    </a>
-
-    <!-- ================= CRM (ngoc luc bao) ================= -->
-    <a href="#" class="ws-building" data-world="crm" tabindex="0" role="button" aria-label="Vào thế giới CRM — Khối trung tâm">
-      <ellipse class="ws-b-shadow" cx="621" cy="514" rx="82" ry="17" fill="#000000" opacity="0.35" filter="url(#softBlur)"/>
-      <g class="ws-b-shape ws-b-appear" style="animation-delay:0.55s">
-        <path d="M621.0,411.8 L749.2,347.6 L749.2,455.6 L621.0,519.8 Z" fill="url(#gCrmRight)" stroke="url(#gCrmRight)" stroke-width="8" stroke-linejoin="round"/>
-        <path d="M492.8,347.6 L621.0,411.8 L621.0,519.8 L492.8,455.6 Z" fill="url(#gCrmLeft)" stroke="url(#gCrmLeft)" stroke-width="8" stroke-linejoin="round"/>
-        <path d="M621.0,283.5 L749.2,347.6 L621.0,411.8 L492.8,347.6 Z" fill="url(#gCrmTop)" stroke="url(#gCrmTop)" stroke-width="8" stroke-linejoin="round"/>
-        <path d="M621.0,283.5 L749.2,347.6 L621.0,411.8 L492.8,347.6 Z" fill="none" stroke="#e3c68a" stroke-width="1.8" stroke-linejoin="round" opacity="0.8"/>
-        <ellipse cx="600" cy="325" rx="32" ry="12" fill="#ffffff" opacity="0.22"/>
-        <path d="M621,283.5 L621,246" stroke="#e3c68a" stroke-width="2"/>
-        <circle cx="621" cy="243" r="5" fill="#e3c68a"/>
-      </g>
-      <text class="ws-label" x="621" y="551">CRM</text>
-      <text class="ws-label-sub" x="621" y="569">KHỐI TRUNG TÂM</text>
-    </a>
-
-    <!-- ================= Database (thach anh tim) ================= -->
-    <a href="#" class="ws-building" data-world="database" tabindex="0" role="button" aria-label="Vào thế giới Database — Dữ liệu gốc">
-      <ellipse class="ws-b-shadow" cx="972" cy="487" rx="70" ry="15" fill="#000000" opacity="0.35" filter="url(#softBlur)"/>
-      <g class="ws-b-shape ws-b-appear" style="animation-delay:0.65s">
-        <path d="M972.0,364.5 L1080.0,310.5 L1080.0,438.8 L972.0,492.8 Z" fill="url(#gDbRight)" stroke="url(#gDbRight)" stroke-width="8" stroke-linejoin="round"/>
-        <path d="M864.0,310.5 L972.0,364.5 L972.0,492.8 L864.0,438.8 Z" fill="url(#gDbLeft)" stroke="url(#gDbLeft)" stroke-width="8" stroke-linejoin="round"/>
-        <path d="M972.0,256.5 L1080.0,310.5 L972.0,364.5 L864.0,310.5 Z" fill="url(#gDbTop)" stroke="url(#gDbTop)" stroke-width="8" stroke-linejoin="round"/>
-        <path d="M972.0,256.5 L1080.0,310.5 L972.0,364.5 L864.0,310.5 Z" fill="none" stroke="#e3c68a" stroke-width="1.8" stroke-linejoin="round" opacity="0.8"/>
-        <ellipse cx="950" cy="295" rx="30" ry="11" fill="#ffffff" opacity="0.22"/>
-        <rect x="930" y="278" width="7" height="18" fill="#e3c68a" opacity="0.85" transform="rotate(-16 930 278)"/>
-        <rect x="945" y="284" width="7" height="18" fill="#e3c68a" opacity="0.65" transform="rotate(-16 945 284)"/>
-        <rect x="960" y="290" width="7" height="18" fill="#e3c68a" opacity="0.85" transform="rotate(-16 960 290)"/>
-      </g>
-      <text class="ws-label" x="972" y="521">Database</text>
-      <text class="ws-label-sub" x="972" y="539">DỮ LIỆU GỐC</text>
-    </a>
-
-    <!-- ================= Personal (than chi) ================= -->
-    <a href="#" class="ws-building" data-world="personal" tabindex="0" role="button" aria-label="Vào không gian Cá nhân">
-      <ellipse class="ws-b-shadow" cx="1256" cy="487" rx="48" ry="12" fill="#000000" opacity="0.35" filter="url(#softBlur)"/>
-      <g class="ws-b-shape ws-b-appear" style="animation-delay:0.75s">
-        <path d="M1255.5,411.8 L1323.0,378.0 L1323.0,459.0 L1255.5,492.8 Z" fill="url(#gPerRight)" stroke="url(#gPerRight)" stroke-width="6" stroke-linejoin="round"/>
-        <path d="M1188.0,378.0 L1255.5,411.8 L1255.5,492.8 L1188.0,459.0 Z" fill="url(#gPerLeft)" stroke="url(#gPerLeft)" stroke-width="6" stroke-linejoin="round"/>
-        <path d="M1255.5,344.2 L1323.0,378.0 L1255.5,411.8 L1188.0,378.0 Z" fill="url(#gPerTop)" stroke="url(#gPerTop)" stroke-width="6" stroke-linejoin="round"/>
-        <path d="M1255.5,344.2 L1323.0,378.0 L1255.5,411.8 L1188.0,378.0 Z" fill="none" stroke="#e3c68a" stroke-width="1.3" stroke-linejoin="round" opacity="0.7"/>
-        <ellipse cx="1238" cy="370" rx="20" ry="7" fill="#ffffff" opacity="0.2"/>
-      </g>
-      <text class="ws-label" x="1256" y="516">Cá nhân</text>
-    </a>
-
-    <!-- Cot den doc loi di -->
-    <g class="ws-b-appear" style="animation-delay:0.35s">
-      <rect x="493" y="440" width="5" height="60" fill="#1a1712"/>
-      <ellipse cx="495" cy="503" rx="10" ry="4" fill="#0d0b08" opacity="0.5"/>
-      <rect x="488" y="422" width="14" height="18" rx="3" fill="url(#lanternGlow)"/>
-      <circle cx="495" cy="431" r="18" fill="#ffe7b0" opacity="0.24"/>
-
-      <rect x="795" y="392" width="5" height="55" fill="#1a1712"/>
-      <ellipse cx="797" cy="450" rx="9" ry="3.5" fill="#0d0b08" opacity="0.5"/>
-      <rect x="790" y="376" width="14" height="18" rx="3" fill="url(#lanternGlow)"/>
-      <circle cx="797" cy="385" r="17" fill="#ffe7b0" opacity="0.24"/>
-    </g>
-
-    <!-- ================= Cong khuon vien — DIEM BAT DAU, ben trai (thang dung, cach xa ERP) ================= -->
-    <g id="gateGroup" class="ws-building ws-b-appear" style="animation-delay:0.3s" tabindex="0" role="button" aria-label="Chấm công nhanh tại cổng">
-      <ellipse cx="30" cy="700" rx="18" ry="7" fill="#000000" opacity="0.3" filter="url(#softBlur)"/>
-      <ellipse cx="100" cy="700" rx="18" ry="7" fill="#000000" opacity="0.3" filter="url(#softBlur)"/>
-      <g class="ws-b-shape">
-        <rect x="21" y="595" width="18" height="105" rx="7" fill="#e9dfc9"/>
-        <rect x="30" y="595" width="9" height="105" fill="#c9b98f"/>
-        <rect x="91" y="595" width="18" height="105" rx="7" fill="#e9dfc9"/>
-        <rect x="100" y="595" width="9" height="105" fill="#c9b98f"/>
-        <rect x="10" y="573" width="110" height="18" rx="7" fill="#181512"/>
-        <rect x="10" y="573" width="110" height="6" rx="3" fill="#e3c68a" opacity="0.6"/>
-        <rect x="58" y="542" width="16" height="24" rx="5" fill="url(#lanternGlow)"/>
-        <circle cx="66" cy="554" r="23" fill="#ffe7b0" opacity="0.3"/>
-      </g>
-      <text class="ws-label-sub" x="66" y="534" style="font-weight:700; fill:#e3c68a; font-size:13px; letter-spacing:0.06em;">CHẤM CÔNG NHANH</text>
-    </g>
-
-    <!-- Cay tinh te 2 ben cong -->
-    <g opacity="0.95">
-      <rect x="-35" y="655" width="8" height="26" fill="#3a2e20" rx="3"/>
-      <circle cx="-31" cy="638" r="21" fill="#1d4a35"/>
-      <circle cx="-42" cy="646" r="14" fill="#245940"/>
-      <circle cx="-20" cy="646" r="14" fill="#173d2b"/>
-      <rect x="150" y="648" width="8" height="26" fill="#3a2e20" rx="3"/>
-      <circle cx="154" cy="631" r="20" fill="#1d4a35"/>
-      <circle cx="143" cy="639" r="13" fill="#245940"/>
-      <circle cx="165" cy="639" r="13" fill="#173d2b"/>
-    </g>
-  </svg>
-</div>
-
-<div class="ws-checkin" id="checkinCard" style="display:none;">
-  <div class="ws-checkin__head">
-    <div>
-      <div class="ws-checkin__title">Chấm công nhanh</div>
-      <div class="ws-checkin__center" id="ciCenterName">—</div>
+<main class="hub-main">
+  <div class="hero-greeting" id="heroGreeting">
+    <div class="hero-greeting__text">
+      <div class="hero-greeting__eyebrow" id="greetingEyebrow">Chào buổi sáng</div>
+      <h1 class="hero-greeting__title">AIS OFFICE, <span id="userNameSpan">bạn</span></h1>
+      <div class="hero-greeting__sub">Hôm nay bạn muốn bắt đầu từ đâu?</div>
     </div>
-    <button class="ws-checkin__close" id="btnCloseCheckin" aria-label="Đóng">✕</button>
   </div>
-  <div class="ws-checkin__hint" id="ciGpsHint">Đang xác định vị trí...</div>
-  <div class="ws-checkin__error" id="ciError" style="display:none;"></div>
-  <div class="ws-checkin__status" id="ciStatus"></div>
-  <div class="ws-checkin__actions">
-    <button class="ws-checkin__btn ws-checkin__btn--in" id="btnCiIn" disabled>Chấm công vào</button>
-    <button class="ws-checkin__btn ws-checkin__btn--out" id="btnCiOut" disabled style="display:none;">Chấm công ra</button>
-  </div>
-  <a href="/attendance-checkin.html" class="ws-checkin__more">Xem đầy đủ lịch sử chấm công →</a>
-</div>
 
-<div class="ws-footer" id="footerBar">Bấm vào 1 khu vực để bắt đầu · <button id="btnSkip">Vào thẳng ERP như mọi khi</button></div>
+  <div class="install-guide-card" id="checkinTrigger" role="button" tabindex="0" aria-label="Chấm công nhanh tại cổng">
+    <div class="install-guide-card__icon"><svg class="icon" viewBox="0 0 24 24"><path d="M12 21s-7-6.1-7-11a7 7 0 0 1 14 0c0 4.9-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg></div>
+    <div class="install-guide-card__text">
+      <strong>Chấm công nhanh tại cổng</strong>
+      <span>Không cần vào ERP — chấm công vào/ra ngay tại đây</span>
+    </div>
+    <div class="install-guide-card__arrow">›</div>
+  </div>
+
+  <div class="checkin-panel" id="checkinCard" style="display:none;">
+    <div class="checkin-panel__head">
+      <div>
+        <div class="checkin-panel__title">Chấm công nhanh</div>
+        <div class="checkin-panel__center" id="ciCenterName">—</div>
+      </div>
+      <button class="checkin-panel__close" id="btnCloseCheckin" aria-label="Đóng">✕</button>
+    </div>
+    <div class="checkin-panel__hint" id="ciGpsHint">Đang xác định vị trí...</div>
+    <div class="checkin-panel__error" id="ciError" style="display:none;"></div>
+    <div class="checkin-panel__status" id="ciStatus"></div>
+    <div class="checkin-panel__actions">
+      <button class="checkin-panel__btn checkin-panel__btn--in" id="btnCiIn" disabled>Chấm công vào</button>
+      <button class="checkin-panel__btn checkin-panel__btn--out" id="btnCiOut" disabled style="display:none;">Chấm công ra</button>
+    </div>
+    <a href="/attendance-checkin.html" class="checkin-panel__more">Xem đầy đủ lịch sử chấm công →</a>
+  </div>
+
+  <h2 class="hub-section-title">Khu vực làm việc</h2>
+  <div class="app-hub app-hub--world" id="worldHub"><!-- render bởi js/worldSelect.js theo quyền, dùng chung WORLD_META với world-switcher --></div>
+
+  <div class="hub-footer" id="footerBar">Bấm vào 1 khu vực để bắt đầu · <button id="btnSkip">Vào thẳng ERP như mọi khi</button></div>
+</main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="/env.js"></script>
