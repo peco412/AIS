@@ -7,7 +7,7 @@ let CAN_EDIT = false;
 
 async function loadRows() {
   const tbody = document.getElementById('tableBody');
-  const { data, error } = await supabase.from('bulk_payment_discounts').select('*, employees(full_name)').order('plan_type');
+  const { data, error } = await supabase.from('bulk_payment_discounts').select('*, employees(full_name)').eq('plan_type', 'FULL_SUB_LEVEL');
   if (error) { tbody.innerHTML = `<tr><td colspan="4" class="empty-cell">Lỗi: ${esc(error.message)}</td></tr>`; return; }
 
   tbody.innerHTML = (data || []).map((r) => `

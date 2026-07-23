@@ -164,10 +164,6 @@ form.addEventListener('submit', async (e) => {
 // mới) qua hàm transfer_student_class() — không sửa thẳng lớp như form
 // "Sửa học viên" nữa, tránh bỏ sót phần đối soát tiền.
 // ---------------------------------------------------------------------
-const PAYMENT_OPTION_LABELS = {
-  BY_MONTH: 'Theo tháng', BY_COURSE: 'Theo khoá hiện tại',
-  COMBO_2_COURSES: 'Đóng 2 khoá liền', FULL_SUB_LEVEL: 'Trọn cấp độ con',
-};
 let TRANSFER_STUDENT = null;
 
 async function openTransfer(id) {

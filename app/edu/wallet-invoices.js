@@ -194,7 +194,11 @@ async function loadInvoices() {
     // duyet) da lam nham o dot truoc — hoan phi gop phai di qua dung
     // trang "Yeu cau hoan phi" da co san (co buoc duyet dang hoang),
     // khong lam rieng 1 nut tat cong o day nua.
-    if (inv.status === 'paid' && ['COMBO_2_COURSES', 'FULL_SUB_LEVEL'].includes(inv.chosen_plan_type)) {
+    // SUA — dung kiem tra CHUNG cho moi combo (2/3/4 khoa deu la goi gop
+    // co chiet khau, khong chi rieng COMBO_2_COURSES) — chinh sach moi
+    // (file 141) co them COMBO_3_COURSES/COMBO_4_COURSES tuy chuong trinh.
+    const isBulkPlan = inv.chosen_plan_type === 'FULL_SUB_LEVEL' || (inv.chosen_plan_type || '').startsWith('COMBO_');
+    if (inv.status === 'paid' && isBulkPlan) {
       actions += `<a href="/edu/refund-requests.html" class="btn btn-outline btn-sm">Hoàn phí</a>`;
     }
     if (inv.status !== 'paid') {
@@ -556,7 +560,8 @@ async function openCollectModal(invoice, remaining) {
   planBox.style.display = 'none';
   paymentSection.style.display = 'block';
 
-  const fullPaymentNote = ['COMBO_2_COURSES', 'FULL_SUB_LEVEL'].includes(invoice.chosen_plan_type)
+  const isBulkPlan = invoice.chosen_plan_type === 'FULL_SUB_LEVEL' || (invoice.chosen_plan_type || '').startsWith('COMBO_');
+  const fullPaymentNote = isBulkPlan
     ? ' — Hình thức này bắt buộc đóng đủ, không nhận đóng từng phần.'
     : '';
   document.getElementById('collectInfo').textContent = `Kỳ ${invoice.period_month}/${invoice.period_year} — còn nợ ${fmtMoney(remaining)} đ${fullPaymentNote}`;
@@ -591,6 +596,7 @@ function renderCounterPlanOptions(invoice) {
         <span class="plan-option-card__label">${esc(opt.label)}</span>
         <span class="plan-option-card__price">${fmtMoney(opt.amount_vnd)} đ</span>
       </div>
+      ${opt.gets_program_rate && opt.program_name ? `<div class="cell-muted" style="font-size:11px; margin-top:4px;">Áp dụng: ${esc(opt.program_name)}${opt.gift_item_name ? ` — kèm quà: ${esc(opt.gift_item_name)}` : ''}</div>` : (opt.gift_item_name ? `<div class="cell-muted" style="font-size:11px; margin-top:4px;">Kèm quà: ${esc(opt.gift_item_name)}</div>` : '')}
     </label>
   `).join('');
   box.querySelectorAll('[data-plan]').forEach((card) => {

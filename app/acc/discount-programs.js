@@ -12,6 +12,12 @@ async function loadCenters() {
   document.getElementById('progCenter').innerHTML = (data || []).map((c) => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
 }
 
+// MOI (file 143) — chuong trinh uu dai gio co the kem qua tang tu kho.
+async function loadGiftItems() {
+  const { data } = await supabase.from('inventory_items').select('id, name').order('display_order');
+  document.getElementById('progGiftItem').innerHTML = '<option value="">— Không có quà —</option>' + (data || []).map((it) => `<option value="${it.id}">${esc(it.name)}</option>`).join('');
+}
+
 async function loadStats() {
   const now = new Date().toISOString();
   const { data: activeSystem } = await supabase.from('discount_programs_view').select('id, discount_rate')
@@ -30,7 +36,7 @@ async function loadRows() {
 
   const { data, error } = await supabase
     .from('discount_programs_view')
-    .select('id, code, name, scope, discount_rate, valid_from, valid_to, status, applies_to, applies_via, centers(name), programs(name), program_sublevels(name), program_courses(name)')
+    .select('id, code, name, scope, discount_rate, valid_from, valid_to, status, applies_to, applies_via, gift_quantity, centers(name), programs(name), program_sublevels(name), program_courses(name), inventory_items:gift_item_id(name)')
     .order('created_at', { ascending: false });
 
   if (error) { tbody.innerHTML = `<tr><td colspan="9" class="empty-cell">Lỗi: ${esc(error.message)}</td></tr>`; return; }
@@ -47,7 +53,7 @@ async function loadRows() {
       <td class="cell-muted">${esc(APPLIES_LABEL[r.applies_to] || r.applies_to)}${scopeRefName(r) ? ` — ${esc(scopeRefName(r))}` : ''}</td>
       <td><span class="badge badge-submitted" style="font-size:10px;">${esc(VIA_LABEL[r.applies_via] || r.applies_via)}</span></td>
       <td class="cell-muted">${r.scope === 'system' ? 'Toàn hệ thống' : esc(r.centers?.name || '—')}</td>
-      <td class="mono">${fmtPercent(r.discount_rate)}</td>
+      <td class="mono">${fmtPercent(r.discount_rate)}${r.inventory_items?.name ? `<div class="cell-muted" style="font-size:10.5px; font-weight:400;">+ Quà: ${esc(r.inventory_items.name)} x${r.gift_quantity}</div>` : ''}</td>
       <td class="cell-muted" style="font-size:12px;">${fmtDateTime(r.valid_from)} → ${fmtDateTime(r.valid_to)}</td>
       <td><span class="badge badge-${r.status === 'active' ? 'active' : 'inactive'}">${r.status === 'active' ? 'Đang bật' : 'Đã tắt'}</span></td>
       <td>
@@ -209,6 +215,8 @@ document.getElementById('programForm').addEventListener('submit', async (e) => {
     scope,
     center_id: scope === 'center' ? document.getElementById('progCenter').value : null,
     discount_rate: rate,
+    gift_item_id: document.getElementById('progGiftItem').value || null,
+    gift_quantity: Number(document.getElementById('progGiftQty').value) || 1,
     valid_range: `[${new Date(from).toISOString()},${new Date(to).toISOString()})`,
     status: 'active',
     created_by: PROFILE.id,
@@ -249,6 +257,7 @@ document.getElementById('programForm').addEventListener('submit', async (e) => {
     }
 
     await loadCenters();
+    await loadGiftItems();
     await Promise.all([loadRows(), loadStats(), loadAudit(), loadBankSettings()]);
   } catch (e) { /* bootShell tự điều hướng */ }
 })();

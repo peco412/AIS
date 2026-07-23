@@ -88,7 +88,7 @@ function renderPlanOptions() {
         <span class="plan-option-card__label">${esc(opt.label)}</span>
         <span class="plan-option-card__price">${fmtMoney(opt.amount_vnd)} đ</span>
       </div>
-      <div class="plan-option-card__note">Bấm để chọn hình thức này</div>
+      ${opt.gets_program_rate && opt.program_name ? `<div class="plan-option-card__note">Áp dụng: ${esc(opt.program_name)}${opt.gift_item_name ? ` — kèm quà: ${esc(opt.gift_item_name)}` : ''}</div>` : (opt.gift_item_name ? `<div class="plan-option-card__note">Kèm quà: ${esc(opt.gift_item_name)}</div>` : '<div class="plan-option-card__note">Bấm để chọn hình thức này</div>')}
     </label>
   `).join('');
 

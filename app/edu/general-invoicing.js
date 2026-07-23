@@ -153,22 +153,30 @@ function openCreateModal(studentId) {
 async function previewPrice() {
   const option = document.getElementById('paymentOption').value;
   const previewEl = document.getElementById('pricePreview');
-  if (!option || !ACTIVE_ROW?.course_id) { previewEl.textContent = '—'; return; }
+  if (!option || !ACTIVE_ROW?.student_id) { previewEl.textContent = '—'; return; }
   previewEl.textContent = 'Đang tính...';
 
-  const [{ data: baseAmount, error }, { data: programs }] = await Promise.all([
-    supabase.rpc('calculate_payment_option_amount_for_course', { p_course_id: ACTIVE_ROW.course_id, p_option: option }),
-    supabase.rpc('get_auto_discount_program_for_class', { p_class_id: ACTIVE_ROW.class_id, p_center_id: ACTIVE_ROW.center_id }),
-  ]);
+  // SUA: dung CHUNG 1 ham trung tam voi backend (get_available_payment_options)
+  // thay vi tu tinh rieng — dam bao xem truoc KHOP CHINH XAC voi so tien
+  // thuc te khi tao hoa don (gom ca gioi han Theo thang/1-2 khoa cho Mam
+  // non..., va thong tin qua tang neu co).
+  const { data: options, error } = await supabase.rpc('get_available_payment_options', { p_student_id: ACTIVE_ROW.student_id });
   if (error) { previewEl.textContent = `Không tính được: ${error.message}`; return; }
 
-  const program = (programs || [])[0];
-  if (program) {
-    const netAmount = Math.round(baseAmount * (1 - program.discount_rate));
-    previewEl.innerHTML = `${fmtMoney(netAmount)} đ <span class="badge badge-active" style="font-size:10px; margin-left:6px;">${esc(program.program_name)} -${Math.round(program.discount_rate * 100)}%</span>`;
-  } else {
-    previewEl.textContent = `${fmtMoney(baseAmount)} đ`;
+  const chosen = (options || []).find((o) => o.plan_type === option);
+  if (!chosen) {
+    previewEl.textContent = 'Hình thức này không áp dụng được cho chương trình của học sinh này.';
+    return;
   }
+
+  let html = `${fmtMoney(chosen.amount_vnd)} đ`;
+  if (chosen.gets_program_rate && chosen.program_name) {
+    html += ` <span class="badge badge-active" style="font-size:10px; margin-left:6px;">${esc(chosen.program_name)}</span>`;
+  }
+  if (chosen.gift_item_name) {
+    html += ` <span class="badge badge-submitted" style="font-size:10px; margin-left:4px;">+ Quà: ${esc(chosen.gift_item_name)}</span>`;
+  }
+  previewEl.innerHTML = html;
 }
 document.getElementById('paymentOption').addEventListener('change', previewPrice);
 
