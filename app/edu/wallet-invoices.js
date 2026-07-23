@@ -743,6 +743,17 @@ document.getElementById('rosterClassSelect').addEventListener('change', (e) => l
     const canView = CAN_EDIT || CAN_REFUND || ['EXECUTIVE', 'TECH'].includes(profile.roleCode);
     if (!canView) {
       document.querySelector('.main').innerHTML = '<div class="empty-cell">Bạn không có quyền dùng trang này.</div>';
+      return;
+    }
+
+    // MOI — cho phep nhay THANG toi 1 hoc sinh cu the tu trang khac (vd
+    // "Tổng hợp hoá đơn" bam nut "Xu ly") — khong bat nhan vien phai tim
+    // lai tu dau, dong bo 2 trang lien quan voi nhau thay vi tach roi.
+    const params = new URLSearchParams(window.location.search);
+    const preselectId = params.get('student');
+    if (preselectId) {
+      const { data: preselectStudent } = await supabase.from('students').select('id, full_name, center_id, class_id, phone, parent_name, centers(name)').eq('id', preselectId).maybeSingle();
+      if (preselectStudent) await selectStudent(preselectStudent);
     }
   } catch (e) { /* bootShell tự điều hướng */ }
 })();

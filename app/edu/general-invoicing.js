@@ -82,7 +82,10 @@ function renderSummary() {
             <td class="cell-muted">${inv.period_month}/${inv.period_year}</td>
             <td class="mono">${fmtMoney(net)} đ</td>
             <td><span class="badge badge-${STATUS_BADGE[inv.status]}">${STATUS_LABEL[inv.status] || inv.status}</span></td>
-            <td><a href="/edu/invoice-print.html?id=${inv.id}" target="_blank" class="btn btn-outline btn-sm">Xem hoá đơn</a></td>
+            <td>
+              <a href="/edu/invoice-print.html?id=${inv.id}" target="_blank" class="btn btn-outline btn-sm">Xem hoá đơn</a>
+              <a href="/edu/wallet-invoices.html?student=${inv.student_id}" class="btn btn-accent btn-sm">Xử lý</a>
+            </td>
           </tr>
         `;
       }).join('');
