@@ -117,6 +117,26 @@
         <stop offset="0%" stop-color="#ffe7b0"/>
         <stop offset="100%" stop-color="#e3a94f"/>
       </linearGradient>
+
+      <!-- MOI — Stylized 3D: gradient mem cho tung mat cua toa nha (thay
+           vi mau phang), tao cam giac anh sang nhe nhang, "do choy" hon. -->
+      <linearGradient id="gErpTop" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#3fa8d6"/><stop offset="100%" stop-color="#0e6a92"/></linearGradient>
+      <linearGradient id="gErpLeft" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#0a3a52"/><stop offset="100%" stop-color="#062639"/></linearGradient>
+      <linearGradient id="gErpRight" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#062639"/><stop offset="100%" stop-color="#031017"/></linearGradient>
+
+      <linearGradient id="gCrmTop" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#4fcf9a"/><stop offset="100%" stop-color="#158a5f"/></linearGradient>
+      <linearGradient id="gCrmLeft" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#0d3d2b"/><stop offset="100%" stop-color="#092e21"/></linearGradient>
+      <linearGradient id="gCrmRight" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#092e21"/><stop offset="100%" stop-color="#041711"/></linearGradient>
+
+      <linearGradient id="gDbTop" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#9d84e8"/><stop offset="100%" stop-color="#5b45a0"/></linearGradient>
+      <linearGradient id="gDbLeft" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#2e2350"/><stop offset="100%" stop-color="#261d42"/></linearGradient>
+      <linearGradient id="gDbRight" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#261d42"/><stop offset="100%" stop-color="#140f24"/></linearGradient>
+
+      <linearGradient id="gPerTop" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#8a8f98"/><stop offset="100%" stop-color="#5c6067"/></linearGradient>
+      <linearGradient id="gPerLeft" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#2c2f33"/><stop offset="100%" stop-color="#242629"/></linearGradient>
+      <linearGradient id="gPerRight" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#242629"/><stop offset="100%" stop-color="#131417"/></linearGradient>
+
+      <filter id="softBlur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4"/></filter>
     </defs>
 
     <!-- Anh trang/hoang hon phia xa -->
@@ -133,11 +153,11 @@
       <ellipse cx="115" cy="595" rx="15" ry="6" fill="#000000" opacity="0.3"/>
       <ellipse cx="165" cy="577" rx="15" ry="6" fill="#000000" opacity="0.3"/>
       <g class="ws-b-shape">
-        <rect x="106" y="500" width="14" height="95" rx="2" fill="#e9dfc9" transform="rotate(-27 113 500)"/>
-        <rect x="156" y="482" width="14" height="95" rx="2" fill="#e9dfc9" transform="rotate(-27 163 482)"/>
-        <path d="M115,470 L172,455 L182,470 L125,486 Z" fill="#181512"/>
-        <path d="M115,470 L172,455" stroke="#e3c68a" stroke-width="2" opacity="0.7"/>
-        <rect x="132" y="452" width="12" height="16" rx="2" fill="url(#lanternGlow)" transform="rotate(-16 138 452)"/>
+        <rect x="106" y="500" width="14" height="95" rx="6" fill="#e9dfc9" transform="rotate(-27 113 500)"/>
+        <rect x="156" y="482" width="14" height="95" rx="6" fill="#e9dfc9" transform="rotate(-27 163 482)"/>
+        <path d="M115,470 L172,455 L182,470 L125,486 Z" fill="#181512" stroke="#181512" stroke-width="4" stroke-linejoin="round"/>
+        <path d="M115,470 L172,455" stroke="#e3c68a" stroke-width="2.5" stroke-linecap="round" opacity="0.7"/>
+        <rect x="132" y="452" width="12" height="16" rx="4" fill="url(#lanternGlow)" transform="rotate(-16 138 452)"/>
         <circle cx="140" cy="462" r="17" fill="#ffe7b0" opacity="0.28"/>
       </g>
       <text class="ws-label-sub" x="140" y="430" style="font-weight:700; fill:#e3c68a; font-size:11px; letter-spacing:0.07em;">CHẤM CÔNG NHANH</text>
@@ -164,14 +184,16 @@
 
     <!-- ================= ERP (xanh navy sau, vien vang) — gan cong nhat ================= -->
     <a href="#" class="ws-building" data-world="erp" tabindex="0" role="button" aria-label="Vào thế giới ERP — Vận hành nội bộ">
-      <ellipse class="ws-b-shadow" cx="250" cy="524" rx="58" ry="13" fill="#000000" opacity="0.35"/>
+      <ellipse class="ws-b-shadow" cx="250" cy="524" rx="58" ry="13" fill="#000000" opacity="0.35" filter="url(#softBlur)"/>
       <g class="ws-b-shape ws-b-appear" style="animation-delay:0.45s">
-        <path d="M250.3,440.4 L325.3,402.9 L325.3,490.9 L250.3,528.4 Z" fill="#041825"/>
-        <path d="M175.3,402.9 L250.3,440.4 L250.3,528.4 L175.3,490.9 Z" fill="#062639"/>
-        <path d="M250.3,365.4 L325.3,402.9 L250.3,440.4 L175.3,402.9 Z" fill="#0e5a82"/>
-        <path d="M250.3,365.4 L325.3,402.9 L250.3,440.4 L175.3,402.9 Z" fill="none" stroke="#e3c68a" stroke-width="1.2" opacity="0.75"/>
-        <path d="M250,341 L272,352 L272,362 L250,365 L228,362 L228,352 Z" fill="#041825"/>
-        <path d="M250,341 L272,352 L250,363 L228,352 Z" fill="#0e5a82"/>
+        <path d="M250.3,440.4 L325.3,402.9 L325.3,490.9 L250.3,528.4 Z" fill="url(#gErpRight)" stroke="url(#gErpRight)" stroke-width="6" stroke-linejoin="round"/>
+        <path d="M175.3,402.9 L250.3,440.4 L250.3,528.4 L175.3,490.9 Z" fill="url(#gErpLeft)" stroke="url(#gErpLeft)" stroke-width="6" stroke-linejoin="round"/>
+        <path d="M250.3,365.4 L325.3,402.9 L250.3,440.4 L175.3,402.9 Z" fill="url(#gErpTop)" stroke="url(#gErpTop)" stroke-width="6" stroke-linejoin="round"/>
+        <path d="M250.3,365.4 L325.3,402.9 L250.3,440.4 L175.3,402.9 Z" fill="none" stroke="#e3c68a" stroke-width="1.5" stroke-linejoin="round" opacity="0.8"/>
+        <!-- anh sang bong bay tren mai (stylized 3D gloss) -->
+        <ellipse cx="235" cy="395" rx="26" ry="10" fill="#ffffff" opacity="0.22"/>
+        <path d="M250,341 L272,352 L272,362 L250,365 L228,362 L228,352 Z" fill="url(#gErpRight)"/>
+        <path d="M250,341 L272,352 L250,363 L228,352 Z" fill="url(#gErpTop)"/>
         <circle cx="250" cy="352" r="6" fill="#fbf3e4" stroke="#e3c68a" stroke-width="1.1"/>
       </g>
       <text class="ws-label" x="250" y="552">ERP</text>
@@ -180,12 +202,13 @@
 
     <!-- ================= CRM (ngoc luc bao sau, vien vang) ================= -->
     <a href="#" class="ws-building" data-world="crm" tabindex="0" role="button" aria-label="Vào thế giới CRM — Khối trung tâm">
-      <ellipse class="ws-b-shadow" cx="520" cy="675" rx="62" ry="13" fill="#000000" opacity="0.35"/>
+      <ellipse class="ws-b-shadow" cx="520" cy="675" rx="62" ry="13" fill="#000000" opacity="0.35" filter="url(#softBlur)"/>
       <g class="ws-b-shape ws-b-appear" style="animation-delay:0.55s">
-        <path d="M520.4,609.7 L600.4,569.7 L600.4,639.7 L520.4,679.7 Z" fill="#061e15"/>
-        <path d="M440.4,569.7 L520.4,609.7 L520.4,679.7 L440.4,639.7 Z" fill="#092e21"/>
-        <path d="M520.4,529.7 L600.4,569.7 L520.4,609.7 L440.4,569.7 Z" fill="#146b4d"/>
-        <path d="M520.4,529.7 L600.4,569.7 L520.4,609.7 L440.4,569.7 Z" fill="none" stroke="#e3c68a" stroke-width="1.2" opacity="0.75"/>
+        <path d="M520.4,609.7 L600.4,569.7 L600.4,639.7 L520.4,679.7 Z" fill="url(#gCrmRight)" stroke="url(#gCrmRight)" stroke-width="6" stroke-linejoin="round"/>
+        <path d="M440.4,569.7 L520.4,609.7 L520.4,679.7 L440.4,639.7 Z" fill="url(#gCrmLeft)" stroke="url(#gCrmLeft)" stroke-width="6" stroke-linejoin="round"/>
+        <path d="M520.4,529.7 L600.4,569.7 L520.4,609.7 L440.4,569.7 Z" fill="url(#gCrmTop)" stroke="url(#gCrmTop)" stroke-width="6" stroke-linejoin="round"/>
+        <path d="M520.4,529.7 L600.4,569.7 L520.4,609.7 L440.4,569.7 Z" fill="none" stroke="#e3c68a" stroke-width="1.5" stroke-linejoin="round" opacity="0.8"/>
+        <ellipse cx="505" cy="562" rx="26" ry="10" fill="#ffffff" opacity="0.22"/>
         <path d="M520,529.7 L520,504" stroke="#e3c68a" stroke-width="1.6"/>
         <circle cx="520" cy="502" r="4" fill="#e3c68a"/>
       </g>
@@ -195,12 +218,13 @@
 
     <!-- ================= Database (thach anh tim sau, vien vang) ================= -->
     <a href="#" class="ws-building" data-world="database" tabindex="0" role="button" aria-label="Vào thế giới Database — Dữ liệu gốc">
-      <ellipse class="ws-b-shadow" cx="598" cy="371" rx="52" ry="12" fill="#000000" opacity="0.35"/>
+      <ellipse class="ws-b-shadow" cx="598" cy="371" rx="52" ry="12" fill="#000000" opacity="0.35" filter="url(#softBlur)"/>
       <g class="ws-b-shape ws-b-appear" style="animation-delay:0.65s">
-        <path d="M597.7,294.0 L665.2,260.2 L665.2,342.2 L597.7,376.0 Z" fill="#18132b"/>
-        <path d="M530.2,260.2 L597.7,294.0 L597.7,376.0 L530.2,342.2 Z" fill="#261d42"/>
-        <path d="M597.7,226.5 L665.2,260.2 L597.7,294.0 L530.2,260.2 Z" fill="#4f3d86"/>
-        <path d="M597.7,226.5 L665.2,260.2 L597.7,294.0 L530.2,260.2 Z" fill="none" stroke="#e3c68a" stroke-width="1.2" opacity="0.75"/>
+        <path d="M597.7,294.0 L665.2,260.2 L665.2,342.2 L597.7,376.0 Z" fill="url(#gDbRight)" stroke="url(#gDbRight)" stroke-width="6" stroke-linejoin="round"/>
+        <path d="M530.2,260.2 L597.7,294.0 L597.7,376.0 L530.2,342.2 Z" fill="url(#gDbLeft)" stroke="url(#gDbLeft)" stroke-width="6" stroke-linejoin="round"/>
+        <path d="M597.7,226.5 L665.2,260.2 L597.7,294.0 L530.2,260.2 Z" fill="url(#gDbTop)" stroke="url(#gDbTop)" stroke-width="6" stroke-linejoin="round"/>
+        <path d="M597.7,226.5 L665.2,260.2 L597.7,294.0 L530.2,260.2 Z" fill="none" stroke="#e3c68a" stroke-width="1.5" stroke-linejoin="round" opacity="0.8"/>
+        <ellipse cx="583" cy="253" rx="24" ry="9" fill="#ffffff" opacity="0.22"/>
         <rect x="582" y="244" width="5" height="14" fill="#e3c68a" opacity="0.85" transform="rotate(-16 582 244)"/>
         <rect x="593" y="249" width="5" height="14" fill="#e3c68a" opacity="0.65" transform="rotate(-16 593 249)"/>
         <rect x="604" y="254" width="5" height="14" fill="#e3c68a" opacity="0.85" transform="rotate(-16 604 254)"/>
@@ -211,12 +235,13 @@
 
     <!-- ================= Personal (than chi sau, vien vang) — xa cong nhat ================= -->
     <a href="#" class="ws-building" data-world="personal" tabindex="0" role="button" aria-label="Vào không gian Cá nhân">
-      <ellipse class="ws-b-shadow" cx="829" cy="470" rx="38" ry="10" fill="#000000" opacity="0.35"/>
+      <ellipse class="ws-b-shadow" cx="829" cy="470" rx="38" ry="10" fill="#000000" opacity="0.35" filter="url(#softBlur)"/>
       <g class="ws-b-shape ws-b-appear" style="animation-delay:0.75s">
-        <path d="M828.6,422.1 L871.1,400.8 L871.1,452.8 L828.6,474.1 Z" fill="#17181a"/>
-        <path d="M786.1,400.8 L828.6,422.1 L828.6,474.1 L786.1,452.8 Z" fill="#242629"/>
-        <path d="M828.6,379.6 L871.1,400.8 L828.6,422.1 L786.1,400.8 Z" fill="#54585e"/>
-        <path d="M828.6,379.6 L871.1,400.8 L828.6,422.1 L786.1,400.8 Z" fill="none" stroke="#e3c68a" stroke-width="1" opacity="0.6"/>
+        <path d="M828.6,422.1 L871.1,400.8 L871.1,452.8 L828.6,474.1 Z" fill="url(#gPerRight)" stroke="url(#gPerRight)" stroke-width="5" stroke-linejoin="round"/>
+        <path d="M786.1,400.8 L828.6,422.1 L828.6,474.1 L786.1,452.8 Z" fill="url(#gPerLeft)" stroke="url(#gPerLeft)" stroke-width="5" stroke-linejoin="round"/>
+        <path d="M828.6,379.6 L871.1,400.8 L828.6,422.1 L786.1,400.8 Z" fill="url(#gPerTop)" stroke="url(#gPerTop)" stroke-width="5" stroke-linejoin="round"/>
+        <path d="M828.6,379.6 L871.1,400.8 L828.6,422.1 L786.1,400.8 Z" fill="none" stroke="#e3c68a" stroke-width="1.2" stroke-linejoin="round" opacity="0.7"/>
+        <ellipse cx="815" cy="405" rx="16" ry="6" fill="#ffffff" opacity="0.2"/>
       </g>
       <text class="ws-label" x="829" y="494">Cá nhân</text>
     </a>
