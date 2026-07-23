@@ -130,10 +130,10 @@ form.addEventListener('submit', async (e) => {
   }
 
   await showLoginLoader({ division: selectedDivision, message: t('login.loaderMessage', 'Đang vào hệ thống...') });
-  window.location.href = 'dashboard.html';
+  window.location.href = 'world-select.html';
 });
 
-// Nếu đã đăng nhập sẵn (session còn hiệu lực) thì chuyển thẳng vào dashboard
+// Nếu đã đăng nhập sẵn (session còn hiệu lực) thì chuyển tới màn chọn thế giới
 supabase.auth.getSession().then(({ data }) => {
-  if (data.session) window.location.href = 'dashboard.html';
+  if (data.session) window.location.href = 'world-select.html';
 });

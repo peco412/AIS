@@ -248,7 +248,7 @@ function injectBrandName() {
   brand.id = 'topbarBrand';
   brand.className = 'topbar-brand';
   brand.innerHTML = '<span class="dot"></span><span>AIS OFFICE</span>';
-  brand.addEventListener('click', () => { window.location.href = '/dashboard.html'; });
+  brand.addEventListener('click', () => { window.location.href = '/world-select.html'; });
   anchor.insertBefore(brand, anchor.firstChild);
 }
 
@@ -666,7 +666,7 @@ export async function bootShell() {
   const brand = document.querySelector('.sidebar__brand');
   if (brand) {
     brand.style.cursor = 'pointer';
-    brand.addEventListener('click', () => { window.location.href = '/dashboard.html'; });
+    brand.addEventListener('click', () => { window.location.href = '/world-select.html'; });
   }
   document.addEventListener('ais:langchange', () => {
     renderNav(profile, document.body.dataset.page || location.pathname);

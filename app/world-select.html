@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Chọn thế giới — AIS OFFICE</title>
+<link rel="manifest" href="/manifest.json" />
+<meta name="theme-color" content="#0094D9" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/css/tokens.css" />
+<style>
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: var(--font-body);
+    background: linear-gradient(180deg, #fde8d2 0%, #fbeedd 28%, #f4f1ea 55%, var(--surface) 100%);
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+    min-height: 100vh; padding: 48px 20px 32px;
+    overflow-x: hidden;
+  }
+
+  .ws-header { text-align: center; margin-bottom: 6px; opacity: 0; animation: ws-fade-up 0.6s var(--ease-spring) 0.05s forwards; }
+  .ws-eyebrow {
+    font-family: var(--font-mono); font-size: 11.5px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 8px;
+  }
+  .ws-title { font-size: 26px; font-weight: 800; color: var(--ink); letter-spacing: -0.01em; }
+  .ws-title span { color: var(--accent-deep, #0077ad); }
+  .ws-sub { font-size: 13.5px; color: var(--ink-soft); margin-top: 6px; }
+
+  .ws-stage { width: 100%; max-width: 980px; margin-top: 12px; opacity: 0; animation: ws-fade-up 0.7s var(--ease-spring) 0.15s forwards; }
+  .ws-stage svg { width: 100%; height: auto; display: block; overflow: visible; }
+
+  .ws-building { cursor: pointer; }
+  .ws-building .ws-b-shape { transition: transform var(--dur-base) var(--ease-spring), filter var(--dur-base) var(--ease); transform-origin: center; transform-box: fill-box; }
+  .ws-building:hover .ws-b-shape, .ws-building:focus-visible .ws-b-shape { transform: translateY(-6px); filter: brightness(1.06) drop-shadow(0 10px 14px rgba(0,0,0,0.16)); }
+  .ws-building:active .ws-b-shape { transform: translateY(-2px); }
+  .ws-building .ws-b-shadow { transition: opacity var(--dur-base) var(--ease), transform var(--dur-base) var(--ease); transform-origin: center; transform-box: fill-box; }
+  .ws-building:hover .ws-b-shadow { opacity: 0.22; transform: scale(1.12); }
+  .ws-building { outline: none; }
+
+  .ws-b-appear { opacity: 0; transform: translateY(14px); animation: ws-settle 0.55s var(--ease-spring) forwards; }
+
+  .ws-label {
+    font-family: var(--font-display); font-weight: 700; font-size: 15px; fill: var(--ink);
+    text-anchor: middle; pointer-events: none;
+  }
+  .ws-label-sub {
+    font-family: var(--font-body); font-weight: 500; font-size: 10.5px; fill: var(--muted);
+    text-anchor: middle; pointer-events: none;
+  }
+
+  .ws-footer { margin-top: 8px; font-size: 12px; color: var(--muted); text-align: center; opacity: 0; animation: ws-fade-up 0.6s var(--ease-spring) 0.35s forwards; }
+  .ws-footer button { background: none; border: none; color: var(--accent-deep, #0077ad); font-weight: 600; font-size: 12px; cursor: pointer; text-decoration: underline; padding: 0; }
+
+  @keyframes ws-fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes ws-settle { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ws-header, .ws-stage, .ws-footer, .ws-b-appear { animation: none !important; opacity: 1 !important; transform: none !important; }
+    .ws-building .ws-b-shape, .ws-building .ws-b-shadow { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="ws-header">
+  <div class="ws-eyebrow" id="greetingEyebrow">Chào buổi sáng</div>
+  <div class="ws-title">AIS OFFICE — <span id="userNameSpan">...</span></div>
+  <div class="ws-sub">Hôm nay bạn muốn bắt đầu từ đâu?</div>
+</div>
+
+<div class="ws-stage">
+  <svg viewBox="-20 130 940 500" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Sân trường — chọn thế giới">
+    <defs>
+      <radialGradient id="sunGlow" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#ffe6b0" stop-opacity="0.9"/>
+        <stop offset="100%" stop-color="#ffe6b0" stop-opacity="0"/>
+      </radialGradient>
+      <linearGradient id="groundGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#dff2df"/>
+        <stop offset="100%" stop-color="#c7e8cb"/>
+      </linearGradient>
+    </defs>
+
+    <!-- Nang som + may nhe -->
+    <circle cx="820" cy="175" r="70" fill="url(#sunGlow)"/>
+    <circle cx="820" cy="175" r="22" fill="#ffedc2"/>
+    <g opacity="0.55" fill="#ffffff">
+      <ellipse cx="120" cy="165" rx="30" ry="10"/>
+      <ellipse cx="145" cy="160" rx="22" ry="8"/>
+      <ellipse cx="620" cy="150" rx="26" ry="9"/>
+    </g>
+
+    <!-- San truong (nen dat isometric) -->
+    <path d="M430.0,155.0 L880.0,380.0 L430.0,605.0 L-20.0,380.0 Z" fill="url(#groundGrad)" stroke="#b9dcc0" stroke-width="2"/>
+
+    <!-- Loi di noi cac toa nha -->
+    <path d="M180,382 L400,395 M400,395 L600,385 M600,385 L700,402" stroke="#eadfc4" stroke-width="14" stroke-linecap="round" fill="none" opacity="0.85"/>
+
+    <!-- ================= ERP (mau xanh duong) ================= -->
+    <a href="#" class="ws-building" data-world="erp" tabindex="0" role="button" aria-label="Vào thế giới ERP — Vận hành nội bộ">
+      <ellipse class="ws-b-shadow" cx="200" cy="396" rx="58" ry="14" fill="#00243a" opacity="0.16"/>
+      <g class="ws-b-shape ws-b-appear" style="animation-delay:0.45s">
+        <path d="M200.0,300.0 L280.0,260.0 L280.0,350.0 L200.0,390.0 Z" fill="#004a6c"/>
+        <path d="M120.0,260.0 L200.0,300.0 L200.0,390.0 L120.0,350.0 Z" fill="#006b9c"/>
+        <path d="M200.0,220.0 L280.0,260.0 L200.0,300.0 L120.0,260.0 Z" fill="#59b9e6"/>
+        <path d="M200.0,195.0 L225.0,182.5 L225.0,237.5 L200.0,250.0 Z" fill="#004a6c"/>
+        <path d="M175.0,182.5 L200.0,195.0 L200.0,250.0 L175.0,237.5 Z" fill="#006b9c"/>
+        <path d="M200.0,170.0 L225.0,182.5 L200.0,195.0 L175.0,182.5 Z" fill="#59b9e6"/>
+        <!-- kim dong ho tren thap -->
+        <circle cx="200" cy="182.5" r="7" fill="#f4f1ea" stroke="#004a6c" stroke-width="1.5"/>
+        <path d="M200,182.5 L200,178 M200,182.5 L203,184" stroke="#004a6c" stroke-width="1.3" stroke-linecap="round"/>
+        <!-- cua ra vao -->
+        <path d="M188,362 L188,390 L200,396 L200,368 Z" fill="#003552"/>
+        <path d="M212,368 L212,396 L200,390 L200,362 Z" fill="#00263b"/>
+      </g>
+      <text class="ws-label" x="200" y="424">ERP</text>
+      <text class="ws-label-sub" x="200" y="439">Vận hành nội bộ</text>
+    </a>
+
+    <!-- ================= CRM (mau xanh la) ================= -->
+    <a href="#" class="ws-building" data-world="crm" tabindex="0" role="button" aria-label="Vào thế giới CRM — Khối trung tâm">
+      <ellipse class="ws-b-shadow" cx="420" cy="401" rx="62" ry="14" fill="#0d3d27" opacity="0.16"/>
+      <g class="ws-b-shape ws-b-appear" style="animation-delay:0.55s">
+        <path d="M420.0,325.0 L505.0,282.5 L505.0,352.5 L420.0,395.0 Z" fill="#115036"/>
+        <path d="M335.0,282.5 L420.0,325.0 L420.0,395.0 L335.0,352.5 Z" fill="#18734d"/>
+        <path d="M420.0,240.0 L505.0,282.5 L420.0,325.0 L335.0,282.5 Z" fill="#6fc19f"/>
+        <!-- 3 cua so day lop hoc -->
+        <rect x="352" y="300" width="14" height="14" fill="#eaf7f0" opacity="0.85" transform="skewY(26)"/>
+        <rect x="376" y="311" width="14" height="14" fill="#eaf7f0" opacity="0.85" transform="skewY(26)"/>
+        <rect x="400" y="322" width="14" height="14" fill="#eaf7f0" opacity="0.85" transform="skewY(26)"/>
+        <!-- co nho tren nong -->
+        <path d="M420,240 L420,214" stroke="#0d3d27" stroke-width="2"/>
+        <path d="M420,214 L442,221 L420,228 Z" fill="#f4b942"/>
+      </g>
+      <text class="ws-label" x="420" y="424">CRM</text>
+      <text class="ws-label-sub" x="420" y="439">Khối trung tâm</text>
+    </a>
+
+    <!-- ================= Database (mau tim) ================= -->
+    <a href="#" class="ws-building" data-world="database" tabindex="0" role="button" aria-label="Vào thế giới Database — Dữ liệu gốc">
+      <ellipse class="ws-b-shadow" cx="620" cy="391" rx="50" ry="13" fill="#241d4d" opacity="0.16"/>
+      <g class="ws-b-shape ws-b-appear" style="animation-delay:0.65s">
+        <path d="M620.0,300.0 L690.0,265.0 L690.0,350.0 L620.0,385.0 Z" fill="#362e74"/>
+        <path d="M550.0,265.0 L620.0,300.0 L620.0,385.0 L550.0,350.0 Z" fill="#4e42a6"/>
+        <path d="M620.0,230.0 L690.0,265.0 L620.0,300.0 L550.0,265.0 Z" fill="#9f95ef"/>
+        <!-- gay sach xep tren mat "mai" -->
+        <rect x="600" y="248" width="6" height="16" fill="#f4f1ea" opacity="0.8" transform="rotate(-18 600 248)"/>
+        <rect x="612" y="253" width="6" height="16" fill="#f4f1ea" opacity="0.65" transform="rotate(-18 612 253)"/>
+        <rect x="624" y="258" width="6" height="16" fill="#f4f1ea" opacity="0.8" transform="rotate(-18 624 258)"/>
+      </g>
+      <text class="ws-label" x="620" y="415">Database</text>
+      <text class="ws-label-sub" x="620" y="430">Dữ liệu gốc</text>
+    </a>
+
+    <!-- ================= Personal (mau xam) ================= -->
+    <a href="#" class="ws-building" data-world="personal" tabindex="0" role="button" aria-label="Vào không gian Cá nhân">
+      <ellipse class="ws-b-shadow" cx="720" cy="406" rx="38" ry="11" fill="#26282a" opacity="0.16"/>
+      <g class="ws-b-shape ws-b-appear" style="animation-delay:0.75s">
+        <path d="M720.0,345.0 L765.0,322.5 L765.0,377.5 L720.0,400.0 Z" fill="#45484c"/>
+        <path d="M675.0,322.5 L720.0,345.0 L720.0,400.0 L675.0,377.5 Z" fill="#63676d"/>
+        <path d="M720.0,300.0 L765.0,322.5 L720.0,345.0 L675.0,322.5 Z" fill="#b3b6bc"/>
+        <!-- cua nho + khoi ong khoi -->
+        <path d="M712,378 L712,398 L720,401 L720,381 Z" fill="#33363a"/>
+        <rect x="700" y="290" width="8" height="16" fill="#8a8f98"/>
+      </g>
+      <text class="ws-label" x="720" y="440">Cá nhân</text>
+    </a>
+  </svg>
+</div>
+
+<div class="ws-footer">Bấm vào 1 toà nhà để bắt đầu · <button id="btnSkip">Vào thẳng ERP như mọi khi</button></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="/env.js"></script>
+<script type="module" src="/js/worldSelect.js"></script>
+</body>
+</html>
