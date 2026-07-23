@@ -41,6 +41,12 @@
   .ws-building:hover .ws-b-shadow { opacity: 0.22; transform: scale(1.12); }
   .ws-building { outline: none; }
 
+  .ws-building--locked { cursor: not-allowed; }
+  .ws-building--locked .ws-b-shape { filter: grayscale(0.85) brightness(0.92); opacity: 0.55; }
+  .ws-building--locked:hover .ws-b-shape { transform: none; filter: grayscale(0.85) brightness(0.92); }
+  .ws-building--locked .ws-b-shadow { opacity: 0.08 !important; }
+  .ws-label-lock { font-size: 10px; fill: var(--muted); text-anchor: middle; font-weight: 600; }
+
   .ws-b-appear { opacity: 0; transform: translateY(14px); animation: ws-settle 0.55s var(--ease-spring) forwards; }
 
   .ws-label {
@@ -54,6 +60,29 @@
 
   .ws-footer { margin-top: 8px; font-size: 12px; color: var(--muted); text-align: center; opacity: 0; animation: ws-fade-up 0.6s var(--ease-spring) 0.35s forwards; }
   .ws-footer button { background: none; border: none; color: var(--accent-deep, #0077ad); font-weight: 600; font-size: 12px; cursor: pointer; text-decoration: underline; padding: 0; }
+
+  .ws-checkin {
+    width: 100%; max-width: 380px; margin-top: 4px; background: var(--surface-card);
+    border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-md);
+    padding: 18px 20px; animation: ws-settle 0.35s var(--ease-spring) forwards;
+  }
+  .ws-checkin__head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+  .ws-checkin__title { font-weight: 800; font-size: 15px; color: var(--ink); }
+  .ws-checkin__center { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .ws-checkin__close { background: none; border: none; color: var(--muted); font-size: 15px; cursor: pointer; padding: 2px 6px; }
+  .ws-checkin__hint { font-size: 12.5px; margin-bottom: 8px; }
+  .ws-checkin__error { font-size: 12.5px; color: var(--danger); background: var(--danger-tint); border-radius: var(--radius-sm); padding: 8px 10px; margin-bottom: 8px; }
+  .ws-checkin__status { font-size: 13px; font-weight: 600; margin-bottom: 12px; }
+  .ws-checkin__actions { display: flex; gap: 10px; }
+  .ws-checkin__btn {
+    flex: 1; padding: 11px; border-radius: var(--radius-md); border: none; font-weight: 700; font-size: 13.5px; cursor: pointer;
+    transition: opacity var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
+  }
+  .ws-checkin__btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .ws-checkin__btn:not(:disabled):active { transform: scale(0.97); }
+  .ws-checkin__btn--in { background: var(--accent, #0094d9); color: #fff; }
+  .ws-checkin__btn--out { background: var(--surface-fill); color: var(--ink); }
+  .ws-checkin__more { display: block; text-align: center; margin-top: 12px; font-size: 11.5px; color: var(--muted); }
 
   @keyframes ws-fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes ws-settle { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
@@ -86,19 +115,53 @@
     </defs>
 
     <!-- Nang som + may nhe -->
-    <circle cx="820" cy="175" r="70" fill="url(#sunGlow)"/>
+    <circle cx="820" cy="175" r="80" fill="url(#sunGlow)"/>
     <circle cx="820" cy="175" r="22" fill="#ffedc2"/>
     <g opacity="0.55" fill="#ffffff">
       <ellipse cx="120" cy="165" rx="30" ry="10"/>
       <ellipse cx="145" cy="160" rx="22" ry="8"/>
       <ellipse cx="620" cy="150" rx="26" ry="9"/>
     </g>
+    <!-- Vai canh chim nho cho co su song -->
+    <g stroke="#c99a6b" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.6">
+      <path d="M300,190 q6,-8 12,0 q6,-8 12,0"/>
+      <path d="M340,205 q5,-7 10,0 q5,-7 10,0"/>
+    </g>
 
     <!-- San truong (nen dat isometric) -->
     <path d="M430.0,155.0 L880.0,380.0 L430.0,605.0 L-20.0,380.0 Z" fill="url(#groundGrad)" stroke="#b9dcc0" stroke-width="2"/>
 
+    <!-- Cay xanh vien san (them cho co su song, khong che toa nha) -->
+    <g class="ws-b-appear" style="animation-delay:0.85s">
+      <rect x="27.8" y="323.8" width="4.5" height="16.2" fill="#8a6a4a" rx="1.5"/>
+      <circle cx="30.0" cy="316.2" r="12.6" fill="#5fa66b"/>
+      <circle cx="23.7" cy="320.0" r="8.8" fill="#6bb376"/>
+      <circle cx="36.3" cy="320.0" r="8.8" fill="#4f9560"/>
+
+      <rect x="827.5" y="282.0" width="5.0" height="18.0" fill="#8a6a4a" rx="1.5"/>
+      <circle cx="830.0" cy="273.6" r="14.0" fill="#5fa66b"/>
+      <circle cx="823.0" cy="277.8" r="9.8" fill="#6bb376"/>
+      <circle cx="837.0" cy="277.8" r="9.8" fill="#4f9560"/>
+
+      <rect x="857.9" y="324.7" width="4.2" height="15.3" fill="#8a6a4a" rx="1.5"/>
+      <circle cx="860.0" cy="317.6" r="11.9" fill="#5fa66b"/>
+      <circle cx="854.0" cy="321.1" r="8.3" fill="#6bb376"/>
+      <circle cx="866.0" cy="321.1" r="8.3" fill="#4f9560"/>
+
+      <rect x="94" y="440" width="4.6" height="16.5" fill="#8a6a4a" rx="1.5"/>
+      <circle cx="96.3" cy="432" r="12.8" fill="#5fa66b"/>
+      <circle cx="89.7" cy="436" r="9" fill="#6bb376"/>
+      <circle cx="103" cy="436" r="9" fill="#4f9560"/>
+
+      <rect x="778" y="445" width="4.2" height="15" fill="#8a6a4a" rx="1.5"/>
+      <circle cx="780" cy="437.5" r="11.5" fill="#5fa66b"/>
+      <circle cx="774" cy="441" r="8" fill="#6bb376"/>
+      <circle cx="786" cy="441" r="8" fill="#4f9560"/>
+    </g>
+
     <!-- Loi di noi cac toa nha -->
     <path d="M180,382 L400,395 M400,395 L600,385 M600,385 L700,402" stroke="#eadfc4" stroke-width="14" stroke-linecap="round" fill="none" opacity="0.85"/>
+    <path d="M430,470 L400,395" stroke="#eadfc4" stroke-width="15" stroke-linecap="round" fill="none" opacity="0.85"/>
 
     <!-- ================= ERP (mau xanh duong) ================= -->
     <a href="#" class="ws-building" data-world="erp" tabindex="0" role="button" aria-label="Vào thế giới ERP — Vận hành nội bộ">
@@ -169,10 +232,46 @@
       </g>
       <text class="ws-label" x="720" y="440">Cá nhân</text>
     </a>
+    <!-- ================= Cong truong — cung la noi cham cong nhanh ================= -->
+    <g id="gateGroup" class="ws-building ws-b-appear" style="animation-delay:0.3s" tabindex="0" role="button" aria-label="Chấm công nhanh tại cổng trường">
+      <ellipse cx="360.0" cy="564.0" rx="16" ry="6" fill="#00243a" opacity="0.16"/>
+      <ellipse cx="500.0" cy="564.0" rx="16" ry="6" fill="#00243a" opacity="0.16"/>
+      <g class="ws-b-shape">
+        <rect x="351.0" y="460.0" width="18" height="100" rx="4" fill="#e8ddc7"/>
+        <rect x="364.0" y="460.0" width="5" height="100" fill="#cfc0a0"/>
+        <rect x="491.0" y="460.0" width="18" height="100" rx="4" fill="#e8ddc7"/>
+        <rect x="504.0" y="460.0" width="5" height="100" fill="#cfc0a0"/>
+        <rect x="343.0" y="442.0" width="174.0" height="18" rx="5" fill="#0094D9"/>
+        <rect x="343.0" y="442.0" width="174.0" height="6" rx="3" fill="#2fb0ec"/>
+        <!-- chuong nho treo giua cong -->
+        <path d="M430,460 L430,470" stroke="#8a6a4a" stroke-width="2"/>
+        <path d="M422,470 a8,8 0 0 0 16,0 Z" fill="#f4b942"/>
+        <circle cx="430" cy="478" r="2" fill="#c98f1f"/>
+      </g>
+      <text class="ws-label-sub" x="430" y="434" style="font-weight:700; fill:#0077ad; font-size:12px;">CHẤM CÔNG NHANH</text>
+    </g>
   </svg>
 </div>
 
-<div class="ws-footer">Bấm vào 1 toà nhà để bắt đầu · <button id="btnSkip">Vào thẳng ERP như mọi khi</button></div>
+<div class="ws-checkin" id="checkinCard" style="display:none;">
+  <div class="ws-checkin__head">
+    <div>
+      <div class="ws-checkin__title">Chấm công nhanh</div>
+      <div class="ws-checkin__center" id="ciCenterName">—</div>
+    </div>
+    <button class="ws-checkin__close" id="btnCloseCheckin" aria-label="Đóng">✕</button>
+  </div>
+  <div class="ws-checkin__hint" id="ciGpsHint">Đang xác định vị trí...</div>
+  <div class="ws-checkin__error" id="ciError" style="display:none;"></div>
+  <div class="ws-checkin__status" id="ciStatus"></div>
+  <div class="ws-checkin__actions">
+    <button class="ws-checkin__btn ws-checkin__btn--in" id="btnCiIn" disabled>Chấm công vào</button>
+    <button class="ws-checkin__btn ws-checkin__btn--out" id="btnCiOut" disabled style="display:none;">Chấm công ra</button>
+  </div>
+  <a href="/attendance-checkin.html" class="ws-checkin__more">Xem đầy đủ lịch sử chấm công →</a>
+</div>
+
+<div class="ws-footer" id="footerBar">Bấm vào 1 toà nhà để bắt đầu · <button id="btnSkip">Vào thẳng ERP như mọi khi</button></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="/env.js"></script>

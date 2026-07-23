@@ -225,7 +225,10 @@ function injectSiblingStrip(profile, currentPage) {
 
 // Danh sach the gioi ma nguoi nay THUC SU co it nhat 1 muc dung duoc —
 // an han the gioi rong (vd nhan vien thuong khong co gi trong "Database").
-function worldsWithAccess(profile) {
+// XUAT RA (truoc day chi dung noi bo o day) — trang world-select can
+// dung LAI dung ham nay de khoa dung cac toa nha khong co quyen, tranh
+// viet lai logic kiem tra quyen o 2 noi de bi lech nhau.
+export function worldsWithAccess(profile) {
   return Object.keys(WORLD_META).filter((world) => {
     if (world === 'personal') return true; // ai cung co Chuc nang ca nhan
     return NAV_CONFIG.some((group) =>
