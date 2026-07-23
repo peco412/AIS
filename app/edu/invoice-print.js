@@ -49,6 +49,21 @@ async function loadInvoice() {
   document.getElementById('remainingAmount').textContent = fmtMoney(net - paid);
   document.getElementById('statusDisplay').textContent = STATUS_LABEL[inv.status] || inv.status;
 
+  // MOI — hoa don (bien lai) chi nen in KHI DA THANH TOAN XONG, dung ban
+  // chat "hoa don" la xac nhan giao dich da hoan tat, khong phai bill
+  // tam de bao no. Cac trang thai khac (chua dong/mot phan/cho chon hinh
+  // thuc/da huy) khong cho in, chi xem thong tin.
+  if (inv.status !== 'paid') {
+    const btnPrint = document.getElementById('btnPrint');
+    btnPrint.disabled = true;
+    btnPrint.style.opacity = '0.5';
+    btnPrint.style.cursor = 'not-allowed';
+    btnPrint.removeAttribute('onclick');
+    const note = document.getElementById('printGateNote');
+    note.style.display = 'block';
+    note.textContent = 'Hoá đơn cần đóng đủ mới in được — hiện đang ở trạng thái "' + (STATUS_LABEL[inv.status] || inv.status) + '".';
+  }
+
   const lastCollector = ledgerRows && ledgerRows.length > 0 ? ledgerRows[ledgerRows.length - 1].employees?.full_name : null;
   if (lastCollector) document.getElementById('collectorName').textContent = lastCollector;
 }
