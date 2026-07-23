@@ -13,17 +13,144 @@ function fmtDate(d) { return d ? new Date(d).toLocaleDateString('vi-VN') : '—'
 
 const HEALTH_LABEL = { good: 'Tốt', fair: 'Trung bình', poor: 'Xấu' };
 const HEALTH_BADGE = { good: 'active', fair: 'submitted', poor: 'rejected' };
-const STATUS_LABEL = { unpaid: 'Chưa đóng', partially_paid: 'Một phần', paid: 'Đã đóng đủ' };
-const STATUS_BADGE = { unpaid: 'rejected', partially_paid: 'submitted', paid: 'active' };
+const STATUS_LABEL = { draft: 'Chờ chọn hình thức', unpaid: 'Chưa đóng', partially_paid: 'Một phần', paid: 'Đã đóng đủ', void: 'Đã huỷ' };
+const STATUS_BADGE = { draft: 'submitted', unpaid: 'rejected', partially_paid: 'submitted', paid: 'active', void: 'unpaid' };
 const PLAN_LABEL = { level: 'Trọn cấp độ', program: 'Trọn chương trình' };
+
+// ---------------------------------------------------------------------
+// MỚI — Gộp "Tổng hợp hoá đơn" (trang riêng trước đây) làm chế độ xem
+// mặc định của trang này — thẻ thống kê + danh sách lọc được đầy đủ,
+// bấm 1 dòng là mở luôn panel hành động bên dưới, không cần đổi trang.
+// ---------------------------------------------------------------------
+let ALL_INVOICES = [];
+
+function showOverview() {
+  document.getElementById('overviewPanel').style.display = 'block';
+  document.getElementById('rosterPanel').style.display = 'none';
+  document.getElementById('studentPanel').style.display = 'none';
+  ACTIVE_STUDENT = null;
+  unsubscribeRealtime();
+}
+
+document.getElementById('btnBackToOverview').addEventListener('click', () => {
+  showOverview();
+  loadOverview();
+});
+
+async function loadOverview() {
+  const tbody = document.getElementById('overviewBody');
+  tbody.innerHTML = '<tr><td colspan="6" class="empty-cell">Đang tải dữ liệu...</td></tr>';
+
+  let query = supabase.from('invoices_health_view')
+    .select('id, student_id, class_id, period_year, period_month, amount_vnd, manual_discount_vnd, status, due_date, invoice_code, students!inner(full_name, center_id, centers(name)), classes(name)')
+    .order('due_date', { ascending: false })
+    .limit(500);
+  if (PROFILE.centerId && !['EXECUTIVE', 'TECH'].includes(PROFILE.roleCode) && PROFILE.departmentCode !== 'ACC') {
+    query = query.eq('students.center_id', PROFILE.centerId);
+  }
+  const { data, error } = await query;
+  if (error) { tbody.innerHTML = `<tr><td colspan="6" class="empty-cell">Lỗi: ${esc(error.message)}</td></tr>`; return; }
+  ALL_INVOICES = data || [];
+  await loadOverviewStats();
+  await loadCenterFilterOptions();
+  renderOverview();
+}
+
+async function loadOverviewStats() {
+  const now = new Date();
+  const [{ count: draftCount }, { count: unpaidCount }, { count: partialCount }, { data: collectedRows }] = await Promise.all([
+    supabase.from('invoices').select('id', { count: 'exact', head: true }).eq('status', 'draft'),
+    supabase.from('invoices').select('id', { count: 'exact', head: true }).eq('status', 'unpaid'),
+    supabase.from('invoices').select('id', { count: 'exact', head: true }).eq('status', 'partially_paid'),
+    supabase.from('debt_ledger').select('amount_vnd').gte('created_at', new Date(now.getFullYear(), now.getMonth(), 1).toISOString()),
+  ]);
+  document.getElementById('statDraft').textContent = draftCount ?? '—';
+  document.getElementById('statUnpaid').textContent = unpaidCount ?? '—';
+  document.getElementById('statPartial').textContent = partialCount ?? '—';
+  document.getElementById('statCollected').textContent = fmtMoney((collectedRows || []).reduce((s, r) => s + Number(r.amount_vnd), 0)) + ' đ';
+}
+
+async function loadCenterFilterOptions() {
+  const select = document.getElementById('filterCenter');
+  if (select.options.length > 1) return;
+  const { data } = await supabase.from('centers').select('id, name').order('name');
+  select.innerHTML = '<option value="">Tất cả trung tâm</option>' + (data || []).map((c) => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
+}
+
+function renderOverview() {
+  const q = document.getElementById('searchStudent').value.trim().toLowerCase();
+  const statusFilter = document.getElementById('filterStatus').value;
+  const centerFilter = document.getElementById('filterCenter').value;
+
+  const rows = ALL_INVOICES.filter((inv) => {
+    if (q && !(inv.students?.full_name || '').toLowerCase().includes(q)) return false;
+    if (statusFilter && inv.status !== statusFilter) return false;
+    if (centerFilter && inv.students?.center_id !== centerFilter) return false;
+    return true;
+  });
+
+  const tbody = document.getElementById('overviewBody');
+  tbody.innerHTML = rows.length === 0
+    ? '<tr><td colspan="6" class="empty-cell">Không có hoá đơn phù hợp.</td></tr>'
+    : rows.map((inv) => {
+        const net = Number(inv.amount_vnd) - Number(inv.manual_discount_vnd || 0);
+        return `
+          <tr>
+            <td><strong>${esc(inv.students?.full_name || '—')}</strong><div class="cell-muted mono" style="font-size:10.5px;">${esc(inv.invoice_code || '—')}</div></td>
+            <td class="cell-muted">${esc(inv.classes?.name || '—')} · ${esc(inv.students?.centers?.name || '—')}</td>
+            <td class="cell-muted">${inv.period_month}/${inv.period_year}</td>
+            <td class="mono">${fmtMoney(net)} đ</td>
+            <td><span class="badge badge-${STATUS_BADGE[inv.status]}">${STATUS_LABEL[inv.status] || inv.status}</span></td>
+            <td>
+              <a href="/edu/invoice-print.html?id=${inv.id}" target="_blank" class="btn btn-outline btn-sm">Xem</a>
+              <button class="btn btn-accent btn-sm" data-open-student="${inv.student_id}">Xử lý</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+  tbody.querySelectorAll('[data-open-student]').forEach((btn) => btn.addEventListener('click', async () => {
+    const { data: student } = await supabase.from('students').select('id, full_name, center_id, class_id, phone, parent_name, centers(name)').eq('id', btn.dataset.openStudent).maybeSingle();
+    if (student) await selectStudent(student);
+  }));
+}
+document.getElementById('filterStatus').addEventListener('change', renderOverview);
+document.getElementById('filterCenter').addEventListener('change', renderOverview);
+
+// ---------------------------------------------------------------------
+// MỚI — Đồng bộ với app: khi phụ huynh tự đóng qua Ví trong app (hoặc
+// nhân viên khác vừa thu tiền), tự động tải lại đúng học sinh đang xem,
+// không cần bấm F5 mới thấy cập nhật.
+// ---------------------------------------------------------------------
+let REALTIME_CHANNEL = null;
+function unsubscribeRealtime() {
+  if (REALTIME_CHANNEL) { supabase.removeChannel(REALTIME_CHANNEL); REALTIME_CHANNEL = null; }
+}
+function subscribeRealtimeForStudent(studentId) {
+  unsubscribeRealtime();
+  REALTIME_CHANNEL = supabase
+    .channel(`wallet-invoices-${studentId}`)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'debt_ledger' }, () => {
+      if (ACTIVE_STUDENT?.id === studentId) loadInvoices();
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'invoices', filter: `student_id=eq.${studentId}` }, () => {
+      if (ACTIVE_STUDENT?.id === studentId) loadInvoices();
+    })
+    .subscribe();
+}
 
 // ---------------------------------------------------------------------
 // Tìm & chọn học sinh
 // ---------------------------------------------------------------------
 let searchTimer;
 document.getElementById('searchStudent').addEventListener('input', () => {
-  clearTimeout(searchTimer);
-  searchTimer = setTimeout(searchAndPick, 350);
+  // Go la LOC ngay danh sach tong hop (khong tu nhay trang giua chung —
+  // tranh bat ngo dieu huong di trong khi dang go chu tim) — muon nhay
+  // thang toi dung 1 hoc sinh thi bam Enter (xem duoi).
+  if (document.getElementById('overviewPanel').style.display !== 'none') renderOverview();
+});
+document.getElementById('searchStudent').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { clearTimeout(searchTimer); searchAndPick(); }
 });
 
 // Tim nhanh theo MA HOA DON — gop chuc nang cua trang invoice-detail.html
@@ -103,9 +230,12 @@ async function searchAndPick() {
 
 async function selectStudent(student) {
   ACTIVE_STUDENT = student;
+  document.getElementById('overviewPanel').style.display = 'none';
+  document.getElementById('rosterPanel').style.display = 'none';
   document.getElementById('studentPanel').style.display = 'block';
   document.getElementById('studentName').textContent = student.full_name;
   document.getElementById('studentCenter').textContent = student.centers?.name || '—';
+  subscribeRealtimeForStudent(student.id);
 
   // "Lop hien tai" — dung dac ta yeu cau hien ro lop hoc sinh dang hoc
   // ngay tai day, truoc day thieu hoan toan truong nay.
@@ -190,25 +320,21 @@ async function loadInvoices() {
     if (plan && plan.status === 'active' && CAN_REFUND) {
       actions = `<button class="btn btn-outline btn-sm" data-refund="${plan.id}" data-total="${plan.total_courses}" data-amount="${plan.total_amount_vnd}">Hoàn phí</button>`;
     }
-    // SUA — bo nut thao tac TRUC TIEP (huy hoa don ngay, khong qua
-    // duyet) da lam nham o dot truoc — hoan phi gop phai di qua dung
-    // trang "Yeu cau hoan phi" da co san (co buoc duyet dang hoang),
-    // khong lam rieng 1 nut tat cong o day nua.
-    // SUA — dung kiem tra CHUNG cho moi combo (2/3/4 khoa deu la goi gop
-    // co chiet khau, khong chi rieng COMBO_2_COURSES) — chinh sach moi
-    // (file 141) co them COMBO_3_COURSES/COMBO_4_COURSES tuy chuong trinh.
     const isBulkPlan = inv.chosen_plan_type === 'FULL_SUB_LEVEL' || (inv.chosen_plan_type || '').startsWith('COMBO_');
     if (inv.status === 'paid' && isBulkPlan) {
       actions += `<a href="/edu/refund-requests.html" class="btn btn-outline btn-sm">Hoàn phí</a>`;
     }
-    if (inv.status !== 'paid') {
+    // SUA LOI THAT: dieu kien cu "if (inv.status !== 'paid')" cho hien nut
+    // Uu dai/Thu tien CHO CA hoa don DA HUY (void), vi 'void' cung khac
+    // 'paid' — hoa don da huy khong nen thao tac gi duoc nua. Gio kiem
+    // tra dung: chi hien khi con CAN thu (draft/unpaid/partially_paid).
+    if (['draft', 'unpaid', 'partially_paid'].includes(inv.status)) {
       actions += `<button class="btn btn-outline btn-sm" data-adjust="${inv.id}" data-current="${inv.manual_discount_vnd || 0}">Ưu đãi</button>`;
       actions += `<button class="btn btn-accent btn-sm" data-collect="${inv.id}" data-remaining="${remaining}">Thu tiền</button>`;
     }
-    // MOI — chi cho xoa khi CHUA co dong nao ca (paid === 0) — hoa don da
-    // co giao dich se bi database tu chan xoa (khoa toan ven du lieu), nen
-    // chi hien nut khi chac chan xoa duoc, tranh bam vao roi bao loi.
-    if (paid === 0) {
+    // Hoa don da huy: khong xoa duoc nua (da la lich su, giu lai de doi
+    // soat) — chi hoa don CHUA co dong nao VA CHUA huy moi cho xoa.
+    if (paid === 0 && inv.status !== 'void') {
       actions += `<button class="btn btn-outline btn-sm" data-delete="${inv.id}" data-code="${esc(inv.invoice_code || '')}" title="Xoá hoá đơn"><svg class="icon icon--sm" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"/></svg></button>`;
     }
 
@@ -241,230 +367,6 @@ async function loadInvoices() {
 // ---------------------------------------------------------------------
 // Tạo khoản thu mới — 3 hình thức + nhập tay, chọn bằng radio rõ ràng
 // ---------------------------------------------------------------------
-const createModal = document.getElementById('createInvoiceModal');
-
-function selectedPlanType() {
-  return document.querySelector('input[name="planType"]:checked').value;
-}
-
-document.querySelectorAll('input[name="planType"]').forEach((radio) => {
-  radio.addEventListener('change', async () => {
-    const type = selectedPlanType();
-    document.getElementById('planPricePreview').textContent = '';
-
-    const label = document.getElementById('planScopeLabel');
-    const select = document.getElementById('planScopeSelect');
-    select.innerHTML = '<option value="">Đang tải...</option>';
-
-    if (type === 'sublevel') {
-      label.textContent = 'Chọn cấp độ con';
-      const { data } = await supabase.from('program_sublevels').select('id, name, program_levels(name, programs(name))').order('display_order');
-      select.innerHTML = (data || []).map((s) => `<option value="${s.id}">${esc(s.program_levels?.programs?.name || '')} — ${esc(s.program_levels?.name || '')} — ${esc(s.name)}</option>`).join('');
-    } else if (type === 'level') {
-      label.textContent = 'Chọn cấp độ';
-      const { data } = await supabase.from('program_levels').select('id, name, programs(name)').order('display_order');
-      select.innerHTML = (data || []).map((l) => `<option value="${l.id}">${esc(l.programs?.name || '')} — ${esc(l.name)}</option>`).join('');
-    } else if (type === 'program') {
-      label.textContent = 'Chọn chương trình';
-      const { data } = await supabase.from('programs').select('id, name').order('display_order');
-      select.innerHTML = (data || []).map((p) => `<option value="${p.id}">${esc(p.name)}</option>`).join('');
-    }
-    updatePlanPricePreview();
-  });
-});
-
-document.getElementById('planScopeSelect').addEventListener('change', updatePlanPricePreview);
-
-// Gia luon cong don tu tang thap nhat "Khoa" (program_courses) - dung
-// cho ca 3 hinh thuc, chi khac nhau o cach loc pham vi (qua 1/2/3 lop
-// join tuong ung voi sublevel/level/program).
-let PLAN_BASE_PRICE = 0;
-let PLAN_TYPE_DISCOUNT_RATE = 0;
-
-async function updatePlanPricePreview() {
-  const type = selectedPlanType();
-  const scopeId = document.getElementById('planScopeSelect').value;
-  const previewEl = document.getElementById('planPricePreview');
-  if (!scopeId) { previewEl.textContent = ''; PLAN_BASE_PRICE = 0; PLAN_TYPE_DISCOUNT_RATE = 0; recomputeAmounts(); return; }
-
-  const { data: discountRow } = await supabase.from('payment_plan_discounts').select('discount_rate').eq('plan_type', type).single();
-  PLAN_TYPE_DISCOUNT_RATE = discountRow?.discount_rate || 0;
-
-  let basePrice = 0, courseCount = 0;
-  if (type === 'sublevel') {
-    const { data } = await supabase.from('program_courses').select('price_vnd').eq('sublevel_id', scopeId);
-    basePrice = (data || []).reduce((s, x) => s + Number(x.price_vnd || 0), 0);
-    courseCount = (data || []).length;
-  } else if (type === 'level') {
-    const { data: sublevels } = await supabase.from('program_sublevels').select('id').eq('level_id', scopeId);
-    const sublevelIds = (sublevels || []).map((s) => s.id);
-    const { data } = await supabase.from('program_courses').select('price_vnd').in('sublevel_id', sublevelIds.length ? sublevelIds : ['00000000-0000-0000-0000-000000000000']);
-    basePrice = (data || []).reduce((s, x) => s + Number(x.price_vnd || 0), 0);
-    courseCount = (data || []).length;
-  } else if (type === 'program') {
-    const { data: levels } = await supabase.from('program_levels').select('id').eq('program_id', scopeId);
-    const levelIds = (levels || []).map((l) => l.id);
-    const { data: sublevels } = await supabase.from('program_sublevels').select('id').in('level_id', levelIds.length ? levelIds : ['00000000-0000-0000-0000-000000000000']);
-    const sublevelIds = (sublevels || []).map((s) => s.id);
-    const { data } = await supabase.from('program_courses').select('price_vnd').in('sublevel_id', sublevelIds.length ? sublevelIds : ['00000000-0000-0000-0000-000000000000']);
-    basePrice = (data || []).reduce((s, x) => s + Number(x.price_vnd || 0), 0);
-    courseCount = (data || []).length;
-  }
-
-  PLAN_BASE_PRICE = basePrice;
-  // Xem truoc gop du 3 nguon uu dai (hinh thuc dong + He thong tu dong +
-  // tay nhap them, tay nhap se cong sau khi nguoi dung go o duoi) — o day
-  // moi hien 2 nguon dau, uu dai tay se cap nhat qua recomputeAmounts().
-  const previewRate = Math.min(PLAN_TYPE_DISCOUNT_RATE + AUTO_DISCOUNT_RATE, 1);
-  const finalPrice = basePrice * (1 - previewRate);
-  previewEl.innerHTML = basePrice > 0
-    ? `Gồm ${courseCount} khoá — Giá gốc: ${fmtMoney(basePrice)} đ — Giảm ${(previewRate * 100).toFixed(1)}% (hình thức đóng + hệ thống ưu đãi, chưa gồm ưu đãi tay) — <strong>Thu: ${fmtMoney(finalPrice)} đ</strong>`
-    : `<span style="color:var(--danger);">Chưa cấu hình học phí cho khoá nào thuộc phạm vi này.</span>`;
-  recomputeAmounts();
-}
-
-let AUTO_DISCOUNT_RATE = 0;
-let RECEIVED_TOUCHED = false;
-
-// SUA THEO DUNG SO DO MOI: "Tao hoa don" gio CHI lam o "Trang tao hoa don
-// chung" (dua theo Tu van chot), tranh 2 cho cung tao hoa don gay chong
-// cheo/nham lan hinh thuc. Trang nay ("Thu hoc phi") tu gio CHI con vai
-// tro THU TIEN cho hoa don DA CO san, khong tao moi nua — nut cu chuyen
-// thanh dieu huong sang trang moi thay vi mo modal rieng (giu nguyen
-// modal/logic cu ben duoi o dang khong dung toi, tranh rui ro xoa nham
-// lam hong code dang chay tot).
-document.getElementById('btnNewInvoice').addEventListener('click', () => {
-  window.location.href = '/edu/general-invoicing.html';
-});
-
-async function _unusedOpenInvoiceModal() {
-  document.getElementById('createError').classList.remove('show');
-  document.querySelector('input[name="planType"][value="sublevel"]').checked = true;
-  document.getElementById('planScopeField').style.display = 'block';
-  document.querySelector('input[name="planType"]:checked').dispatchEvent(new Event('change'));
-  const now = new Date();
-  document.getElementById('invYear').value = now.getFullYear();
-  document.getElementById('invMonth').value = now.getMonth() + 1;
-  document.getElementById('invDueDate').value = '';
-  document.getElementById('manualDiscountRate').value = 0;
-  document.getElementById('specialCategory').value = '';
-  document.getElementById('invReceivedVnd').value = '';
-  document.getElementById('hinhThucThu').value = 'CASH';
-  RECEIVED_TOUCHED = false;
-  NET_AMOUNT_TOUCHED = false;
-
-  // "Han dong phi" mac dinh = ngay ket khoa cua lop hoc sinh dang hoc.
-  if (ACTIVE_STUDENT?.class_id) {
-    const { data: cls } = await supabase.from('classes').select('end_date').eq('id', ACTIVE_STUDENT.class_id).single();
-    if (cls?.end_date) document.getElementById('invDueDate').value = cls.end_date;
-  }
-
-  // "Ưu đãi tự động điền" — quét cấu hình Hệ thống ưu đãi của Kế toán
-  // đang áp dụng đúng lớp/trung tâm của học sinh này ngay lúc mở form.
-  AUTO_DISCOUNT_RATE = 0;
-  document.getElementById('autoDiscountField').style.display = 'none';
-  if (ACTIVE_STUDENT?.class_id && ACTIVE_STUDENT?.center_id) {
-    const { data } = await supabase.rpc('get_auto_discount_for_class', {
-      p_class_id: ACTIVE_STUDENT.class_id, p_center_id: ACTIVE_STUDENT.center_id,
-    });
-    AUTO_DISCOUNT_RATE = Number(data) || 0;
-    if (AUTO_DISCOUNT_RATE > 0) {
-      document.getElementById('autoDiscountField').style.display = 'block';
-      document.getElementById('autoDiscountDisplay').textContent = `Tự động áp dụng: -${(AUTO_DISCOUNT_RATE * 100).toFixed(1)}%`;
-    }
-  }
-  updateNetAmountPreview();
-  createModal.classList.add('show');
-}
-
-function updateNetAmountPreview() {
-  recomputeAmounts();
-}
-
-let NET_AMOUNT_TOUCHED = false;
-
-// Tong tien sau uu dai = Gia goc x (1 - Uu dai hinh thuc dong - Uu dai He
-// thong tu dong - Uu dai tay nhap them) — gop CA 3 nguon uu dai lam 1,
-// ap dung chung cho ca 3 hinh thuc thu (Theo khoa/Cap do/Chuong trinh).
-// Van la 1 O NHAP THUC SU (khong khoa cung) — tu dong goi y gia tinh san
-// nhung nhan vien van sua duoc, vi khong phai luc nao gia cau hinh san
-// cung dung 100% voi tinh huong thuc te (thoa thuan rieng, gia chua
-// duoc cau hinh du cho khoa do...).
-function recomputeAmounts() {
-  const manualRate = Number(document.getElementById('manualDiscountRate').value) / 100 || 0;
-  const totalRate = Math.min(PLAN_TYPE_DISCOUNT_RATE + AUTO_DISCOUNT_RATE + manualRate, 1);
-  const suggested = PLAN_BASE_PRICE * (1 - totalRate);
-  if (!NET_AMOUNT_TOUCHED) document.getElementById('netAmountInput').value = suggested ? Math.round(suggested) : '';
-  const net = Number(document.getElementById('netAmountInput').value) || 0;
-  // Mac dinh "Tien nhan" = du Tong tien (truong hop thuong gap nhat: dong
-  // du 1 lan) — nhung neu nhan vien da tu tay sua o thi khong ghi de nua,
-  // de ho tu do ghi dung so tien thuc nhan khi phu huynh dong 1 phan.
-  if (!RECEIVED_TOUCHED) document.getElementById('invReceivedVnd').value = net || '';
-  const received = Number(document.getElementById('invReceivedVnd').value) || 0;
-  const remaining = Math.max(net - received, 0);
-  document.getElementById('remainingPreview').textContent = `${remaining.toLocaleString('vi-VN')} đ`;
-  document.getElementById('remainingPreview').style.color = remaining > 0 ? 'var(--danger)' : 'var(--success)';
-}
-document.getElementById('manualDiscountRate').addEventListener('input', recomputeAmounts);
-document.getElementById('netAmountInput').addEventListener('input', () => { NET_AMOUNT_TOUCHED = true; recomputeAmounts(); });
-document.getElementById('invReceivedVnd').addEventListener('input', () => { RECEIVED_TOUCHED = true; recomputeAmounts(); });
-document.getElementById('closeCreateModal').addEventListener('click', () => createModal.classList.remove('show'));
-document.getElementById('cancelCreateModal').addEventListener('click', () => createModal.classList.remove('show'));
-
-document.getElementById('btnSubmitInvoice').addEventListener('click', async () => {
-  const errBox = document.getElementById('createError');
-  errBox.classList.remove('show');
-  const type = selectedPlanType();
-  const scopeId = document.getElementById('planScopeSelect').value;
-  if (!scopeId) { errBox.textContent = 'Vui lòng chọn phạm vi.'; errBox.classList.add('show'); return; }
-
-  try {
-    const manualRate = Number(document.getElementById('manualDiscountRate').value) / 100 || 0;
-    const specialCategory = document.getElementById('specialCategory').value || null;
-    const { data: newInvoice, error } = await supabase.rpc('create_payment_plan_invoice', {
-      p_student_id: ACTIVE_STUDENT.id, p_plan_type: type, p_scope_id: scopeId,
-      p_manual_discount_rate: manualRate, p_special_category: specialCategory,
-    });
-    if (error) throw error;
-
-    // Neu nhan vien tu sua "Tong tien" khac voi gia he thong tu tinh (vd
-    // gia chua cau hinh du, thoa thuan rieng...) — ghi de lai dung theo
-    // so ho go, giu nguyen gia goc de con audit, chi dieu chinh lai phan
-    // uu dai cho khop dung so cuoi cung ho muon thu.
-    const typedNet = Number(document.getElementById('netAmountInput').value) || 0;
-    if (newInvoice?.id && typedNet > 0) {
-      const computedNet = Number(newInvoice.amount_vnd) - Number(newInvoice.manual_discount_vnd || 0);
-      if (Math.round(typedNet) !== Math.round(computedNet)) {
-        const newDiscount = Number(newInvoice.amount_vnd) - typedNet;
-        const { error: adjErr } = await supabase.from('invoices').update({ manual_discount_vnd: newDiscount }).eq('id', newInvoice.id);
-        if (adjErr) throw adjErr;
-      }
-    }
-
-    // "Tien nhan" — ghi nhan NGAY luon phan da thu duoc trong cung 1 thao
-    // tac. SUA LOI THAT QUAN TRONG: truoc day insert THANG vao debt_ledger
-    // + goi rieng refresh_invoice_status — BO QUA HOAN TOAN buoc ghi so
-    // tai chinh (append_financial_log), khien khoan thu nay KHONG BAO GIO
-    // vao duoc Bao cao tai chinh lan So cai. Da co san dung 1 ham lam CA
-    // 3 viec cung luc (record_counter_payment) — dung lai cho dung, giong
-    // y het luong "thu tiep hoa don da co san" ben duoi dang dung dung.
-    const receivedVnd = Math.min(Number(document.getElementById('invReceivedVnd').value) || 0, PLAN_BASE_PRICE);
-    const hinhThucThu = document.getElementById('hinhThucThu').value;
-    if (receivedVnd > 0 && newInvoice?.id) {
-      const { error: paymentErr } = await supabase.rpc('record_counter_payment', {
-        p_invoice_id: newInvoice.id, p_source: hinhThucThu, p_amount_vnd: receivedVnd, p_actor_id: PROFILE.id,
-      });
-      if (paymentErr) throw paymentErr;
-    }
-
-    createModal.classList.remove('show');
-    await selectStudent(ACTIVE_STUDENT);
-  } catch (err) {
-    errBox.textContent = err.message || 'Có lỗi xảy ra.';
-    errBox.classList.add('show');
-  }
-});
-
 // ---------------------------------------------------------------------
 // Ưu đãi hoá đơn — chỉ 1 trong 2 (theo trường hợp / theo chương trình)
 // ---------------------------------------------------------------------
@@ -493,7 +395,7 @@ async function openAdjustDiscount(invoiceId, currentDiscount) {
       if (error) throw error;
     } else if (choice === '3') {
       const catChoice = prompt('Chọn diện ưu đãi:\n1 = Con HĐQT\n2 = Cháu HĐQT\n3 = Con hiệu trưởng\n4 = Khác\n\nNhập 1-4:');
-      const catMap = { '1': 'child_of_board', '2': 'grandchild_of_board', '3': 'child_of_principal', '4': 'other' };
+      const catMap = { '1': 'board_child', '2': 'board_grandchild', '3': 'principal_child', '4': 'other' };
       const category = catMap[catChoice];
       if (!category) return;
       const amountStr = prompt('Số tiền ưu đãi (VNĐ):', currentDiscount || 0);
@@ -672,8 +574,10 @@ async function loadClassListForRoster() {
 async function loadRoster(classId) {
   const panel = document.getElementById('rosterPanel');
   const tbody = document.getElementById('rosterBody');
-  if (!classId) { panel.style.display = 'none'; return; }
+  if (!classId) { panel.style.display = 'none'; document.getElementById('overviewPanel').style.display = 'block'; return; }
   panel.style.display = 'block';
+  document.getElementById('overviewPanel').style.display = 'none';
+  document.getElementById('studentPanel').style.display = 'none';
   tbody.innerHTML = '<tr><td colspan="4" class="empty-cell">Đang tải dữ liệu...</td></tr>';
 
   const { data: students } = await supabase
@@ -746,14 +650,16 @@ document.getElementById('rosterClassSelect').addEventListener('change', (e) => l
       return;
     }
 
-    // MOI — cho phep nhay THANG toi 1 hoc sinh cu the tu trang khac (vd
-    // "Tổng hợp hoá đơn" bam nut "Xu ly") — khong bat nhan vien phai tim
-    // lai tu dau, dong bo 2 trang lien quan voi nhau thay vi tach roi.
+    // MOI — cho phep nhay THANG toi 1 hoc sinh cu the qua URL (vd tu
+    // link trong thong bao) — khong thi mac dinh hien Tong hop.
     const params = new URLSearchParams(window.location.search);
     const preselectId = params.get('student');
     if (preselectId) {
       const { data: preselectStudent } = await supabase.from('students').select('id, full_name, center_id, class_id, phone, parent_name, centers(name)').eq('id', preselectId).maybeSingle();
       if (preselectStudent) await selectStudent(preselectStudent);
+      else await loadOverview();
+    } else {
+      await loadOverview();
     }
   } catch (e) { /* bootShell tự điều hướng */ }
 })();

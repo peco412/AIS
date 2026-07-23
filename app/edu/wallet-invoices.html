@@ -65,20 +65,56 @@
 
   <main class="main">
     <div class="page-header">
-      <div><h1>Thu học phí</h1><div class="sub">Tìm học sinh → xem học phí → thu tiền qua Ví hoặc tại quầy.</div></div>
+      <div><h1>Thu học phí</h1><div class="sub">Xem tổng quan hoặc tìm 1 học sinh → xem học phí → thu tiền qua Ví hoặc tại quầy. Tự cập nhật khi phụ huynh đóng qua app.</div></div>
     </div>
+
+    <div class="stat-cards-row" id="statCards">
+      <div class="stat-card"><div class="label">Chờ chọn hình thức</div><div class="value mono" id="statDraft">—</div></div>
+      <div class="stat-card"><div class="label">Chưa đóng</div><div class="value mono" id="statUnpaid">—</div></div>
+      <div class="stat-card"><div class="label">Một phần</div><div class="value mono" id="statPartial">—</div></div>
+      <div class="stat-card"><div class="label">Đã thu tháng này</div><div class="value mono" id="statCollected">—</div></div>
+    </div>
+    <style>
+      .stat-cards-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+      .stat-cards-row .stat-card { background: var(--surface-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 14px 16px; }
+      .stat-cards-row .label { font-size: 11.5px; color: var(--muted); margin-bottom: 4px; }
+      .stat-cards-row .value { font-size: 19px; font-weight: 800; }
+      @media (max-width: 640px) { .stat-cards-row { grid-template-columns: repeat(2, 1fr); } }
+    </style>
 
     <div class="toolbar">
       <div class="toolbar__filters">
-        <input class="text-input" type="text" id="searchStudent" placeholder="Tìm theo tên học sinh hoặc SĐT phụ huynh..." style="min-width:280px;" />
-        <span class="cell-muted" style="align-self:center;">hoặc</span>
-        <input class="text-input" type="text" id="searchInvoiceCode" placeholder="Nhập nhanh mã hoá đơn (VD: HD-00001)..." style="min-width:220px;" />
-        <span class="cell-muted" style="align-self:center;">hoặc</span>
-        <select class="select-input" id="rosterClassSelect" style="min-width:200px;"><option value="">— Xem theo lớp —</option></select>
+        <input class="text-input" type="text" id="searchStudent" placeholder="Tìm theo tên học sinh hoặc SĐT phụ huynh..." style="min-width:240px;" />
+        <input class="text-input" type="text" id="searchInvoiceCode" placeholder="Nhập nhanh mã hoá đơn (VD: HD-00001)..." style="min-width:200px;" />
+        <select class="select-input" id="rosterClassSelect" style="min-width:160px;"><option value="">— Xem theo lớp —</option></select>
+        <select class="select-input" id="filterStatus" style="min-width:160px;">
+          <option value="">Tất cả trạng thái</option>
+          <option value="draft">Chờ chọn hình thức</option>
+          <option value="unpaid">Chưa đóng</option>
+          <option value="partially_paid">Một phần</option>
+          <option value="paid">Đã đóng đủ</option>
+          <option value="void">Đã huỷ</option>
+        </select>
+        <select class="select-input" id="filterCenter" style="min-width:160px;"><option value="">Tất cả trung tâm</option></select>
       </div>
     </div>
     <div id="searchFeedback" class="cell-muted" style="margin: -6px 0 14px; font-size:12.5px;"></div>
     <div id="searchResultsList" style="display:none; margin-bottom:16px;"></div>
+
+    <!-- MOI — gop luon danh sach tong hop (truoc day o trang rieng "Tổng
+         hợp hoá đơn") lam CHE DO XEM MAC DINH khi chua chon hoc sinh/lop
+         cu the — tranh 2 trang lam viec gan giong nhau, tach roi khong
+         can thiet. Bam 1 dong la mo thang panel hanh dong ben duoi, khong
+         can chuyen trang. -->
+    <div id="overviewPanel">
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Học sinh</th><th>Lớp / Trung tâm</th><th>Kỳ</th><th>Số tiền</th><th>Trạng thái</th><th></th></tr></thead>
+          <tbody id="overviewBody"><tr><td colspan="6" class="empty-cell">Đang tải dữ liệu...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
     <div id="rosterPanel" style="display:none; margin-bottom:20px;">
       <div class="data-table-wrap">
         <table class="data-table">
@@ -89,6 +125,7 @@
     </div>
 
     <div id="studentPanel" style="display:none;">
+      <button class="btn btn-outline btn-sm" id="btnBackToOverview" style="margin-bottom:14px;">← Về danh sách tổng hợp</button>
       <div class="tuition-student-card">
         <div>
           <div class="tuition-student-card__name" id="studentName"></div>
@@ -100,7 +137,6 @@
           <div class="cell-muted" style="font-size:11.5px;">Số dư ví</div>
           <div class="tuition-student-card__wallet" id="walletBalance">–</div>
         </div>
-        <button class="btn btn-accent btn-sm" id="btnNewInvoice" title="Chuyển sang trang Tạo hoá đơn chung — đúng theo Tư vấn đã chốt">+ Tạo hoá đơn (sang trang chung)</button>
       </div>
 
       <div class="data-table-wrap">
@@ -111,74 +147,6 @@
       </div>
     </div>
   </main>
-</div>
-
-<div class="modal-overlay" id="createInvoiceModal">
-  <div class="modal-box">
-    <button class="modal-close" id="closeCreateModal"><svg class="icon icon--sm" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
-    <h3>Tạo khoản thu mới</h3>
-    <div class="form-error" id="createError"></div>
-
-    <div class="plan-radio-group">
-      <label class="plan-radio-option"><input type="radio" name="planType" value="sublevel" checked /> <div><strong>Theo cấp độ con</strong><div class="cell-muted" style="font-size:11.5px;">Học tới đâu đóng tới đó</div></div></label>
-      <label class="plan-radio-option"><input type="radio" name="planType" value="level" /> <div><strong>Trọn 1 cấp độ</strong><div class="cell-muted" style="font-size:11.5px;">Đóng gộp cả cấp độ, có ưu đãi riêng</div></div></label>
-      <label class="plan-radio-option"><input type="radio" name="planType" value="program" /> <div><strong>Trọn chương trình</strong><div class="cell-muted" style="font-size:11.5px;">Đóng gộp cả chương trình, ưu đãi cao nhất</div></div></label>
-    </div>
-
-    <div id="planScopeField">
-      <div class="field"><label for="planScopeSelect" id="planScopeLabel">Chọn cấp độ con</label><select id="planScopeSelect"></select></div>
-      <p class="cell-muted" id="planPricePreview" style="margin-bottom:14px;"></p>
-    </div>
-
-    <!-- Cac truong nay ap dung CHUNG cho ca 3 hinh thuc thu (Theo khoa/
-         Cap do/Chuong trinh) — dung dung "Mau du lieu nhap" trong dac ta,
-         khong rieng cho 1 hinh thuc nao ca. -->
-    <div class="field-grid-2">
-      <div class="field"><label for="invYear">Năm</label><input type="number" id="invYear" /></div>
-      <div class="field"><label for="invMonth">Tháng</label><input type="number" id="invMonth" min="1" max="12" /></div>
-    </div>
-    <div class="field" id="autoDiscountField" style="display:none;">
-      <label>Ưu đãi tự động điền</label>
-      <div class="cell-muted mono" id="autoDiscountDisplay" style="padding:8px 12px; background:var(--surface-sunken); border-radius:8px;">—</div>
-    </div>
-    <div class="field-grid-2">
-      <div class="field"><label for="manualDiscountRate">Ưu đãi tay tự nhập (%)</label><input type="number" id="manualDiscountRate" min="0" max="100" step="0.1" value="0" /></div>
-      <div class="field">
-        <label for="specialCategory">Diện ưu đãi đặc biệt</label>
-        <select id="specialCategory">
-          <option value="">— Không —</option>
-          <option value="board_child">Con HĐQT</option>
-          <option value="board_grandchild">Cháu HĐQT</option>
-          <option value="principal_child">Con Hiệu trưởng</option>
-          <option value="other">Khác</option>
-        </select>
-      </div>
-    </div>
-    <div style="border-top:1px dashed var(--border); padding-top:10px; margin-top:4px;">
-      <div class="field"><label for="netAmountInput">Tổng tiền (sau ưu đãi, VNĐ) *</label><input type="number" id="netAmountInput" min="0" /></div>
-    </div>
-    <div class="field"><label for="invDueDate">Hạn chót *</label><input type="date" id="invDueDate" /></div>
-
-    <div id="paymentFields" style="border-top: 1px solid var(--border); padding-top: 14px; margin-top: 4px;">
-      <div class="field-grid-2">
-        <div class="field"><label for="hinhThucThu">Hình thức thu</label>
-          <select id="hinhThucThu">
-            <option value="CASH">Tiền mặt</option>
-            <option value="BANK_TRANSFER">Chuyển khoản</option>
-          </select>
-        </div>
-        <div class="field"><label for="invReceivedVnd">Tiền nhận (VNĐ) *</label><input type="number" id="invReceivedVnd" min="0" /></div>
-      </div>
-      <div class="batch-row" style="padding-top:4px;">
-        <span class="cell-muted">Số tiền còn lại</span><strong class="mono" id="remainingPreview" style="color:var(--danger);">—</strong>
-      </div>
-    </div>
-
-    <div class="modal-actions">
-      <button type="button" class="btn btn-outline" id="cancelCreateModal"><span data-i18n="common.cancel">Huỷ</span></button>
-      <button type="button" class="btn btn-accent" id="btnSubmitInvoice">Tạo</button>
-    </div>
-  </div>
 </div>
 
 <div class="modal-overlay" id="collectModal">
