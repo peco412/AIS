@@ -5,90 +5,91 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Chọn thế giới — AIS OFFICE</title>
 <link rel="manifest" href="/manifest.json" />
-<meta name="theme-color" content="#0094D9" />
+<meta name="theme-color" content="#1a1530" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="/css/tokens.css" />
 <style>
   * { box-sizing: border-box; }
   html, body { height: 100%; margin: 0; }
   body {
-    font-family: var(--font-body);
-    background: linear-gradient(180deg, #fde8d2 0%, #fbeedd 28%, #f4f1ea 55%, var(--surface) 100%);
+    font-family: 'Be Vietnam Pro', sans-serif;
+    background:
+      radial-gradient(ellipse 900px 500px at 50% 0%, rgba(212,175,110,0.16) 0%, transparent 65%),
+      linear-gradient(180deg, #1c1730 0%, #2c2140 22%, #4a3450 42%, #8a5a52 64%, #d69a5e 84%, #f0bf7d 100%);
     display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
-    min-height: 100vh; padding: 48px 20px 32px;
+    min-height: 100vh; padding: 46px 20px 32px;
     overflow-x: hidden;
   }
 
-  .ws-header { text-align: center; margin-bottom: 6px; opacity: 0; animation: ws-fade-up 0.6s var(--ease-spring) 0.05s forwards; }
+  .ws-header { text-align: center; margin-bottom: 4px; opacity: 0; animation: ws-fade-up 0.7s var(--ease-spring) 0.05s forwards; }
   .ws-eyebrow {
-    font-family: var(--font-mono); font-size: 11.5px; letter-spacing: 0.14em; text-transform: uppercase;
-    color: var(--muted); margin-bottom: 8px;
+    font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.22em; text-transform: uppercase;
+    color: #e3c68a; margin-bottom: 10px;
   }
-  .ws-title { font-size: 26px; font-weight: 800; color: var(--ink); letter-spacing: -0.01em; }
-  .ws-title span { color: var(--accent-deep, #0077ad); }
-  .ws-sub { font-size: 13.5px; color: var(--ink-soft); margin-top: 6px; }
+  .ws-title { font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 700; color: #fbf3e4; letter-spacing: 0.01em; }
+  .ws-title span { color: #e3c68a; font-style: italic; }
+  .ws-sub { font-size: 13px; color: #d8c9c2; margin-top: 8px; letter-spacing: 0.01em; }
 
-  .ws-stage { width: 100%; max-width: 980px; margin-top: 12px; opacity: 0; animation: ws-fade-up 0.7s var(--ease-spring) 0.15s forwards; }
+  .ws-stage { width: 100%; max-width: 1000px; margin-top: 8px; opacity: 0; animation: ws-fade-up 0.8s var(--ease-spring) 0.15s forwards; }
   .ws-stage svg { width: 100%; height: auto; display: block; overflow: visible; }
 
-  .ws-building { cursor: pointer; }
-  .ws-building .ws-b-shape { transition: transform var(--dur-base) var(--ease-spring), filter var(--dur-base) var(--ease); transform-origin: center; transform-box: fill-box; }
-  .ws-building:hover .ws-b-shape, .ws-building:focus-visible .ws-b-shape { transform: translateY(-6px); filter: brightness(1.06) drop-shadow(0 10px 14px rgba(0,0,0,0.16)); }
-  .ws-building:active .ws-b-shape { transform: translateY(-2px); }
-  .ws-building .ws-b-shadow { transition: opacity var(--dur-base) var(--ease), transform var(--dur-base) var(--ease); transform-origin: center; transform-box: fill-box; }
-  .ws-building:hover .ws-b-shadow { opacity: 0.22; transform: scale(1.12); }
-  .ws-building { outline: none; }
+  .ws-building { cursor: pointer; outline: none; }
+  .ws-building .ws-b-shape { transition: transform 0.3s var(--ease-spring), filter 0.3s var(--ease); transform-origin: center; transform-box: fill-box; }
+  .ws-building:hover .ws-b-shape, .ws-building:focus-visible .ws-b-shape { transform: translateY(-7px); filter: brightness(1.14) drop-shadow(0 14px 18px rgba(0,0,0,0.45)); }
+  .ws-building:active .ws-b-shape { transform: translateY(-3px); }
+  .ws-building .ws-b-shadow { transition: opacity 0.3s var(--ease), transform 0.3s var(--ease); transform-origin: center; transform-box: fill-box; }
+  .ws-building:hover .ws-b-shadow { opacity: 0.35; transform: scale(1.14); }
 
   .ws-building--locked { cursor: not-allowed; }
-  .ws-building--locked .ws-b-shape { filter: grayscale(0.85) brightness(0.92); opacity: 0.55; }
-  .ws-building--locked:hover .ws-b-shape { transform: none; filter: grayscale(0.85) brightness(0.92); }
-  .ws-building--locked .ws-b-shadow { opacity: 0.08 !important; }
-  .ws-label-lock { font-size: 10px; fill: var(--muted); text-anchor: middle; font-weight: 600; }
+  .ws-building--locked .ws-b-shape { filter: grayscale(0.9) brightness(0.5); opacity: 0.5; }
+  .ws-building--locked:hover .ws-b-shape { transform: none; filter: grayscale(0.9) brightness(0.5); }
+  .ws-building--locked .ws-b-shadow { opacity: 0.06 !important; }
+  .ws-label-lock { font-size: 9.5px; fill: #c9b8ae; text-anchor: middle; font-weight: 600; letter-spacing: 0.03em; }
 
-  .ws-b-appear { opacity: 0; transform: translateY(14px); animation: ws-settle 0.55s var(--ease-spring) forwards; }
+  .ws-b-appear { opacity: 0; transform: translateY(16px); animation: ws-settle 0.6s var(--ease-spring) forwards; }
 
   .ws-label {
-    font-family: var(--font-display); font-weight: 700; font-size: 15px; fill: var(--ink);
-    text-anchor: middle; pointer-events: none;
+    font-family: 'Playfair Display', serif; font-weight: 700; font-size: 15.5px; fill: #fbf3e4;
+    text-anchor: middle; pointer-events: none; letter-spacing: 0.01em;
   }
   .ws-label-sub {
-    font-family: var(--font-body); font-weight: 500; font-size: 10.5px; fill: var(--muted);
-    text-anchor: middle; pointer-events: none;
+    font-family: 'Be Vietnam Pro', sans-serif; font-weight: 500; font-size: 10px; fill: #cfa96a;
+    text-anchor: middle; pointer-events: none; letter-spacing: 0.02em;
   }
 
-  .ws-footer { margin-top: 8px; font-size: 12px; color: var(--muted); text-align: center; opacity: 0; animation: ws-fade-up 0.6s var(--ease-spring) 0.35s forwards; }
-  .ws-footer button { background: none; border: none; color: var(--accent-deep, #0077ad); font-weight: 600; font-size: 12px; cursor: pointer; text-decoration: underline; padding: 0; }
+  .ws-footer { margin-top: 4px; font-size: 11.5px; color: #cbb9ae; text-align: center; opacity: 0; animation: ws-fade-up 0.6s var(--ease-spring) 0.4s forwards; }
+  .ws-footer button { background: none; border: none; color: #e3c68a; font-weight: 600; font-size: 11.5px; cursor: pointer; text-decoration: underline; padding: 0; }
 
   .ws-checkin {
-    width: 100%; max-width: 380px; margin-top: 4px; background: var(--surface-card);
-    border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-md);
-    padding: 18px 20px; animation: ws-settle 0.35s var(--ease-spring) forwards;
+    width: 100%; max-width: 380px; margin-top: 6px; background: rgba(28, 22, 40, 0.92); backdrop-filter: blur(12px);
+    border: 1px solid rgba(227, 198, 138, 0.25); border-radius: 18px; box-shadow: 0 20px 48px rgba(0,0,0,0.4);
+    padding: 20px 22px; animation: ws-settle 0.4s var(--ease-spring) forwards;
   }
   .ws-checkin__head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
-  .ws-checkin__title { font-weight: 800; font-size: 15px; color: var(--ink); }
-  .ws-checkin__center { font-size: 12px; color: var(--muted); margin-top: 2px; }
-  .ws-checkin__close { background: none; border: none; color: var(--muted); font-size: 15px; cursor: pointer; padding: 2px 6px; }
-  .ws-checkin__hint { font-size: 12.5px; margin-bottom: 8px; }
-  .ws-checkin__error { font-size: 12.5px; color: var(--danger); background: var(--danger-tint); border-radius: var(--radius-sm); padding: 8px 10px; margin-bottom: 8px; }
-  .ws-checkin__status { font-size: 13px; font-weight: 600; margin-bottom: 12px; }
+  .ws-checkin__title { font-family: 'Playfair Display', serif; font-weight: 700; font-size: 16px; color: #fbf3e4; }
+  .ws-checkin__center { font-size: 11.5px; color: #cbb9ae; margin-top: 3px; }
+  .ws-checkin__close { background: none; border: none; color: #cbb9ae; font-size: 15px; cursor: pointer; padding: 2px 6px; }
+  .ws-checkin__hint { font-size: 12px; margin-bottom: 8px; color: #d8c9c2; }
+  .ws-checkin__error { font-size: 12px; color: #ffb4a8; background: rgba(255,90,70,0.14); border-radius: 10px; padding: 8px 10px; margin-bottom: 8px; }
+  .ws-checkin__status { font-size: 12.5px; font-weight: 600; margin-bottom: 12px; color: #f0d9a8; }
   .ws-checkin__actions { display: flex; gap: 10px; }
   .ws-checkin__btn {
-    flex: 1; padding: 11px; border-radius: var(--radius-md); border: none; font-weight: 700; font-size: 13.5px; cursor: pointer;
-    transition: opacity var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
+    flex: 1; padding: 11px; border-radius: 12px; border: none; font-weight: 700; font-size: 13px; cursor: pointer;
+    transition: opacity 0.15s, transform 0.15s;
   }
-  .ws-checkin__btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .ws-checkin__btn:disabled { opacity: 0.35; cursor: not-allowed; }
   .ws-checkin__btn:not(:disabled):active { transform: scale(0.97); }
-  .ws-checkin__btn--in { background: var(--accent, #0094d9); color: #fff; }
-  .ws-checkin__btn--out { background: var(--surface-fill); color: var(--ink); }
-  .ws-checkin__more { display: block; text-align: center; margin-top: 12px; font-size: 11.5px; color: var(--muted); }
+  .ws-checkin__btn--in { background: linear-gradient(135deg, #e3c68a, #c9a45f); color: #241c14; }
+  .ws-checkin__btn--out { background: rgba(255,255,255,0.08); color: #fbf3e4; border: 1px solid rgba(255,255,255,0.14); }
+  .ws-checkin__more { display: block; text-align: center; margin-top: 12px; font-size: 11px; color: #b8a89c; }
 
-  @keyframes ws-fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-  @keyframes ws-settle { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes ws-fade-up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes ws-settle { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
 
   @media (prefers-reduced-motion: reduce) {
-    .ws-header, .ws-stage, .ws-footer, .ws-b-appear { animation: none !important; opacity: 1 !important; transform: none !important; }
+    .ws-header, .ws-stage, .ws-footer, .ws-b-appear, .ws-checkin { animation: none !important; opacity: 1 !important; transform: none !important; }
     .ws-building .ws-b-shape, .ws-building .ws-b-shadow { transition: none !important; }
   }
 </style>
@@ -97,158 +98,146 @@
 
 <div class="ws-header">
   <div class="ws-eyebrow" id="greetingEyebrow">Chào buổi sáng</div>
-  <div class="ws-title">AIS OFFICE — <span id="userNameSpan">...</span></div>
+  <div class="ws-title">AIS OFFICE <span id="userNameSpan">...</span></div>
   <div class="ws-sub">Hôm nay bạn muốn bắt đầu từ đâu?</div>
 </div>
 
 <div class="ws-stage">
-  <svg viewBox="-20 130 940 500" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Sân trường — chọn thế giới">
+  <svg viewBox="-40 130 980 540" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Khuôn viên — chọn thế giới">
     <defs>
-      <radialGradient id="sunGlow" cx="50%" cy="50%" r="50%">
-        <stop offset="0%" stop-color="#ffe6b0" stop-opacity="0.9"/>
-        <stop offset="100%" stop-color="#ffe6b0" stop-opacity="0"/>
+      <radialGradient id="moonGlow" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#f0d9a8" stop-opacity="0.85"/>
+        <stop offset="100%" stop-color="#f0d9a8" stop-opacity="0"/>
       </radialGradient>
       <linearGradient id="groundGrad" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#dff2df"/>
-        <stop offset="100%" stop-color="#c7e8cb"/>
+        <stop offset="0%" stop-color="#5a4a52"/>
+        <stop offset="100%" stop-color="#3e3340"/>
+      </linearGradient>
+      <linearGradient id="lanternGlow" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#ffe7b0"/>
+        <stop offset="100%" stop-color="#e3a94f"/>
       </linearGradient>
     </defs>
 
-    <!-- Nang som + may nhe -->
-    <circle cx="820" cy="175" r="80" fill="url(#sunGlow)"/>
-    <circle cx="820" cy="175" r="22" fill="#ffedc2"/>
-    <g opacity="0.55" fill="#ffffff">
-      <ellipse cx="120" cy="165" rx="30" ry="10"/>
-      <ellipse cx="145" cy="160" rx="22" ry="8"/>
-      <ellipse cx="620" cy="150" rx="26" ry="9"/>
-    </g>
-    <!-- Vai canh chim nho cho co su song -->
-    <g stroke="#c99a6b" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.6">
-      <path d="M300,190 q6,-8 12,0 q6,-8 12,0"/>
-      <path d="M340,205 q5,-7 10,0 q5,-7 10,0"/>
-    </g>
+    <!-- Anh trang/hoang hon phia xa -->
+    <circle cx="840" cy="185" r="85" fill="url(#moonGlow)"/>
+    <circle cx="840" cy="185" r="26" fill="#fbead0"/>
 
-    <!-- San truong (nen dat isometric) -->
-    <path d="M430.0,155.0 L880.0,380.0 L430.0,605.0 L-20.0,380.0 Z" fill="url(#groundGrad)" stroke="#b9dcc0" stroke-width="2"/>
+    <!-- San (nen da hoa cuong isometric, tong am sang trong) -->
+    <path d="M450.0,175.0 L925.0,412.5 L450.0,650.0 L-25.0,412.5 Z" fill="url(#groundGrad)" stroke="rgba(227,198,138,0.22)" stroke-width="1.5"/>
+    <!-- Vien vach ke da tinh te -->
+    <path d="M450,175 L925,412.5 M450,175 L-25,412.5" stroke="rgba(227,198,138,0.10)" stroke-width="1"/>
 
-    <!-- Cay xanh vien san (them cho co su song, khong che toa nha) -->
-    <g class="ws-b-appear" style="animation-delay:0.85s">
-      <rect x="27.8" y="323.8" width="4.5" height="16.2" fill="#8a6a4a" rx="1.5"/>
-      <circle cx="30.0" cy="316.2" r="12.6" fill="#5fa66b"/>
-      <circle cx="23.7" cy="320.0" r="8.8" fill="#6bb376"/>
-      <circle cx="36.3" cy="320.0" r="8.8" fill="#4f9560"/>
+    <!-- Loi di lat da, khong dam vao khu nao -->
+    <path d="M450,470 L450,395" stroke="rgba(227,198,138,0.18)" stroke-width="20" stroke-linecap="round" fill="none"/>
 
-      <rect x="827.5" y="282.0" width="5.0" height="18.0" fill="#8a6a4a" rx="1.5"/>
-      <circle cx="830.0" cy="273.6" r="14.0" fill="#5fa66b"/>
-      <circle cx="823.0" cy="277.8" r="9.8" fill="#6bb376"/>
-      <circle cx="837.0" cy="277.8" r="9.8" fill="#4f9560"/>
-
-      <rect x="857.9" y="324.7" width="4.2" height="15.3" fill="#8a6a4a" rx="1.5"/>
-      <circle cx="860.0" cy="317.6" r="11.9" fill="#5fa66b"/>
-      <circle cx="854.0" cy="321.1" r="8.3" fill="#6bb376"/>
-      <circle cx="866.0" cy="321.1" r="8.3" fill="#4f9560"/>
-
-      <rect x="94" y="440" width="4.6" height="16.5" fill="#8a6a4a" rx="1.5"/>
-      <circle cx="96.3" cy="432" r="12.8" fill="#5fa66b"/>
-      <circle cx="89.7" cy="436" r="9" fill="#6bb376"/>
-      <circle cx="103" cy="436" r="9" fill="#4f9560"/>
-
-      <rect x="778" y="445" width="4.2" height="15" fill="#8a6a4a" rx="1.5"/>
-      <circle cx="780" cy="437.5" r="11.5" fill="#5fa66b"/>
-      <circle cx="774" cy="441" r="8" fill="#6bb376"/>
-      <circle cx="786" cy="441" r="8" fill="#4f9560"/>
-    </g>
-
-    <!-- Loi di noi cac toa nha -->
-    <path d="M180,382 L400,395 M400,395 L600,385 M600,385 L700,402" stroke="#eadfc4" stroke-width="14" stroke-linecap="round" fill="none" opacity="0.85"/>
-    <path d="M430,470 L400,395" stroke="#eadfc4" stroke-width="15" stroke-linecap="round" fill="none" opacity="0.85"/>
-
-    <!-- ================= ERP (mau xanh duong) ================= -->
+    <!-- ================= ERP (xanh navy sau, vien vang) ================= -->
     <a href="#" class="ws-building" data-world="erp" tabindex="0" role="button" aria-label="Vào thế giới ERP — Vận hành nội bộ">
-      <ellipse class="ws-b-shadow" cx="200" cy="396" rx="58" ry="14" fill="#00243a" opacity="0.16"/>
+      <ellipse class="ws-b-shadow" cx="170" cy="380" rx="60" ry="14" fill="#000000" opacity="0.35"/>
       <g class="ws-b-shape ws-b-appear" style="animation-delay:0.45s">
-        <path d="M200.0,300.0 L280.0,260.0 L280.0,350.0 L200.0,390.0 Z" fill="#004a6c"/>
-        <path d="M120.0,260.0 L200.0,300.0 L200.0,390.0 L120.0,350.0 Z" fill="#006b9c"/>
-        <path d="M200.0,220.0 L280.0,260.0 L200.0,300.0 L120.0,260.0 Z" fill="#59b9e6"/>
-        <path d="M200.0,195.0 L225.0,182.5 L225.0,237.5 L200.0,250.0 Z" fill="#004a6c"/>
-        <path d="M175.0,182.5 L200.0,195.0 L200.0,250.0 L175.0,237.5 Z" fill="#006b9c"/>
-        <path d="M200.0,170.0 L225.0,182.5 L200.0,195.0 L175.0,182.5 Z" fill="#59b9e6"/>
-        <!-- kim dong ho tren thap -->
-        <circle cx="200" cy="182.5" r="7" fill="#f4f1ea" stroke="#004a6c" stroke-width="1.5"/>
-        <path d="M200,182.5 L200,178 M200,182.5 L203,184" stroke="#004a6c" stroke-width="1.3" stroke-linecap="round"/>
-        <!-- cua ra vao -->
-        <path d="M188,362 L188,390 L200,396 L200,368 Z" fill="#003552"/>
-        <path d="M212,368 L212,396 L200,390 L200,362 Z" fill="#00263b"/>
+        <path d="M170.0,282.5 L252.5,241.2 L252.5,333.2 L170.0,374.5 Z" fill="#041825"/>
+        <path d="M87.5,241.2 L170.0,282.5 L170.0,374.5 L87.5,333.2 Z" fill="#062639"/>
+        <path d="M170.0,200.0 L252.5,241.2 L170.0,282.5 L87.5,241.2 Z" fill="#0e5a82"/>
+        <path d="M170.0,172.0 L194.0,160.0 L194.0,214.0 L170.0,226.0 Z" fill="#041825"/>
+        <path d="M146.0,160.0 L170.0,172.0 L170.0,226.0 L146.0,214.0 Z" fill="#062639"/>
+        <path d="M170.0,148.0 L194.0,160.0 L170.0,172.0 L146.0,160.0 Z" fill="#0e5a82"/>
+        <!-- vien vang tinh te tren mai + thap -->
+        <path d="M170.0,200.0 L252.5,241.2 L170.0,282.5 L87.5,241.2 Z" fill="none" stroke="#e3c68a" stroke-width="1.2" opacity="0.75"/>
+        <path d="M170.0,148.0 L194.0,160.0 L170.0,172.0 L146.0,160.0 Z" fill="none" stroke="#e3c68a" stroke-width="1" opacity="0.75"/>
+        <circle cx="170" cy="160" r="6" fill="#fbf3e4" stroke="#e3c68a" stroke-width="1.2"/>
       </g>
-      <text class="ws-label" x="200" y="424">ERP</text>
-      <text class="ws-label-sub" x="200" y="439">Vận hành nội bộ</text>
+      <text class="ws-label" x="170" y="405">ERP</text>
+      <text class="ws-label-sub" x="170" y="420">VẬN HÀNH NỘI BỘ</text>
     </a>
 
-    <!-- ================= CRM (mau xanh la) ================= -->
+    <!-- ================= CRM (ngoc luc bao sau, vien vang) ================= -->
     <a href="#" class="ws-building" data-world="crm" tabindex="0" role="button" aria-label="Vào thế giới CRM — Khối trung tâm">
-      <ellipse class="ws-b-shadow" cx="420" cy="401" rx="62" ry="14" fill="#0d3d27" opacity="0.16"/>
+      <ellipse class="ws-b-shadow" cx="400" cy="392" rx="64" ry="14" fill="#000000" opacity="0.35"/>
       <g class="ws-b-shape ws-b-appear" style="animation-delay:0.55s">
-        <path d="M420.0,325.0 L505.0,282.5 L505.0,352.5 L420.0,395.0 Z" fill="#115036"/>
-        <path d="M335.0,282.5 L420.0,325.0 L420.0,395.0 L335.0,352.5 Z" fill="#18734d"/>
-        <path d="M420.0,240.0 L505.0,282.5 L420.0,325.0 L335.0,282.5 Z" fill="#6fc19f"/>
-        <!-- 3 cua so day lop hoc -->
-        <rect x="352" y="300" width="14" height="14" fill="#eaf7f0" opacity="0.85" transform="skewY(26)"/>
-        <rect x="376" y="311" width="14" height="14" fill="#eaf7f0" opacity="0.85" transform="skewY(26)"/>
-        <rect x="400" y="322" width="14" height="14" fill="#eaf7f0" opacity="0.85" transform="skewY(26)"/>
-        <!-- co nho tren nong -->
-        <path d="M420,240 L420,214" stroke="#0d3d27" stroke-width="2"/>
-        <path d="M420,214 L442,221 L420,228 Z" fill="#f4b942"/>
+        <path d="M400.0,312.5 L487.5,268.8 L487.5,342.8 L400.0,386.5 Z" fill="#061e15"/>
+        <path d="M312.5,268.8 L400.0,312.5 L400.0,386.5 L312.5,342.8 Z" fill="#092e21"/>
+        <path d="M400.0,225.0 L487.5,268.8 L400.0,312.5 L312.5,268.8 Z" fill="#146b4d"/>
+        <path d="M400.0,225.0 L487.5,268.8 L400.0,312.5 L312.5,268.8 Z" fill="none" stroke="#e3c68a" stroke-width="1.2" opacity="0.75"/>
+        <!-- cot nho gia tan huy hieu -->
+        <path d="M400,225 L400,199" stroke="#e3c68a" stroke-width="1.6"/>
+        <circle cx="400" cy="197" r="4" fill="#e3c68a"/>
       </g>
-      <text class="ws-label" x="420" y="424">CRM</text>
-      <text class="ws-label-sub" x="420" y="439">Khối trung tâm</text>
+      <text class="ws-label" x="400" y="417">CRM</text>
+      <text class="ws-label-sub" x="400" y="432">KHỐI TRUNG TÂM</text>
     </a>
 
-    <!-- ================= Database (mau tim) ================= -->
+    <!-- ================= Database (thach anh tim sau, vien vang) ================= -->
     <a href="#" class="ws-building" data-world="database" tabindex="0" role="button" aria-label="Vào thế giới Database — Dữ liệu gốc">
-      <ellipse class="ws-b-shadow" cx="620" cy="391" rx="50" ry="13" fill="#241d4d" opacity="0.16"/>
+      <ellipse class="ws-b-shadow" cx="630" cy="376" rx="54" ry="13" fill="#000000" opacity="0.35"/>
       <g class="ws-b-shape ws-b-appear" style="animation-delay:0.65s">
-        <path d="M620.0,300.0 L690.0,265.0 L690.0,350.0 L620.0,385.0 Z" fill="#362e74"/>
-        <path d="M550.0,265.0 L620.0,300.0 L620.0,385.0 L550.0,350.0 Z" fill="#4e42a6"/>
-        <path d="M620.0,230.0 L690.0,265.0 L620.0,300.0 L550.0,265.0 Z" fill="#9f95ef"/>
-        <!-- gay sach xep tren mat "mai" -->
-        <rect x="600" y="248" width="6" height="16" fill="#f4f1ea" opacity="0.8" transform="rotate(-18 600 248)"/>
-        <rect x="612" y="253" width="6" height="16" fill="#f4f1ea" opacity="0.65" transform="rotate(-18 612 253)"/>
-        <rect x="624" y="258" width="6" height="16" fill="#f4f1ea" opacity="0.8" transform="rotate(-18 624 258)"/>
+        <path d="M630.0,282.5 L702.5,246.2 L702.5,334.2 L630.0,370.5 Z" fill="#18132b"/>
+        <path d="M557.5,246.2 L630.0,282.5 L630.0,370.5 L557.5,334.2 Z" fill="#261d42"/>
+        <path d="M630.0,210.0 L702.5,246.2 L630.0,282.5 L557.5,246.2 Z" fill="#4f3d86"/>
+        <path d="M630.0,210.0 L702.5,246.2 L630.0,282.5 L557.5,246.2 Z" fill="none" stroke="#e3c68a" stroke-width="1.2" opacity="0.75"/>
+        <!-- gay sach vang tinh te -->
+        <rect x="612" y="228" width="5" height="14" fill="#e3c68a" opacity="0.85" transform="rotate(-16 612 228)"/>
+        <rect x="623" y="233" width="5" height="14" fill="#e3c68a" opacity="0.65" transform="rotate(-16 623 233)"/>
+        <rect x="634" y="238" width="5" height="14" fill="#e3c68a" opacity="0.85" transform="rotate(-16 634 238)"/>
       </g>
-      <text class="ws-label" x="620" y="415">Database</text>
-      <text class="ws-label-sub" x="620" y="430">Dữ liệu gốc</text>
+      <text class="ws-label" x="630" y="395">Database</text>
+      <text class="ws-label-sub" x="630" y="410">DỮ LIỆU GỐC</text>
     </a>
 
-    <!-- ================= Personal (mau xam) ================= -->
+    <!-- ================= Personal (than chi sau, vien vang) ================= -->
     <a href="#" class="ws-building" data-world="personal" tabindex="0" role="button" aria-label="Vào không gian Cá nhân">
-      <ellipse class="ws-b-shadow" cx="720" cy="406" rx="38" ry="11" fill="#26282a" opacity="0.16"/>
+      <ellipse class="ws-b-shadow" cx="760" cy="393" rx="40" ry="11" fill="#000000" opacity="0.35"/>
       <g class="ws-b-shape ws-b-appear" style="animation-delay:0.75s">
-        <path d="M720.0,345.0 L765.0,322.5 L765.0,377.5 L720.0,400.0 Z" fill="#45484c"/>
-        <path d="M675.0,322.5 L720.0,345.0 L720.0,400.0 L675.0,377.5 Z" fill="#63676d"/>
-        <path d="M720.0,300.0 L765.0,322.5 L720.0,345.0 L675.0,322.5 Z" fill="#b3b6bc"/>
-        <!-- cua nho + khoi ong khoi -->
-        <path d="M712,378 L712,398 L720,401 L720,381 Z" fill="#33363a"/>
-        <rect x="700" y="290" width="8" height="16" fill="#8a8f98"/>
+        <path d="M760.0,331.0 L806.0,308.0 L806.0,364.0 L760.0,387.0 Z" fill="#17181a"/>
+        <path d="M714.0,308.0 L760.0,331.0 L760.0,387.0 L714.0,364.0 Z" fill="#242629"/>
+        <path d="M760.0,285.0 L806.0,308.0 L760.0,331.0 L714.0,308.0 Z" fill="#54585e"/>
+        <path d="M760.0,285.0 L806.0,308.0 L760.0,331.0 L714.0,308.0 Z" fill="none" stroke="#e3c68a" stroke-width="1" opacity="0.6"/>
       </g>
-      <text class="ws-label" x="720" y="440">Cá nhân</text>
+      <text class="ws-label" x="760" y="410">Cá nhân</text>
     </a>
-    <!-- ================= Cong truong — cung la noi cham cong nhanh ================= -->
-    <g id="gateGroup" class="ws-building ws-b-appear" style="animation-delay:0.3s" tabindex="0" role="button" aria-label="Chấm công nhanh tại cổng trường">
-      <ellipse cx="360.0" cy="564.0" rx="16" ry="6" fill="#00243a" opacity="0.16"/>
-      <ellipse cx="500.0" cy="564.0" rx="16" ry="6" fill="#00243a" opacity="0.16"/>
+
+    <!-- ================= Topiary tinh te 2 ben cong (thay cho cay hoat hinh) ================= -->
+    <g opacity="0.9">
+      <rect x="223" y="512" width="6" height="18" fill="#2a2118"/>
+      <ellipse cx="226" cy="500" rx="13" ry="16" fill="#1d4a35"/>
+      <ellipse cx="226" cy="480" rx="9" ry="11" fill="#245940"/>
+      <rect x="667" y="512" width="6" height="18" fill="#2a2118"/>
+      <ellipse cx="670" cy="500" rx="13" ry="16" fill="#1d4a35"/>
+      <ellipse cx="670" cy="480" rx="9" ry="11" fill="#245940"/>
+    </g>
+
+    <!-- Den long 2 ben cong -->
+    <g class="ws-b-appear" style="animation-delay:0.35s">
+      <rect x="228" y="470" width="4" height="60" fill="#1a1712"/>
+      <ellipse cx="230" cy="533" rx="10" ry="4" fill="#0d0b08" opacity="0.5"/>
+      <rect x="224" y="452" width="12" height="16" rx="2" fill="url(#lanternGlow)"/>
+      <circle cx="230" cy="460" r="16" fill="#ffe7b0" opacity="0.22"/>
+
+      <rect x="666" y="470" width="4" height="60" fill="#1a1712"/>
+      <ellipse cx="668" cy="533" rx="10" ry="4" fill="#0d0b08" opacity="0.5"/>
+      <rect x="662" y="452" width="12" height="16" rx="2" fill="url(#lanternGlow)"/>
+      <circle cx="668" cy="460" r="16" fill="#ffe7b0" opacity="0.22"/>
+    </g>
+
+    <!-- ================= Cong khuon vien (da + sat ren, tach rieng ro rang) — cung la noi cham cong nhanh ================= -->
+    <g id="gateGroup" class="ws-building ws-b-appear" style="animation-delay:0.3s" tabindex="0" role="button" aria-label="Chấm công nhanh tại cổng">
+      <ellipse cx="395.0" cy="564" rx="15" ry="6" fill="#000000" opacity="0.3"/>
+      <ellipse cx="505.0" cy="564" rx="15" ry="6" fill="#000000" opacity="0.3"/>
       <g class="ws-b-shape">
-        <rect x="351.0" y="460.0" width="18" height="100" rx="4" fill="#e8ddc7"/>
-        <rect x="364.0" y="460.0" width="5" height="100" fill="#cfc0a0"/>
-        <rect x="491.0" y="460.0" width="18" height="100" rx="4" fill="#e8ddc7"/>
-        <rect x="504.0" y="460.0" width="5" height="100" fill="#cfc0a0"/>
-        <rect x="343.0" y="442.0" width="174.0" height="18" rx="5" fill="#0094D9"/>
-        <rect x="343.0" y="442.0" width="174.0" height="6" rx="3" fill="#2fb0ec"/>
-        <!-- chuong nho treo giua cong -->
-        <path d="M430,460 L430,470" stroke="#8a6a4a" stroke-width="2"/>
-        <path d="M422,470 a8,8 0 0 0 16,0 Z" fill="#f4b942"/>
-        <circle cx="430" cy="478" r="2" fill="#c98f1f"/>
+        <rect x="388.0" y="465.0" width="14" height="95" rx="2" fill="#e9dfc9"/>
+        <rect x="398.0" y="465.0" width="4" height="95" fill="#c9b98f"/>
+        <rect x="498.0" y="465.0" width="14" height="95" rx="2" fill="#e9dfc9"/>
+        <rect x="508.0" y="465.0" width="4" height="95" fill="#c9b98f"/>
+        <!-- xa ngang sat ren den + diem nhan vang -->
+        <rect x="378.0" y="451.0" width="144" height="10" rx="3" fill="#181512"/>
+        <rect x="378.0" y="451.0" width="144" height="3" fill="#e3c68a" opacity="0.7"/>
+        <path d="M405,461 q45,20 90,0" stroke="#181512" stroke-width="3" fill="none"/>
+        <path d="M405,461 q45,20 90,0" stroke="#e3c68a" stroke-width="1" fill="none" opacity="0.5"/>
+        <!-- den long trung tam cong -->
+        <rect x="444" y="437" width="12" height="16" rx="2" fill="url(#lanternGlow)"/>
+        <circle cx="450" cy="445" r="18" fill="#ffe7b0" opacity="0.28"/>
+        <path d="M450,437 L450,428" stroke="#181512" stroke-width="2"/>
       </g>
-      <text class="ws-label-sub" x="430" y="434" style="font-weight:700; fill:#0077ad; font-size:12px;">CHẤM CÔNG NHANH</text>
+      <text class="ws-label-sub" x="450" y="425" style="font-weight:700; fill:#e3c68a; font-size:11.5px; letter-spacing:0.08em;">CHẤM CÔNG NHANH</text>
     </g>
   </svg>
 </div>
@@ -271,7 +260,7 @@
   <a href="/attendance-checkin.html" class="ws-checkin__more">Xem đầy đủ lịch sử chấm công →</a>
 </div>
 
-<div class="ws-footer" id="footerBar">Bấm vào 1 toà nhà để bắt đầu · <button id="btnSkip">Vào thẳng ERP như mọi khi</button></div>
+<div class="ws-footer" id="footerBar">Bấm vào 1 khu vực để bắt đầu · <button id="btnSkip">Vào thẳng ERP như mọi khi</button></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="/env.js"></script>
