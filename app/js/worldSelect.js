@@ -99,6 +99,32 @@ function timeGreeting() {
 
 const EXEC_ICONS = { '/exec/reports.html': '📊', '/exec/sign.html': '✍️' };
 const DEPT_ICON = { 'Phòng nhân sự': '👥', 'Phòng kế toán': '💰', 'Phòng truyền thông': '📣', 'Phòng cơ sở vật chất': '🔧' };
+// MOI — moi phong ban co MAU RIENG khi mo ra (banner chu de), khong con
+// dung chung 1 mau xanh nhu truoc.
+const DEPT_THEME = {
+  'Phòng nhân sự': '#0094D9',
+  'Phòng kế toán': '#2FAE6B',
+  'Phòng truyền thông': '#A855C9',
+  'Phòng cơ sở vật chất': '#D97A3D',
+};
+// MOI — icon RIENG cho tung chuc nang cu the (truoc day dung chung 1
+// icon "📄" cho moi thu trong danh sach con, nhin rat "trong" — gio moi
+// muc co bieu tuong dac trung dung noi dung cua no).
+const ITEM_ICONS = {
+  '/hr/employees.html': '👤', '/hr/positions.html': '🏷️', '/hr/leave-balances.html': '📅',
+  '/hr/work-schedule.html': '🗓️', '/hr/contracts.html': '📜', '/hr/leave-requests.html': '✋',
+  '/hr/base-salary.html': '💵', '/hr/business-trips.html': '✈️', '/hr/tasks.html': '✅', '/hr/sign.html': '✍️',
+  '/acc/payment-requests.html': '🧾', '/acc/advance-requests.html': '💳', '/acc/reports.html': '📊',
+  '/acc/discount-programs.html': '🏷️', '/edu/refund-requests.html': '↩️', '/acc/wallet-links.html': '🔗',
+  '/acc/wallet-recovery.html': '🛠️', '/acc/sepay-transactions.html': '💸', '/acc/general-ledger.html': '📒',
+  '/acc/period-closing.html': '🔒', '/acc/commissions.html': '🎯', '/acc/budget-setup.html': '📈',
+  '/acc/attendance-payroll-report.html': '⏱️', '/acc/payroll.html': '💵', '/acc/tasks.html': '✅', '/acc/sign.html': '✍️',
+  '/mkt/requests.html': '📣', '/mkt/event-proposals.html': '🎉', '/mkt/expense-reports.html': '🧮',
+  '/mkt/accounts.html': '🔐', '/mkt/parent-announcements.html': '📢', '/mkt/extracurricular-programs.html': '🎨',
+  '/mkt/tasks.html': '✅', '/mkt/sign.html': '✍️',
+  '/fac/requests.html': '🛠️', '/fac/purchase-requests.html': '🛒', '/fac/stats.html': '📦',
+  '/fac/tasks.html': '✅', '/fac/sign.html': '✍️',
+};
 
 document.querySelectorAll('.erp-tab').forEach((tab) => {
   tab.addEventListener('click', () => {
@@ -138,11 +164,24 @@ function renderErp(profile) {
   });
   document.querySelectorAll('#deptGrid .item-card:not(.item-card--locked)').forEach((el) => {
     el.addEventListener('click', () => {
-      const group = NAV_CONFIG.find((g) => g.section === el.dataset.dept);
+      const dept = el.dataset.dept;
+      const group = NAV_CONFIG.find((g) => g.section === dept);
       const items = group.items.filter((it) => it.visible(profile));
-      document.getElementById('deptDrillTitle').textContent = el.dataset.dept;
+      const theme = DEPT_THEME[dept] || 'var(--accent)';
+      // MOI — "spacework" rieng cho tung phong ban: banner mau chu de +
+      // icon lon, thay vi chi hien danh sach tro troi nhu truoc.
+      document.getElementById('deptDrill').style.setProperty('--dept-theme', theme);
+      document.getElementById('deptDrillTitle').innerHTML = `
+        <div class="dept-workspace-banner" style="background:${theme}1a; border-color:${theme}40;">
+          <span class="dept-workspace-banner__icon" style="background:${theme};">${DEPT_ICON[dept] || '🏢'}</span>
+          <div><div class="dept-workspace-banner__name">${dept}</div><div class="dept-workspace-banner__count">${items.length} chức năng</div></div>
+        </div>
+      `;
       document.getElementById('deptDrillGrid').innerHTML = items.map((it) => `
-        <div class="item-card" data-href="${it.href}"><span class="item-card__icon">📄</span><span class="item-card__name">${it.label}</span></div>
+        <div class="item-card" data-href="${it.href}" style="border-color:${theme}30;">
+          <span class="item-card__icon" style="background:${theme}1a; border-radius:8px; width:32px; height:32px; display:flex; align-items:center; justify-content:center;">${ITEM_ICONS[it.href] || '📄'}</span>
+          <span class="item-card__name">${it.label}</span>
+        </div>
       `).join('') || '<div class="content-sub">Không có mục nào.</div>';
       document.querySelectorAll('#deptDrillGrid .item-card').forEach((c) => {
         c.addEventListener('click', () => { window.location.href = c.dataset.href; });
