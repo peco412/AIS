@@ -1,249 +1,323 @@
 <!doctype html>
-<html lang="vi">
+<html lang="vi" data-division="aloha">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>AIS OFFICE — Mặt tiền toà nhà</title>
+<title>AIS OFFICE — Sảnh chờ</title>
 <link rel="manifest" href="/manifest.json" />
-<meta name="theme-color" content="#0F172A" />
+<meta name="theme-color" content="#f5f5f7" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Orbitron:wght@600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="/css/tokens.css" />
 <style>
-  * { box-sizing: border-box; }
-  html, body { height: 100%; margin: 0; }
-  body {
-    font-family: 'Be Vietnam Pro', sans-serif;
-    background: radial-gradient(ellipse 1000px 700px at 50% 20%, rgba(34,211,238,0.08) 0%, transparent 60%), linear-gradient(180deg, #0F172A 0%, #16213a 45%, #1E293B 100%);
-    display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
-    min-height: 100vh; padding: 40px 16px 28px; overflow-x: hidden; position: relative;
-  }
-  /* Vet sang mo phia sau tao chieu sau */
-  .bg-streak { position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.5; }
+  /* ===================================================================
+     Lobby — kế thừa tokens.css, không override nền/font gốc.
+     3 lớp: Ngoài (entry) → 4 nhánh (branches) → nội dung nhánh (erp/crm/
+     room/banzone). Panel Chấm công là overlay riêng, không phải 1 lớp.
+     =================================================================== */
+  .lobby-wrap { max-width: 980px; margin: 0 auto; padding: 44px 20px 60px; position: relative; }
 
-  .ws-header { text-align: center; margin-bottom: 4px; opacity: 0; animation: fu 0.7s var(--ease-spring) 0.05s forwards; position: relative; z-index: 1; }
-  .ws-eyebrow { font-family: 'Orbitron', sans-serif; font-size: 10px; letter-spacing: 0.28em; text-transform: uppercase; color: #22D3EE; margin-bottom: 10px; text-shadow: 0 0 12px rgba(34,211,238,0.5); }
-  .ws-title { font-family: 'Orbitron', sans-serif; font-size: 26px; font-weight: 700; color: #F1F5F9; letter-spacing: 0.02em; }
-  .ws-title span { color: #22D3EE; }
-  .ws-sub { font-size: 13px; color: #94A3B8; margin-top: 8px; }
+  .lobby-layer { display: none; }
+  .lobby-layer.is-active { display: block; }
 
-  .ws-stage { width: 100%; max-width: 760px; margin-top: 4px; opacity: 0; animation: fu 0.8s var(--ease-spring) 0.15s forwards; position: relative; z-index: 1; }
-  .ws-stage svg { width: 100%; height: auto; display: block; overflow: visible; }
-
-  #buildingScene { transition: transform 1.1s cubic-bezier(0.65,0,0.35,1), opacity 0.9s ease; transform-origin: 500px 460px; }
-  #buildingScene.is-entering { transform: scale(3.2) translateY(60px); opacity: 0; }
-
-  /* Anh sang phan chieu theo con tro chuot */
-  #cursorGlow { pointer-events: none; transition: opacity 0.3s ease; opacity: 0; mix-blend-mode: screen; }
-  .ws-stage:hover #cursorGlow { opacity: 0.55; }
-
-  #doorGroup { cursor: pointer; }
-  .door-label { font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 12px; letter-spacing: 0.15em; fill: #22D3EE; text-anchor: middle; text-shadow: 0 0 8px #22D3EE; animation: ws-pulse 2s ease-in-out infinite; }
-  @keyframes ws-pulse { 0%,100% { opacity: 0.5; } 50% { opacity: 1; } }
-  .door-path-light { stroke-dasharray: 4 6; animation: dash-flow 1.2s linear infinite; }
-  @keyframes dash-flow { to { stroke-dashoffset: -20; } }
-
-  .kiosk-group { cursor: pointer; }
-  .kiosk-scan-ring { animation: scan-pulse 2.2s ease-in-out infinite; transform-origin: center; transform-box: fill-box; }
-  @keyframes scan-pulse { 0% { transform: scale(0.85); opacity: 0.9; } 100% { transform: scale(1.6); opacity: 0; } }
-
-  .ws-footer { margin-top: 10px; font-size: 12px; color: #94A3B8; text-align: center; opacity: 0; animation: fu 0.6s var(--ease-spring) 0.4s forwards; position: relative; z-index: 1; }
-  .ws-footer button { background: none; border: none; color: #22D3EE; font-weight: 600; font-size: 12px; cursor: pointer; text-decoration: underline; padding: 0; }
-
-  /* Glass Kiosk check-in card */
-  .ws-checkin {
-    width: 100%; max-width: 380px; margin-top: 6px; background: rgba(15,23,42,0.55); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(34,211,238,0.3); border-radius: 20px; box-shadow: 0 24px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08);
-    padding: 20px 22px; animation: fu 0.4s var(--ease-spring) forwards; position: relative; z-index: 2;
-  }
-  .ws-checkin__head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
-  .ws-checkin__title { font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 14px; color: #F1F5F9; letter-spacing: 0.03em; }
-  .ws-checkin__center { font-size: 11.5px; color: #94A3B8; margin-top: 4px; }
-  .ws-checkin__close { background: none; border: none; color: #94A3B8; font-size: 15px; cursor: pointer; padding: 2px 6px; }
-  .ws-checkin__hint { font-size: 12px; margin-bottom: 8px; color: #CBD5E1; }
-  .ws-checkin__error { font-size: 12px; color: #FCA5A5; background: rgba(239,68,68,0.14); border-radius: 10px; padding: 8px 10px; margin-bottom: 8px; }
-  .ws-checkin__status { font-size: 12.5px; font-weight: 600; margin-bottom: 12px; color: #67E8F9; }
-  .ws-checkin__actions { display: flex; gap: 10px; }
-  .ws-checkin__btn { flex: 1; padding: 11px; border-radius: 12px; border: none; font-weight: 700; font-size: 13px; cursor: pointer; transition: opacity 0.15s, transform 0.15s; }
-  .ws-checkin__btn:disabled { opacity: 0.35; cursor: not-allowed; }
-  .ws-checkin__btn:not(:disabled):active { transform: scale(0.97); }
-  .ws-checkin__btn--in { background: linear-gradient(135deg, #22D3EE, #0891B2); color: #0F172A; box-shadow: 0 0 20px rgba(34,211,238,0.4); }
-  .ws-checkin__btn--out { background: rgba(255,255,255,0.06); color: #F1F5F9; border: 1px solid rgba(255,255,255,0.14); }
-  .ws-checkin__more { display: block; text-align: center; margin-top: 12px; font-size: 11px; color: #64748B; }
-
-  @keyframes fu { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  /* Hieu ung chuyen lop */
+  @keyframes layer-zoom-in { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } }
+  @keyframes layer-zoom-out { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.92); } }
+  @keyframes card-fade-scale-out { to { opacity: 0; transform: scale(0.85); } }
+  @keyframes card-fill-in { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+  .lobby-layer.is-entering { animation: layer-zoom-in 350ms var(--ease-spring) forwards; }
+  .lobby-layer.is-leaving { animation: layer-zoom-out 350ms var(--ease-spring) forwards; }
   @media (prefers-reduced-motion: reduce) {
-    .ws-header, .ws-stage, .ws-footer, .ws-checkin { animation: none !important; opacity: 1 !important; }
-    #buildingScene, .kiosk-scan-ring, .door-label, .door-path-light { animation: none !important; transition: none !important; }
+    .lobby-layer.is-entering, .lobby-layer.is-leaving, .card-fade-out, .card-fill-in { animation: none !important; }
   }
 
-  /* MOI — Sanh chinh (Screen 2 tam thoi) — se lam rieng ban ky hon o
-     buoc sau, hien tai dung the kinh (glassmorphism) dong bo mau sac
-     man 1. */
-  .ws-branches {
-    position: absolute; inset: 0; display: none; grid-template-columns: repeat(2, 1fr); gap: 16px;
-    align-content: center; justify-items: center; padding: 20px; z-index: 3;
+  .lobby-back {
+    display: inline-flex; align-items: center; gap: 6px; background: none; border: none; cursor: pointer;
+    color: var(--ink-soft); font-size: 13px; font-weight: 600; padding: 8px 4px; margin-bottom: 16px;
+    transition: color var(--dur-fast) var(--ease);
   }
-  .ws-branches.is-visible { display: grid; }
-  .ws-branch-card {
-    width: 100%; max-width: 220px; background: rgba(15,23,42,0.55); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(148,163,184,0.25); border-radius: 18px; padding: 22px 18px; text-align: center;
-    cursor: pointer; opacity: 0; transform: translateY(16px) scale(0.94);
-    animation: branch-in 0.5s var(--ease-spring) forwards;
-    transition: border-color 0.25s var(--ease), transform 0.25s var(--ease-spring), box-shadow 0.25s var(--ease);
-  }
-  .ws-branch-card:hover { border-color: rgba(34,211,238,0.6); transform: translateY(-4px) scale(1.02); box-shadow: 0 16px 32px rgba(34,211,238,0.15); }
-  .ws-branch-card--locked { cursor: not-allowed; opacity: 0.4 !important; filter: grayscale(0.7); }
-  .ws-branch-card--locked:hover { transform: none; border-color: rgba(148,163,184,0.25); box-shadow: none; }
-  .ws-branch-card__icon { font-size: 30px; margin-bottom: 10px; }
-  .ws-branch-card__name { font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 16px; color: #F1F5F9; letter-spacing: 0.03em; }
-  .ws-branch-card__desc { font-size: 10.5px; color: #67E8F9; margin-top: 5px; letter-spacing: 0.04em; }
-  .ws-branch-card__lock { font-size: 10.5px; color: #94A3B8; margin-top: 6px; }
-  @keyframes branch-in { from { opacity: 0; transform: translateY(16px) scale(0.94); } to { opacity: 1; transform: translateY(0) scale(1); } }
+  .lobby-back:hover { color: var(--accent-deep); }
 
-  .ws-back-btn { display: none; margin: 6px auto 0; background: none; border: none; color: #94A3B8; font-size: 12px; cursor: pointer; text-decoration: underline; position: relative; z-index: 3; }
-  .ws-back-btn.is-visible { display: block; }
+  /* ---- Entry ---- */
+  .entry-header { text-align: center; margin: 30px 0 40px; }
+  .entry-eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+  .entry-title { font-size: 30px; font-weight: 800; color: var(--ink); }
+  .entry-title span { color: var(--accent-deep); }
+  .entry-sub { font-size: 14px; color: var(--ink-soft); margin-top: 8px; }
+
+  .entry-cards { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; max-width: 640px; margin: 0 auto; }
+  @media (max-width: 640px) { .entry-cards { grid-template-columns: 1fr; } }
+
+  .entry-card {
+    background: var(--surface-card); border: 1px solid var(--border); border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm); padding: 28px 24px; cursor: pointer; text-align: left;
+    transition: transform var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
+  }
+  .entry-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); border-color: var(--accent); }
+  .entry-card--primary { background: var(--accent-tint); border-color: var(--accent); }
+  .entry-card__icon { font-size: 30px; margin-bottom: 12px; }
+  .entry-card__title { font-size: 17px; font-weight: 800; color: var(--ink); }
+  .entry-card__desc { font-size: 12.5px; color: var(--ink-soft); margin-top: 4px; }
+
+  /* ---- Branches grid (Launchpad) ---- */
+  .branches-header { text-align: center; margin-bottom: 26px; }
+  .branches-title { font-size: 22px; font-weight: 800; color: var(--ink); }
+  .branches-sub { font-size: 13px; color: var(--ink-soft); margin-top: 6px; }
+
+  .branch-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  @media (max-width: 1024px) { .branch-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 640px) { .branch-grid { grid-template-columns: 1fr; } }
+
+  .branch-card {
+    background: var(--surface-card); border: 1px solid var(--border); border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm); padding: 26px 18px; text-align: center; cursor: pointer;
+    transition: transform var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
+  }
+  .branch-card:hover { transform: scale(1.04); box-shadow: var(--shadow-md); border-color: var(--accent); }
+  .branch-card:hover .branch-card__icon { color: var(--accent); }
+  .branch-card--locked { opacity: 0.4; cursor: not-allowed; }
+  .branch-card--locked:hover { transform: none; box-shadow: var(--shadow-sm); border-color: var(--border); }
+  .branch-card--locked .branch-card__icon { color: var(--muted) !important; }
+  .branch-card__icon { font-size: 32px; margin-bottom: 10px; color: var(--ink-soft); transition: color var(--dur-fast) var(--ease); }
+  .branch-card__name { font-size: 16px; font-weight: 800; color: var(--ink); }
+  .branch-card__desc { font-size: 11.5px; color: var(--muted); margin-top: 4px; letter-spacing: 0.02em; }
+  .branch-card__lock { font-size: 10.5px; color: var(--danger); margin-top: 6px; }
+
+  /* ---- Generic content title ---- */
+  .content-header { margin-bottom: 20px; }
+  .content-title { font-size: 20px; font-weight: 800; color: var(--ink); }
+  .content-sub { font-size: 12.5px; color: var(--ink-soft); margin-top: 4px; }
+
+  /* ---- ERP: tab selector + grids ---- */
+  .erp-tabs { display: inline-flex; background: var(--surface-fill); border-radius: var(--radius-pill); padding: 4px; margin-bottom: 22px; }
+  .erp-tab { padding: 9px 20px; border-radius: var(--radius-pill); border: none; background: none; cursor: pointer; font-weight: 700; font-size: 13px; color: var(--ink-soft); transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease); }
+  .erp-tab.is-active { background: var(--surface-card); color: var(--ink); box-shadow: var(--shadow-xs); }
+
+  .erp-panel { display: none; }
+  .erp-panel.is-active { display: block; animation: slide-in var(--dur-base) var(--ease) forwards; }
+  @keyframes slide-in { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: translateX(0); } }
+
+  .item-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  @media (max-width: 900px) { .item-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 560px) { .item-grid { grid-template-columns: 1fr; } }
+  .item-card {
+    background: var(--surface-card); border: 1px solid var(--border); border-radius: var(--radius-md);
+    box-shadow: var(--shadow-xs); padding: 16px; display: flex; align-items: center; gap: 12px; cursor: pointer;
+    transition: transform var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
+  }
+  .item-card:hover:not(.item-card--locked) { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+  .item-card--locked { opacity: 0.4; cursor: not-allowed; }
+  .item-card__icon { font-size: 20px; flex-shrink: 0; }
+  .item-card__name { font-size: 13px; font-weight: 600; color: var(--ink); flex: 1; }
+  .item-card__lock { font-size: 15px; }
+
+  .dept-drill { margin-top: 16px; display: none; }
+  .dept-drill.is-visible { display: block; animation: slide-in var(--dur-base) var(--ease) forwards; }
+  .dept-drill__title { font-size: 13px; font-weight: 700; color: var(--ink-soft); margin-bottom: 10px; }
+
+  /* ---- CRM orbital ---- */
+  .crm-stage { position: relative; width: 100%; max-width: 560px; margin: 0 auto; aspect-ratio: 1; }
+  .crm-logo {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: 84px; height: 84px; border-radius: 50%; background: var(--surface-card); border: 2px solid var(--accent);
+    box-shadow: var(--shadow-md); display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  .crm-logo__title { font-size: 13px; font-weight: 800; color: var(--ink); }
+  .crm-logo__sub { font-size: 8px; color: var(--accent-deep); letter-spacing: 0.08em; margin-top: 2px; }
+  .crm-orbit { position: absolute; border: 1px dashed var(--border-strong); border-radius: 50%; top: 50%; left: 50%; }
+  .crm-satellite {
+    position: absolute; width: 56px; height: 56px; border-radius: 50%; background: var(--surface-card);
+    border: 2px solid var(--accent); box-shadow: var(--shadow-sm); display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 11px; font-weight: 800; color: var(--accent-deep);
+    transition: transform var(--dur-fast) var(--ease-spring), box-shadow var(--dur-fast) var(--ease);
+    animation: orbit-rotate linear infinite;
+  }
+  .crm-satellite:hover { transform: scale(1.35) !important; box-shadow: var(--shadow-lg); z-index: 5; }
+  .crm-satellite--locked { opacity: 0.4; cursor: not-allowed; border-color: var(--muted); color: var(--muted); }
+  .crm-satellite--locked:hover { transform: scale(1) !important; box-shadow: var(--shadow-sm); }
+  .crm-satellite__full { display: none; position: absolute; top: 100%; margin-top: 6px; left: 50%; transform: translateX(-50%); font-size: 11px; font-weight: 700; color: var(--ink); white-space: nowrap; background: var(--surface-card); padding: 3px 8px; border-radius: var(--radius-sm); box-shadow: var(--shadow-sm); }
+  .crm-satellite:hover .crm-satellite__full { display: block; }
+  @keyframes orbit-rotate { from { transform: rotate(0deg) translateX(var(--orbit-r)) rotate(0deg); } to { transform: rotate(360deg) translateX(var(--orbit-r)) rotate(-360deg); } }
+  @media (prefers-reduced-motion: reduce) { .crm-satellite { animation: none !important; } }
+
+  /* ---- ROOM flat grid ---- */
+  .room-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  @media (max-width: 900px) { .room-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 560px) { .room-grid { grid-template-columns: 1fr; } }
+
+  /* ---- BANZONE search + accordion ---- */
+  .banzone-search {
+    display: flex; align-items: center; gap: 10px; background: var(--surface-fill); border: 1px solid var(--border);
+    border-radius: var(--radius-md); padding: 10px 14px; margin-bottom: 20px;
+  }
+  .banzone-search input { border: none; background: none; outline: none; font-size: 14px; color: var(--ink); flex: 1; font-family: var(--font-body); }
+  .banzone-search__icon { color: var(--muted); }
+
+  .accordion { border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; margin-bottom: 10px; background: var(--surface-card); box-shadow: var(--shadow-xs); }
+  .accordion__head { display: flex; align-items: center; gap: 12px; padding: 14px 16px; cursor: pointer; }
+  .accordion__head:hover { background: var(--surface-fill); }
+  .accordion--locked .accordion__head { opacity: 0.4; cursor: not-allowed; }
+  .accordion__icon { font-size: 18px; }
+  .accordion__name { font-size: 14px; font-weight: 700; color: var(--ink); flex: 1; }
+  .accordion__count { font-size: 11.5px; color: var(--muted); }
+  .accordion__arrow { color: var(--muted); font-size: 13px; transition: transform var(--dur-fast) var(--ease); }
+  .accordion.is-open .accordion__arrow { transform: rotate(90deg); }
+  .accordion__body { display: none; padding: 0 16px 14px 46px; }
+  .accordion.is-open .accordion__body { display: block; }
+  .accordion-row { display: flex; align-items: center; gap: 8px; padding: 9px 12px; border-radius: var(--radius-sm); cursor: pointer; font-size: 12.5px; color: var(--ink-soft); }
+  .accordion-row:hover:not(.accordion-row--locked) { background: var(--surface-fill); color: var(--ink); }
+  .accordion-row--locked { opacity: 0.4; cursor: not-allowed; }
+  .accordion-row--hidden { display: none; }
+
+  /* ---- Check-in floating panel ---- */
+  .checkin-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.15); display: none; align-items: flex-end; justify-content: center; z-index: 50; padding: 20px; }
+  .checkin-overlay.is-visible { display: flex; }
+  @media (min-width: 641px) { .checkin-overlay { align-items: center; } }
+  .checkin-panel {
+    width: 100%; max-width: 380px; background: var(--glass-bg-strong); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); padding: 22px;
+    animation: slide-up-fade 220ms var(--ease-spring) forwards;
+  }
+  @keyframes slide-up-fade { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+  .checkin-panel__head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+  .checkin-panel__title { font-size: 16px; font-weight: 800; color: var(--ink); }
+  .checkin-panel__center { font-size: 12px; color: var(--ink-soft); margin-top: 3px; }
+  .checkin-panel__close { background: none; border: none; color: var(--muted); font-size: 16px; cursor: pointer; padding: 4px; }
+  .checkin-panel__hint { font-size: 12.5px; margin-bottom: 8px; color: var(--ink-soft); }
+  .checkin-panel__error { font-size: 12.5px; color: var(--danger); background: var(--danger-tint); border-radius: var(--radius-sm); padding: 8px 10px; margin-bottom: 8px; }
+  .checkin-panel__status { font-size: 13px; font-weight: 700; margin-bottom: 14px; color: var(--ink); }
+  .checkin-panel__actions { display: flex; gap: 10px; }
+  .checkin-btn { flex: 1; padding: 12px; border-radius: var(--radius-md); border: none; font-weight: 700; font-size: 13.5px; cursor: pointer; transition: opacity var(--dur-fast), transform var(--dur-fast); }
+  .checkin-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .checkin-btn:not(:disabled):active { transform: scale(0.97); }
+  .checkin-btn--in { background: var(--accent); color: #fff; }
+  .checkin-btn--out { background: var(--surface-fill); color: var(--ink); border: 1px solid var(--border); }
+  .checkin-panel__more { display: block; text-align: center; margin-top: 12px; font-size: 11.5px; color: var(--muted); }
+
+  .skeleton { background: var(--surface-sunken); border-radius: var(--radius-md); height: 60px; }
 </style>
 </head>
 <body>
 
-<svg class="bg-streak" id="bgStreak"></svg>
+<div class="lobby-wrap">
 
-<div class="ws-header">
-  <div class="ws-eyebrow" id="greetingEyebrow">SYSTEM ONLINE</div>
-  <div class="ws-title">AIS OFFICE <span id="userNameSpan">...</span></div>
-  <div class="ws-sub" id="subText">Bấm vào cửa để bước vào sảnh chính</div>
+  <!-- ================= LOP 0 — MAN HINH NGOAI ================= -->
+  <section class="lobby-layer is-active" id="layerEntry">
+    <div class="entry-header">
+      <div class="entry-eyebrow" id="greetingEyebrow">Chào buổi sáng</div>
+      <div class="entry-title">AIS OFFICE <span id="userNameSpan">...</span></div>
+      <div class="entry-sub">Chọn 1 mục để bắt đầu</div>
+    </div>
+    <div class="entry-cards">
+      <div class="entry-card entry-card--primary" id="btnEnterDoor">
+        <div class="entry-card__icon">🚪</div>
+        <div class="entry-card__title">Vào cửa</div>
+        <div class="entry-card__desc">Đi vào hệ thống — ERP, CRM, Room, Banzone</div>
+      </div>
+      <div class="entry-card" id="btnOpenCheckin">
+        <div class="entry-card__icon">🕐</div>
+        <div class="entry-card__title">Chấm công</div>
+        <div class="entry-card__desc">Check-in / Check-out nhanh</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= LOP 1 — 4 NHANH ================= -->
+  <section class="lobby-layer" id="layerBranches">
+    <button class="lobby-back" data-back="layerEntry">← Quay lại</button>
+    <div class="branches-header">
+      <div class="branches-title">Chọn khu vực</div>
+      <div class="branches-sub">Bấm vào 1 thẻ để đi sâu vào bên trong</div>
+    </div>
+    <div class="branch-grid" id="branchGrid">
+      <div class="branch-card" data-branch="erp">
+        <div class="branch-card__icon">🏢</div>
+        <div class="branch-card__name">ERP</div>
+        <div class="branch-card__desc">PHÒNG BAN</div>
+      </div>
+      <div class="branch-card" data-branch="crm">
+        <div class="branch-card__icon">🌐</div>
+        <div class="branch-card__name">CRM</div>
+        <div class="branch-card__desc">TRUNG TÂM</div>
+      </div>
+      <div class="branch-card" data-branch="room">
+        <div class="branch-card__icon">🚪</div>
+        <div class="branch-card__name">ROOM</div>
+        <div class="branch-card__desc">CÁ NHÂN</div>
+      </div>
+      <div class="branch-card" data-branch="banzone">
+        <div class="branch-card__icon">🗄️</div>
+        <div class="branch-card__name">BANZONE</div>
+        <div class="branch-card__desc">DATABASE</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= LOP 2a — ERP ================= -->
+  <section class="lobby-layer" id="layerErp">
+    <button class="lobby-back" data-back="layerBranches">← Quay lại</button>
+    <div class="content-header"><div class="content-title">ERP — Khối Quản Trị Phòng Ban</div></div>
+    <div class="erp-tabs">
+      <button class="erp-tab is-active" data-tab="exec">Tầng Điều hành</button>
+      <button class="erp-tab" data-tab="dept">Tầng Phòng ban</button>
+    </div>
+    <div class="erp-panel is-active" id="erpPanelExec">
+      <div class="item-grid" id="execGrid"><div class="skeleton"></div></div>
+    </div>
+    <div class="erp-panel" id="erpPanelDept">
+      <div class="item-grid" id="deptGrid"><div class="skeleton"></div></div>
+      <div class="dept-drill" id="deptDrill">
+        <div class="dept-drill__title" id="deptDrillTitle"></div>
+        <div class="item-grid" id="deptDrillGrid"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= LOP 2b — CRM ================= -->
+  <section class="lobby-layer" id="layerCrm">
+    <button class="lobby-back" data-back="layerBranches">← Quay lại</button>
+    <div class="content-header"><div class="content-title">CRM — Khối Trung Tâm</div><div class="content-sub" id="crmSub">Đang tải danh sách trung tâm...</div></div>
+    <div class="crm-stage" id="crmStage"></div>
+  </section>
+
+  <!-- ================= LOP 2c — ROOM ================= -->
+  <section class="lobby-layer" id="layerRoom">
+    <button class="lobby-back" data-back="layerBranches">← Quay lại</button>
+    <div class="content-header"><div class="content-title">Room — Không gian cá nhân</div></div>
+    <div class="room-grid" id="roomGrid"><div class="skeleton"></div></div>
+  </section>
+
+  <!-- ================= LOP 2d — BANZONE ================= -->
+  <section class="lobby-layer" id="layerBanzone">
+    <button class="lobby-back" data-back="layerBranches">← Quay lại</button>
+    <div class="content-header"><div class="content-title">Banzone — Kho dữ liệu gốc</div></div>
+    <div class="banzone-search">
+      <span class="banzone-search__icon">🔍</span>
+      <input type="text" id="banzoneSearch" placeholder="Tìm nhanh (VD: trung tâm, chi phí, kho...)" />
+    </div>
+    <div id="banzoneAccordions"><div class="skeleton"></div></div>
+  </section>
+
 </div>
 
-<div class="ws-stage" id="wsStage" style="min-height:560px;">
-  <svg id="buildingScene" viewBox="180 120 640 620" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Toà nhà kính AIS OFFICE — bấm cửa để vào hệ thống">
-    <defs>
-      <linearGradient id="glassPanelL" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#c9dbe8" stop-opacity="0.55"/><stop offset="100%" stop-color="#7a94ab" stop-opacity="0.45"/></linearGradient>
-      <linearGradient id="glassPanelR" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#9fb4c7" stop-opacity="0.5"/><stop offset="100%" stop-color="#546678" stop-opacity="0.5"/></linearGradient>
-      <linearGradient id="gFrameTop" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f4f7fa"/><stop offset="100%" stop-color="#c7d1db"/></linearGradient>
-      <linearGradient id="gFrameLeft" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#d3dbe3"/><stop offset="100%" stop-color="#aab6c2"/></linearGradient>
-      <linearGradient id="gFrameRight" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#93a1af"/><stop offset="100%" stop-color="#6b7889"/></linearGradient>
-      <radialGradient id="cyanGlow" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#22D3EE" stop-opacity="0.9"/><stop offset="100%" stop-color="#22D3EE" stop-opacity="0"/></radialGradient>
-      <filter id="softBlur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6"/></filter>
-    </defs>
-
-    <!-- San (kinh phan chieu) -->
-    <ellipse cx="500" cy="700" rx="280" ry="48" fill="#1E293B" opacity="0.7"/>
-    <ellipse cx="500" cy="700" rx="220" ry="30" fill="#000000" opacity="0.3" filter="url(#softBlur)"/>
-
-    <!-- ===== TOA NHA — khung nhom bac + kinh xam khoi ===== -->
-    <path d="M500.0,165.0 L600.0,215.0 L500.0,265.0 L400.0,215.0 Z" fill="url(#gFrameTop)" stroke="#eef2f6" stroke-width="1.5" stroke-linejoin="round"/>
-    <path d="M400.0,215.0 L500.0,265.0 L500.0,320.0 L400.0,270.0 Z" fill="url(#gFrameLeft)"/>
-    <path d="M500.0,265.0 L600.0,215.0 L600.0,270.0 L500.0,320.0 Z" fill="url(#gFrameRight)"/>
-
-    <path d="M330.0,305.0 L500.0,390.0 L500.0,690.0 L330.0,605.0 Z" fill="url(#gFrameLeft)" stroke="url(#gFrameLeft)" stroke-width="6" stroke-linejoin="round"/>
-    <path d="M500.0,390.0 L670.0,305.0 L670.0,605.0 L500.0,690.0 Z" fill="url(#gFrameRight)" stroke="url(#gFrameRight)" stroke-width="6" stroke-linejoin="round"/>
-    <path d="M500.0,220.0 L670.0,305.0 L500.0,390.0 L330.0,305.0 Z" fill="url(#gFrameTop)" stroke="url(#gFrameTop)" stroke-width="6" stroke-linejoin="round"/>
-    <path d="M500.0,220.0 L670.0,305.0 L500.0,390.0 L330.0,305.0 Z" fill="none" stroke="#ffffff" stroke-width="1.5" stroke-linejoin="round" opacity="0.6"/>
-
-    <!-- Luoi kinh 2 mat -->
-    <g>
-      <path d="M338.5,321.2 L380.3,342.2 L380.3,386.3 L338.5,365.4 Z" fill="url(#glassPanelL)" stroke="rgba(255,255,255,0.35)" stroke-width="1.2"/>
-      <path d="M389.5,346.8 L431.3,367.7 L431.3,411.8 L389.5,390.9 Z" fill="url(#glassPanelL)" stroke="rgba(255,255,255,0.35)" stroke-width="1.2"/>
-      <path d="M440.5,372.2 L482.3,393.2 L482.3,437.3 L440.5,416.4 Z" fill="url(#glassPanelL)" stroke="rgba(255,255,255,0.35)" stroke-width="1.2"/>
-      <path d="M338.5,376.4 L380.3,397.4 L380.3,441.5 L338.5,420.6 Z" fill="url(#glassPanelL)" stroke="rgba(255,255,255,0.35)" stroke-width="1.2"/>
-      <path d="M389.5,401.9 L431.3,422.9 L431.3,467.0 L389.5,446.1 Z" fill="url(#glassPanelL)" stroke="rgba(255,255,255,0.35)" stroke-width="1.2"/>
-      <path d="M440.5,427.4 L482.3,448.4 L482.3,492.5 L440.5,471.6 Z" fill="url(#glassPanelL)" stroke="rgba(255,255,255,0.35)" stroke-width="1.2"/>
-      <path d="M338.5,431.6 L380.3,452.6 L380.3,496.7 L338.5,475.8 Z" fill="url(#glassPanelL)" stroke="rgba(255,255,255,0.35)" stroke-width="1.2"/>
-      <path d="M389.5,457.1 L431.3,478.1 L431.3,522.2 L389.5,501.3 Z" fill="url(#glassPanelL)" stroke="rgba(255,255,255,0.35)" stroke-width="1.2"/>
-      <path d="M440.5,482.6 L482.3,503.6 L482.3,547.7 L440.5,526.8 Z" fill="url(#glassPanelL)" stroke="rgba(255,255,255,0.35)" stroke-width="1.2"/>
-      <path d="M338.5,486.9 L380.3,507.8 L380.3,551.9 L338.5,531.0 Z" fill="url(#glassPanelL)" stroke="rgba(255,255,255,0.35)" stroke-width="1.2"/>
-      <path d="M389.5,512.4 L431.3,533.3 L431.3,577.4 L389.5,556.5 Z" fill="url(#glassPanelL)" stroke="rgba(255,255,255,0.35)" stroke-width="1.2"/>
-      <path d="M440.5,537.9 L482.3,558.8 L482.3,602.9 L440.5,582.0 Z" fill="url(#glassPanelL)" stroke="rgba(255,255,255,0.35)" stroke-width="1.2"/>
-      <path d="M338.5,542.0 L380.3,563.0 L380.3,607.1 L338.5,586.2 Z" fill="url(#glassPanelL)" stroke="rgba(255,255,255,0.35)" stroke-width="1.2"/>
-      <path d="M389.5,567.5 L431.3,588.5 L431.3,632.6 L389.5,611.7 Z" fill="url(#glassPanelL)" stroke="rgba(255,255,255,0.35)" stroke-width="1.2"/>
-      <path d="M440.5,593.0 L482.3,614.0 L482.3,658.1 L440.5,637.2 Z" fill="url(#glassPanelL)" stroke="rgba(255,255,255,0.35)" stroke-width="1.2"/>
-    </g>
-    <g>
-      <path d="M508.5,397.8 L550.3,376.8 L550.3,421.0 L508.5,441.9 Z" fill="url(#glassPanelR)" stroke="rgba(255,255,255,0.2)" stroke-width="1.2"/>
-      <path d="M559.5,372.2 L601.3,351.3 L601.3,395.5 L559.5,416.4 Z" fill="url(#glassPanelR)" stroke="rgba(255,255,255,0.2)" stroke-width="1.2"/>
-      <path d="M610.5,346.8 L652.3,325.8 L652.3,370.0 L610.5,390.9 Z" fill="url(#glassPanelR)" stroke="rgba(255,255,255,0.2)" stroke-width="1.2"/>
-      <path d="M508.5,452.9 L550.3,432.0 L550.3,476.2 L508.5,497.1 Z" fill="url(#glassPanelR)" stroke="rgba(255,255,255,0.2)" stroke-width="1.2"/>
-      <path d="M559.5,427.4 L601.3,406.5 L601.3,450.7 L559.5,471.6 Z" fill="url(#glassPanelR)" stroke="rgba(255,255,255,0.2)" stroke-width="1.2"/>
-      <path d="M610.5,401.9 L652.3,381.0 L652.3,425.2 L610.5,446.1 Z" fill="url(#glassPanelR)" stroke="rgba(255,255,255,0.2)" stroke-width="1.2"/>
-      <path d="M508.5,508.1 L550.3,487.2 L550.3,531.4 L508.5,552.3 Z" fill="url(#glassPanelR)" stroke="rgba(255,255,255,0.2)" stroke-width="1.2"/>
-      <path d="M559.5,482.6 L601.3,461.7 L601.3,505.9 L559.5,526.8 Z" fill="url(#glassPanelR)" stroke="rgba(255,255,255,0.2)" stroke-width="1.2"/>
-      <path d="M610.5,457.1 L652.3,436.2 L652.3,480.4 L610.5,501.3 Z" fill="url(#glassPanelR)" stroke="rgba(255,255,255,0.2)" stroke-width="1.2"/>
-      <path d="M508.5,563.4 L550.3,542.4 L550.3,586.6 L508.5,607.5 Z" fill="url(#glassPanelR)" stroke="rgba(255,255,255,0.2)" stroke-width="1.2"/>
-      <path d="M559.5,537.9 L601.3,516.9 L601.3,561.1 L559.5,582.0 Z" fill="url(#glassPanelR)" stroke="rgba(255,255,255,0.2)" stroke-width="1.2"/>
-      <path d="M610.5,512.4 L652.3,491.4 L652.3,535.6 L610.5,556.5 Z" fill="url(#glassPanelR)" stroke="rgba(255,255,255,0.2)" stroke-width="1.2"/>
-      <path d="M508.5,618.5 L550.3,597.6 L550.3,641.8 L508.5,662.7 Z" fill="url(#glassPanelR)" stroke="rgba(255,255,255,0.2)" stroke-width="1.2"/>
-      <path d="M559.5,593.0 L601.3,572.1 L601.3,616.3 L559.5,637.2 Z" fill="url(#glassPanelR)" stroke="rgba(255,255,255,0.2)" stroke-width="1.2"/>
-      <path d="M610.5,567.5 L652.3,546.6 L652.3,590.8 L610.5,611.7 Z" fill="url(#glassPanelR)" stroke="rgba(255,255,255,0.2)" stroke-width="1.2"/>
-    </g>
-
-    <!-- Anh sang phan chieu theo con tro chuot -->
-    <circle id="cursorGlow" cx="500" cy="450" r="90" fill="url(#cyanGlow)"/>
-
-    <!-- ===== CUA CHINH — "ENTER LOBBY" ===== -->
-    <g id="doorGroup" tabindex="0" role="button" aria-label="Vào sảnh chính">
-      <path class="door-path-light" d="M500,690 L500,650" stroke="#22D3EE" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
-      <rect x="476" y="600" width="48" height="90" fill="rgba(15,23,42,0.85)" stroke="#22D3EE" stroke-width="1.5" rx="2"/>
-      <rect x="476" y="600" width="48" height="90" fill="url(#cyanGlow)" opacity="0.15"/>
-      <line x1="500" y1="600" x2="500" y2="690" stroke="#22D3EE" stroke-width="1" opacity="0.5"/>
-      <text class="door-label" x="500" y="588">ENTER LOBBY</text>
-    </g>
-
-    <!-- ===== Tram cham cong kinh (Glass Kiosk) ===== -->
-    <g id="checkinTrigger" class="kiosk-group" tabindex="0" role="button" aria-label="Chấm công nhanh">
-      <rect x="322" y="612" width="26" height="70" rx="4" fill="rgba(15,23,42,0.8)" stroke="#22D3EE" stroke-width="1.4"/>
-      <rect x="322" y="612" width="26" height="70" rx="4" fill="url(#cyanGlow)" opacity="0.12"/>
-      <circle class="kiosk-scan-ring" cx="335" cy="632" r="9" fill="none" stroke="#22D3EE" stroke-width="1.5"/>
-      <circle cx="335" cy="632" r="6" fill="#22D3EE" opacity="0.85"/>
-      <rect x="326" y="650" width="18" height="3" rx="1.5" fill="#22D3EE" opacity="0.5"/>
-      <rect x="326" y="657" width="18" height="3" rx="1.5" fill="#22D3EE" opacity="0.3"/>
-      <text class="door-label" x="335" y="602" style="font-size:9.5px; letter-spacing:0.08em;">CHECK-IN</text>
-    </g>
-  </svg>
-
-  <div class="ws-branches" id="branchesOverlay">
-    <div class="ws-branch-card" data-world="erp" style="animation-delay:0.05s;">
-      <div class="ws-branch-card__icon">🏛️</div>
-      <div class="ws-branch-card__name">ERP</div>
-      <div class="ws-branch-card__desc">PHÒNG BAN</div>
+<!-- ================= PANEL CHAM CONG (overlay riêng) ================= -->
+<div class="checkin-overlay" id="checkinOverlay">
+  <div class="checkin-panel">
+    <div class="checkin-panel__head">
+      <div><div class="checkin-panel__title">Chấm công nhanh</div><div class="checkin-panel__center" id="ciCenterName">—</div></div>
+      <button class="checkin-panel__close" id="btnCloseCheckin" aria-label="Đóng">✕</button>
     </div>
-    <div class="ws-branch-card" data-world="crm" style="animation-delay:0.12s;">
-      <div class="ws-branch-card__icon">🌐</div>
-      <div class="ws-branch-card__name">CRM</div>
-      <div class="ws-branch-card__desc">TRUNG TÂM</div>
+    <div class="checkin-panel__hint" id="ciGpsHint">Đang xác định vị trí...</div>
+    <div class="checkin-panel__error" id="ciError" style="display:none;"></div>
+    <div class="checkin-panel__status" id="ciStatus"></div>
+    <div class="checkin-panel__actions">
+      <button class="checkin-btn checkin-btn--in" id="btnCiIn" disabled>Chấm công vào</button>
+      <button class="checkin-btn checkin-btn--out" id="btnCiOut" disabled style="display:none;">Chấm công ra</button>
     </div>
-    <div class="ws-branch-card" data-world="personal" style="animation-delay:0.19s;">
-      <div class="ws-branch-card__icon">🚪</div>
-      <div class="ws-branch-card__name">ROOM</div>
-      <div class="ws-branch-card__desc">CÁ NHÂN</div>
-    </div>
-    <div class="ws-branch-card" data-world="database" style="animation-delay:0.26s;">
-      <div class="ws-branch-card__icon">🗄️</div>
-      <div class="ws-branch-card__name">BANZONE</div>
-      <div class="ws-branch-card__desc">DỮ LIỆU GỐC</div>
-    </div>
+    <a href="/attendance-checkin.html" class="checkin-panel__more">Xem đầy đủ lịch sử chấm công →</a>
   </div>
 </div>
-
-<button class="ws-back-btn" id="btnBack">← Quay lại mặt tiền</button>
-
-<div class="ws-checkin" id="checkinCard" style="display:none;">
-  <div class="ws-checkin__head">
-    <div><div class="ws-checkin__title">CHẤM CÔNG NHANH</div><div class="ws-checkin__center" id="ciCenterName">—</div></div>
-    <button class="ws-checkin__close" id="btnCloseCheckin" aria-label="Đóng">✕</button>
-  </div>
-  <div class="ws-checkin__hint" id="ciGpsHint">Đang xác định vị trí...</div>
-  <div class="ws-checkin__error" id="ciError" style="display:none;"></div>
-  <div class="ws-checkin__status" id="ciStatus"></div>
-  <div class="ws-checkin__actions">
-    <button class="ws-checkin__btn ws-checkin__btn--in" id="btnCiIn" disabled>Chấm công vào</button>
-    <button class="ws-checkin__btn ws-checkin__btn--out" id="btnCiOut" disabled style="display:none;">Chấm công ra</button>
-  </div>
-  <a href="/attendance-checkin.html" class="ws-checkin__more">Xem đầy đủ lịch sử chấm công →</a>
-</div>
-
-<div class="ws-footer" id="footerBar">Bấm vào cửa để bắt đầu · <button id="btnSkip">Vào thẳng ERP như mọi khi</button></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="/env.js"></script>

@@ -1,103 +1,283 @@
-import { supabase } from './supabase.js';
+import { supabase, esc } from './supabase.js';
 import { worldsWithAccess } from './shell.js';
+import { NAV_CONFIG } from './navConfig.js';
 
+const STORAGE_KEY = 'ais_lobby_layer';
 const WORLD_STORAGE_KEY = 'ais_current_world';
-const RADIUS_LIMIT_M = 1000;
 
-function timeGreeting() {
-  const h = new Date().getHours();
-  if (h < 11) return 'CHÀO BUỔI SÁNG';
-  if (h < 14) return 'CHÀO BUỔI TRƯA';
-  if (h < 18) return 'CHÀO BUỔI CHIỀU';
-  return 'CHÀO BUỔI TỐI';
-}
+// =====================================================================
+// PHAN 1 — Dieu huong 3 lop (overlay, khong tai lai trang) + luu trang
+// thai qua sessionStorage/history de F5 hoac bam Back trinh duyet van
+// mo dung lop dang xem, dung yeu cau trong dac ta.
+// =====================================================================
+const PARENT_OF = {
+  layerBranches: 'layerEntry',
+  layerErp: 'layerBranches',
+  layerCrm: 'layerBranches',
+  layerRoom: 'layerBranches',
+  layerBanzone: 'layerBranches',
+};
 
-function enterWorld(world) {
-  localStorage.setItem(WORLD_STORAGE_KEY, world);
-  window.location.href = '/dashboard.html';
-}
+let currentLayer = 'layerEntry';
 
-// ---------------------------------------------------------------------
-// MOI — Vet sang mo phia sau (trang tri, dung dung mau slate-blue +
-// cyan theo dac ta).
-// ---------------------------------------------------------------------
-function renderBackgroundStreaks() {
-  const svg = document.getElementById('bgStreak');
-  let html = '';
-  for (let i = 0; i < 5; i++) {
-    const y = 10 + i * 20 + Math.random() * 8;
-    const w = 30 + Math.random() * 40;
-    html += `<rect x="${Math.random() * 60}%" y="${y}%" width="${w}%" height="1" fill="#22D3EE" opacity="${(0.02 + Math.random() * 0.04).toFixed(2)}"/>`;
+function showLayer(id, { push = true } = {}) {
+  const from = document.getElementById(currentLayer);
+  const to = document.getElementById(id);
+  if (from && from !== to) {
+    from.classList.remove('is-active', 'is-entering');
+    from.classList.add('is-leaving');
+    setTimeout(() => { from.classList.remove('is-leaving'); }, 360);
   }
-  svg.innerHTML = html;
+  to.classList.add('is-active', 'is-entering');
+  setTimeout(() => { to.classList.remove('is-entering'); }, 360);
+  currentLayer = id;
+  sessionStorage.setItem(STORAGE_KEY, id);
+  if (push) window.history.pushState({ layer: id }, '', '#' + id.replace('layer', '').toLowerCase());
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// ---------------------------------------------------------------------
-// MOI — Anh sang phan chieu tren mat kinh toa nha di chuyen theo con tro
-// chuot, dung "Interactive Lighting" trong dac ta.
-// ---------------------------------------------------------------------
-const stage = document.getElementById('wsStage');
-const cursorGlow = document.getElementById('cursorGlow');
-const buildingSvg = document.getElementById('buildingScene');
-stage.addEventListener('mousemove', (e) => {
-  const rect = stage.getBoundingClientRect();
-  const viewBox = buildingSvg.viewBox.baseVal;
-  const px = (e.clientX - rect.left) / rect.width;
-  const py = (e.clientY - rect.top) / rect.height;
-  const x = viewBox.x + px * viewBox.width;
-  const y = viewBox.y + py * viewBox.height;
-  cursorGlow.setAttribute('cx', x.toFixed(0));
-  cursorGlow.setAttribute('cy', y.toFixed(0));
+window.addEventListener('popstate', (e) => {
+  const layer = e.state?.layer || 'layerEntry';
+  showLayer(layer, { push: false });
 });
 
-// ---------------------------------------------------------------------
-// MOI — Cua chinh: hieu ung "Dolly Zoom" (phong to tien vao trong) truoc
-// khi hien Sanh chinh (4 nhanh) — dung dac ta yeu cau.
-// ---------------------------------------------------------------------
-const branchesOverlay = document.getElementById('branchesOverlay');
-const btnBack = document.getElementById('btnBack');
-const subText = document.getElementById('subText');
-const footerBar = document.getElementById('footerBar');
-
-function openBranches() {
-  buildingSvg.classList.add('is-entering');
-  setTimeout(() => { branchesOverlay.classList.add('is-visible'); }, 700);
-  btnBack.classList.add('is-visible');
-  subText.textContent = 'Chọn nơi bạn muốn bắt đầu';
-  footerBar.style.display = 'none';
-}
-function closeBranches() {
-  branchesOverlay.classList.remove('is-visible');
-  buildingSvg.classList.remove('is-entering');
-  btnBack.classList.remove('is-visible');
-  subText.textContent = 'Bấm vào cửa để bước vào sảnh chính';
-  footerBar.style.display = 'block';
-}
-
-document.getElementById('doorGroup').addEventListener('click', openBranches);
-document.getElementById('doorGroup').addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openBranches(); }
+document.querySelectorAll('[data-back]').forEach((btn) => {
+  btn.addEventListener('click', () => { window.history.back(); });
 });
-btnBack.addEventListener('click', closeBranches);
 
-branchesOverlay.querySelectorAll('.ws-branch-card').forEach((card) => {
+document.getElementById('btnEnterDoor').addEventListener('click', () => showLayer('layerBranches'));
+
+// =====================================================================
+// PHAN 2 — 4 nhanh: bam the -> mo dung lop noi dung, khoa theo quyen
+// that (worldsWithAccess, dung chung logic voi menu chinh).
+// =====================================================================
+const BRANCH_TO_LAYER = { erp: 'layerErp', crm: 'layerCrm', room: 'layerRoom', banzone: 'layerBanzone' };
+const BRANCH_TO_WORLD = { erp: 'erp', crm: 'crm', room: 'personal', banzone: 'database' };
+
+document.querySelectorAll('.branch-card').forEach((card) => {
   card.addEventListener('click', () => {
-    if (card.classList.contains('ws-branch-card--locked')) return;
-    if (card.dataset.world === 'erp') { window.location.href = '/erp-lobby.html'; return; }
-    if (card.dataset.world === 'crm') { window.location.href = '/crm-galaxy.html'; return; }
-    if (card.dataset.world === 'personal') { window.location.href = '/room-lobby.html'; return; }
-    if (card.dataset.world === 'database') { window.location.href = '/banzone-vault.html'; return; }
-    enterWorld(card.dataset.world);
+    if (card.classList.contains('branch-card--locked')) return;
+    showLayer(BRANCH_TO_LAYER[card.dataset.branch]);
   });
 });
-document.getElementById('btnSkip').addEventListener('click', () => enterWorld('erp'));
 
-// ---------------------------------------------------------------------
-// Tram cham cong kinh (Glass Kiosk) — logic giu nguyen nhu truoc.
-// ---------------------------------------------------------------------
+function hasAccessToSection(sectionName, profile) {
+  const group = NAV_CONFIG.find((g) => g.section === sectionName);
+  if (!group) return false;
+  return group.items.some((item) => item.visible(profile));
+}
+
+function applyBranchLocks(profile) {
+  const accessibleWorlds = new Set(worldsWithAccess(profile));
+  document.querySelectorAll('.branch-card[data-branch]').forEach((card) => {
+    const world = BRANCH_TO_WORLD[card.dataset.branch];
+    if (accessibleWorlds.has(world)) return;
+    card.classList.add('branch-card--locked');
+    card.querySelector('.branch-card__desc').insertAdjacentHTML('afterend', '<div class="branch-card__lock">🔒 Không có quyền</div>');
+  });
+}
+
+// =====================================================================
+// PHAN 3 — ERP: doi tab + luoi chuc nang dieu hanh + khoi phong ban.
+// =====================================================================
+function timeGreeting() {
+  const h = new Date().getHours();
+  if (h < 11) return 'Chào buổi sáng';
+  if (h < 14) return 'Chào buổi trưa';
+  if (h < 18) return 'Chào buổi chiều';
+  return 'Chào buổi tối';
+}
+
+const EXEC_ICONS = { '/exec/reports.html': '📊', '/exec/sign.html': '✍️' };
+const DEPT_ICON = { 'Phòng nhân sự': '👥', 'Phòng kế toán': '💰', 'Phòng truyền thông': '📣', 'Phòng cơ sở vật chất': '🔧' };
+
+document.querySelectorAll('.erp-tab').forEach((tab) => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.erp-tab').forEach((t) => t.classList.remove('is-active'));
+    tab.classList.add('is-active');
+    document.querySelectorAll('.erp-panel').forEach((p) => p.classList.remove('is-active'));
+    document.getElementById(tab.dataset.tab === 'exec' ? 'erpPanelExec' : 'erpPanelDept').classList.add('is-active');
+  });
+});
+
+function renderErp(profile) {
+  const execGroup = NAV_CONFIG.find((g) => g.section === 'Ban điều hành');
+  const execItems = (execGroup?.items || []).filter((it) => it.visible(profile));
+  document.getElementById('execGrid').innerHTML = execItems.length === 0
+    ? '<div class="content-sub">🔒 Không có quyền truy cập Tầng Điều hành.</div>'
+    : execItems.map((it) => `
+        <div class="item-card" data-href="${it.href}">
+          <span class="item-card__icon">${EXEC_ICONS[it.href] || '📁'}</span>
+          <span class="item-card__name">${it.label}</span>
+        </div>
+      `).join('');
+
+  const deptSections = ['Phòng nhân sự', 'Phòng kế toán', 'Phòng truyền thông', 'Phòng cơ sở vật chất'];
+  document.getElementById('deptGrid').innerHTML = deptSections.map((s) => {
+    const visible = hasAccessToSection(s, profile);
+    return `
+      <div class="item-card ${visible ? '' : 'item-card--locked'}" data-dept="${s}">
+        <span class="item-card__icon">${DEPT_ICON[s]}</span>
+        <span class="item-card__name">${s}</span>
+        ${visible ? '' : '<span class="item-card__lock">🔒</span>'}
+      </div>
+    `;
+  }).join('');
+
+  document.querySelectorAll('#execGrid .item-card, #deptDrillGrid .item-card').forEach((el) => {
+    el.addEventListener('click', () => { if (el.dataset.href) window.location.href = el.dataset.href; });
+  });
+  document.querySelectorAll('#deptGrid .item-card:not(.item-card--locked)').forEach((el) => {
+    el.addEventListener('click', () => {
+      const group = NAV_CONFIG.find((g) => g.section === el.dataset.dept);
+      const items = group.items.filter((it) => it.visible(profile));
+      document.getElementById('deptDrillTitle').textContent = el.dataset.dept;
+      document.getElementById('deptDrillGrid').innerHTML = items.map((it) => `
+        <div class="item-card" data-href="${it.href}"><span class="item-card__icon">📄</span><span class="item-card__name">${it.label}</span></div>
+      `).join('') || '<div class="content-sub">Không có mục nào.</div>';
+      document.querySelectorAll('#deptDrillGrid .item-card').forEach((c) => {
+        c.addEventListener('click', () => { window.location.href = c.dataset.href; });
+      });
+      document.getElementById('deptDrill').classList.add('is-visible');
+      document.getElementById('deptDrill').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+  });
+}
+
+// =====================================================================
+// PHAN 4 — CRM: quy dao ve tinh quanh logo, du lieu trung tam THAT.
+// =====================================================================
+async function renderCrm(profile) {
+  const { data: centers, error } = await supabase.from('centers').select('id, name, code').eq('is_active', true).order('name');
+  const sub = document.getElementById('crmSub');
+  const stage = document.getElementById('crmStage');
+  if (error || !centers || centers.length === 0) { sub.textContent = 'Không tải được danh sách trung tâm.'; return; }
+  sub.textContent = `${centers.length} trung tâm đang hoạt động`;
+
+  let html = '<div class="crm-logo"><div class="crm-logo__title">AIS</div><div class="crm-logo__sub">OFFICE</div></div>';
+  const n = centers.length;
+  const ring1 = centers.slice(0, Math.min(n, 6));
+  const ring2 = centers.slice(6);
+  const rings = [{ items: ring1, r: 44, size: 220 }, { items: ring2, r: 46, size: 340 }].filter((r) => r.items.length > 0);
+
+  rings.forEach((ring) => {
+    html += `<div class="crm-orbit" style="width:${ring.size}%; height:${ring.size}%; margin-left:-${ring.size / 2}%; margin-top:-${ring.size / 2}%;"></div>`;
+    const count = ring.items.length;
+    ring.items.forEach((c, i) => {
+      const angle = (360 / count) * i;
+      const duration = 40 + ring.r;
+      const isAccessible = !profile.isCenterManager || profile.centerId === c.id;
+      html += `
+        <div class="crm-satellite ${isAccessible ? '' : 'crm-satellite--locked'}" data-center="${c.id}"
+             style="top:50%; left:50%; margin-top:-28px; margin-left:-28px; --orbit-r:${ring.r}%; animation-duration:${duration}s; animation-delay:-${(angle / 360) * duration}s;"
+             tabindex="${isAccessible ? '0' : '-1'}" role="button" aria-label="Vào trung tâm ${esc(c.name)}">
+          ${esc(c.code || c.name.slice(0, 4))}
+          <span class="crm-satellite__full">${esc(c.name)}${isAccessible ? '' : ' — 🔒'}</span>
+        </div>
+      `;
+    });
+  });
+
+  stage.innerHTML = html;
+  stage.querySelectorAll('.crm-satellite').forEach((el) => {
+    el.addEventListener('click', () => {
+      if (el.classList.contains('crm-satellite--locked')) return;
+      localStorage.setItem(WORLD_STORAGE_KEY, 'crm');
+      localStorage.setItem('ais_selected_center', el.dataset.center);
+      window.location.href = '/dashboard.html';
+    });
+  });
+}
+
+// =====================================================================
+// PHAN 5 — ROOM: luoi phang cac chuc nang ca nhan.
+// =====================================================================
+const ROOM_ICONS = {
+  '/directory.html': '📇', '/profile.html': '👤', '/my-payroll.html': '💵', '/meetings.html': '🗓️',
+  '/attendance-checkin.html': '📍', '/hr/late-clockin-requests.html': '⏰', '/acc/purchase-orders.html': '🧾',
+  '/proposals.html': '💡', '/archive.html': '📚', '/permission-requests.html': '🔑', '/change-password.html': '🔒',
+};
+function renderRoom(profile) {
+  const group = NAV_CONFIG.find((g) => g.section === 'Chức năng cá nhân');
+  const grid = document.getElementById('roomGrid');
+  grid.innerHTML = group.items.map((item) => {
+    const visible = item.visible(profile);
+    return `
+      <div class="item-card ${visible ? '' : 'item-card--locked'}" data-href="${item.href}">
+        <span class="item-card__icon">${ROOM_ICONS[item.href] || '✨'}</span>
+        <span class="item-card__name">${item.label}</span>
+        ${visible ? '' : '<span class="item-card__lock">🔒</span>'}
+      </div>
+    `;
+  }).join('');
+  grid.querySelectorAll('.item-card:not(.item-card--locked)').forEach((el) => {
+    el.addEventListener('click', () => { window.location.href = el.dataset.href; });
+  });
+}
+
+// =====================================================================
+// PHAN 6 — BANZONE: gop theo danh muc (accordion) + tim nhanh.
+// =====================================================================
+const BANZONE_CATEGORIES = [
+  { name: 'Tổ chức', icon: '🏢', hrefs: ['/master-data/centers.html', '/master-data/departments.html', '/master-data/system-roles.html', '/master-data/divisions.html'] },
+  { name: 'Tài chính', icon: '💰', hrefs: ['/acc/suppliers.html', '/master-data/expense-categories.html', '/master-data/chart-of-accounts.html', '/master-data/wallet-tier-discounts.html', '/master-data/program-pricing.html', '/master-data/program-plan-discounts.html'] },
+  { name: 'Vận hành', icon: '📦', hrefs: ['/master-data/size-chart.html', '/master-data/inventory-items.html'] },
+];
+function renderBanzone(profile) {
+  const group = NAV_CONFIG.find((g) => g.section === 'Cấu hình dữ liệu gốc');
+  const itemsByHref = {};
+  group.items.forEach((it) => { itemsByHref[it.href] = it; });
+  const usedHrefs = new Set(BANZONE_CATEGORIES.flatMap((c) => c.hrefs));
+  const remaining = group.items.filter((it) => !usedHrefs.has(it.href));
+  const categories = [...BANZONE_CATEGORIES];
+  if (remaining.length > 0) categories.push({ name: 'Hệ thống', icon: '⚙️', hrefs: remaining.map((it) => it.href) });
+
+  const box = document.getElementById('banzoneAccordions');
+  box.innerHTML = categories.map((cat, ci) => {
+    const items = cat.hrefs.map((h) => itemsByHref[h]).filter(Boolean);
+    const anyVisible = items.some((it) => it.visible(profile));
+    return `
+      <div class="accordion ${anyVisible ? '' : 'accordion--locked'}" data-cat="${ci}">
+        <div class="accordion__head">
+          <span class="accordion__icon">${cat.icon}</span>
+          <span class="accordion__name">${cat.name}</span>
+          <span class="accordion__count">${items.length} mục${anyVisible ? '' : ' — 🔒'}</span>
+          <span class="accordion__arrow">▸</span>
+        </div>
+        <div class="accordion__body">
+          ${items.map((it) => {
+            const visible = it.visible(profile);
+            return `<div class="accordion-row ${visible ? '' : 'accordion-row--locked'}" data-href="${it.href}" data-name="${it.label.toLowerCase()}">${it.label}${visible ? '' : ' 🔒'}</div>`;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  box.querySelectorAll('.accordion:not(.accordion--locked) .accordion__head').forEach((head) => {
+    head.addEventListener('click', () => { head.closest('.accordion').classList.toggle('is-open'); });
+  });
+  box.querySelectorAll('.accordion-row:not(.accordion-row--locked)').forEach((row) => {
+    row.addEventListener('click', (e) => { e.stopPropagation(); window.location.href = row.dataset.href; });
+  });
+
+  document.getElementById('banzoneSearch').addEventListener('input', (e) => {
+    const q = e.target.value.trim().toLowerCase();
+    box.querySelectorAll('.accordion-row').forEach((row) => {
+      const match = !q || row.dataset.name.includes(q);
+      row.classList.toggle('accordion-row--hidden', !match);
+      if (match && q) row.closest('.accordion').classList.add('is-open');
+    });
+  });
+}
+
+// =====================================================================
+// PHAN 7 — Cham cong nhanh (giu nguyen logic, doi mau sang theme sang).
+// =====================================================================
 let PROFILE = null;
 let CENTER = null;
 let LAST_POSITION = null;
+const RADIUS_LIMIT_M = 1000;
 
 function distanceMeters(lat1, lon1, lat2, lon2) {
   const R = 6371000;
@@ -118,13 +298,13 @@ function watchPosition() {
       const dist = distanceMeters(pos.coords.latitude, pos.coords.longitude, CENTER.latitude, CENTER.longitude);
       const inRange = dist <= RADIUS_LIMIT_M;
       hint.textContent = inRange ? `Trong phạm vi — cách trung tâm ${fmtDistance(dist)}` : `Ngoài phạm vi — cách ${fmtDistance(dist)} (giới hạn 1km)`;
-      hint.style.color = inRange ? '#67E8F9' : '#FCA5A5';
+      hint.style.color = inRange ? 'var(--success)' : 'var(--danger)';
       const btnIn = document.getElementById('btnCiIn');
       const btnOut = document.getElementById('btnCiOut');
       if (btnIn.style.display !== 'none') btnIn.disabled = !inRange;
       if (btnOut.style.display !== 'none') btnOut.disabled = !inRange;
     },
-    (err) => { hint.textContent = 'Không lấy được vị trí: ' + (err.message || 'cần cho phép truy cập vị trí.'); hint.style.color = '#FCA5A5'; },
+    (err) => { hint.textContent = 'Không lấy được vị trí: ' + (err.message || 'cần cho phép truy cập vị trí.'); hint.style.color = 'var(--danger)'; },
     { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 }
   );
 }
@@ -133,13 +313,11 @@ async function loadTodayStatus() {
   const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
   const { data } = await supabase.from('attendance_checkins').select('check_type, checked_at')
     .eq('employee_id', PROFILE.id).gte('checked_at', todayStart.toISOString()).order('checked_at', { ascending: true });
-
   const hasIn = (data || []).some((r) => r.check_type === 'in');
   const hasOut = (data || []).some((r) => r.check_type === 'out');
   const status = document.getElementById('ciStatus');
   const btnIn = document.getElementById('btnCiIn');
   const btnOut = document.getElementById('btnCiOut');
-
   if (hasIn && hasOut) {
     status.textContent = '✓ Đã hoàn tất chấm công hôm nay (vào & ra).';
     btnIn.style.display = 'none'; btnOut.style.display = 'none';
@@ -156,10 +334,8 @@ async function doCheckin(type) {
   const errBox = document.getElementById('ciError');
   errBox.style.display = 'none';
   if (!LAST_POSITION) { errBox.textContent = 'Chưa xác định được vị trí — đợi vài giây rồi thử lại.'; errBox.style.display = 'block'; return; }
-
   const dist = distanceMeters(LAST_POSITION.latitude, LAST_POSITION.longitude, CENTER.latitude, CENTER.longitude);
   if (dist > RADIUS_LIMIT_M) { errBox.textContent = `Cách trung tâm ${fmtDistance(dist)} — ngoài phạm vi cho phép (1km).`; errBox.style.display = 'block'; return; }
-
   const btn = type === 'in' ? document.getElementById('btnCiIn') : document.getElementById('btnCiOut');
   btn.disabled = true; const oldText = btn.textContent; btn.textContent = 'Đang chấm công...';
   try {
@@ -177,17 +353,14 @@ async function doCheckin(type) {
 }
 document.getElementById('btnCiIn').addEventListener('click', () => doCheckin('in'));
 document.getElementById('btnCiOut').addEventListener('click', () => doCheckin('out'));
-document.getElementById('btnCloseCheckin').addEventListener('click', () => { document.getElementById('checkinCard').style.display = 'none'; });
+document.getElementById('btnCloseCheckin').addEventListener('click', () => { document.getElementById('checkinOverlay').classList.remove('is-visible'); });
+document.getElementById('checkinOverlay').addEventListener('click', (e) => { if (e.target.id === 'checkinOverlay') e.currentTarget.classList.remove('is-visible'); });
 
 let checkinInitialized = false;
-async function toggleCheckin() {
-  const card = document.getElementById('checkinCard');
-  if (card.style.display === 'block') { card.style.display = 'none'; return; }
-  card.style.display = 'block';
-  card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+async function openCheckin() {
+  document.getElementById('checkinOverlay').classList.add('is-visible');
   if (checkinInitialized) return;
   checkinInitialized = true;
-
   if (!PROFILE?.centerId) {
     document.getElementById('ciGpsHint').textContent = 'Bạn không gắn cố định 1 trung tâm — dùng trang chấm công đầy đủ để chọn đúng trung tâm đang có mặt.';
     document.getElementById('btnCiIn').style.display = 'none';
@@ -206,12 +379,12 @@ async function toggleCheckin() {
   watchPosition();
   await loadTodayStatus();
 }
-const checkinTrigger = document.getElementById('checkinTrigger');
-checkinTrigger.addEventListener('click', toggleCheckin);
-checkinTrigger.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleCheckin(); } });
+document.getElementById('btnOpenCheckin').addEventListener('click', openCheckin);
 
+// =====================================================================
+// BOOT
+// =====================================================================
 (async () => {
-  renderBackgroundStreaks();
   document.getElementById('greetingEyebrow').textContent = timeGreeting();
 
   const { data: sessionData } = await supabase.auth.getSession();
@@ -240,15 +413,18 @@ checkinTrigger.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.k
     centerName: employee.centers?.name || '',
     isCenterManager: employee.system_roles?.code === 'CENTER_MANAGER',
   };
-  const accessibleWorlds = new Set(worldsWithAccess(fullProfile));
 
-  branchesOverlay.querySelectorAll('.ws-branch-card[data-world]').forEach((card) => {
-    if (accessibleWorlds.has(card.dataset.world)) return;
-    card.classList.add('ws-branch-card--locked');
-    const desc = card.querySelector('.ws-branch-card__desc');
-    const lockNote = document.createElement('div');
-    lockNote.className = 'ws-branch-card__lock';
-    lockNote.textContent = '🔒 Không có quyền truy cập';
-    desc.after(lockNote);
-  });
+  applyBranchLocks(fullProfile);
+  renderErp(fullProfile);
+  renderRoom(fullProfile);
+  renderBanzone(fullProfile);
+  await renderCrm(fullProfile);
+
+  // Khoi phuc dung lop dang xem neu F5 / mo lai (dung sessionStorage)
+  const savedLayer = sessionStorage.getItem(STORAGE_KEY);
+  if (savedLayer && savedLayer !== 'layerEntry' && document.getElementById(savedLayer)) {
+    showLayer(savedLayer, { push: false });
+  } else {
+    window.history.replaceState({ layer: 'layerEntry' }, '', '#entry');
+  }
 })();
