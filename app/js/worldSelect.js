@@ -1,6 +1,28 @@
 import { supabase, esc } from './supabase.js';
 import { worldsWithAccess } from './shell.js';
 import { NAV_CONFIG } from './navConfig.js';
+import { getLang, setLang, syncLangFromProfile } from './i18n.js';
+
+// =====================================================================
+// MOI — Doi ngon ngu + Dang xuat ngay tai trang cho — dung LAI dung
+// ham/kieu nut da co san o shell.js (khong bay dung 1 kieu rieng).
+// =====================================================================
+function paintLangSwitcher() {
+  const current = getLang();
+  document.querySelectorAll('#langSwitcher button').forEach((b) => {
+    b.classList.toggle('is-active', b.dataset.lang === current);
+  });
+}
+document.querySelectorAll('#langSwitcher button').forEach((b) => {
+  b.addEventListener('click', () => setLang(b.dataset.lang, { supabase, employeeId: PROFILE?.id }));
+});
+document.addEventListener('ais:langchange', paintLangSwitcher);
+paintLangSwitcher();
+
+document.getElementById('btnLogout').addEventListener('click', async () => {
+  await supabase.auth.signOut();
+  window.location.href = '/index.html';
+});
 
 const STORAGE_KEY = 'ais_lobby_layer';
 const WORLD_STORAGE_KEY = 'ais_current_world';
@@ -505,7 +527,7 @@ document.getElementById('btnOpenCheckin').addEventListener('click', openCheckin)
   const { data: employee } = await supabase
     .from('employees')
     .select(`
-      id, full_name, center_id,
+      id, full_name, center_id, language_preference,
       departments ( code ), positions ( name ),
       system_roles ( code ), centers ( id, name )
     `)
@@ -515,6 +537,8 @@ document.getElementById('btnOpenCheckin').addEventListener('click', openCheckin)
   if (!employee) return;
   document.getElementById('userNameSpan').textContent = employee.full_name || '';
   PROFILE = { id: employee.id, centerId: employee.center_id };
+  syncLangFromProfile(employee.language_preference);
+  paintLangSwitcher();
 
   const fullProfile = {
     id: employee.id,

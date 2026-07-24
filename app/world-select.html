@@ -201,9 +201,31 @@
   .checkin-panel__more { display: block; text-align: center; margin-top: 12px; font-size: 11.5px; color: var(--muted); }
 
   .skeleton { background: var(--surface-sunken); border-radius: var(--radius-md); height: 60px; }
+  .lobby-utility-bar { position: absolute; top: 20px; right: 20px; display: flex; align-items: center; gap: 10px; z-index: 5; }
+  .lobby-lang-switcher { display: flex; background: var(--surface-fill); border-radius: var(--radius-pill); padding: 2px; gap: 2px; }
+  .lobby-lang-switcher button {
+    border: none; background: transparent; padding: 5px 10px; border-radius: var(--radius-pill);
+    font-size: 11.5px; font-weight: 700; cursor: pointer; color: var(--muted); transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+  }
+  .lobby-lang-switcher button.is-active { background: var(--accent); color: #fff; }
+  .lobby-logout-btn {
+    display: flex; align-items: center; gap: 6px; background: var(--surface-card); border: 1px solid var(--border);
+    border-radius: var(--radius-pill); padding: 6px 14px; font-size: 12px; font-weight: 700; color: var(--ink-soft);
+    cursor: pointer; box-shadow: var(--shadow-xs); transition: color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
+  }
+  .lobby-logout-btn:hover { color: var(--danger); border-color: var(--danger); }
+  @media (max-width: 560px) { .lobby-utility-bar { top: 14px; right: 14px; } .lobby-logout-btn span { display: none; } }
 </style>
 </head>
 <body>
+
+<div class="lobby-utility-bar">
+  <div class="lobby-lang-switcher" id="langSwitcher">
+    <button type="button" data-lang="vi">VI</button>
+    <button type="button" data-lang="en">EN</button>
+  </div>
+  <button class="lobby-logout-btn" id="btnLogout">🚪 <span data-i18n="common.logout">Đăng xuất</span></button>
+</div>
 
 <div class="lobby-wrap">
 
