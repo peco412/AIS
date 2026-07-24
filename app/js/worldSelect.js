@@ -13,6 +13,7 @@ const WORLD_STORAGE_KEY = 'ais_current_world';
 const PARENT_OF = {
   layerBranches: 'layerEntry',
   layerErp: 'layerBranches',
+  layerDeptWorkspace: 'layerErp',
   layerCrm: 'layerBranches',
   layerRoom: 'layerBranches',
   layerBanzone: 'layerBranches',
@@ -168,26 +169,25 @@ function renderErp(profile) {
       const group = NAV_CONFIG.find((g) => g.section === dept);
       const items = group.items.filter((it) => it.visible(profile));
       const theme = DEPT_THEME[dept] || 'var(--accent)';
-      // MOI — "spacework" rieng cho tung phong ban: banner mau chu de +
-      // icon lon, thay vi chi hien danh sach tro troi nhu truoc.
-      document.getElementById('deptDrill').style.setProperty('--dept-theme', theme);
-      document.getElementById('deptDrillTitle').innerHTML = `
+      // MOI — "spacework" rieng cho tung phong ban: mo hang han 1 LOP
+      // MAN HINH RIENG (giong het ERP/CRM/Room/Banzone), khong con la
+      // 1 khoi mo rong ngay trong trang ERP nua.
+      document.getElementById('deptWorkspaceBanner').innerHTML = `
         <div class="dept-workspace-banner" style="background:${theme}1a; border-color:${theme}40;">
           <span class="dept-workspace-banner__icon" style="background:${theme};">${DEPT_ICON[dept] || '🏢'}</span>
           <div><div class="dept-workspace-banner__name">${dept}</div><div class="dept-workspace-banner__count">${items.length} chức năng</div></div>
         </div>
       `;
-      document.getElementById('deptDrillGrid').innerHTML = items.map((it) => `
+      document.getElementById('deptWorkspaceGrid').innerHTML = items.map((it) => `
         <div class="item-card" data-href="${it.href}" style="border-color:${theme}30;">
           <span class="item-card__icon" style="background:${theme}1a; border-radius:8px; width:32px; height:32px; display:flex; align-items:center; justify-content:center;">${ITEM_ICONS[it.href] || '📄'}</span>
           <span class="item-card__name">${it.label}</span>
         </div>
       `).join('') || '<div class="content-sub">Không có mục nào.</div>';
-      document.querySelectorAll('#deptDrillGrid .item-card').forEach((c) => {
+      document.querySelectorAll('#deptWorkspaceGrid .item-card').forEach((c) => {
         c.addEventListener('click', () => { window.location.href = c.dataset.href; });
       });
-      document.getElementById('deptDrill').classList.add('is-visible');
-      document.getElementById('deptDrill').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      showLayer('layerDeptWorkspace');
     });
   });
 }

@@ -112,9 +112,6 @@
   .item-card__name { font-size: 13px; font-weight: 600; color: var(--ink); flex: 1; }
   .item-card__lock { font-size: 15px; }
 
-  .dept-drill { margin-top: 16px; display: none; }
-  .dept-drill.is-visible { display: block; animation: slide-in var(--dur-base) var(--ease) forwards; }
-  .dept-drill__title { margin-bottom: 14px; }
   .dept-workspace-banner {
     display: flex; align-items: center; gap: 14px; padding: 16px 18px; border-radius: var(--radius-lg);
     border: 1px solid; animation: slide-in var(--dur-base) var(--ease) forwards;
@@ -275,11 +272,14 @@
     </div>
     <div class="erp-panel" id="erpPanelDept">
       <div class="item-grid" id="deptGrid"><div class="skeleton"></div></div>
-      <div class="dept-drill" id="deptDrill">
-        <div class="dept-drill__title" id="deptDrillTitle"></div>
-        <div class="item-grid" id="deptDrillGrid"></div>
-      </div>
     </div>
+  </section>
+
+  <!-- ================= LOP 3 — SPACEWORK RIENG CUA 1 PHONG BAN ================= -->
+  <section class="lobby-layer" id="layerDeptWorkspace">
+    <button class="lobby-back" data-back="layerErp">← Quay lại</button>
+    <div id="deptWorkspaceBanner"></div>
+    <div class="item-grid" id="deptWorkspaceGrid" style="margin-top:18px;"></div>
   </section>
 
   <!-- ================= LOP 2b — CRM ================= -->
