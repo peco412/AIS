@@ -39,6 +39,7 @@ function showLayer(id, { push = true } = {}) {
 window.addEventListener('popstate', (e) => {
   const layer = e.state?.layer || 'layerEntry';
   showLayer(layer, { push: false });
+  if (layer === 'layerCrm') setTimeout(repositionCrmSatellites, 60);
 });
 
 document.querySelectorAll('[data-back]').forEach((btn) => {
@@ -57,7 +58,9 @@ const BRANCH_TO_WORLD = { erp: 'erp', crm: 'crm', room: 'personal', banzone: 'da
 document.querySelectorAll('.branch-card').forEach((card) => {
   card.addEventListener('click', () => {
     if (card.classList.contains('branch-card--locked')) return;
-    showLayer(BRANCH_TO_LAYER[card.dataset.branch]);
+    const layer = BRANCH_TO_LAYER[card.dataset.branch];
+    showLayer(layer);
+    if (layer === 'layerCrm') setTimeout(repositionCrmSatellites, 60);
   });
 });
 
@@ -158,18 +161,26 @@ async function renderCrm(profile) {
   const n = centers.length;
   const ring1 = centers.slice(0, Math.min(n, 6));
   const ring2 = centers.slice(6);
-  const rings = [{ items: ring1, r: 44, size: 220 }, { items: ring2, r: 46, size: 340 }].filter((r) => r.items.length > 0);
+  // SUA LOI THAT: truoc day dung "--orbit-r: 44%" roi translateX(var(--orbit-r))
+  // — nhung transform: translateX(%) luon tinh theo KICH THUOC CUA CHINH
+  // PHAN TU DO (ve tinh 56px), KHONG PHAI theo khung san khau — nen ban
+  // kinh thuc te chi ~25px, khien moi ve tinh don cuc vao sat logo. Gio do
+  // dung KICH THUOC THAT cua san khau (do bang JS) roi tinh ban kinh ra
+  // PIXEL that, khong dung % nua.
+  const stageSize = stage.offsetWidth || 560;
+  const rings = [{ items: ring1, rPct: 0.30, size: 220 }, { items: ring2, rPct: 0.44, size: 340 }].filter((r) => r.items.length > 0);
 
   rings.forEach((ring) => {
     html += `<div class="crm-orbit" style="width:${ring.size}%; height:${ring.size}%; margin-left:-${ring.size / 2}%; margin-top:-${ring.size / 2}%;"></div>`;
     const count = ring.items.length;
+    const radiusPx = Math.round(stageSize * ring.rPct);
     ring.items.forEach((c, i) => {
       const angle = (360 / count) * i;
-      const duration = 40 + ring.r;
+      const duration = 40 + radiusPx / 10;
       const isAccessible = !profile.isCenterManager || profile.centerId === c.id;
       html += `
-        <div class="crm-satellite ${isAccessible ? '' : 'crm-satellite--locked'}" data-center="${c.id}"
-             style="top:50%; left:50%; margin-top:-28px; margin-left:-28px; --orbit-r:${ring.r}%; animation-duration:${duration}s; animation-delay:-${(angle / 360) * duration}s;"
+        <div class="crm-satellite ${isAccessible ? '' : 'crm-satellite--locked'}" data-center="${c.id}" data-ring-pct="${ring.rPct}"
+             style="top:50%; left:50%; margin-top:-28px; margin-left:-28px; --orbit-r:${radiusPx}px; animation-duration:${duration}s; animation-delay:-${(angle / 360) * duration}s;"
              tabindex="${isAccessible ? '0' : '-1'}" role="button" aria-label="Vào trung tâm ${esc(c.name)}">
           ${esc(c.code || c.name.slice(0, 4))}
           <span class="crm-satellite__full">${esc(c.name)}${isAccessible ? '' : ' — 🔒'}</span>
@@ -179,6 +190,7 @@ async function renderCrm(profile) {
   });
 
   stage.innerHTML = html;
+  repositionCrmSatellites();
   stage.querySelectorAll('.crm-satellite').forEach((el) => {
     el.addEventListener('click', () => {
       if (el.classList.contains('crm-satellite--locked')) return;
@@ -186,6 +198,20 @@ async function renderCrm(profile) {
       localStorage.setItem('ais_selected_center', el.dataset.center);
       window.location.href = '/dashboard.html';
     });
+  });
+}
+
+// MOI — tinh lai ban kinh quy dao THEO KICH THUOC THAT cua san khau tai
+// thoi diem lop CRM dang HIEN (khi dang an, offsetWidth = 0, do sai) —
+// goi lai moi khi mo lop nay de dam bao chinh xac tren moi kich man hinh.
+function repositionCrmSatellites() {
+  const stage = document.getElementById('crmStage');
+  const stageSize = stage.offsetWidth;
+  if (!stageSize) return; // van dang an, doi lan goi sau
+  stage.querySelectorAll('.crm-satellite').forEach((el) => {
+    const ringPct = Number(el.dataset.ringPct);
+    const radiusPx = Math.round(stageSize * ringPct);
+    el.style.setProperty('--orbit-r', radiusPx + 'px');
   });
 }
 
@@ -424,7 +450,10 @@ document.getElementById('btnOpenCheckin').addEventListener('click', openCheckin)
   const savedLayer = sessionStorage.getItem(STORAGE_KEY);
   if (savedLayer && savedLayer !== 'layerEntry' && document.getElementById(savedLayer)) {
     showLayer(savedLayer, { push: false });
+    if (savedLayer === 'layerCrm') setTimeout(repositionCrmSatellites, 60);
   } else {
     window.history.replaceState({ layer: 'layerEntry' }, '', '#entry');
   }
+
+  window.addEventListener('resize', () => { if (currentLayer === 'layerCrm') repositionCrmSatellites(); });
 })();
