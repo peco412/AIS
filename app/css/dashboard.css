@@ -358,9 +358,9 @@
   border-radius: var(--radius-md);
   padding: 18px 20px;
   box-shadow: var(--shadow-xs);
-  transition: box-shadow var(--dur-base) var(--ease), transform var(--dur-base) var(--ease);
+  transition: box-shadow var(--dur-base) var(--ease), transform var(--dur-base) var(--ease-spring);
 }
-.stat-card:hover { box-shadow: var(--shadow-sm); transform: translateY(-1px); }
+.stat-card:hover { box-shadow: var(--shadow-sm); transform: translateY(-2px); }
 .stat-card .label { font-size: 12.5px; color: var(--muted); font-weight: 600; }
 .stat-card .value { font-family: var(--font-mono); font-size: 27px; font-weight: 600; margin-top: 6px; color: var(--ink); letter-spacing: -0.01em; }
 .stat-card .delta { font-size: 12px; margin-top: 4px; color: var(--success); }

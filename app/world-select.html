@@ -234,60 +234,60 @@
     <div class="entry-header">
       <div class="entry-eyebrow" id="greetingEyebrow">Chào buổi sáng</div>
       <div class="entry-title">AIS OFFICE <span id="userNameSpan">...</span></div>
-      <div class="entry-sub">Chọn 1 mục để bắt đầu</div>
+      <div class="entry-sub" data-i18n="lobby.entry.sub">Chọn 1 mục để bắt đầu</div>
     </div>
     <div class="entry-cards">
       <div class="entry-card entry-card--primary" id="btnEnterDoor">
         <div class="entry-card__icon">🚪</div>
-        <div class="entry-card__title">Vào cửa</div>
-        <div class="entry-card__desc">Đi vào hệ thống — ERP, CRM, Room, Banzone</div>
+        <div class="entry-card__title" data-i18n="lobby.entry.doorTitle">Vào cửa</div>
+        <div class="entry-card__desc" data-i18n="lobby.entry.doorDesc">Đi vào hệ thống — ERP, CRM, Room, Banzone</div>
       </div>
       <div class="entry-card" id="btnOpenCheckin">
         <div class="entry-card__icon">🕐</div>
-        <div class="entry-card__title">Chấm công</div>
-        <div class="entry-card__desc">Check-in / Check-out nhanh</div>
+        <div class="entry-card__title" data-i18n="lobby.entry.checkinTitle">Chấm công</div>
+        <div class="entry-card__desc" data-i18n="lobby.entry.checkinDesc">Check-in / Check-out nhanh</div>
       </div>
     </div>
   </section>
 
   <!-- ================= LOP 1 — 4 NHANH ================= -->
   <section class="lobby-layer" id="layerBranches">
-    <button class="lobby-back" data-back="layerEntry">← Quay lại</button>
+    <button class="lobby-back" data-back="layerEntry" data-i18n="lobby.back">← Quay lại</button>
     <div class="branches-header">
-      <div class="branches-title">Chọn khu vực</div>
-      <div class="branches-sub">Bấm vào 1 thẻ để đi sâu vào bên trong</div>
+      <div class="branches-title" data-i18n="lobby.branches.title">Chọn khu vực</div>
+      <div class="branches-sub" data-i18n="lobby.branches.sub">Bấm vào 1 thẻ để đi sâu vào bên trong</div>
     </div>
     <div class="branch-grid" id="branchGrid">
       <div class="branch-card" data-branch="erp">
         <div class="branch-card__icon">🏢</div>
-        <div class="branch-card__name">ERP</div>
-        <div class="branch-card__desc">PHÒNG BAN</div>
+        <div class="branch-card__name" data-i18n="lobby.branch.erp.name">ERP</div>
+        <div class="branch-card__desc" data-i18n="lobby.branch.erp.desc">PHÒNG BAN</div>
       </div>
       <div class="branch-card" data-branch="crm">
         <div class="branch-card__icon">🌐</div>
-        <div class="branch-card__name">CRM</div>
-        <div class="branch-card__desc">TRUNG TÂM</div>
+        <div class="branch-card__name" data-i18n="lobby.branch.crm.name">CRM</div>
+        <div class="branch-card__desc" data-i18n="lobby.branch.crm.desc">TRUNG TÂM</div>
       </div>
       <div class="branch-card" data-branch="room">
         <div class="branch-card__icon">🚪</div>
-        <div class="branch-card__name">ROOM</div>
-        <div class="branch-card__desc">CÁ NHÂN</div>
+        <div class="branch-card__name" data-i18n="lobby.branch.room.name">ROOM</div>
+        <div class="branch-card__desc" data-i18n="lobby.branch.room.desc">CÁ NHÂN</div>
       </div>
       <div class="branch-card" data-branch="banzone">
         <div class="branch-card__icon">🗄️</div>
-        <div class="branch-card__name">BANZONE</div>
-        <div class="branch-card__desc">DATABASE</div>
+        <div class="branch-card__name" data-i18n="lobby.branch.banzone.name">BANZONE</div>
+        <div class="branch-card__desc" data-i18n="lobby.branch.banzone.desc">DATABASE</div>
       </div>
     </div>
   </section>
 
   <!-- ================= LOP 2a — ERP ================= -->
   <section class="lobby-layer" id="layerErp">
-    <button class="lobby-back" data-back="layerBranches">← Quay lại</button>
-    <div class="content-header"><div class="content-title">ERP — Khối Quản Trị Phòng Ban</div></div>
+    <button class="lobby-back" data-back="layerBranches" data-i18n="lobby.back">← Quay lại</button>
+    <div class="content-header"><div class="content-title" data-i18n="lobby.erp.title">ERP — Khối Quản Trị Phòng Ban</div></div>
     <div class="erp-tabs">
-      <button class="erp-tab is-active" data-tab="exec">Tầng Điều hành</button>
-      <button class="erp-tab" data-tab="dept">Tầng Phòng ban</button>
+      <button class="erp-tab is-active" data-tab="exec" data-i18n="lobby.erp.tabExec">Tầng Điều hành</button>
+      <button class="erp-tab" data-tab="dept" data-i18n="lobby.erp.tabDept">Tầng Phòng ban</button>
     </div>
     <div class="erp-panel is-active" id="erpPanelExec">
       <div class="item-grid" id="execGrid"><div class="skeleton"></div></div>
@@ -299,32 +299,32 @@
 
   <!-- ================= LOP 3 — SPACEWORK RIENG CUA 1 PHONG BAN ================= -->
   <section class="lobby-layer" id="layerDeptWorkspace">
-    <button class="lobby-back" data-back="layerErp">← Quay lại</button>
+    <button class="lobby-back" data-back="layerErp" data-i18n="lobby.back">← Quay lại</button>
     <div id="deptWorkspaceBanner"></div>
     <div class="item-grid" id="deptWorkspaceGrid" style="margin-top:18px;"></div>
   </section>
 
   <!-- ================= LOP 2b — CRM ================= -->
   <section class="lobby-layer" id="layerCrm">
-    <button class="lobby-back" data-back="layerBranches">← Quay lại</button>
-    <div class="content-header"><div class="content-title">CRM — Khối Trung Tâm</div><div class="content-sub" id="crmSub">Đang tải danh sách trung tâm...</div></div>
+    <button class="lobby-back" data-back="layerBranches" data-i18n="lobby.back">← Quay lại</button>
+    <div class="content-header"><div class="content-title" data-i18n="lobby.crm.title">CRM — Khối Trung Tâm</div><div class="content-sub" id="crmSub" data-i18n="lobby.crm.loading">Đang tải danh sách trung tâm...</div></div>
     <div class="crm-stage" id="crmStage"></div>
   </section>
 
   <!-- ================= LOP 2c — ROOM ================= -->
   <section class="lobby-layer" id="layerRoom">
-    <button class="lobby-back" data-back="layerBranches">← Quay lại</button>
-    <div class="content-header"><div class="content-title">Room — Không gian cá nhân</div></div>
+    <button class="lobby-back" data-back="layerBranches" data-i18n="lobby.back">← Quay lại</button>
+    <div class="content-header"><div class="content-title" data-i18n="lobby.room.title">Room — Không gian cá nhân</div></div>
     <div class="room-grid" id="roomGrid"><div class="skeleton"></div></div>
   </section>
 
   <!-- ================= LOP 2d — BANZONE ================= -->
   <section class="lobby-layer" id="layerBanzone">
-    <button class="lobby-back" data-back="layerBranches">← Quay lại</button>
-    <div class="content-header"><div class="content-title">Banzone — Kho dữ liệu gốc</div></div>
+    <button class="lobby-back" data-back="layerBranches" data-i18n="lobby.back">← Quay lại</button>
+    <div class="content-header"><div class="content-title" data-i18n="lobby.banzone.title">Banzone — Kho dữ liệu gốc</div></div>
     <div class="banzone-search">
       <span class="banzone-search__icon">🔍</span>
-      <input type="text" id="banzoneSearch" placeholder="Tìm nhanh (VD: trung tâm, chi phí, kho...)" />
+      <input type="text" id="banzoneSearch" placeholder="Tìm nhanh (VD: trung tâm, chi phí, kho...)" data-i18n-placeholder="lobby.banzone.searchPlaceholder" />
     </div>
     <div id="banzoneAccordions"><div class="skeleton"></div></div>
   </section>
@@ -335,17 +335,17 @@
 <div class="checkin-overlay" id="checkinOverlay">
   <div class="checkin-panel">
     <div class="checkin-panel__head">
-      <div><div class="checkin-panel__title">Chấm công nhanh</div><div class="checkin-panel__center" id="ciCenterName">—</div></div>
+      <div><div class="checkin-panel__title" data-i18n="lobby.checkin.title">Chấm công nhanh</div><div class="checkin-panel__center" id="ciCenterName">—</div></div>
       <button class="checkin-panel__close" id="btnCloseCheckin" aria-label="Đóng">✕</button>
     </div>
-    <div class="checkin-panel__hint" id="ciGpsHint">Đang xác định vị trí...</div>
+    <div class="checkin-panel__hint" id="ciGpsHint" data-i18n="lobby.checkin.locating">Đang xác định vị trí...</div>
     <div class="checkin-panel__error" id="ciError" style="display:none;"></div>
     <div class="checkin-panel__status" id="ciStatus"></div>
     <div class="checkin-panel__actions">
-      <button class="checkin-btn checkin-btn--in" id="btnCiIn" disabled>Chấm công vào</button>
-      <button class="checkin-btn checkin-btn--out" id="btnCiOut" disabled style="display:none;">Chấm công ra</button>
+      <button class="checkin-btn checkin-btn--in" id="btnCiIn" disabled data-i18n="lobby.checkin.btnIn">Chấm công vào</button>
+      <button class="checkin-btn checkin-btn--out" id="btnCiOut" disabled style="display:none;" data-i18n="lobby.checkin.btnOut">Chấm công ra</button>
     </div>
-    <a href="/attendance-checkin.html" class="checkin-panel__more">Xem đầy đủ lịch sử chấm công →</a>
+    <a href="/attendance-checkin.html" class="checkin-panel__more" data-i18n="lobby.checkin.moreLink">Xem đầy đủ lịch sử chấm công →</a>
   </div>
 </div>
 

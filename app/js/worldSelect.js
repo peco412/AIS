@@ -1,7 +1,7 @@
 import { supabase, esc } from './supabase.js';
 import { worldsWithAccess } from './shell.js';
 import { NAV_CONFIG } from './navConfig.js';
-import { getLang, setLang, syncLangFromProfile } from './i18n.js';
+import { t, getLang, setLang, syncLangFromProfile } from './i18n.js';
 
 // =====================================================================
 // MOI — Doi ngon ngu + Dang xuat ngay tai trang cho — dung LAI dung
@@ -12,6 +12,14 @@ function paintLangSwitcher() {
   document.querySelectorAll('#langSwitcher button').forEach((b) => {
     b.classList.toggle('is-active', b.dataset.lang === current);
   });
+  document.getElementById('greetingEyebrow').textContent = timeGreeting();
+  // Ve lai cac khu vuc co nhan dich duoc (ERP/Room/Banzone) de doi ngon
+  // ngu xong hien dung ngay, khong can tai lai trang.
+  if (FULL_PROFILE) {
+    renderErp(FULL_PROFILE);
+    renderRoom(FULL_PROFILE);
+    renderBanzone(FULL_PROFILE);
+  }
 }
 document.querySelectorAll('#langSwitcher button').forEach((b) => {
   b.addEventListener('click', () => setLang(b.dataset.lang, { supabase, employeeId: PROFILE?.id }));
@@ -105,7 +113,7 @@ function applyBranchLocks(profile) {
     const world = BRANCH_TO_WORLD[card.dataset.branch];
     if (accessibleWorlds.has(world)) return;
     card.classList.add('branch-card--locked');
-    card.querySelector('.branch-card__desc').insertAdjacentHTML('afterend', '<div class="branch-card__lock">🔒 Không có quyền</div>');
+    card.querySelector('.branch-card__desc').insertAdjacentHTML('afterend', `<div class="branch-card__lock">${t('lobby.locked', '🔒 Không có quyền')}</div>`);
   });
 }
 
@@ -114,10 +122,10 @@ function applyBranchLocks(profile) {
 // =====================================================================
 function timeGreeting() {
   const h = new Date().getHours();
-  if (h < 11) return 'Chào buổi sáng';
-  if (h < 14) return 'Chào buổi trưa';
-  if (h < 18) return 'Chào buổi chiều';
-  return 'Chào buổi tối';
+  if (h < 11) return t('lobby.greeting.morning', 'Chào buổi sáng');
+  if (h < 14) return t('lobby.greeting.noon', 'Chào buổi trưa');
+  if (h < 18) return t('lobby.greeting.afternoon', 'Chào buổi chiều');
+  return t('lobby.greeting.evening', 'Chào buổi tối');
 }
 
 const EXEC_ICONS = { '/exec/reports.html': '📊', '/exec/sign.html': '✍️' };
@@ -162,21 +170,23 @@ function renderErp(profile) {
   const execGroup = NAV_CONFIG.find((g) => g.section === 'Ban điều hành');
   const execItems = (execGroup?.items || []).filter((it) => it.visible(profile));
   document.getElementById('execGrid').innerHTML = execItems.length === 0
-    ? '<div class="content-sub">🔒 Không có quyền truy cập Tầng Điều hành.</div>'
+    ? `<div class="content-sub">${t('lobby.erp.noExecAccess', '🔒 Không có quyền truy cập Tầng Điều hành.')}</div>`
     : execItems.map((it) => `
         <div class="item-card" data-href="${it.href}">
           <span class="item-card__icon">${EXEC_ICONS[it.href] || '📁'}</span>
-          <span class="item-card__name">${it.label}</span>
+          <span class="item-card__name">${t(it.labelKey, it.label)}</span>
         </div>
       `).join('');
 
   const deptSections = ['Phòng nhân sự', 'Phòng kế toán', 'Phòng truyền thông', 'Phòng cơ sở vật chất'];
   document.getElementById('deptGrid').innerHTML = deptSections.map((s) => {
     const visible = hasAccessToSection(s, profile);
+    const group = NAV_CONFIG.find((g) => g.section === s);
+    const displayName = t(group?.sectionKey, s);
     return `
       <div class="item-card ${visible ? '' : 'item-card--locked'}" data-dept="${s}">
         <span class="item-card__icon">${DEPT_ICON[s]}</span>
-        <span class="item-card__name">${s}</span>
+        <span class="item-card__name">${displayName}</span>
         ${visible ? '' : '<span class="item-card__lock">🔒</span>'}
       </div>
     `;
@@ -191,21 +201,22 @@ function renderErp(profile) {
       const group = NAV_CONFIG.find((g) => g.section === dept);
       const items = group.items.filter((it) => it.visible(profile));
       const theme = DEPT_THEME[dept] || 'var(--accent)';
+      const deptDisplayName = t(group.sectionKey, dept);
       // MOI — "spacework" rieng cho tung phong ban: mo hang han 1 LOP
       // MAN HINH RIENG (giong het ERP/CRM/Room/Banzone), khong con la
       // 1 khoi mo rong ngay trong trang ERP nua.
       document.getElementById('deptWorkspaceBanner').innerHTML = `
         <div class="dept-workspace-banner" style="background:${theme}1a; border-color:${theme}40;">
           <span class="dept-workspace-banner__icon" style="background:${theme};">${DEPT_ICON[dept] || '🏢'}</span>
-          <div><div class="dept-workspace-banner__name">${dept}</div><div class="dept-workspace-banner__count">${items.length} chức năng</div></div>
+          <div><div class="dept-workspace-banner__name">${deptDisplayName}</div><div class="dept-workspace-banner__count">${items.length} ${t('lobby.erp.functionCount', 'chức năng')}</div></div>
         </div>
       `;
       document.getElementById('deptWorkspaceGrid').innerHTML = items.map((it) => `
         <div class="item-card" data-href="${it.href}" style="border-color:${theme}30;">
           <span class="item-card__icon" style="background:${theme}1a; border-radius:8px; width:32px; height:32px; display:flex; align-items:center; justify-content:center;">${ITEM_ICONS[it.href] || '📄'}</span>
-          <span class="item-card__name">${it.label}</span>
+          <span class="item-card__name">${t(it.labelKey, it.label)}</span>
         </div>
-      `).join('') || '<div class="content-sub">Không có mục nào.</div>';
+      `).join('') || `<div class="content-sub">${t('lobby.erp.noItems', 'Không có mục nào.')}</div>`;
       document.querySelectorAll('#deptWorkspaceGrid .item-card').forEach((c) => {
         c.addEventListener('click', () => { window.location.href = c.dataset.href; });
       });
@@ -238,8 +249,8 @@ async function renderCrm(profile) {
   const { data: centers, error } = await supabase.from('centers').select('id, name, code').eq('is_active', true).order('name');
   const sub = document.getElementById('crmSub');
   const stage = document.getElementById('crmStage');
-  if (error || !centers || centers.length === 0) { sub.textContent = 'Không tải được danh sách trung tâm.'; return; }
-  sub.textContent = `${centers.length} trung tâm đang hoạt động`;
+  if (error || !centers || centers.length === 0) { sub.textContent = t('lobby.crm.loadError', 'Không tải được danh sách trung tâm.'); return; }
+  sub.textContent = `${centers.length} ${t('lobby.crm.activeCenters', 'trung tâm đang hoạt động')}`;
 
   let html = '<div class="crm-logo"><div class="crm-logo__title">AIS</div><div class="crm-logo__sub">OFFICE</div></div>';
   const n = centers.length;
@@ -339,7 +350,7 @@ function renderRoom(profile) {
     return `
       <div class="item-card ${visible ? '' : 'item-card--locked'}" data-href="${item.href}">
         <span class="item-card__icon">${ROOM_ICONS[item.href] || '✨'}</span>
-        <span class="item-card__name">${item.label}</span>
+        <span class="item-card__name">${t(item.labelKey, item.label)}</span>
         ${visible ? '' : '<span class="item-card__lock">🔒</span>'}
       </div>
     `;
@@ -353,9 +364,9 @@ function renderRoom(profile) {
 // PHAN 6 — BANZONE: gop theo danh muc (accordion) + tim nhanh.
 // =====================================================================
 const BANZONE_CATEGORIES = [
-  { name: 'Tổ chức', icon: '🏢', hrefs: ['/master-data/centers.html', '/master-data/departments.html', '/master-data/system-roles.html', '/master-data/divisions.html'] },
-  { name: 'Tài chính', icon: '💰', hrefs: ['/acc/suppliers.html', '/master-data/expense-categories.html', '/master-data/chart-of-accounts.html', '/master-data/wallet-tier-discounts.html', '/master-data/program-pricing.html', '/master-data/program-plan-discounts.html'] },
-  { name: 'Vận hành', icon: '📦', hrefs: ['/master-data/size-chart.html', '/master-data/inventory-items.html'] },
+  { name: t('lobby.banzone.catOrg', 'Tổ chức'), icon: '🏢', hrefs: ['/master-data/centers.html', '/master-data/departments.html', '/master-data/system-roles.html', '/master-data/divisions.html'] },
+  { name: t('lobby.banzone.catFinance', 'Tài chính'), icon: '💰', hrefs: ['/acc/suppliers.html', '/master-data/expense-categories.html', '/master-data/chart-of-accounts.html', '/master-data/wallet-tier-discounts.html', '/master-data/program-pricing.html', '/master-data/program-plan-discounts.html'] },
+  { name: t('lobby.banzone.catOps', 'Vận hành'), icon: '📦', hrefs: ['/master-data/size-chart.html', '/master-data/inventory-items.html'] },
 ];
 function renderBanzone(profile) {
   const group = NAV_CONFIG.find((g) => g.section === 'Cấu hình dữ liệu gốc');
@@ -364,7 +375,7 @@ function renderBanzone(profile) {
   const usedHrefs = new Set(BANZONE_CATEGORIES.flatMap((c) => c.hrefs));
   const remaining = group.items.filter((it) => !usedHrefs.has(it.href));
   const categories = [...BANZONE_CATEGORIES];
-  if (remaining.length > 0) categories.push({ name: 'Hệ thống', icon: '⚙️', hrefs: remaining.map((it) => it.href) });
+  if (remaining.length > 0) categories.push({ name: t('lobby.banzone.catSystem', 'Hệ thống'), icon: '⚙️', hrefs: remaining.map((it) => it.href) });
 
   const box = document.getElementById('banzoneAccordions');
   box.innerHTML = categories.map((cat, ci) => {
@@ -375,13 +386,14 @@ function renderBanzone(profile) {
         <div class="accordion__head">
           <span class="accordion__icon">${cat.icon}</span>
           <span class="accordion__name">${cat.name}</span>
-          <span class="accordion__count">${items.length} mục${anyVisible ? '' : ' — 🔒'}</span>
+          <span class="accordion__count">${items.length} ${t('lobby.banzone.items', 'mục')}${anyVisible ? '' : ' — 🔒'}</span>
           <span class="accordion__arrow">▸</span>
         </div>
         <div class="accordion__body">
           ${items.map((it) => {
             const visible = it.visible(profile);
-            return `<div class="accordion-row ${visible ? '' : 'accordion-row--locked'}" data-href="${it.href}" data-name="${it.label.toLowerCase()}">${it.label}${visible ? '' : ' 🔒'}</div>`;
+            const label = t(it.labelKey, it.label);
+            return `<div class="accordion-row ${visible ? '' : 'accordion-row--locked'}" data-href="${it.href}" data-name="${label.toLowerCase()}">${label}${visible ? '' : ' 🔒'}</div>`;
           }).join('')}
         </div>
       </div>
@@ -409,6 +421,7 @@ function renderBanzone(profile) {
 // PHAN 7 — Cham cong nhanh (giu nguyen logic, doi mau sang theme sang).
 // =====================================================================
 let PROFILE = null;
+let FULL_PROFILE = null; // dung de ve lai noi dung dich duoc khi doi ngon ngu
 let CENTER = null;
 let LAST_POSITION = null;
 const RADIUS_LIMIT_M = 1000;
@@ -425,20 +438,20 @@ function fmtDistance(m) { return m >= 1000 ? `${(m / 1000).toFixed(2)} km` : `${
 
 function watchPosition() {
   const hint = document.getElementById('ciGpsHint');
-  if (!('geolocation' in navigator)) { hint.textContent = 'Trình duyệt không hỗ trợ định vị vị trí.'; return; }
+  if (!('geolocation' in navigator)) { hint.textContent = t('lobby.checkin.noGeo', 'Trình duyệt không hỗ trợ định vị vị trí.'); return; }
   navigator.geolocation.watchPosition(
     (pos) => {
       LAST_POSITION = pos.coords;
       const dist = distanceMeters(pos.coords.latitude, pos.coords.longitude, CENTER.latitude, CENTER.longitude);
       const inRange = dist <= RADIUS_LIMIT_M;
-      hint.textContent = inRange ? `Trong phạm vi — cách trung tâm ${fmtDistance(dist)}` : `Ngoài phạm vi — cách ${fmtDistance(dist)} (giới hạn 1km)`;
+      hint.textContent = inRange ? `${t('lobby.checkin.inRange', 'Trong phạm vi — cách trung tâm')} ${fmtDistance(dist)}` : `${t('lobby.checkin.outOfRange', 'Ngoài phạm vi — cách')} ${fmtDistance(dist)} (${t('lobby.checkin.rangeLimit', 'giới hạn 1km')})`;
       hint.style.color = inRange ? 'var(--success)' : 'var(--danger)';
       const btnIn = document.getElementById('btnCiIn');
       const btnOut = document.getElementById('btnCiOut');
       if (btnIn.style.display !== 'none') btnIn.disabled = !inRange;
       if (btnOut.style.display !== 'none') btnOut.disabled = !inRange;
     },
-    (err) => { hint.textContent = 'Không lấy được vị trí: ' + (err.message || 'cần cho phép truy cập vị trí.'); hint.style.color = 'var(--danger)'; },
+    (err) => { hint.textContent = t('lobby.checkin.gpsError', 'Không lấy được vị trí:') + ' ' + (err.message || t('lobby.checkin.gpsPermission', 'cần cho phép truy cập vị trí.')); hint.style.color = 'var(--danger)'; },
     { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 }
   );
 }
@@ -453,13 +466,13 @@ async function loadTodayStatus() {
   const btnIn = document.getElementById('btnCiIn');
   const btnOut = document.getElementById('btnCiOut');
   if (hasIn && hasOut) {
-    status.textContent = '✓ Đã hoàn tất chấm công hôm nay (vào & ra).';
+    status.textContent = t('lobby.checkin.doneToday', '✓ Đã hoàn tất chấm công hôm nay (vào & ra).');
     btnIn.style.display = 'none'; btnOut.style.display = 'none';
   } else if (hasIn) {
-    status.textContent = `✓ Đã chấm công vào lúc ${new Date(data.find((r) => r.check_type === 'in').checked_at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`;
+    status.textContent = `${t('lobby.checkin.checkedInAt', '✓ Đã chấm công vào lúc')} ${new Date(data.find((r) => r.check_type === 'in').checked_at).toLocaleTimeString(getLang() === 'en' ? 'en-US' : 'vi-VN', { hour: '2-digit', minute: '2-digit' })}`;
     btnIn.style.display = 'none'; btnOut.style.display = 'block';
   } else {
-    status.textContent = 'Chưa chấm công vào hôm nay.';
+    status.textContent = t('lobby.checkin.notYet', 'Chưa chấm công vào hôm nay.');
     btnIn.style.display = 'block'; btnOut.style.display = 'none';
   }
 }
@@ -467,11 +480,11 @@ async function loadTodayStatus() {
 async function doCheckin(type) {
   const errBox = document.getElementById('ciError');
   errBox.style.display = 'none';
-  if (!LAST_POSITION) { errBox.textContent = 'Chưa xác định được vị trí — đợi vài giây rồi thử lại.'; errBox.style.display = 'block'; return; }
+  if (!LAST_POSITION) { errBox.textContent = t('lobby.checkin.waitLocating', 'Chưa xác định được vị trí — đợi vài giây rồi thử lại.'); errBox.style.display = 'block'; return; }
   const dist = distanceMeters(LAST_POSITION.latitude, LAST_POSITION.longitude, CENTER.latitude, CENTER.longitude);
-  if (dist > RADIUS_LIMIT_M) { errBox.textContent = `Cách trung tâm ${fmtDistance(dist)} — ngoài phạm vi cho phép (1km).`; errBox.style.display = 'block'; return; }
+  if (dist > RADIUS_LIMIT_M) { errBox.textContent = `${t('lobby.checkin.tooFar', 'Cách trung tâm')} ${fmtDistance(dist)} — ${t('lobby.checkin.outOfAllowedRange', 'ngoài phạm vi cho phép (1km).')}`; errBox.style.display = 'block'; return; }
   const btn = type === 'in' ? document.getElementById('btnCiIn') : document.getElementById('btnCiOut');
-  btn.disabled = true; const oldText = btn.textContent; btn.textContent = 'Đang chấm công...';
+  btn.disabled = true; const oldText = btn.textContent; btn.textContent = t('lobby.checkin.submitting', 'Đang chấm công...');
   try {
     const { error } = await supabase.from('attendance_checkins').insert({
       employee_id: PROFILE.id, center_id: CENTER.id, check_type: type,
@@ -480,7 +493,7 @@ async function doCheckin(type) {
     if (error) throw error;
     await loadTodayStatus();
   } catch (err) {
-    errBox.textContent = err.message || 'Có lỗi xảy ra.';
+    errBox.textContent = err.message || t('lobby.checkin.genericError', 'Có lỗi xảy ra.');
     errBox.style.display = 'block';
     btn.disabled = false; btn.textContent = oldText;
   }
@@ -496,14 +509,14 @@ async function openCheckin() {
   if (checkinInitialized) return;
   checkinInitialized = true;
   if (!PROFILE?.centerId) {
-    document.getElementById('ciGpsHint').textContent = 'Bạn không gắn cố định 1 trung tâm — dùng trang chấm công đầy đủ để chọn đúng trung tâm đang có mặt.';
+    document.getElementById('ciGpsHint').textContent = t('lobby.checkin.noCenter', 'Bạn không gắn cố định 1 trung tâm — dùng trang chấm công đầy đủ để chọn đúng trung tâm đang có mặt.');
     document.getElementById('btnCiIn').style.display = 'none';
     document.getElementById('btnCiOut').style.display = 'none';
     return;
   }
   const { data: center } = await supabase.from('centers').select('id, name, latitude, longitude').eq('id', PROFILE.centerId).single();
   if (!center || !center.latitude || !center.longitude) {
-    document.getElementById('ciGpsHint').textContent = 'Trung tâm của bạn chưa có toạ độ GPS — liên hệ kỹ thuật.';
+    document.getElementById('ciGpsHint').textContent = t('lobby.checkin.noGps', 'Trung tâm của bạn chưa có toạ độ GPS — liên hệ kỹ thuật.');
     document.getElementById('btnCiIn').style.display = 'none';
     document.getElementById('btnCiOut').style.display = 'none';
     return;
@@ -549,6 +562,7 @@ document.getElementById('btnOpenCheckin').addEventListener('click', openCheckin)
     centerName: employee.centers?.name || '',
     isCenterManager: employee.system_roles?.code === 'CENTER_MANAGER',
   };
+  FULL_PROFILE = fullProfile;
 
   applyBranchLocks(fullProfile);
   renderErp(fullProfile);

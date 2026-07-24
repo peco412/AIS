@@ -22,7 +22,7 @@
   background: var(--surface-fill);
   font-size: 13px;
   color: var(--ink);
-  transition: background var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
+  transition: background var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease-spring);
 }
 .select-input:focus, .text-input:focus {
   background: #fff;
@@ -40,11 +40,11 @@
   font-weight: 600;
   cursor: pointer;
   border: none;
-  transition: background var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
+  transition: background var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease-spring), box-shadow var(--dur-fast) var(--ease);
 }
 .btn:active { transform: scale(0.97); }
 .btn-accent { background: var(--accent); color: #fff; box-shadow: 0 1px 3px rgba(var(--accent-rgb), 0.35); }
-.btn-accent:hover { background: var(--accent-deep); }
+.btn-accent:hover { background: var(--accent-deep); transform: translateY(-1px); box-shadow: 0 4px 10px rgba(var(--accent-rgb), 0.28); }
 .btn-outline { background: var(--surface-fill); color: var(--ink); }
 .btn-outline:hover { background: var(--surface-sunken); }
 .btn-sm { padding: 6px 13px; font-size: 12.5px; }
