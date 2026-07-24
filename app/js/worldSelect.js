@@ -3,6 +3,18 @@ import { worldsWithAccess } from './shell.js';
 import { NAV_CONFIG } from './navConfig.js';
 import { t, getLang, setLang, syncLangFromProfile } from './i18n.js';
 
+// SUA LOI THAT NGHIEM TRONG: 2 bien nay truoc day khai bao o gan CUOI
+// file (bang "let"), nhung "paintLangSwitcher()" lai duoc GOI NGAY o
+// dau file (dong duoi day) va co doc "FULL_PROFILE" ben trong — vi "let"
+// khong duoc khoi tao truoc dong khai bao cua no (temporal dead zone),
+// doc bien truoc khi no duoc khai bao se NEM LOI NGAY LAP TUC, lam DUNG
+// TOAN BO phan con lai cua file (moi handler bam nut, dieu huong 4 nhanh...)
+// KHONG BAO GIO CHAY DUOC — day chinh la ly do "bam khong vao duoc,
+// dung o lobby" ban gap. Chuyen len dau file de bien co san TRUOC khi bi
+// doc toi.
+let PROFILE = null;
+let FULL_PROFILE = null; // dung de ve lai noi dung dich duoc khi doi ngon ngu
+
 // =====================================================================
 // MOI — Doi ngon ngu + Dang xuat ngay tai trang cho — dung LAI dung
 // ham/kieu nut da co san o shell.js (khong bay dung 1 kieu rieng).
@@ -420,8 +432,6 @@ function renderBanzone(profile) {
 // =====================================================================
 // PHAN 7 — Cham cong nhanh (giu nguyen logic, doi mau sang theme sang).
 // =====================================================================
-let PROFILE = null;
-let FULL_PROFILE = null; // dung de ve lai noi dung dich duoc khi doi ngon ngu
 let CENTER = null;
 let LAST_POSITION = null;
 const RADIUS_LIMIT_M = 1000;
