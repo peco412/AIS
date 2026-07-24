@@ -167,6 +167,12 @@ function renderErp(profile) {
 let crmAnimHandle = null;
 let CRM_SATELLITES = []; // { el, angleDeg, radiusPct, speedDegPerSec }
 
+// MOI — moi trung tam gio la 1 "tieu hanh tinh" rieng: mau khac nhau,
+// kich thuoc khac nhau, va CO QUY DAO RIENG cua no (khong con dung 2
+// vong gop chung nhu truoc) — dung dan xen ban kinh deu nhau tu gan ra
+// xa, giong 1 he mat troi that hon la 2 nhom co dinh.
+const PLANET_COLORS = ['#0094D9', '#E8A33D', '#2FAE6B', '#A855C9', '#E85D5D', '#3DBFB0', '#7B68C4', '#D97A3D'];
+
 async function renderCrm(profile) {
   const { data: centers, error } = await supabase.from('centers').select('id, name, code').eq('is_active', true).order('name');
   const sub = document.getElementById('crmSub');
@@ -176,37 +182,36 @@ async function renderCrm(profile) {
 
   let html = '<div class="crm-logo"><div class="crm-logo__title">AIS</div><div class="crm-logo__sub">OFFICE</div></div>';
   const n = centers.length;
-  const ring1 = centers.slice(0, Math.min(n, 6));
-  const ring2 = centers.slice(6);
-  const rings = [{ items: ring1, rPct: 0.30, size: 220 }, { items: ring2, rPct: 0.44, size: 340 }].filter((r) => r.items.length > 0);
+  // Ban kinh quy dao rieng cho tung hanh tinh — dan xen deu tu gan ra xa
+  // (18% -> 46% cua san khau), moi trung tam 1 khoang cach khac nhau.
+  const minR = 0.18, maxR = 0.46;
+  const step = n > 1 ? (maxR - minR) / (n - 1) : 0;
 
   CRM_SATELLITES = [];
-  rings.forEach((ring) => {
-    html += `<div class="crm-orbit" style="width:${ring.size}%; height:${ring.size}%; margin-left:-${ring.size / 2}%; margin-top:-${ring.size / 2}%;"></div>`;
-    const count = ring.items.length;
-    ring.items.forEach((c, i) => {
-      const angleDeg = (360 / count) * i;
-      const isAccessible = !profile.isCenterManager || profile.centerId === c.id;
-      html += `
-        <div class="crm-satellite ${isAccessible ? '' : 'crm-satellite--locked'}" data-center="${c.id}"
-             tabindex="${isAccessible ? '0' : '-1'}" role="button" aria-label="Vào trung tâm ${esc(c.name)}">
-          ${esc(c.code || c.name.slice(0, 4))}
-          <span class="crm-satellite__full">${esc(c.name)}${isAccessible ? '' : ' — 🔒'}</span>
-        </div>
-      `;
-    });
+  centers.forEach((c, i) => {
+    const rPct = minR + step * i;
+    const sizePct = rPct * 200; // duong kinh vong quy dao (% cua san khau)
+    // Goc bat dau lech nhau (khong xep hang thang) cho tu nhien hon.
+    const angleDeg = (137.5 * i) % 360; // "golden angle" — rai deu, khong trung lap kieu hinh hoc
+    const color = PLANET_COLORS[i % PLANET_COLORS.length];
+    const diameter = 40 + (i % 3) * 8; // 40/48/56px — hanh tinh to nho khac nhau
+    const isAccessible = !profile.isCenterManager || profile.centerId === c.id;
+
+    html += `<div class="crm-orbit" style="width:${sizePct}%; height:${sizePct}%; margin-left:-${sizePct / 2}%; margin-top:-${sizePct / 2}%;"></div>`;
+    html += `
+      <div class="crm-satellite ${isAccessible ? '' : 'crm-satellite--locked'}" data-center="${c.id}"
+           style="width:${diameter}px; height:${diameter}px; ${isAccessible ? `background: radial-gradient(circle at 32% 30%, ${color}dd, ${color});` : ''} ${isAccessible ? `border-color:${color};` : ''}"
+           tabindex="${isAccessible ? '0' : '-1'}" role="button" aria-label="Vào trung tâm ${esc(c.name)}">
+        <span class="crm-satellite__label" style="${isAccessible ? 'color:#fff; text-shadow:0 1px 2px rgba(0,0,0,0.25);' : ''}">${esc(c.code || c.name.slice(0, 4))}</span>
+        <span class="crm-satellite__full">${esc(c.name)}${isAccessible ? '' : ' — 🔒'}</span>
+      </div>
+    `;
+    CRM_SATELLITES.push({ angleDeg, radiusPct: rPct, speedDegPerSec: 360 / (45 + rPct * 90), half: diameter / 2 });
   });
 
   stage.innerHTML = html;
   const satelliteEls = [...stage.querySelectorAll('.crm-satellite')];
-  let flatIndex = 0;
-  rings.forEach((ring) => {
-    ring.items.forEach((c, i) => {
-      const angleDeg = (360 / ring.items.length) * i;
-      CRM_SATELLITES.push({ el: satelliteEls[flatIndex], angleDeg, radiusPct: ring.rPct, speedDegPerSec: 360 / (50 + ring.rPct * 40) });
-      flatIndex++;
-    });
-  });
+  satelliteEls.forEach((el, i) => { CRM_SATELLITES[i].el = el; });
 
   satelliteEls.forEach((el) => {
     el.addEventListener('click', () => {
@@ -225,8 +230,8 @@ function positionCrmSatellitesOnce() {
   CRM_SATELLITES.forEach((s) => {
     const rad = (s.angleDeg * Math.PI) / 180;
     const rx = w * s.radiusPct, ry = h * s.radiusPct;
-    const x = w / 2 + rx * Math.cos(rad) - 28;
-    const y = h / 2 + ry * Math.sin(rad) - 28;
+    const x = w / 2 + rx * Math.cos(rad) - s.half;
+    const y = h / 2 + ry * Math.sin(rad) - s.half;
     s.el.style.left = x + 'px';
     s.el.style.top = y + 'px';
   });
@@ -248,8 +253,8 @@ function startCrmAnimation() {
       s.angleDeg = (s.angleDeg + s.speedDegPerSec * dt) % 360;
       const rad = (s.angleDeg * Math.PI) / 180;
       const rx = w * s.radiusPct, ry = h * s.radiusPct;
-      s.el.style.left = (w / 2 + rx * Math.cos(rad) - 28) + 'px';
-      s.el.style.top = (h / 2 + ry * Math.sin(rad) - 28) + 'px';
+      s.el.style.left = (w / 2 + rx * Math.cos(rad) - s.half) + 'px';
+      s.el.style.top = (h / 2 + ry * Math.sin(rad) - s.half) + 'px';
     });
     crmAnimHandle = requestAnimationFrame(frame);
   }
