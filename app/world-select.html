@@ -131,15 +131,13 @@
     border: 2px solid var(--accent); box-shadow: var(--shadow-sm); display: flex; align-items: center; justify-content: center;
     cursor: pointer; font-size: 11px; font-weight: 800; color: var(--accent-deep);
     transition: transform var(--dur-fast) var(--ease-spring), box-shadow var(--dur-fast) var(--ease);
-    animation: orbit-rotate linear infinite;
   }
-  .crm-satellite:hover { transform: scale(1.35) !important; box-shadow: var(--shadow-lg); z-index: 5; }
+  .crm-satellite:hover { box-shadow: var(--shadow-lg); transform: scale(1.35); z-index: 5; }
   .crm-satellite--locked { opacity: 0.4; cursor: not-allowed; border-color: var(--muted); color: var(--muted); }
-  .crm-satellite--locked:hover { transform: scale(1) !important; box-shadow: var(--shadow-sm); }
+  .crm-satellite--locked:hover { transform: none; box-shadow: var(--shadow-sm); }
   .crm-satellite__full { display: none; position: absolute; top: 100%; margin-top: 6px; left: 50%; transform: translateX(-50%); font-size: 11px; font-weight: 700; color: var(--ink); white-space: nowrap; background: var(--surface-card); padding: 3px 8px; border-radius: var(--radius-sm); box-shadow: var(--shadow-sm); }
   .crm-satellite:hover .crm-satellite__full { display: block; }
-  @keyframes orbit-rotate { from { transform: rotate(0deg) translateX(var(--orbit-r)) rotate(0deg); } to { transform: rotate(360deg) translateX(var(--orbit-r)) rotate(-360deg); } }
-  @media (prefers-reduced-motion: reduce) { .crm-satellite { animation: none !important; } }
+  @media (prefers-reduced-motion: reduce) { .crm-satellite { transition: none !important; } }
 
   /* ---- ROOM flat grid ---- */
   .room-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }

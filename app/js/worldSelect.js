@@ -39,11 +39,17 @@ function showLayer(id, { push = true } = {}) {
 window.addEventListener('popstate', (e) => {
   const layer = e.state?.layer || 'layerEntry';
   showLayer(layer, { push: false });
-  if (layer === 'layerCrm') setTimeout(repositionCrmSatellites, 60);
+  if (layer === 'layerCrm') startCrmAnimation(); else stopCrmAnimation();
 });
 
 document.querySelectorAll('[data-back]').forEach((btn) => {
-  btn.addEventListener('click', () => { window.history.back(); });
+  // SUA LOI THAT: truoc day dung window.history.back() — loi khi khong
+  // co "lich su" dung de quay ve (vd tai lai trang dang o thang
+  // world-select.html#crm, hoac mo thang link co san #crm) — luc do
+  // trinh duyet hoac khong lam gi, hoac nhay ra HAN NGOAI trang nay.
+  // Gio di THANG toi dung lop cha (da ghi san trong data-back), luon
+  // dang tin cay bat ke lich su trinh duyet dang the nao.
+  btn.addEventListener('click', () => { showLayer(btn.dataset.back); stopCrmAnimation(); });
 });
 
 document.getElementById('btnEnterDoor').addEventListener('click', () => showLayer('layerBranches'));
@@ -60,7 +66,7 @@ document.querySelectorAll('.branch-card').forEach((card) => {
     if (card.classList.contains('branch-card--locked')) return;
     const layer = BRANCH_TO_LAYER[card.dataset.branch];
     showLayer(layer);
-    if (layer === 'layerCrm') setTimeout(repositionCrmSatellites, 60);
+    if (layer === 'layerCrm') startCrmAnimation();
   });
 });
 
@@ -150,6 +156,17 @@ function renderErp(profile) {
 // =====================================================================
 // PHAN 4 — CRM: quy dao ve tinh quanh logo, du lieu trung tam THAT.
 // =====================================================================
+// SUA LOI THAT (lan 2): cach cu dung CSS "animation: translateX(var(--
+// orbit-r)) + rotate" — ve mat ly thuyet dung, nhung tren thuc te van
+// khong an dinh duoc dung do vi thoi diem do offsetWidth (luc lop dang
+// an/vua hien) khong dang tin cay, va % trong translateX() lai tinh theo
+// KICH THUOC PHAN TU chu khong phai san khau. Lam lai HOAN TOAN khac —
+// bo CSS animation, tu tinh toa do bang JS qua requestAnimationFrame,
+// gan THANG top/left (khong qua transform/bien CSS nao ca) — chac chan
+// dung, khong con phu thuoc thoi diem do kich thuoc.
+let crmAnimHandle = null;
+let CRM_SATELLITES = []; // { el, angleDeg, radiusPct, speedDegPerSec }
+
 async function renderCrm(profile) {
   const { data: centers, error } = await supabase.from('centers').select('id, name, code').eq('is_active', true).order('name');
   const sub = document.getElementById('crmSub');
@@ -161,26 +178,17 @@ async function renderCrm(profile) {
   const n = centers.length;
   const ring1 = centers.slice(0, Math.min(n, 6));
   const ring2 = centers.slice(6);
-  // SUA LOI THAT: truoc day dung "--orbit-r: 44%" roi translateX(var(--orbit-r))
-  // — nhung transform: translateX(%) luon tinh theo KICH THUOC CUA CHINH
-  // PHAN TU DO (ve tinh 56px), KHONG PHAI theo khung san khau — nen ban
-  // kinh thuc te chi ~25px, khien moi ve tinh don cuc vao sat logo. Gio do
-  // dung KICH THUOC THAT cua san khau (do bang JS) roi tinh ban kinh ra
-  // PIXEL that, khong dung % nua.
-  const stageSize = stage.offsetWidth || 560;
   const rings = [{ items: ring1, rPct: 0.30, size: 220 }, { items: ring2, rPct: 0.44, size: 340 }].filter((r) => r.items.length > 0);
 
+  CRM_SATELLITES = [];
   rings.forEach((ring) => {
     html += `<div class="crm-orbit" style="width:${ring.size}%; height:${ring.size}%; margin-left:-${ring.size / 2}%; margin-top:-${ring.size / 2}%;"></div>`;
     const count = ring.items.length;
-    const radiusPx = Math.round(stageSize * ring.rPct);
     ring.items.forEach((c, i) => {
-      const angle = (360 / count) * i;
-      const duration = 40 + radiusPx / 10;
+      const angleDeg = (360 / count) * i;
       const isAccessible = !profile.isCenterManager || profile.centerId === c.id;
       html += `
-        <div class="crm-satellite ${isAccessible ? '' : 'crm-satellite--locked'}" data-center="${c.id}" data-ring-pct="${ring.rPct}"
-             style="top:50%; left:50%; margin-top:-28px; margin-left:-28px; --orbit-r:${radiusPx}px; animation-duration:${duration}s; animation-delay:-${(angle / 360) * duration}s;"
+        <div class="crm-satellite ${isAccessible ? '' : 'crm-satellite--locked'}" data-center="${c.id}"
              tabindex="${isAccessible ? '0' : '-1'}" role="button" aria-label="Vào trung tâm ${esc(c.name)}">
           ${esc(c.code || c.name.slice(0, 4))}
           <span class="crm-satellite__full">${esc(c.name)}${isAccessible ? '' : ' — 🔒'}</span>
@@ -190,8 +198,17 @@ async function renderCrm(profile) {
   });
 
   stage.innerHTML = html;
-  repositionCrmSatellites();
-  stage.querySelectorAll('.crm-satellite').forEach((el) => {
+  const satelliteEls = [...stage.querySelectorAll('.crm-satellite')];
+  let flatIndex = 0;
+  rings.forEach((ring) => {
+    ring.items.forEach((c, i) => {
+      const angleDeg = (360 / ring.items.length) * i;
+      CRM_SATELLITES.push({ el: satelliteEls[flatIndex], angleDeg, radiusPct: ring.rPct, speedDegPerSec: 360 / (50 + ring.rPct * 40) });
+      flatIndex++;
+    });
+  });
+
+  satelliteEls.forEach((el) => {
     el.addEventListener('click', () => {
       if (el.classList.contains('crm-satellite--locked')) return;
       localStorage.setItem(WORLD_STORAGE_KEY, 'crm');
@@ -201,19 +218,44 @@ async function renderCrm(profile) {
   });
 }
 
-// MOI — tinh lai ban kinh quy dao THEO KICH THUOC THAT cua san khau tai
-// thoi diem lop CRM dang HIEN (khi dang an, offsetWidth = 0, do sai) —
-// goi lai moi khi mo lop nay de dam bao chinh xac tren moi kich man hinh.
-function repositionCrmSatellites() {
+function positionCrmSatellitesOnce() {
   const stage = document.getElementById('crmStage');
-  const stageSize = stage.offsetWidth;
-  if (!stageSize) return; // van dang an, doi lan goi sau
-  stage.querySelectorAll('.crm-satellite').forEach((el) => {
-    const ringPct = Number(el.dataset.ringPct);
-    const radiusPx = Math.round(stageSize * ringPct);
-    el.style.setProperty('--orbit-r', radiusPx + 'px');
+  const w = stage.clientWidth, h = stage.clientHeight;
+  if (!w || !h) return false;
+  CRM_SATELLITES.forEach((s) => {
+    const rad = (s.angleDeg * Math.PI) / 180;
+    const rx = w * s.radiusPct, ry = h * s.radiusPct;
+    const x = w / 2 + rx * Math.cos(rad) - 28;
+    const y = h / 2 + ry * Math.sin(rad) - 28;
+    s.el.style.left = x + 'px';
+    s.el.style.top = y + 'px';
   });
+  return true;
 }
+
+const REDUCE_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function startCrmAnimation() {
+  stopCrmAnimation();
+  if (!positionCrmSatellitesOnce()) { setTimeout(startCrmAnimation, 80); return; }
+  if (REDUCE_MOTION) return; // vi tri tinh la du, khong xoay
+  let last = performance.now();
+  function frame(now) {
+    const dt = (now - last) / 1000;
+    last = now;
+    const stage = document.getElementById('crmStage');
+    const w = stage.clientWidth, h = stage.clientHeight;
+    CRM_SATELLITES.forEach((s) => {
+      s.angleDeg = (s.angleDeg + s.speedDegPerSec * dt) % 360;
+      const rad = (s.angleDeg * Math.PI) / 180;
+      const rx = w * s.radiusPct, ry = h * s.radiusPct;
+      s.el.style.left = (w / 2 + rx * Math.cos(rad) - 28) + 'px';
+      s.el.style.top = (h / 2 + ry * Math.sin(rad) - 28) + 'px';
+    });
+    crmAnimHandle = requestAnimationFrame(frame);
+  }
+  crmAnimHandle = requestAnimationFrame(frame);
+}
+function stopCrmAnimation() { if (crmAnimHandle) cancelAnimationFrame(crmAnimHandle); crmAnimHandle = null; }
 
 // =====================================================================
 // PHAN 5 — ROOM: luoi phang cac chuc nang ca nhan.
@@ -446,14 +488,21 @@ document.getElementById('btnOpenCheckin').addEventListener('click', openCheckin)
   renderBanzone(fullProfile);
   await renderCrm(fullProfile);
 
-  // Khoi phuc dung lop dang xem neu F5 / mo lai (dung sessionStorage)
+  // Khoi phuc dung lop dang xem neu F5 / mo lai (dung sessionStorage) —
+  // SUA: truoc day chi goi showLayer(..., {push:false}) — hien dung lop
+  // nhung KHONG dung lai chuoi lich su cha-con, khien nut Back CUA TRINH
+  // DUYET (khac voi nut "Quay lai" trong app da sua rieng o tren) van bi
+  // sai — gio dung lai DUNG chuoi tu goc truoc khi hien lop dich.
   const savedLayer = sessionStorage.getItem(STORAGE_KEY);
   if (savedLayer && savedLayer !== 'layerEntry' && document.getElementById(savedLayer)) {
+    window.history.replaceState({ layer: 'layerEntry' }, '', '#entry');
+    const chain = [];
+    let walk = savedLayer;
+    while (walk) { chain.unshift(walk); walk = PARENT_OF[walk]; }
+    chain.forEach((id) => { window.history.pushState({ layer: id }, '', '#' + id.replace('layer', '').toLowerCase()); });
     showLayer(savedLayer, { push: false });
-    if (savedLayer === 'layerCrm') setTimeout(repositionCrmSatellites, 60);
+    if (savedLayer === 'layerCrm') startCrmAnimation();
   } else {
     window.history.replaceState({ layer: 'layerEntry' }, '', '#entry');
   }
-
-  window.addEventListener('resize', () => { if (currentLayer === 'layerCrm') repositionCrmSatellites(); });
 })();
