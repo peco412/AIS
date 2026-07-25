@@ -208,32 +208,37 @@ function renderErp(profile) {
     el.addEventListener('click', () => { if (el.dataset.href) window.location.href = el.dataset.href; });
   });
   document.querySelectorAll('#deptGrid .item-card:not(.item-card--locked)').forEach((el) => {
-    el.addEventListener('click', () => {
-      const dept = el.dataset.dept;
-      const group = NAV_CONFIG.find((g) => g.section === dept);
-      const items = group.items.filter((it) => it.visible(profile));
-      const theme = DEPT_THEME[dept] || 'var(--accent)';
-      const deptDisplayName = t(group.sectionKey, dept);
-      // MOI — "spacework" rieng cho tung phong ban: mo hang han 1 LOP
-      // MAN HINH RIENG (giong het ERP/CRM/Room/Banzone), khong con la
-      // 1 khoi mo rong ngay trong trang ERP nua.
-      document.getElementById('deptWorkspaceBanner').innerHTML = `
-        <div class="dept-workspace-banner" style="background:${theme}1a; border-color:${theme}40;">
-          <span class="dept-workspace-banner__icon" style="background:${theme};">${DEPT_ICON[dept] || '🏢'}</span>
-          <div><div class="dept-workspace-banner__name">${deptDisplayName}</div><div class="dept-workspace-banner__count">${items.length} ${t('lobby.erp.functionCount', 'chức năng')}</div></div>
-        </div>
-      `;
-      document.getElementById('deptWorkspaceGrid').innerHTML = items.map((it) => `
-        <div class="item-card" data-href="${it.href}" style="border-color:${theme}30;">
-          <span class="item-card__icon" style="background:${theme}1a; border-radius:8px; width:32px; height:32px; display:flex; align-items:center; justify-content:center;">${ITEM_ICONS[it.href] || '📄'}</span>
-          <span class="item-card__name">${t(it.labelKey, it.label)}</span>
-        </div>
-      `).join('') || `<div class="content-sub">${t('lobby.erp.noItems', 'Không có mục nào.')}</div>`;
-      document.querySelectorAll('#deptWorkspaceGrid .item-card').forEach((c) => {
-        c.addEventListener('click', () => { window.location.href = c.dataset.href; });
-      });
-      showLayer('layerDeptWorkspace');
-    });
+    el.addEventListener('click', () => { openDeptWorkspace(el.dataset.dept, profile); showLayer('layerDeptWorkspace'); });
+  });
+}
+
+// MOI — tach rieng thanh 1 ham dung lai duoc (truoc day nam thang trong
+// callback bam nut) — vi CAN GOI LAI ham nay khi khoi phuc dung lop dang
+// xem luc F5/mo lai link #deptworkspace: truoc day chi nho DUNG LOP nao
+// dang hien, nhung QUEN mat dang xem phong ban nao BEN TRONG lop do, nen
+// hien ra 1 man hinh trong khong — day chinh la loi ban gap.
+const DEPT_WORKSPACE_KEY = 'ais_lobby_dept';
+function openDeptWorkspace(dept, profile) {
+  const group = NAV_CONFIG.find((g) => g.section === dept);
+  if (!group) return;
+  sessionStorage.setItem(DEPT_WORKSPACE_KEY, dept);
+  const items = group.items.filter((it) => it.visible(profile));
+  const theme = DEPT_THEME[dept] || 'var(--accent)';
+  const deptDisplayName = t(group.sectionKey, dept);
+  document.getElementById('deptWorkspaceBanner').innerHTML = `
+    <div class="dept-workspace-banner" style="background:${theme}1a; border-color:${theme}40;">
+      <span class="dept-workspace-banner__icon" style="background:${theme};">${DEPT_ICON[dept] || '🏢'}</span>
+      <div><div class="dept-workspace-banner__name">${deptDisplayName}</div><div class="dept-workspace-banner__count">${items.length} ${t('lobby.erp.functionCount', 'chức năng')}</div></div>
+    </div>
+  `;
+  document.getElementById('deptWorkspaceGrid').innerHTML = items.map((it) => `
+    <div class="item-card" data-href="${it.href}" style="border-color:${theme}30;">
+      <span class="item-card__icon" style="background:${theme}1a; border-radius:8px; width:32px; height:32px; display:flex; align-items:center; justify-content:center;">${ITEM_ICONS[it.href] || '📄'}</span>
+      <span class="item-card__name">${t(it.labelKey, it.label)}</span>
+    </div>
+  `).join('') || `<div class="content-sub">${t('lobby.erp.noItems', 'Không có mục nào.')}</div>`;
+  document.querySelectorAll('#deptWorkspaceGrid .item-card').forEach((c) => {
+    c.addEventListener('click', () => { window.location.href = c.dataset.href; });
   });
 }
 
@@ -294,7 +299,7 @@ async function renderCrm(profile) {
     html += `<div class="crm-orbit" style="width:${sizePct}%; height:${sizePct}%; margin-left:-${sizePct / 2}%; margin-top:-${sizePct / 2}%;"></div>`;
     html += `
       <div class="crm-satellite ${isAccessible ? '' : 'crm-satellite--locked'}" data-center="${c.id}" data-division="${isAloha ? 'aloha' : 'ilingo'}"
-           style="width:${diameter}px; height:${diameter}px; ${isAccessible ? `background: radial-gradient(circle at 32% 30%, ${color}dd, ${color});` : ''} ${isAccessible ? `border-color:${color};` : ''}"
+           style="width:${diameter}px; height:${diameter}px; ${isAccessible ? `background: radial-gradient(circle at 32% 30%, ${color}dd, ${color}); border-color:${color}; color:${color};` : ''}"
            tabindex="${isAccessible ? '0' : '-1'}" role="button" aria-label="Vào trung tâm ${esc(c.name)}">
         <span class="crm-satellite__label" style="${isAccessible ? `color:#fff; text-shadow:0 1px 2px rgba(0,0,0,0.35); font-size:${labelFontSize}px;` : `font-size:${labelFontSize}px;`}">${esc(rawLabel)}</span>
         <span class="crm-satellite__full">${esc(c.name)}${isAccessible ? '' : ' — 🔒'}</span>
@@ -366,6 +371,10 @@ function launchWarpJump(satelliteEl, onDone) {
   stopCrmAnimation();
   const stage = document.getElementById('crmStage');
   if (!stage || REDUCE_MOTION) { onDone(); return; } // giam chuyen dong: chuyen thang, khong hieu ung
+
+  const veil = document.createElement('div');
+  veil.className = 'crm-warp-veil';
+  stage.appendChild(veil);
 
   stage.querySelectorAll('.crm-satellite, .crm-logo, .crm-orbit').forEach((el) => {
     if (el !== satelliteEl) el.classList.add('crm-warp-fade');
@@ -631,8 +640,24 @@ document.getElementById('btnOpenCheckin').addEventListener('click', openCheckin)
     let walk = savedLayer;
     while (walk) { chain.unshift(walk); walk = PARENT_OF[walk]; }
     chain.forEach((id) => { window.history.pushState({ layer: id }, '', '#' + id.replace('layer', '').toLowerCase()); });
-    showLayer(savedLayer, { push: false });
-    if (savedLayer === 'layerCrm') startCrmAnimation();
+    // SUA LOI THAT: truoc day chi hien DUNG LOP nhung QUEN dien lai noi
+    // dung ben trong lop "layerDeptWorkspace" (banner + luoi chuc nang
+    // cua dung phong ban dang xem) — F5 hoac mo thang link #deptworkspace
+    // se ra man hinh trong khong. Neu khong con nho dung phong ban nao
+    // (vd xoa rieng sessionStorage nay), lui ve lop cha (Tang Phong ban)
+    // thay vi hien 1 man rong.
+    if (savedLayer === 'layerDeptWorkspace') {
+      const savedDept = sessionStorage.getItem(DEPT_WORKSPACE_KEY);
+      if (savedDept && NAV_CONFIG.find((g) => g.section === savedDept)) {
+        openDeptWorkspace(savedDept, fullProfile);
+        showLayer(savedLayer, { push: false });
+      } else {
+        showLayer('layerErp', { push: false });
+      }
+    } else {
+      showLayer(savedLayer, { push: false });
+      if (savedLayer === 'layerCrm') startCrmAnimation();
+    }
   } else {
     window.history.replaceState({ layer: 'layerEntry' }, '', '#entry');
   }
