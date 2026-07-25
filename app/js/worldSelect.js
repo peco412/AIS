@@ -251,14 +251,21 @@ function renderErp(profile) {
 let crmAnimHandle = null;
 let CRM_SATELLITES = []; // { el, angleDeg, radiusPct, speedDegPerSec }
 
-// MOI — moi trung tam gio la 1 "tieu hanh tinh" rieng: mau khac nhau,
-// kich thuoc khac nhau, va CO QUY DAO RIENG cua no (khong con dung 2
-// vong gop chung nhu truoc) — dung dan xen ban kinh deu nhau tu gan ra
-// xa, giong 1 he mat troi that hon la 2 nhom co dinh.
-const PLANET_COLORS = ['#0094D9', '#E8A33D', '#2FAE6B', '#A855C9', '#E85D5D', '#3DBFB0', '#7B68C4', '#D97A3D'];
+// MOI — moi trung tam gio la 1 "tieu hanh tinh" rieng: kich thuoc khac
+// nhau va CO QUY DAO RIENG cua no (dan xen ban kinh deu nhau tu gan ra
+// xa) — mau sac gio lay DUNG theo phan he (ALOHA/iLingo) tu du lieu that,
+// khong con dung bang mau cau vong tu dat nhu truoc.
 
 async function renderCrm(profile) {
-  const { data: centers, error } = await supabase.from('centers').select('id, name, code').eq('is_active', true).order('name');
+  // SUA — truoc day chi lay id/name/code roi tu bia mau cau vong 8 mau —
+  // gio lay DUNG mau chinh thuc cua tung phan he (divisions.theme_color
+  // — da co san trong du lieu goc: ALOHA xanh duong, iLingo xanh la),
+  // dung 1 nguon du lieu THAT thay vi tu dat mau rieng.
+  const { data: centers, error } = await supabase
+    .from('centers')
+    .select('id, name, code, divisions(code, theme_color)')
+    .eq('is_active', true)
+    .order('name');
   const sub = document.getElementById('crmSub');
   const stage = document.getElementById('crmStage');
   if (error || !centers || centers.length === 0) { sub.textContent = t('lobby.crm.loadError', 'Không tải được danh sách trung tâm.'); return; }
@@ -266,27 +273,30 @@ async function renderCrm(profile) {
 
   let html = '<div class="crm-logo"><div class="crm-logo__title">AIS</div><div class="crm-logo__sub">OFFICE</div></div>';
   const n = centers.length;
-  // Ban kinh quy dao rieng cho tung hanh tinh — dan xen deu tu gan ra xa
-  // (18% -> 46% cua san khau), moi trung tam 1 khoang cach khac nhau.
   const minR = 0.18, maxR = 0.46;
   const step = n > 1 ? (maxR - minR) / (n - 1) : 0;
 
   CRM_SATELLITES = [];
   centers.forEach((c, i) => {
     const rPct = minR + step * i;
-    const sizePct = rPct * 200; // duong kinh vong quy dao (% cua san khau)
-    // Goc bat dau lech nhau (khong xep hang thang) cho tu nhien hon.
-    const angleDeg = (137.5 * i) % 360; // "golden angle" — rai deu, khong trung lap kieu hinh hoc
-    const color = PLANET_COLORS[i % PLANET_COLORS.length];
-    const diameter = 40 + (i % 3) * 8; // 40/48/56px — hanh tinh to nho khac nhau
+    const sizePct = rPct * 200;
+    const angleDeg = (137.5 * i) % 360;
+    const color = c.divisions?.theme_color || '#94A3B8';
+    const diameter = 44 + (i % 3) * 8; // 44/52/60px — hoi to hon truoc, do chu can nhieu cho hon
     const isAccessible = !profile.isCenterManager || profile.centerId === c.id;
+    // SUA — chu bi tran ra ngoai hanh tinh vi dung nguyen "code" trung
+    // tam (co the dai 6-7 ky tu) o co chu co dinh — gio CAT NGAN toi da
+    // 4 ky tu VA tu giam co chu neu ten van dai hon muc do rong cho phep.
+    const rawLabel = (c.code || c.name || '').toUpperCase().replace(/\s+/g, '').slice(0, 4);
+    const labelFontSize = rawLabel.length >= 4 ? 9.5 : rawLabel.length === 3 ? 10.5 : 11.5;
+    const isAloha = c.divisions?.code === 'ALOHA';
 
     html += `<div class="crm-orbit" style="width:${sizePct}%; height:${sizePct}%; margin-left:-${sizePct / 2}%; margin-top:-${sizePct / 2}%;"></div>`;
     html += `
-      <div class="crm-satellite ${isAccessible ? '' : 'crm-satellite--locked'}" data-center="${c.id}"
+      <div class="crm-satellite ${isAccessible ? '' : 'crm-satellite--locked'}" data-center="${c.id}" data-division="${isAloha ? 'aloha' : 'ilingo'}"
            style="width:${diameter}px; height:${diameter}px; ${isAccessible ? `background: radial-gradient(circle at 32% 30%, ${color}dd, ${color});` : ''} ${isAccessible ? `border-color:${color};` : ''}"
            tabindex="${isAccessible ? '0' : '-1'}" role="button" aria-label="Vào trung tâm ${esc(c.name)}">
-        <span class="crm-satellite__label" style="${isAccessible ? 'color:#fff; text-shadow:0 1px 2px rgba(0,0,0,0.25);' : ''}">${esc(c.code || c.name.slice(0, 4))}</span>
+        <span class="crm-satellite__label" style="${isAccessible ? `color:#fff; text-shadow:0 1px 2px rgba(0,0,0,0.35); font-size:${labelFontSize}px;` : `font-size:${labelFontSize}px;`}">${esc(rawLabel)}</span>
         <span class="crm-satellite__full">${esc(c.name)}${isAccessible ? '' : ' — 🔒'}</span>
       </div>
     `;
@@ -300,9 +310,11 @@ async function renderCrm(profile) {
   satelliteEls.forEach((el) => {
     el.addEventListener('click', () => {
       if (el.classList.contains('crm-satellite--locked')) return;
-      localStorage.setItem(WORLD_STORAGE_KEY, 'crm');
-      localStorage.setItem('ais_selected_center', el.dataset.center);
-      window.location.href = '/dashboard.html';
+      launchWarpJump(el, () => {
+        localStorage.setItem(WORLD_STORAGE_KEY, 'crm');
+        localStorage.setItem('ais_selected_center', el.dataset.center);
+        window.location.href = '/dashboard.html';
+      });
     });
   });
 }
@@ -345,6 +357,33 @@ function startCrmAnimation() {
   crmAnimHandle = requestAnimationFrame(frame);
 }
 function stopCrmAnimation() { if (crmAnimHandle) cancelAnimationFrame(crmAnimHandle); crmAnimHandle = null; }
+
+// MOI — hieu ung "du hanh vu tru": bam vao 1 hanh tinh se nhu dang lao
+// toi no o toc do anh sang truoc khi thuc su chuyen trang — dung hieu
+// ung phong to + mo dan + vai vet sang toe ra, dung tinh than "space
+// travel" ban yeu cau.
+function launchWarpJump(satelliteEl, onDone) {
+  stopCrmAnimation();
+  const stage = document.getElementById('crmStage');
+  if (!stage || REDUCE_MOTION) { onDone(); return; } // giam chuyen dong: chuyen thang, khong hieu ung
+
+  stage.querySelectorAll('.crm-satellite, .crm-logo, .crm-orbit').forEach((el) => {
+    if (el !== satelliteEl) el.classList.add('crm-warp-fade');
+  });
+  satelliteEl.classList.add('crm-warp-zoom');
+
+  // Vai vet sang toe ra tu tam, mo phong toc do anh sang.
+  for (let i = 0; i < 10; i++) {
+    const streak = document.createElement('div');
+    streak.className = 'crm-warp-streak';
+    const angle = Math.random() * 360;
+    streak.style.setProperty('--streak-angle', angle + 'deg');
+    streak.style.animationDelay = (Math.random() * 80) + 'ms';
+    stage.appendChild(streak);
+  }
+
+  setTimeout(onDone, 620);
+}
 
 // =====================================================================
 // PHAN 5 — ROOM: luoi phang cac chuc nang ca nhan.

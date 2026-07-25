@@ -267,53 +267,22 @@ function injectWorldSwitcher(profile, currentWorld, currentPage) {
   document.getElementById('worldSwitcher')?.remove();
 
   const available = worldsWithAccess(profile);
-  if (available.length <= 1) return; // chi 1 the gioi thi khong can nut chon
+  if (available.length <= 1) return; // chi 1 the gioi thi khong can nut nay
 
+  // SUA — truoc day day la 1 menu tha xuong tu chon 4 the gioi NGAY
+  // TRONG topbar (trung lap voi trang cho/lobby moi xay, vua rac roi vua
+  // khong dep bang). Gio don gian hoa thanh 1 nut DUY NHAT dan thang ve
+  // dung trang lobby — noi DA CO SAN giao dien chon the gioi rat truc
+  // quan (toa nha, dai ngan ha...), khong can lam lai 1 ban rut gon o
+  // day nua.
   const meta = WORLD_META[currentWorld];
-  const wrap = document.createElement('div');
+  const wrap = document.createElement('a');
   wrap.id = 'worldSwitcher';
-  wrap.className = 'world-switcher';
-  wrap.innerHTML = `
-    <button type="button" class="world-switcher__btn" id="worldSwitcherBtn" style="--world-color:${meta.color};">
-      <span class="world-switcher__icon">${meta.icon}</span>
-      <span class="world-switcher__label">${esc(meta.label.split(' — ')[0])}</span>
-      <span class="world-switcher__caret">▾</span>
-    </button>
-    <div class="world-switcher__menu" id="worldSwitcherMenu" style="display:none;">
-      ${available.map((w) => `
-        <button type="button" class="world-switcher__option ${w === currentWorld ? 'active' : ''}" data-world="${w}" style="--world-color:${WORLD_META[w].color};">
-          <span class="world-switcher__icon">${WORLD_META[w].icon}</span>
-          <span>${esc(WORLD_META[w].label)}</span>
-        </button>
-      `).join('')}
-    </div>
-  `;
+  wrap.href = '/world-select.html';
+  wrap.className = 'world-switcher-link';
+  wrap.style.cssText = `--world-color:${meta.color};`;
+  wrap.innerHTML = `<span class="world-switcher-link__icon">${meta.icon}</span><span>Sảnh chính</span>`;
   anchor.appendChild(wrap);
-
-  const btn = wrap.querySelector('#worldSwitcherBtn');
-  const menu = wrap.querySelector('#worldSwitcherMenu');
-  btn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
-  });
-  document.addEventListener('click', () => { menu.style.display = 'none'; });
-  wrap.querySelectorAll('[data-world]').forEach((opt) => {
-    opt.addEventListener('click', () => {
-      const world = opt.dataset.world;
-      setSavedWorld(world);
-      menu.style.display = 'none';
-      document.dispatchEvent(new CustomEvent('ais:worldchange', { detail: { world } }));
-      // Dang o dung trang thuoc the gioi vua chon -> chi ve lai hub, khong
-      // can dieu huong. Khac the gioi -> ve trang chu de bat dau lai.
-      const stillInWorld = layerToWorld(findActiveGroup(currentPage, profile)?.layer) === world;
-      if (!stillInWorld && !currentPage?.endsWith('/dashboard.html')) {
-        window.location.href = '/dashboard.html';
-      } else {
-        injectWorldSwitcher(profile, world, currentPage);
-        injectHubLauncher(profile, world, currentPage);
-      }
-    });
-  });
 }
 
 /**
@@ -483,7 +452,7 @@ function esc(s) { return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&am
  * lại phần <header> của mọi trang HTML trong hệ thống.
  */
 function injectLangSwitcher(profileId) {
-  const topbarRight = document.querySelector('.topbar__right');
+  const topbarRight = document.querySelector('.topbar__right, .hub-topbar__right');
   if (!topbarRight || document.getElementById('langSwitcher')) return;
 
   const wrap = document.createElement('div');

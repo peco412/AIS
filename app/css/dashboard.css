@@ -197,7 +197,7 @@
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   border-bottom: 1px solid var(--separator);
-  border-top: 3px solid var(--accent);
+  border-top: 2px solid var(--accent);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -419,7 +419,7 @@ body.hub-body { background: var(--surface); }
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   border-bottom: 1px solid var(--separator);
-  border-top: 3px solid var(--accent);
+  border-top: 2px solid var(--accent);
   position: sticky; top: 0; z-index: 30;
 }
 .hub-topbar__brand {
@@ -622,34 +622,17 @@ body.hub-body { background: var(--surface); }
    icon toan man hinh thay cho viec di chuyen bang cay muc luc).
    ========================================================================= */
 
-.world-switcher { position: relative; margin-left: 12px; }
-.world-switcher__btn {
-  display: flex; align-items: center; gap: 6px;
+.world-switcher-link {
+  display: flex; align-items: center; gap: 6px; margin-left: 12px; text-decoration: none;
   background: color-mix(in srgb, var(--world-color) 10%, transparent);
   border: 1px solid color-mix(in srgb, var(--world-color) 25%, transparent);
   color: var(--world-color);
-  border-radius: 999px; padding: 6px 12px 6px 10px;
+  border-radius: 999px; padding: 6px 14px 6px 10px;
   font-size: 12.5px; font-weight: 700; cursor: pointer;
-  transition: background var(--dur-fast) var(--ease);
+  transition: background var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease-spring);
 }
-.world-switcher__btn:hover { background: color-mix(in srgb, var(--world-color) 16%, transparent); }
-.world-switcher__icon { font-size: 14px; }
-.world-switcher__caret { font-size: 9px; opacity: 0.7; margin-left: 2px; }
-.world-switcher__menu {
-  position: absolute; top: calc(100% + 8px); left: 0; z-index: 200;
-  background: var(--surface-card); border: 1px solid var(--border);
-  border-radius: var(--radius-md); box-shadow: var(--shadow-md);
-  padding: 6px; min-width: 220px;
-}
-.world-switcher__option {
-  display: flex; align-items: center; gap: 10px; width: 100%;
-  background: transparent; border: none; border-radius: 8px;
-  padding: 9px 10px; font-size: 13px; font-weight: 600; color: var(--ink);
-  cursor: pointer; text-align: left; transition: background var(--dur-fast) var(--ease);
-}
-.world-switcher__option:hover { background: var(--surface-sunken); }
-.world-switcher__option.active { background: color-mix(in srgb, var(--world-color) 12%, transparent); color: var(--world-color); }
-.world-switcher__option .world-switcher__icon { font-size: 16px; }
+.world-switcher-link:hover { background: color-mix(in srgb, var(--world-color) 16%, transparent); transform: translateY(-1px); }
+.world-switcher-link__icon { font-size: 14px; }
 
 .hub-overlay {
   position: fixed; inset: 0; z-index: 500;
@@ -760,7 +743,7 @@ body.hub-body { background: var(--surface); }
 }
 
 @media (max-width: 640px) {
-  .world-switcher__label { display: none; }
+  .world-switcher-link span:last-child { display: none; }
   /* SỬA — Material Design: trên điện thoại, đổi từ LƯỚI Ô VUÔNG (mỗi mục
      to, chỉ thấy 6-8 mục/màn hình, phải cuộn nhiều) sang DANH SÁCH DÒNG
      NGANG (icon + tên trên cùng 1 dòng, kiểu List đúng chuẩn Material cho
