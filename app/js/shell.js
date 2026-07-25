@@ -697,24 +697,24 @@ export async function bootShell() {
 
 function injectDeptHeaderBadge() {
   const DEPT_BADGE = {
-    '/hr/': { icon: '👥', color: '#0094D9' },
-    '/acc/': { icon: '💰', color: '#2FAE6B' },
-    '/mkt/': { icon: '📣', color: '#A855C9' },
-    '/fac/': { icon: '🔧', color: '#D97A3D' },
-    '/exec/': { icon: '🏛️', color: '#D4AF6E' },
-    '/master-data/': { icon: '🗄️', color: '#6c5ce7' },
-    '/edu/': { icon: '🎓', color: '#22a06b' },
-    '/consultant/': { icon: '🎓', color: '#22a06b' },
-    '/teacher/': { icon: '🎓', color: '#22a06b' },
+    '/hr/': { icon: '👥', color: '#0094D9', label: 'Phòng nhân sự' },
+    '/acc/': { icon: '💰', color: '#2FAE6B', label: 'Phòng kế toán' },
+    '/mkt/': { icon: '📣', color: '#A855C9', label: 'Phòng truyền thông' },
+    '/fac/': { icon: '🔧', color: '#D97A3D', label: 'Phòng cơ sở vật chất' },
+    '/exec/': { icon: '🏛️', color: '#D4AF6E', label: 'Ban điều hành' },
+    '/master-data/': { icon: '🗄️', color: '#6c5ce7', label: 'Dữ liệu gốc' },
+    '/edu/': { icon: '🎓', color: '#22a06b', label: 'Khối trung tâm' },
+    '/consultant/': { icon: '🎓', color: '#22a06b', label: 'Khối trung tâm' },
+    '/teacher/': { icon: '🎓', color: '#22a06b', label: 'Khối trung tâm' },
   };
-  // MOI — 4 trang nay nam trong thu muc /acc/ nhung THUC RA thuoc "Khoi
+  // MOI — 3 trang nay nam trong thu muc /acc/ nhung THUC RA thuoc "Khoi
   // trung tam" (CRM) trong dieu huong chung, khong phai nghiep vu Ke
   // toan thuan tuy — uu tien kiem tra rieng TRUOC ca quy tac theo thu
   // muc, tranh bi gan nham mau Ke toan.
   const CRM_OVERRIDE_PAGES = new Set([
     '/acc/wallet-topup-requests.html', '/acc/budget-setup.html', '/acc/commissions.html',
   ]);
-  const CRM_BADGE = { icon: '🎓', color: '#22a06b' };
+  const CRM_BADGE = { icon: '🎓', color: '#22a06b', label: 'Khối trung tâm' };
   // MOI — cac trang "Room" (ca nhan) khong nam chung 1 thu muc nhu cac
   // phong ban khac (vd /profile.html, /meetings.html nam thang o goc),
   // nen phai liet ke DUNG TEN FILE thay vi doan tien to duong dan — dung
@@ -724,7 +724,7 @@ function injectDeptHeaderBadge() {
     '/attendance-checkin.html', '/proposals.html', '/archive.html',
     '/permission-requests.html', '/change-password.html', '/acc/purchase-orders.html',
   ]);
-  const ROOM_BADGE = { icon: '🚪', color: '#8a8f98' };
+  const ROOM_BADGE = { icon: '🚪', color: '#8a8f98', label: 'Cá nhân' };
 
   const path = window.location.pathname;
   let badgeInfo;
@@ -734,9 +734,27 @@ function injectDeptHeaderBadge() {
     const prefix = Object.keys(DEPT_BADGE).find((p) => path.startsWith(p));
     badgeInfo = prefix ? DEPT_BADGE[prefix] : null;
   }
+
+  const pageHeader = document.querySelector('.page-header');
+  if (!pageHeader || pageHeader.dataset.lobbyHeaderDone) return; // da lam roi thi thoi, tranh chen 2 lan
+  pageHeader.dataset.lobbyHeaderDone = '1';
+
+  // MOI — thanh nho phia tren tieu de trang, DUNG DUNG kieu "eyebrow" +
+  // nut "Quay lai" da dung o trang cho (lobby) — ap dung cho MOI trang
+  // co ".page-header", khong rieng gi cac trang co gan duoc mau phong
+  // ban. Day chinh la "noi de ve lobby" khi dang o sau trong 1 chuc
+  // nang cu the cua tung phong.
+  const bar = document.createElement('div');
+  bar.style.cssText = 'display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px;';
+  bar.innerHTML = `
+    <a href="/world-select.html" style="display:inline-flex; align-items:center; gap:5px; font-size:12.5px; font-weight:600; color:var(--muted); text-decoration:none;">← Sảnh chính</a>
+    ${badgeInfo ? `<span style="font-family:var(--font-mono); font-size:10.5px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:${badgeInfo.color};">${esc(badgeInfo.label)}</span>` : ''}
+  `;
+  pageHeader.parentElement.insertBefore(bar, pageHeader);
+
   if (!badgeInfo) return;
-  const h1 = document.querySelector('.page-header h1');
-  if (!h1 || h1.querySelector('.dept-header-badge')) return; // da co roi thi thoi, tranh chen 2 lan
+  const h1 = pageHeader.querySelector('h1');
+  if (!h1 || h1.querySelector('.dept-header-badge')) return;
   const badge = document.createElement('span');
   badge.className = 'dept-header-badge';
   badge.textContent = badgeInfo.icon;
