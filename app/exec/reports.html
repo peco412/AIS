@@ -56,22 +56,30 @@
       </div>
     </div>
 
-    <div class="form-section-title" style="margin-top:0;">Nhân sự</div>
+    <div class="form-section-title" style="margin-top:0;"><span class="dept-dot" style="background:#0094D9;"></span>Nhân sự</div>
     <div class="stat-grid" id="statsHR"></div>
 
-    <div class="form-section-title">Kế toán</div>
+    <div class="form-section-title"><span class="dept-dot" style="background:#2FAE6B;"></span>Kế toán</div>
     <div class="stat-grid" id="statsACC"></div>
 
-    <div class="form-section-title">Truyền thông</div>
+    <div class="form-section-title"><span class="dept-dot" style="background:#A855C9;"></span>Truyền thông</div>
     <div class="stat-grid" id="statsMKT"></div>
 
-    <div class="form-section-title">Cơ sở vật chất</div>
+    <div class="form-section-title"><span class="dept-dot" style="background:#D97A3D;"></span>Cơ sở vật chất</div>
     <div class="stat-grid" id="statsFAC"></div>
 
-    <div class="form-section-title">Học vụ</div>
+    <div class="form-section-title"><span class="dept-dot" style="background:#3DBFB0;"></span>Học vụ</div>
     <div class="stat-grid" id="statsEDU"></div>
   </main>
 </div>
+
+<style>
+  /* MOI — cham mau nho canh ten phong ban, dung DUNG mau da dung o
+     "Sanh ERP" trong trang cho (lobby) — noi 2 noi lai voi nhau bang thi
+     giac, khong chi la text tro troi nhu truoc. */
+  .form-section-title { display: flex; align-items: center; gap: 8px; }
+  .dept-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+</style>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="/env.js"></script>

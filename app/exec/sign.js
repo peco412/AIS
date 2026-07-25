@@ -107,8 +107,19 @@ async function fetchPending() {
   return rows;
 }
 
+// MOI — mau cham tron dau dong theo dung phong ban nguon cua ho so, suy
+// ra tu chinh "href" da co san o moi loi goi row() — khong can sua tay
+// tung noi goi (14 cho), chi sua đúng 1 ham nay la an toan hon nhieu.
+const HREF_DEPT_COLOR = {
+  '/hr/': '#0094D9', '/acc/': '#2FAE6B', '/mkt/': '#A855C9', '/fac/': '#D97A3D', '/proposals.html': '#8a8f98',
+};
+function deptColorFor(href) {
+  const prefix = Object.keys(HREF_DEPT_COLOR).find((p) => href.startsWith(p));
+  return prefix ? HREF_DEPT_COLOR[prefix] : '#94A3B8';
+}
+
 function row(type, code, requester, stepLabel, href) {
-  return { type, code, requester: requester || '—', stepLabel, href };
+  return { type, code, requester: requester || '—', stepLabel, href, deptColor: deptColorFor(href) };
 }
 
 function render(rows) {
@@ -116,7 +127,7 @@ function render(rows) {
     ? '<tr><td colspan="5" class="empty-cell">Không có hồ sơ nào đang chờ bạn xử lý.</td></tr>'
     : rows.map((r) => `
       <tr>
-        <td>${esc(r.type)}</td>
+        <td><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${r.deptColor}; margin-right:8px; vertical-align:middle;"></span>${esc(r.type)}</td>
         <td class="cell-code">${esc(r.code)}</td>
         <td>${esc(r.requester)}</td>
         <td><span class="badge badge-submitted">${esc(r.stepLabel)}</span></td>

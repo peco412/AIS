@@ -683,5 +683,62 @@ export async function bootShell() {
     window.location.href = '/index.html';
   });
 
+  // MOI — gan 1 cham mau + icon nho canh tieu de trang, dung DUNG mau/
+  // icon da dung o Sanh ERP trong trang cho (lobby) — noi TOAN BO trang
+  // trong tung phong ban voi dung mau cua no, sua 1 CHO NAY la ap dung
+  // duoc cho MOI trang hien tai va sau nay, khong can sua tung file HTML.
+  // Boc try/catch rieng — neu co loi gi o day cung KHONG lam hong phan
+  // con lai cua bootShell (dang xuat, thong bao... van chay binh thuong).
+  try { injectDeptHeaderBadge(); } catch (e) { /* khong lam gi, chi la trang tri */ }
+
   return { profile, supabase };
+}
+
+function injectDeptHeaderBadge() {
+  const DEPT_BADGE = {
+    '/hr/': { icon: '👥', color: '#0094D9' },
+    '/acc/': { icon: '💰', color: '#2FAE6B' },
+    '/mkt/': { icon: '📣', color: '#A855C9' },
+    '/fac/': { icon: '🔧', color: '#D97A3D' },
+    '/exec/': { icon: '🏛️', color: '#D4AF6E' },
+    '/master-data/': { icon: '🗄️', color: '#6c5ce7' },
+    '/edu/': { icon: '🎓', color: '#22a06b' },
+    '/consultant/': { icon: '🎓', color: '#22a06b' },
+    '/teacher/': { icon: '🎓', color: '#22a06b' },
+  };
+  // MOI — 4 trang nay nam trong thu muc /acc/ nhung THUC RA thuoc "Khoi
+  // trung tam" (CRM) trong dieu huong chung, khong phai nghiep vu Ke
+  // toan thuan tuy — uu tien kiem tra rieng TRUOC ca quy tac theo thu
+  // muc, tranh bi gan nham mau Ke toan.
+  const CRM_OVERRIDE_PAGES = new Set([
+    '/acc/wallet-topup-requests.html', '/acc/budget-setup.html', '/acc/commissions.html',
+  ]);
+  const CRM_BADGE = { icon: '🎓', color: '#22a06b' };
+  // MOI — cac trang "Room" (ca nhan) khong nam chung 1 thu muc nhu cac
+  // phong ban khac (vd /profile.html, /meetings.html nam thang o goc),
+  // nen phai liet ke DUNG TEN FILE thay vi doan tien to duong dan — dung
+  // mau xam cua the gioi "Ca nhan" da dat o lobby.
+  const ROOM_PAGES = new Set([
+    '/directory.html', '/profile.html', '/my-payroll.html', '/meetings.html',
+    '/attendance-checkin.html', '/proposals.html', '/archive.html',
+    '/permission-requests.html', '/change-password.html', '/acc/purchase-orders.html',
+  ]);
+  const ROOM_BADGE = { icon: '🚪', color: '#8a8f98' };
+
+  const path = window.location.pathname;
+  let badgeInfo;
+  if (CRM_OVERRIDE_PAGES.has(path)) badgeInfo = CRM_BADGE;
+  else if (ROOM_PAGES.has(path)) badgeInfo = ROOM_BADGE;
+  else {
+    const prefix = Object.keys(DEPT_BADGE).find((p) => path.startsWith(p));
+    badgeInfo = prefix ? DEPT_BADGE[prefix] : null;
+  }
+  if (!badgeInfo) return;
+  const h1 = document.querySelector('.page-header h1');
+  if (!h1 || h1.querySelector('.dept-header-badge')) return; // da co roi thi thoi, tranh chen 2 lan
+  const badge = document.createElement('span');
+  badge.className = 'dept-header-badge';
+  badge.textContent = badgeInfo.icon;
+  badge.style.cssText = `display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:10px; background:${badgeInfo.color}1a; margin-right:10px; font-size:15px; vertical-align:middle;`;
+  h1.insertBefore(badge, h1.firstChild);
 }
