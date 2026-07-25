@@ -84,6 +84,56 @@ table.data-table { width: 100%; min-width: 640px; border-collapse: collapse; fon
 .data-table .cell-muted { color: var(--muted); font-size: 12.5px; }
 .data-table .cell-code { font-family: var(--font-mono); font-size: 12.5px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
 
+/* =====================================================================
+   MOI — Bang du lieu tren dien thoai: doi thanh THE DOC (moi dong = 1
+   the), khong con phai cuon ngang nua. Nhan ten cot (data-label) duoc
+   JS tu dong gan (xem shell.js — injectMobileTableLabels), KHONG can sua
+   tay tung noi goi bang trong 100+ trang. Desktop giu nguyen 100%, quy
+   tac nay CHI bat khi man hinh thuc su hep (duoi 640px).
+   ===================================================================== */
+@media (max-width: 640px) {
+  .data-table-wrap { overflow-x: visible; border: none; background: none; box-shadow: none; }
+  table.data-table { min-width: 0; width: 100%; }
+  .data-table thead { display: none; }
+  .data-table tbody, .data-table tr, .data-table td { display: block; width: 100%; }
+  .data-table tbody tr {
+    background: var(--surface-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-xs);
+    padding: 4px 14px;
+    margin-bottom: 10px;
+  }
+  .data-table tbody tr:hover { background: var(--surface-card); } /* bo hover doi mau — khong con y nghia o dang the */
+  .data-table tbody td {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--separator);
+    text-align: right;
+  }
+  .data-table tbody tr:last-child td:last-child,
+  .data-table tbody td:last-child { border-bottom: none; }
+  /* O nao khong co gia tri that su (chi chua nut hanh dong) thi khong
+     can nhan ten cot, chi can canh cac nut cho gon */
+  .data-table tbody td:empty,
+  .data-table tbody td:has(> a:only-child, > button:only-child) { justify-content: flex-end; }
+  .data-table tbody td::before {
+    content: attr(data-label);
+    font-weight: 700;
+    font-size: 11.5px;
+    color: var(--muted);
+    text-align: left;
+    flex-shrink: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .data-table tbody td:not([data-label])::before,
+  .data-table tbody td[data-label='']::before { content: none; }
+}
+
 .avatar-sm {
   width: 30px; height: 30px; border-radius: 50%;
   background: var(--accent-tint); color: var(--accent-deep);

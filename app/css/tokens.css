@@ -90,15 +90,6 @@ html, body {
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* SUA LOI THAT — man hinh dien thoai bi cat cut/lech noi dung o hang
-     loat trang: khong co dong nay, 1 bang du lieu rong (vd min-width:
-     640px) o BAT KY dau trong trang co the day CA TRANG rong ra ngang,
-     khien toan bo layout (sidebar, topbar...) bi keo lech theo, thay vi
-     chi rieng khung bang do duoc cuon ngang doc lap nhu thiet ke. Chan
-     han o goc de KHONG BAO GIO ca trang bi cuon ngang — phan tu nao
-     rong hon man hinh se tu cuon rieng no (data-table-wrap da co san
-     overflow-x:auto), khong keo theo ca trang. */
-  overflow-x: hidden;
 }
 
 body { min-height: 100vh; }

@@ -690,6 +690,7 @@ export async function bootShell() {
   // Boc try/catch rieng — neu co loi gi o day cung KHONG lam hong phan
   // con lai cua bootShell (dang xuat, thong bao... van chay binh thuong).
   try { injectDeptHeaderBadge(); } catch (e) { /* khong lam gi, chi la trang tri */ }
+  try { setupMobileTableLabels(); } catch (e) { /* khong lam gi, bang van dung duoc, chi thieu nhan tren dien thoai */ }
 
   return { profile, supabase };
 }
@@ -741,4 +742,42 @@ function injectDeptHeaderBadge() {
   badge.textContent = badgeInfo.icon;
   badge.style.cssText = `display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:10px; background:${badgeInfo.color}1a; margin-right:10px; font-size:15px; vertical-align:middle;`;
   h1.insertBefore(badge, h1.firstChild);
+}
+
+// MOI — Gan "data-label" cho tung o <td> DUA VAO DUNG CHU O <thead> CUNG
+// BANG DO — de CSS (@media max-width:640px trong module.css) co the
+// hien tung dong bang thanh 1 the doc tren dien thoai, kem ten cot ro
+// rang, MA KHONG can sua tay bat ky trang nao trong so hon 100 trang
+// dang co bang du lieu. Vi da so bang deu duoc dien du lieu SAU KHI
+// trang da tai xong (goi API roi moi "innerHTML = ..."), phai theo doi
+// them thay doi trong trang bang MutationObserver de gan nhan LAI moi
+// khi co dong moi duoc them vao — CHI theo doi "co phan tu moi hay
+// khong" (childList), TUYET DOI KHONG theo doi thay doi thuoc tinh
+// (attributes) — vi chinh ham nay se ghi thuoc tinh data-label, neu lo
+// theo doi ca attributes se tu kich hoat lai chinh no vo han lan.
+function applyMobileTableLabels() {
+  document.querySelectorAll('.data-table').forEach((table) => {
+    const headerCells = table.querySelectorAll('thead th');
+    if (headerCells.length === 0) return;
+    const headers = [...headerCells].map((th) => th.textContent.trim());
+    table.querySelectorAll('tbody tr').forEach((tr) => {
+      [...tr.children].forEach((td, i) => {
+        if (td.hasAttribute('data-label')) return; // da gan roi, bo qua cho nhanh
+        const label = headers[i];
+        if (label) td.setAttribute('data-label', label);
+      });
+    });
+  });
+}
+
+function setupMobileTableLabels() {
+  applyMobileTableLabels();
+  let pending = null;
+  const observer = new MutationObserver(() => {
+    // Gop nhieu thay doi lien tiep lai thanh 1 lan chay (vd 1 bang render
+    // ca chuc dong cung luc), tranh chay lai qua nhieu lan lien tuc.
+    if (pending) clearTimeout(pending);
+    pending = setTimeout(applyMobileTableLabels, 120);
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
 }
