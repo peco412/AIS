@@ -107,6 +107,54 @@ document.querySelectorAll('.friend-tabs button').forEach((btn) => {
   });
 });
 
+// ---------------------------------------------------------------------
+// Bai dang cua toi — xem lai, sua nhanh, xoa
+// ---------------------------------------------------------------------
+async function loadMyPosts() {
+  const box = document.getElementById('myPostsList');
+  const filterCol = PROFILE.type === 'parent' ? 'author_parent_id' : 'author_employee_id';
+  const { data: posts, error } = await supabase
+    .from('social_posts')
+    .select('id, caption, image_url, created_at')
+    .eq(filterCol, PROFILE.id)
+    .order('created_at', { ascending: false });
+
+  if (error) { box.innerHTML = `<div class="empty-state">${esc(error.message)}</div>`; return; }
+  if (!posts || posts.length === 0) { box.innerHTML = '<div class="empty-state">Bạn chưa đăng bài nào — vào Cộng đồng để chia sẻ khoảnh khắc đầu tiên!</div>'; return; }
+
+  box.innerHTML = posts.map((p) => `
+    <div class="my-post-row" data-my-post="${p.id}">
+      ${p.image_url ? `<img class="my-post-row__img" src="${esc(p.image_url)}" alt="" />` : '<div class="my-post-row__img"></div>'}
+      <div style="flex:1; min-width:0;">
+        <div class="my-post-row__caption">${esc(p.caption || '(Không có chú thích)')}</div>
+        <div class="my-post-row__meta">${new Date(p.created_at).toLocaleDateString('vi-VN')}</div>
+      </div>
+      <div class="my-post-row__actions">
+        <button data-edit-my-post="${p.id}" data-current-caption="${esc(p.caption || '')}">✏️ Sửa</button>
+        <button class="danger" data-delete-my-post="${p.id}">🗑️ Xoá</button>
+      </div>
+    </div>
+  `).join('');
+
+  box.querySelectorAll('[data-edit-my-post]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const newCaption = prompt('Sửa chú thích bài đăng:', btn.dataset.currentCaption);
+      if (newCaption === null) return; // bam Huy
+      const { error } = await supabase.from('social_posts').update({ caption: newCaption.trim() || null, updated_at: new Date().toISOString() }).eq('id', btn.dataset.editMyPost);
+      if (error) { alert('Sửa thất bại: ' + error.message); return; }
+      loadMyPosts();
+    });
+  });
+  box.querySelectorAll('[data-delete-my-post]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('Xoá bài đăng này? Không thể hoàn tác.')) return;
+      const { error } = await supabase.from('social_posts').delete().eq('id', btn.dataset.deleteMyPost);
+      if (error) { alert('Xoá thất bại: ' + error.message); return; }
+      loadMyPosts();
+    });
+  });
+}
+
 async function renderFriendsTab() {
   const box = document.getElementById('friendsTabContent');
   box.innerHTML = '<div class="empty-state">Đang tải...</div>';
@@ -173,6 +221,7 @@ async function updateRequestBadge() {
     MY_PROFILE_ID = myId;
     document.getElementById('displayNameInput').value = PROFILE.displayName;
     renderAvatarPreview();
+    await loadMyPosts();
     await renderFriendsTab();
     await updateRequestBadge();
   } catch (e) {

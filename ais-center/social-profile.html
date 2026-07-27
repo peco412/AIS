@@ -38,6 +38,14 @@
   .search-friend { display: flex; gap: 8px; margin-bottom: 14px; }
   .search-friend input { flex: 1; padding: 10px 14px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface-fill); font-size: 13px; outline: none; }
   .empty-state { text-align: center; padding: 30px 20px; color: var(--muted); font-size: 13px; }
+
+  .my-post-row { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .my-post-row__img { width: 56px; height: 56px; border-radius: 10px; object-fit: cover; flex-shrink: 0; background: var(--surface-fill); }
+  .my-post-row__caption { font-size: 12.5px; color: var(--ink); flex: 1; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .my-post-row__meta { font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .my-post-row__actions { display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; }
+  .my-post-row__actions button { border: none; background: var(--surface-fill); border-radius: 8px; padding: 5px 10px; font-size: 11px; cursor: pointer; color: var(--ink); }
+  .my-post-row__actions button.danger { color: var(--danger, #e33); }
 </style>
 </head>
 <body>
@@ -57,6 +65,11 @@
     <div class="field"><label>Tên hiển thị</label><input type="text" id="displayNameInput" /></div>
     <button class="btn-primary" id="btnSaveProfile">Lưu thay đổi</button>
     <div id="saveMsg" style="text-align:center; font-size:12px; margin-top:8px;"></div>
+  </div>
+
+  <div class="card">
+    <h3>📸 Bài đăng của tôi</h3>
+    <div id="myPostsList"><div class="empty-state">Đang tải...</div></div>
   </div>
 
   <div class="card">

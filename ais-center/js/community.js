@@ -164,10 +164,14 @@ async function loadFeed() {
     const isStaffAuthor = !!p.author_employee_id;
     const liked = myLikes.has(p.id);
     const count = likeCounts[p.id] || 0;
-    const isMyOwnPost = authorProfile.profileId && authorProfile.profileId === MY_PROFILE_ID;
+    // MOI — kiem tra "co phai bai cua chinh minh" truc tiep tren ID
+    // tac gia (dang tin cay hon, khong phu thuoc viec profileId co lay
+    // duoc hay khong) — dung de hien nut Sua/Xoa.
+    const isMyOwnPost = (PROFILE.type === 'parent' && p.author_parent_id === PROFILE.id) || (PROFILE.type === 'employee' && p.author_employee_id === PROFILE.id);
+    const isFriendBtnTarget = authorProfile.profileId && authorProfile.profileId !== MY_PROFILE_ID;
     const friendStatus = authorProfile.profileId ? friendStatusMap.get(authorProfile.profileId) : null;
     let friendBtnHtml = '';
-    if (!isMyOwnPost && authorProfile.profileId) {
+    if (isFriendBtnTarget) {
       if (friendStatus === 'accepted') friendBtnHtml = '<span class="post-card__friendbtn is-friend">✓ Bạn bè</span>';
       else if (friendStatus === 'pending') friendBtnHtml = '<span class="post-card__friendbtn is-pending">Đã gửi lời mời</span>';
       else friendBtnHtml = `<button class="post-card__friendbtn" data-quick-friend="${authorProfile.profileId}">+ Kết bạn</button>`;
@@ -181,9 +185,27 @@ async function loadFeed() {
             <div class="post-card__meta">${timeAgo(p.created_at)}${p.centers?.name ? ` · 📍 ${esc(p.centers.name)}` : ''}</div>
           </div>
           ${friendBtnHtml}
+          ${isMyOwnPost ? `
+            <div class="post-card__ownmenu">
+              <button class="post-card__ownmenu-btn" data-toggle-ownmenu="${p.id}">⋯</button>
+              <div class="post-card__ownmenu-list" id="ownmenu-${p.id}" style="display:none;">
+                <button data-edit-post="${p.id}">✏️ Sửa</button>
+                <button data-delete-post="${p.id}">🗑️ Xoá</button>
+              </div>
+            </div>
+          ` : ''}
         </div>
-        ${p.caption ? `<div class="post-card__caption">${esc(p.caption)}</div>` : ''}
-        ${p.image_url ? `<img class="post-card__img" src="${esc(p.image_url)}" alt="Ảnh bài đăng" loading="lazy" />` : ''}
+        <div class="post-card__caption-view" id="caption-view-${p.id}">
+          ${p.caption ? `<div class="post-card__caption">${esc(p.caption)}</div>` : ''}
+          ${p.image_url ? `<img class="post-card__img" src="${esc(p.image_url)}" alt="Ảnh bài đăng" loading="lazy" />` : ''}
+        </div>
+        <div class="post-card__caption-edit" id="caption-edit-${p.id}" style="display:none; padding:0 16px 12px;">
+          <textarea class="post-edit-textarea" id="edit-textarea-${p.id}" rows="2">${esc(p.caption || '')}</textarea>
+          <div style="display:flex; gap:8px; margin-top:6px; justify-content:flex-end;">
+            <button class="btn-cancel-edit" data-cancel-edit="${p.id}">Huỷ</button>
+            <button class="btn-save-edit" data-save-edit="${p.id}">Lưu</button>
+          </div>
+        </div>
         <div class="post-card__actions">
           <button class="post-card__actionbtn ${liked ? 'is-liked' : ''}" data-like="${p.id}">
             <svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
@@ -198,6 +220,7 @@ async function loadFeed() {
           <div class="comments-list" id="comments-list-${p.id}"></div>
           <div class="comment-input-row">
             <input type="text" placeholder="Viết bình luận..." data-comment-input="${p.id}" />
+
             <button data-comment-submit="${p.id}">Gửi</button>
           </div>
         </div>
@@ -218,6 +241,49 @@ async function loadFeed() {
   });
   feedList.querySelectorAll('[data-toggle-comments]').forEach((btn) => {
     btn.addEventListener('click', () => toggleComments(btn.dataset.toggleComments));
+  });
+  feedList.querySelectorAll('[data-toggle-ownmenu]').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const menu = document.getElementById(`ownmenu-${btn.dataset.toggleOwnmenu}`);
+      const isOpen = menu.style.display === 'block';
+      document.querySelectorAll('.post-card__ownmenu-list').forEach((m) => { m.style.display = 'none'; });
+      menu.style.display = isOpen ? 'none' : 'block';
+    });
+  });
+  feedList.querySelectorAll('[data-edit-post]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.editPost;
+      document.getElementById(`ownmenu-${id}`).style.display = 'none';
+      document.getElementById(`caption-view-${id}`).style.display = 'none';
+      document.getElementById(`caption-edit-${id}`).style.display = 'block';
+    });
+  });
+  feedList.querySelectorAll('[data-cancel-edit]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.cancelEdit;
+      document.getElementById(`caption-edit-${id}`).style.display = 'none';
+      document.getElementById(`caption-view-${id}`).style.display = 'block';
+    });
+  });
+  feedList.querySelectorAll('[data-save-edit]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.saveEdit;
+      const newCaption = document.getElementById(`edit-textarea-${id}`).value.trim();
+      btn.disabled = true; btn.textContent = 'Đang lưu...';
+      const { error } = await supabase.from('social_posts').update({ caption: newCaption || null, updated_at: new Date().toISOString() }).eq('id', id);
+      if (error) { alert('Sửa bài thất bại: ' + error.message); btn.disabled = false; btn.textContent = 'Lưu'; return; }
+      await loadFeed();
+    });
+  });
+  feedList.querySelectorAll('[data-delete-post]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('Xoá bài đăng này? Không thể hoàn tác.')) return;
+      const id = btn.dataset.deletePost;
+      const { error } = await supabase.from('social_posts').delete().eq('id', id);
+      if (error) { alert('Xoá bài thất bại: ' + error.message); return; }
+      await loadFeed();
+    });
   });
   feedList.querySelectorAll('[data-comment-submit]').forEach((btn) => {
     btn.addEventListener('click', () => submitComment(btn.dataset.commentSubmit));
@@ -300,6 +366,10 @@ async function toggleLike(btn) {
     btn.disabled = false;
   }
 }
+
+document.addEventListener('click', () => {
+  document.querySelectorAll('.post-card__ownmenu-list').forEach((m) => { m.style.display = 'none'; });
+});
 
 document.getElementById('logoutBtn').addEventListener('click', async () => {
   await supabase.auth.signOut();
