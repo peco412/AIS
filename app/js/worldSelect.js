@@ -339,11 +339,20 @@ function positionCrmSatellitesOnce() {
   return true;
 }
 
-const REDUCE_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 function startCrmAnimation() {
   stopCrmAnimation();
   if (!positionCrmSatellitesOnce()) { setTimeout(startCrmAnimation, 80); return; }
-  if (REDUCE_MOTION) return; // vi tri tinh la du, khong xoay
+  // SUA — truoc day neu may dang bat "giam chuyen dong"
+  // (prefers-reduced-motion, thuong la cai dat tiet kiem pin cua may,
+  // khong han nguoi dung tu chon) thi TAT HAN xoay — nhin nhu bi dung
+  // hinh, du hanh tinh van bam duoc binh thuong. Gio van XOAY, chi cham
+  // hon han (theo dung tinh than "giam" chu khong phai "tat het"
+  // chuyen dong, dung chuan huong dan hop can bang giua tiep can va
+  // trai nghiem).
+  // MOI — theo yeu cau, bo han che toc do theo "giam chuyen dong" cua
+  // may — luon xoay dung toc do binh thuong, khong tu dong lam cham
+  // theo cai dat he dieu hanh nua.
+  const speedMultiplier = 1;
   let last = performance.now();
   function frame(now) {
     const dt = (now - last) / 1000;
@@ -351,7 +360,7 @@ function startCrmAnimation() {
     const stage = document.getElementById('crmStage');
     const w = stage.clientWidth, h = stage.clientHeight;
     CRM_SATELLITES.forEach((s) => {
-      s.angleDeg = (s.angleDeg + s.speedDegPerSec * dt) % 360;
+      s.angleDeg = (s.angleDeg + s.speedDegPerSec * dt * speedMultiplier) % 360;
       const rad = (s.angleDeg * Math.PI) / 180;
       const rx = w * s.radiusPct, ry = h * s.radiusPct;
       s.el.style.left = (w / 2 + rx * Math.cos(rad) - s.half) + 'px';
@@ -370,7 +379,7 @@ function stopCrmAnimation() { if (crmAnimHandle) cancelAnimationFrame(crmAnimHan
 function launchWarpJump(satelliteEl, onDone) {
   stopCrmAnimation();
   const stage = document.getElementById('crmStage');
-  if (!stage || REDUCE_MOTION) { onDone(); return; } // giam chuyen dong: chuyen thang, khong hieu ung
+  if (!stage) { onDone(); return; }
 
   // MOI — veil va vet sang gio gan vao document.body (khong con nam
   // trong khung crm-stage nho 560px nua), dung "position: fixed" de
@@ -575,9 +584,29 @@ async function openCheckin() {
   if (checkinInitialized) return;
   checkinInitialized = true;
   if (!PROFILE?.centerId) {
-    document.getElementById('ciGpsHint').textContent = t('lobby.checkin.noCenter', 'Bạn không gắn cố định 1 trung tâm — dùng trang chấm công đầy đủ để chọn đúng trung tâm đang có mặt.');
-    document.getElementById('btnCiIn').style.display = 'none';
-    document.getElementById('btnCiOut').style.display = 'none';
+    // SUA — truoc day chi hien dong chu bao di dung trang day du, KHONG
+    // cho cham cong ngay tai day — trong khi trang day du
+    // (attendance-checkin.html) da co san cach xu ly dung: cho tu chon
+    // dung trung tam dang co mat. Dong bo lai y het o day, thay vi bat
+    // khoi van phong (Ke toan, BDH...) phai roi sang trang khac.
+    const { data: centers } = await supabase.from('centers').select('id, name, latitude, longitude').order('name');
+    document.getElementById('ciCenterPicker').style.display = 'block';
+    document.getElementById('ciGpsHint').textContent = '';
+    const select = document.getElementById('ciCenterSelect');
+    select.innerHTML = '<option value="">— Chọn trung tâm —</option>' + (centers || []).map((c) => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
+    select.addEventListener('change', () => {
+      const chosen = (centers || []).find((c) => c.id === select.value);
+      if (!chosen || !chosen.latitude || !chosen.longitude) {
+        document.getElementById('btnCiIn').style.display = 'none';
+        document.getElementById('btnCiOut').style.display = 'none';
+        return;
+      }
+      CENTER = chosen;
+      document.getElementById('ciCenterName').textContent = chosen.name;
+      document.getElementById('btnCiIn').style.display = 'block';
+      watchPosition();
+      loadTodayStatus();
+    });
     return;
   }
   const { data: center } = await supabase.from('centers').select('id, name, latitude, longitude').eq('id', PROFILE.centerId).single();

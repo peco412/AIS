@@ -369,6 +369,10 @@
       <div><div class="checkin-panel__title" data-i18n="lobby.checkin.title">Chấm công nhanh</div><div class="checkin-panel__center" id="ciCenterName">—</div></div>
       <button class="checkin-panel__close" id="btnCloseCheckin" aria-label="Đóng">✕</button>
     </div>
+    <div id="ciCenterPicker" style="display:none; margin-bottom:10px;">
+      <label style="font-size:12px; color:var(--ink-soft); display:block; margin-bottom:5px;">Bạn đang có mặt tại trung tâm nào?</label>
+      <select id="ciCenterSelect" class="select-input" style="width:100%;"><option value="">— Chọn trung tâm —</option></select>
+    </div>
     <div class="checkin-panel__hint" id="ciGpsHint" data-i18n="lobby.checkin.locating">Đang xác định vị trí...</div>
     <div class="checkin-panel__error" id="ciError" style="display:none;"></div>
     <div class="checkin-panel__status" id="ciStatus"></div>

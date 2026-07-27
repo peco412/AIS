@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="vi" data-division="aloha">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Điều chỉnh chấm công — AIS OFFICE</title>
+<link rel="manifest" href="/manifest.json" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="AIS OFFICE" />
+<link rel="apple-touch-icon" href="/assets/icon-192.png" />
+<meta name="theme-color" content="#0094D9" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/css/tokens.css" />
+<link rel="stylesheet" href="/css/dashboard.css" />
+<link rel="stylesheet" href="/css/module.css" />
+</head>
+<body data-page="/hr/attendance-adjustments.html">
+
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar__brand"><span class="dot"></span><div>AIS OFFICE<small data-i18n="brand.subtitle">Hệ thống quản trị nội bộ</small></div></div>
+    <nav id="sidebarNav"></nav>
+    <div class="sidebar__footer">© 2026 AIS OFFICE</div>
+  </aside>
+  <header class="topbar">
+    <div class="topbar__left"><button class="menu-toggle" id="menuToggle"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg></button></div>
+    <div class="topbar__right">
+      <button class="icon-btn" onclick="location.href='/notifications.html'"><svg class="icon" viewBox="0 0 24 24"><path d="M6 8a6 6 0 1 1 12 0c0 4 1.5 6 2 6.5H4c.5-.5 2-2.5 2-6.5z"/><path d="M9.5 18a2.5 2.5 0 0 0 5 0"/></svg><span class="badge" id="notifBadge" style="display:none;">0</span></button>
+      <div class="user-chip" onclick="location.href='/profile.html'">
+        <div class="user-chip__avatar" id="userChipAvatar">--</div>
+        <div class="user-chip__meta"><div class="name" id="userChipName">Đang tải...</div><div class="role" id="userChipRole">—</div></div>
+      </div>
+      <button class="icon-btn" id="logoutBtn"><svg class="icon" viewBox="0 0 24 24"><path d="M9 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h4"/><path d="M15 16l4-4-4-4"/><path d="M19 12H9"/></svg></button>
+    </div>
+  </header>
+
+  <main class="main">
+    <div class="page-header">
+      <div><h1>Điều chỉnh chấm công</h1><div class="sub">Thêm/sửa/xoá chấm công thay cho nhân viên — dùng khi quên chấm công, nghỉ nguyên tháng không tự động lên hệ thống, hoặc cần sửa sai lệch trước khi tính lương.</div></div>
+    </div>
+
+    <div class="toolbar">
+      <select class="select-input" id="filterEmployee"><option value="">— Chọn nhân viên —</option></select>
+      <input type="month" class="select-input" id="filterMonth" />
+      <button class="btn btn-accent" id="btnAddRow" disabled>+ Thêm dòng chấm công</button>
+    </div>
+
+    <div class="data-table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr><th>Ngày</th><th>Loại</th><th>Giờ</th><th>Nguồn</th><th>Ghi chú</th><th></th></tr>
+        </thead>
+        <tbody id="tableBody">
+          <tr><td colspan="6" class="empty-cell">Chọn nhân viên và tháng để xem chấm công.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<!-- Modal them dong cham cong thu cong -->
+<div class="modal-overlay" id="addModal">
+  <div class="modal-box">
+    <h3>Thêm dòng chấm công thủ công</h3>
+    <div class="modal-sub">Dùng khi nhân viên quên chấm công, hoặc nghỉ không lên hệ thống tự động — bắt buộc ghi rõ lý do để đối soát sau này.</div>
+    <div class="field"><label>Ngày</label><input type="date" id="mAdjustDate" /></div>
+    <div class="field"><label>Loại</label>
+      <select id="mAdjustType"><option value="in">Chấm công vào</option><option value="out">Chấm công ra</option></select>
+    </div>
+    <div class="field"><label>Giờ</label><input type="time" id="mAdjustTime" /></div>
+    <div class="field"><label>Lý do điều chỉnh (bắt buộc)</label><textarea id="mAdjustNote" rows="2" placeholder="VD: Nghỉ không lương cả tháng 7, đã xác nhận với quản lý trung tâm"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" id="mAdjustCancel">Huỷ</button>
+      <button class="btn btn-accent" id="mAdjustSave">Lưu</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="/env.js"></script>
+<script type="module" src="/js/attendanceAdjustments.js"></script>
+</body>
+</html>

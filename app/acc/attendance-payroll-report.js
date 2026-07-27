@@ -27,7 +27,6 @@ async function loadReport() {
 
   const { data, error } = await query;
   if (error) { tbody.innerHTML = `<tr><td colspan="5" class="empty-cell">Lỗi: ${esc(error.message)}</td></tr>`; return; }
-  if (!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="empty-cell">Không có dữ liệu chấm công trong tháng này.</td></tr>'; return; }
 
   // Đơn xin chấm công trễ ĐÃ ĐƯỢC PHÓ PHÒNG NS DUYỆT trong tháng này —
   // dùng để tự động đánh dấu "Đúng giờ" cho đúng ngày đó, khớp đúng logic
@@ -39,7 +38,7 @@ async function loadReport() {
 
   // Gom theo nhân viên -> theo ngày -> {in, out}
   const byEmployee = {};
-  data.forEach((r) => {
+  (data || []).forEach((r) => {
     if (!byEmployee[r.employee_id]) byEmployee[r.employee_id] = { name: r.employees?.full_name || '—', center: r.centers?.name || '—', days: {} };
     const dateKey = r.checked_at.slice(0, 10);
     if (!byEmployee[r.employee_id].days[dateKey]) byEmployee[r.employee_id].days[dateKey] = {};
@@ -53,8 +52,6 @@ async function loadReport() {
     return { empId, info, dateKeys, daysWithIn, missingOut };
   });
 
-  document.getElementById('resultCount').textContent = `${rows.length} nhân viên`;
-
   function fmtInOut(day, empId, dateKey) {
     const inTime = day.in ? fmtTime(day.in) : '—';
     const outTime = day.out ? fmtTime(day.out) : '<span style="color:var(--danger);">chưa ra</span>';
@@ -63,7 +60,39 @@ async function loadReport() {
     return `vào ${inTime} → ra ${outTime}${badge}`;
   }
 
-  tbody.innerHTML = rows.map((r) => `
+  // SUA LOI THAT — truoc day nhan vien KHONG CO lan cham cong nao trong
+  // thang se TU DONG BIEN MAT khoi bao cao nay (vi rows chi duoc dung
+  // tu cac dong DA CO du lieu) — day chinh la nguyen nhan nhan vien
+  // nghi nguyen thang "khong len bang luong", vi Ke toan khong he thay
+  // ho de xu ly. Gio truy van THEM toan bo nhan vien dang hoat dong,
+  // doi chieu voi rows da co, hien canh bao ro rang cho ai bi thieu.
+  let missingQuery = supabase.from('employees').select('id, full_name, centers(name)').eq('status', 'active');
+  if (centerId) missingQuery = missingQuery.eq('center_id', centerId);
+  const { data: allEmployees } = await missingQuery;
+  const presentIds = new Set(rows.map((r) => r.empId));
+  const missing = (allEmployees || []).filter((e) => !presentIds.has(e.id));
+
+  document.getElementById('resultCount').textContent = missing.length > 0
+    ? `${rows.length} nhân viên có chấm công · ⚠️ ${missing.length} nhân viên chưa có dữ liệu`
+    : `${rows.length} nhân viên`;
+
+  const missingHtml = missing.length === 0 ? '' : `
+    <tr><td colspan="5" style="background:var(--danger-tint); font-weight:700; color:var(--danger); padding:10px 14px;">
+      ⚠️ ${missing.length} nhân viên KHÔNG có lượt chấm công nào trong tháng — cần vào
+      <a href="/hr/attendance-adjustments.html" style="color:var(--danger); text-decoration:underline;">Điều chỉnh chấm công</a> để xử lý trước khi tính lương, nếu không sẽ không đi lương được cho họ.
+    </td></tr>
+    ${missing.map((e) => `
+      <tr style="background:var(--danger-tint);">
+        <td>${esc(e.full_name)}</td>
+        <td class="cell-muted">${e.centers?.name ? esc(e.centers.name) : '—'}</td>
+        <td class="mono" style="color:var(--danger);">0</td>
+        <td>—</td>
+        <td><span class="badge badge-unpaid">Chưa có dữ liệu</span></td>
+      </tr>
+    `).join('')}
+  `;
+
+  tbody.innerHTML = missingHtml + rows.map((r) => `
     <tr>
       <td>${esc(r.info.name)}</td>
       <td class="cell-muted">${esc(r.info.center)}</td>
