@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Hồ sơ mạng xã hội — AIS Center</title>
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#0094D9" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/parent.css" />
+<style>
+  .avatar-edit { display: flex; flex-direction: column; align-items: center; padding: 20px 0 10px; }
+  .avatar-edit__preview {
+    width: 96px; height: 96px; border-radius: 50%; background: var(--accent-tint); color: var(--accent-deep);
+    display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 30px;
+    overflow: hidden; position: relative; box-shadow: var(--shadow-sm);
+  }
+  .avatar-edit__preview img { width: 100%; height: 100%; object-fit: cover; }
+  .avatar-edit__btn { margin-top: 10px; font-size: 12.5px; font-weight: 700; color: var(--accent-deep); cursor: pointer; }
+  .avatar-edit__btn input { display: none; }
+
+  .friend-tabs { display: flex; gap: 6px; margin-bottom: 14px; background: var(--surface-fill); border-radius: 999px; padding: 4px; }
+  .friend-tabs button { flex: 1; border: none; background: none; padding: 8px; border-radius: 999px; font-size: 12.5px; font-weight: 700; color: var(--muted); cursor: pointer; }
+  .friend-tabs button.active { background: var(--surface-card); color: var(--ink); box-shadow: var(--shadow-xs); }
+
+  .friend-row { display: flex; align-items: center; gap: 10px; padding: 10px 4px; border-bottom: 1px solid var(--border); }
+  .friend-row__avatar { width: 38px; height: 38px; border-radius: 50%; background: var(--accent-tint); color: var(--accent-deep); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; overflow: hidden; flex-shrink: 0; }
+  .friend-row__avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .friend-row__name { font-weight: 700; font-size: 13px; flex: 1; }
+  .friend-row button { padding: 6px 12px; border-radius: 999px; border: none; font-weight: 700; font-size: 11.5px; cursor: pointer; margin-left: 6px; }
+  .btn-accept { background: var(--accent); color: #fff; }
+  .btn-reject { background: var(--surface-fill); color: var(--ink); }
+  .btn-add-friend { background: var(--accent); color: #fff; }
+  .btn-pending { background: var(--surface-fill); color: var(--muted); cursor: default; }
+
+  .search-friend { display: flex; gap: 8px; margin-bottom: 14px; }
+  .search-friend input { flex: 1; padding: 10px 14px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface-fill); font-size: 13px; outline: none; }
+  .empty-state { text-align: center; padding: 30px 20px; color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+
+<header class="app-topbar">
+  <button class="app-topbar__back" onclick="location.href='community.html'">←</button>
+  <div class="app-topbar__title">Hồ sơ mạng xã hội</div>
+  <div class="app-topbar__right"></div>
+</header>
+
+<main class="app-main">
+  <div class="card">
+    <div class="avatar-edit">
+      <div class="avatar-edit__preview" id="avatarPreview">--</div>
+      <label class="avatar-edit__btn">📷 Đổi ảnh đại diện<input type="file" id="avatarInput" accept="image/*" /></label>
+    </div>
+    <div class="field"><label>Tên hiển thị</label><input type="text" id="displayNameInput" /></div>
+    <button class="btn-primary" id="btnSaveProfile">Lưu thay đổi</button>
+    <div id="saveMsg" style="text-align:center; font-size:12px; margin-top:8px;"></div>
+  </div>
+
+  <div class="card">
+    <h3>👥 Bạn bè</h3>
+    <div class="search-friend">
+      <input type="text" id="friendSearchInput" placeholder="Tìm người để kết bạn..." />
+    </div>
+    <div id="friendSearchResults"></div>
+
+    <div class="friend-tabs">
+      <button class="active" data-tab="friends">Bạn bè</button>
+      <button data-tab="requests">Lời mời <span id="requestBadge"></span></button>
+    </div>
+    <div id="friendsTabContent"></div>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="env.js"></script>
+<script type="module" src="js/socialProfile.js"></script>
+</body>
+</html>

@@ -90,6 +90,29 @@ btnPost.addEventListener('click', async () => {
 // ---------------------------------------------------------------------
 // Bang tin
 // ---------------------------------------------------------------------
+// MOI — social_posts tham chieu THANG toi parent_accounts/employees
+// (khong phai social_profiles), nen khong the JOIN truc tiep ra ten
+// hien thi cong khai — phai truy van social_profiles RIENG roi ghep
+// lai o client. Dung 1 ham chung cho ca bang tin lan binh luan.
+async function fetchProfilesMap(parentIds, employeeIds) {
+  const map = new Map(); // key: `parent:<id>` hoac `employee:<id>` -> { name, avatar }
+  const tasks = [];
+  if (parentIds.length > 0) tasks.push(supabase.from('social_profiles').select('parent_account_id, display_name, avatar_url').in('parent_account_id', parentIds));
+  if (employeeIds.length > 0) tasks.push(supabase.from('social_profiles').select('employee_id, display_name, avatar_url').in('employee_id', employeeIds));
+  const results = await Promise.all(tasks);
+  results.forEach(({ data }) => {
+    (data || []).forEach((r) => {
+      const key = r.parent_account_id ? `parent:${r.parent_account_id}` : `employee:${r.employee_id}`;
+      map.set(key, { name: r.display_name, avatar: r.avatar_url });
+    });
+  });
+  return map;
+}
+function profileFor(map, parentId, employeeId) {
+  const key = parentId ? `parent:${parentId}` : `employee:${employeeId}`;
+  return map.get(key) || { name: parentId ? 'Phụ huynh' : 'Nhân viên', avatar: null };
+}
+
 async function loadFeed() {
   const feedList = document.getElementById('feedList');
   const { data: posts, error } = await supabase
@@ -97,8 +120,6 @@ async function loadFeed() {
     .select(`
       id, caption, image_url, created_at,
       author_parent_id, author_employee_id,
-      parent_accounts:author_parent_id(full_name),
-      employees:author_employee_id(full_name),
       centers:center_id(name)
     `)
     .order('created_at', { ascending: false })
@@ -106,6 +127,11 @@ async function loadFeed() {
 
   if (error) { feedList.innerHTML = `<div class="empty-state">Không tải được bảng tin: ${esc(error.message)}</div>`; return; }
   if (!posts || posts.length === 0) { feedList.innerHTML = '<div class="empty-state">Chưa có bài đăng nào — hãy là người đầu tiên chia sẻ!</div>'; return; }
+
+  const profilesMap = await fetchProfilesMap(
+    [...new Set(posts.filter((p) => p.author_parent_id).map((p) => p.author_parent_id))],
+    [...new Set(posts.filter((p) => p.author_employee_id).map((p) => p.author_employee_id))]
+  );
 
   const { data: likeRows } = await supabase.from('social_post_likes').select('post_id, liker_parent_id, liker_employee_id').in('post_id', posts.map((p) => p.id));
   const likeCounts = {};
@@ -117,14 +143,15 @@ async function loadFeed() {
   });
 
   feedList.innerHTML = posts.map((p) => {
-    const authorName = p.parent_accounts?.full_name || p.employees?.full_name || 'Người dùng';
+    const authorProfile = profileFor(profilesMap, p.author_parent_id, p.author_employee_id);
+    const authorName = authorProfile.name;
     const isStaffAuthor = !!p.author_employee_id;
     const liked = myLikes.has(p.id);
     const count = likeCounts[p.id] || 0;
     return `
       <div class="post-card" data-post="${p.id}">
         <div class="post-card__head">
-          <div class="post-card__avatar">${esc(initials(authorName))}</div>
+          <div class="post-card__avatar">${authorProfile.avatar ? `<img src="${esc(authorProfile.avatar)}" alt="" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" />` : esc(initials(authorName))}</div>
           <div>
             <div class="post-card__name">${esc(authorName)}${isStaffAuthor ? '<span class="post-card__badge">Nhân viên</span>' : ''}</div>
             <div class="post-card__meta">${timeAgo(p.created_at)}${p.centers?.name ? ` · 📍 ${esc(p.centers.name)}` : ''}</div>
@@ -183,16 +210,22 @@ async function renderComments(postId) {
   const listEl = document.getElementById(`comments-list-${postId}`);
   const { data: comments, error } = await supabase
     .from('social_comments')
-    .select('id, content, created_at, author_parent_id, author_employee_id, parent_accounts:author_parent_id(full_name), employees:author_employee_id(full_name)')
+    .select('id, content, created_at, author_parent_id, author_employee_id')
     .eq('post_id', postId)
     .order('created_at', { ascending: true });
   if (error) { listEl.innerHTML = `<div class="empty-state" style="padding:8px;">${esc(error.message)}</div>`; return; }
+
+  const profilesMap = await fetchProfilesMap(
+    [...new Set((comments || []).filter((c) => c.author_parent_id).map((c) => c.author_parent_id))],
+    [...new Set((comments || []).filter((c) => c.author_employee_id).map((c) => c.author_employee_id))]
+  );
+
   listEl.innerHTML = (comments || []).map((c) => {
-    const name = c.parent_accounts?.full_name || c.employees?.full_name || 'Người dùng';
+    const profile = profileFor(profilesMap, c.author_parent_id, c.author_employee_id);
     return `
       <div class="comment-row">
-        <div class="comment-row__avatar">${esc(initials(name))}</div>
-        <div class="comment-row__bubble"><div class="comment-row__name">${esc(name)}</div>${esc(c.content)}</div>
+        <div class="comment-row__avatar">${profile.avatar ? `<img src="${esc(profile.avatar)}" alt="" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" />` : esc(initials(profile.name))}</div>
+        <div class="comment-row__bubble"><div class="comment-row__name">${esc(profile.name)}</div>${esc(c.content)}</div>
       </div>
     `;
   }).join('') || '<div style="font-size:12px; color:var(--muted); padding:4px 0;">Chưa có bình luận nào.</div>';

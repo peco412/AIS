@@ -204,11 +204,21 @@ export async function bootSocialShell() {
   if (!sessionData.session) { window.location.href = '/index.html'; throw new Error('NO_SESSION'); }
   const uid = sessionData.session.user.id;
 
+  // MOI — dam bao co san 1 ho so mang xa hoi (ten hien thi + avatar,
+  // TACH BIET khoi parent_accounts/employees nhay cam) — day la nguon
+  // DUY NHAT ma cac trang Cong dong/Tin nhan dung de hien ten nguoi
+  // khac, vi bang goc chi cho xem ten CHINH MINH.
+  const { data: socialProfile, error: profileErr } = await supabase.rpc('ensure_social_profile').maybeSingle();
+  if (profileErr) console.warn('Không tạo được hồ sơ mạng xã hội:', profileErr.message);
+
   const { data: parent } = await supabase.from('parent_accounts').select('id, full_name, phone').eq('auth_user_id', uid).maybeSingle();
   if (parent) {
     const { data: links } = await supabase.from('parent_student_links').select('students(center_id, centers(name))').eq('parent_account_id', parent.id);
     const centerIds = [...new Set((links || []).map((l) => l.students?.center_id).filter(Boolean))];
-    return { type: 'parent', id: parent.id, name: parent.full_name, centerIds, defaultCenterId: centerIds[0] || null, canPickAnyCenter: false };
+    return {
+      type: 'parent', id: parent.id, name: parent.full_name, centerIds, defaultCenterId: centerIds[0] || null, canPickAnyCenter: false,
+      profileId: socialProfile?.id, displayName: socialProfile?.display_name || parent.full_name, avatarUrl: socialProfile?.avatar_url || null,
+    };
   }
 
   const { data: employee } = await supabase.from('employees').select('id, full_name, center_id, departments(code), system_roles(code)').eq('auth_user_id', uid).maybeSingle();
@@ -226,7 +236,10 @@ export async function bootSocialShell() {
       const { data: allCenters } = await supabase.from('centers').select('id').eq('is_active', true);
       centerIds = (allCenters || []).map((c) => c.id);
     }
-    return { type: 'employee', id: employee.id, name: employee.full_name, centerIds, defaultCenterId: employee.center_id || centerIds[0] || null, canPickAnyCenter };
+    return {
+      type: 'employee', id: employee.id, name: employee.full_name, centerIds, defaultCenterId: employee.center_id || centerIds[0] || null, canPickAnyCenter,
+      profileId: socialProfile?.id, displayName: socialProfile?.display_name || employee.full_name, avatarUrl: socialProfile?.avatar_url || null,
+    };
   }
 
   throw new Error('Không tìm thấy hồ sơ phụ huynh hoặc nhân viên tương ứng với tài khoản này.');

@@ -60,6 +60,30 @@ async function loadTeacherShortcuts() {
 // ---------------------------------------------------------------------
 // Danh sach hoi thoai
 // ---------------------------------------------------------------------
+
+// MOI — social_conversation_participants tham chieu THANG toi
+// parent_accounts/employees (khong phai social_profiles), nen phai
+// truy van social_profiles RIENG de lay dung ten hien thi cong khai —
+// giong het cach da sua ben community.js.
+async function fetchProfilesMap(parentIds, employeeIds) {
+  const map = new Map();
+  const tasks = [];
+  if (parentIds.length > 0) tasks.push(supabase.from('social_profiles').select('parent_account_id, display_name, avatar_url').in('parent_account_id', parentIds));
+  if (employeeIds.length > 0) tasks.push(supabase.from('social_profiles').select('employee_id, display_name, avatar_url').in('employee_id', employeeIds));
+  const results = await Promise.all(tasks);
+  results.forEach(({ data }) => {
+    (data || []).forEach((r) => {
+      const key = r.parent_account_id ? `parent:${r.parent_account_id}` : `employee:${r.employee_id}`;
+      map.set(key, { name: r.display_name, avatar: r.avatar_url });
+    });
+  });
+  return map;
+}
+function profileFor(map, parentId, employeeId) {
+  const key = parentId ? `parent:${parentId}` : `employee:${employeeId}`;
+  return map.get(key) || { name: parentId ? 'Phụ huynh' : 'Nhân viên', avatar: null };
+}
+
 async function loadConversations() {
   const list = document.getElementById('convList');
   const myFilterCol = PROFILE.type === 'parent' ? 'participant_parent_id' : 'participant_employee_id';
@@ -75,8 +99,13 @@ async function loadConversations() {
   const convIds = myParts.map((p) => p.conversation_id);
   const { data: allParts } = await supabase
     .from('social_conversation_participants')
-    .select('conversation_id, participant_parent_id, participant_employee_id, parent_accounts:participant_parent_id(full_name), employees:participant_employee_id(full_name)')
+    .select('conversation_id, participant_parent_id, participant_employee_id')
     .in('conversation_id', convIds);
+
+  const profilesMap = await fetchProfilesMap(
+    [...new Set((allParts || []).filter((p) => p.participant_parent_id).map((p) => p.participant_parent_id))],
+    [...new Set((allParts || []).filter((p) => p.participant_employee_id).map((p) => p.participant_employee_id))]
+  );
 
   const { data: lastMsgs } = await supabase
     .from('social_messages')
@@ -92,7 +121,7 @@ async function loadConversations() {
       (PROFILE.type === 'parent' && ap.participant_parent_id === PROFILE.id) ||
       (PROFILE.type === 'employee' && ap.participant_employee_id === PROFILE.id)
     ));
-    const otherName = others.map((o) => o.parent_accounts?.full_name || o.employees?.full_name).filter(Boolean).join(', ') || 'Cuộc trò chuyện';
+    const otherName = others.map((o) => profileFor(profilesMap, o.participant_parent_id, o.participant_employee_id).name).filter(Boolean).join(', ') || 'Cuộc trò chuyện';
     const last = lastMsgByConv[p.conversation_id];
     return {
       id: p.conversation_id,
@@ -134,21 +163,17 @@ searchInput.addEventListener('input', () => {
 });
 
 async function runSearch(q) {
-  if (!PROFILE.defaultCenterId) return;
-  const [{ data: parents }, { data: employees }] = await Promise.all([
-    supabase.from('parent_accounts').select('id, full_name, parent_student_links(students(center_id))').ilike('full_name', `%${q}%`).limit(8),
-    supabase.from('employees').select('id, full_name, center_id').ilike('full_name', `%${q}%`).limit(8),
-  ]);
+  // SUA — truoc day tim thang trong parent_accounts.full_name, nhung
+  // bang do CHI cho xem ten CHINH MINH (RLS bao ve rieng tu ERP) — hau
+  // het nguoi tim se KHONG RA KET QUA NAO ca. Gio tim trong
+  // social_profiles.display_name (mo doc cho moi nguoi dang nhap),
+  // dung cho DUNG muc dich tim de nhan tin.
+  const { data: profiles } = await supabase.from('social_profiles').select('id, display_name, parent_account_id, employee_id').ilike('display_name', `%${q}%`).limit(15);
 
-  const parentResults = (parents || [])
-    .filter((p) => p.parent_student_links?.some((l) => l.students?.center_id === PROFILE.defaultCenterId))
-    .filter((p) => !(PROFILE.type === 'parent' && p.id === PROFILE.id))
-    .map((p) => ({ type: 'parent', id: p.id, name: p.full_name }));
-  const employeeResults = (employees || [])
-    .filter((e) => !(PROFILE.type === 'employee' && e.id === PROFILE.id))
-    .map((e) => ({ type: 'employee', id: e.id, name: e.full_name }));
+  const results = (profiles || [])
+    .filter((p) => !(PROFILE.type === 'parent' && p.parent_account_id === PROFILE.id) && !(PROFILE.type === 'employee' && p.employee_id === PROFILE.id))
+    .map((p) => ({ type: p.parent_account_id ? 'parent' : 'employee', id: p.parent_account_id || p.employee_id, name: p.display_name }));
 
-  const results = [...parentResults, ...employeeResults];
   if (results.length === 0) { searchResults.innerHTML = '<div class="search-result-row">Không tìm thấy ai phù hợp.</div>'; searchResults.classList.add('show'); return; }
 
   searchResults.innerHTML = results.map((r) => `
