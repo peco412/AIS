@@ -167,28 +167,14 @@ async function startConversationWith(otherType, otherId, otherName) {
   searchResults.classList.remove('show');
   searchInput.value = '';
 
-  // Tim hoi thoai 1-1 DA CO san giua 2 nguoi nay truoc, tranh tao trung lap.
-  const myFilterCol = PROFILE.type === 'parent' ? 'participant_parent_id' : 'participant_employee_id';
-  const otherFilterCol = otherType === 'parent' ? 'participant_parent_id' : 'participant_employee_id';
+  // SUA — truoc day tu ghep 3 buoc insert rieng le o client, moi buoc
+  // phai tu dung dung dieu kien RLS — de sai va gay loi "vi pham RLS"
+  // kho do nguyen nhan. Gio goi 1 ham xu ly san tren server (RPC), lam
+  // toan bo trong 1 buoc chac chan dung.
+  const { data: convId, error } = await supabase.rpc('start_or_get_conversation', { p_other_type: otherType, p_other_id: otherId });
+  if (error) { alert('Không tạo được cuộc trò chuyện: ' + error.message); return; }
 
-  const { data: myConvs } = await supabase.from('social_conversation_participants').select('conversation_id').eq(myFilterCol, PROFILE.id);
-  const myConvIds = (myConvs || []).map((c) => c.conversation_id);
-  let existingConvId = null;
-  if (myConvIds.length > 0) {
-    const { data: match } = await supabase.from('social_conversation_participants').select('conversation_id').eq(otherFilterCol, otherId).in('conversation_id', myConvIds).maybeSingle();
-    existingConvId = match?.conversation_id || null;
-  }
-
-  if (existingConvId) { openThread(existingConvId, otherName); return; }
-
-  const { data: newConv, error: convErr } = await supabase.from('social_conversations').insert({}).select('id').single();
-  if (convErr) { alert('Không tạo được cuộc trò chuyện: ' + convErr.message); return; }
-
-  const myRow = PROFILE.type === 'parent' ? { conversation_id: newConv.id, participant_parent_id: PROFILE.id } : { conversation_id: newConv.id, participant_employee_id: PROFILE.id };
-  const otherRow = otherType === 'parent' ? { conversation_id: newConv.id, participant_parent_id: otherId } : { conversation_id: newConv.id, participant_employee_id: otherId };
-  await supabase.from('social_conversation_participants').insert([myRow, otherRow]);
-
-  openThread(newConv.id, otherName);
+  openThread(convId, otherName);
 }
 
 // ---------------------------------------------------------------------
