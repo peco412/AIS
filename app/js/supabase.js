@@ -15,7 +15,17 @@ const SUPABASE_ANON_KEY = window.__ENV__?.SUPABASE_ANON_KEY || 'sb_publishable_L
 
 export const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
+    // MOI — truoc day dung mac dinh cua Supabase (localStorage), nghia
+    // la phien dang nhap con LUU MAI cho den khi het han hoac dang xuat
+    // thu cong — tren may dung chung o trung tam, nguoi sau co the vo
+    // tinh "thua huong" phien dang nhap cua nguoi truoc neu ho khong
+    // chu dong dang xuat. Doi sang sessionStorage: phien chi ton tai
+    // trong dung 1 CUA SO/TAB trinh duyet dang mo — dong trinh duyet lai
+    // (hoac tat may) la phien mat, LAN SAU BAT BUOC DANG NHAP LAI. Van
+    // giu duoc trai nghiem binh thuong (F5, chuyen trang trong cung 1
+    // phien khong bi dang xuat giua chung).
     persistSession: true,
+    storage: window.sessionStorage,
     autoRefreshToken: true,
     detectSessionInUrl: false,
   },

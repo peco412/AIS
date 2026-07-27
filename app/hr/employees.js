@@ -125,13 +125,40 @@ function applyFilters() {
       <td>${row.centers?.name ? esc(row.centers.name) : '<span class="cell-muted">Văn phòng</span>'}</td>
       <td class="cell-muted">${esc(row.phone || '—')}</td>
       <td><span class="badge badge-${row.status}">${esc(STATUS_LABEL[row.status] || row.status)}</span></td>
-      <td>${window.__EMP_CAN_EDIT__ ? `<button class="btn btn-outline btn-sm" data-edit="${row.id}">Sửa</button>` : ''}</td>
+      <td>
+        ${window.__EMP_CAN_EDIT__ ? `<button class="btn btn-outline btn-sm" data-edit="${row.id}">Sửa</button>` : ''}
+        ${window.__EMP_CAN_RESET_PW__ ? `<button class="btn btn-outline btn-sm" data-reset-pw="${row.id}" data-name="${esc(row.full_name)}" style="margin-left:6px;">🔑 Đặt lại MK</button>` : ''}
+      </td>
     </tr>
   `).join('');
 
   tbody.querySelectorAll('[data-edit]').forEach((btn) => {
     btn.addEventListener('click', () => openEditModal(btn.dataset.edit));
   });
+  tbody.querySelectorAll('[data-reset-pw]').forEach((btn) => {
+    btn.addEventListener('click', () => resetEmployeePassword(btn.dataset.resetPw, btn.dataset.name));
+  });
+}
+
+// MOI — Tech/BDH dat lai mat khau tam cho nhan vien quen mat khau, goi
+// Edge Function rieng (dung service_role key ben server, KHONG bao gio
+// dua key do ra frontend) — hien mat khau tam DUNG 1 LAN de bao lai cho
+// nhan vien, giong het luong tao nhan vien moi da co san.
+async function resetEmployeePassword(employeeId, fullName) {
+  if (!confirm(`Đặt lại mật khẩu tạm cho "${fullName}"? Mật khẩu cũ sẽ không còn dùng được nữa.`)) return;
+  try {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const resp = await fetch(`${window.__ENV__?.SUPABASE_URL || 'https://iikflzntcpqliuxrzvdz.supabase.co'}/functions/v1/reset-employee-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sessionData.session.access_token}` },
+      body: JSON.stringify({ employee_id: employeeId }),
+    });
+    const result = await resp.json();
+    if (!resp.ok) throw new Error(result.error || 'Có lỗi xảy ra.');
+    alert(`Đã đặt lại mật khẩu cho ${result.full_name} (${result.employee_code}).\n\nMật khẩu tạm: ${result.temp_password}\n\nHãy báo lại mật khẩu này cho nhân viên qua kênh riêng (không gửi công khai). Nhân viên nên đổi mật khẩu ngay sau khi đăng nhập.`);
+  } catch (err) {
+    alert('Đặt lại mật khẩu thất bại: ' + err.message);
+  }
 }
 
 ['filterDept', 'filterCenter', 'filterStatus', 'searchInput'].forEach((id) => {
@@ -308,6 +335,10 @@ form.addEventListener('submit', async (e) => {
       document.getElementById('btnAddEmployee').style.display = 'none';
     }
     window.__EMP_CAN_EDIT__ = CAN_EDIT;
+    // MOI — chi TECH/EXECUTIVE duoc dat lai mat khau tam cho nguoi khac
+    // (truong hop nhan vien quen mat khau, tu ho khong tu dang nhap duoc
+    // de doi mat khau nhu binh thuong).
+    window.__EMP_CAN_RESET_PW__ = profile.roleCode === 'TECH' || profile.roleCode === 'EXECUTIVE';
 
     await loadLookups();
     await loadEmployees();

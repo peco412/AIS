@@ -38,19 +38,19 @@ create policy extracurricular_programs_select_parent on extracurricular_programs
 
 create policy extracurricular_programs_select_staff on extracurricular_programs for select
   using (
-    current_department_id() = (select id from departments where code in ('MKT', 'EDU'))
+    current_department_id() in (select id from departments where code in ('MKT', 'EDU'))
     or current_role_code() = 'CENTER_MANAGER'
     or is_executive_or_tech()
   );
 
 create policy extracurricular_programs_write on extracurricular_programs for all
   using (
-    current_department_id() = (select id from departments where code in ('MKT', 'EDU'))
+    current_department_id() in (select id from departments where code in ('MKT', 'EDU'))
     or current_role_code() = 'CENTER_MANAGER'
     or is_executive_or_tech()
   )
   with check (
-    current_department_id() = (select id from departments where code in ('MKT', 'EDU'))
+    current_department_id() in (select id from departments where code in ('MKT', 'EDU'))
     or current_role_code() = 'CENTER_MANAGER'
     or is_executive_or_tech()
   );

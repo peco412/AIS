@@ -39,19 +39,19 @@ create policy parent_announcements_select_parent on parent_announcements for sel
 -- TOAN BO (ke ca dang tat) de quan ly, va la nguoi duoc tao/sua/xoa.
 create policy parent_announcements_select_staff on parent_announcements for select
   using (
-    current_department_id() = (select id from departments where code in ('MKT', 'EDU'))
+    current_department_id() in (select id from departments where code in ('MKT', 'EDU'))
     or current_role_code() = 'CENTER_MANAGER'
     or is_executive_or_tech()
   );
 
 create policy parent_announcements_write on parent_announcements for all
   using (
-    current_department_id() = (select id from departments where code in ('MKT', 'EDU'))
+    current_department_id() in (select id from departments where code in ('MKT', 'EDU'))
     or current_role_code() = 'CENTER_MANAGER'
     or is_executive_or_tech()
   )
   with check (
-    current_department_id() = (select id from departments where code in ('MKT', 'EDU'))
+    current_department_id() in (select id from departments where code in ('MKT', 'EDU'))
     or current_role_code() = 'CENTER_MANAGER'
     or is_executive_or_tech()
   );
