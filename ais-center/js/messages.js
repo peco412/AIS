@@ -279,6 +279,11 @@ document.getElementById('logoutBtn').addEventListener('click', async () => {
 (async () => {
   try {
     PROFILE = await bootSocialShell();
+    // MOI — an cac muc "Trang chu/Vi AIScoins/Tai khoan" (chi danh cho
+    // phu huynh) khoi thanh dieu huong khi dang la phien NHAN VIEN.
+    if (PROFILE.type === 'employee') {
+      document.querySelectorAll('.nav-parent-only').forEach((el) => { el.style.display = 'none'; });
+    }
     await loadTeacherShortcuts();
     await loadConversations();
   } catch (e) {

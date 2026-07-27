@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CRM — Chọn trung tâm — AIS OFFICE</title>
+<link rel="manifest" href="/manifest.json" />
+<meta name="theme-color" content="#0f0a1f" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/css/tokens.css" />
+<style>
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: 'Be Vietnam Pro', sans-serif;
+    background: radial-gradient(ellipse 1000px 800px at 50% 45%, #241a3d 0%, #140f26 45%, #0a0714 100%);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: 100vh; padding: 30px 16px; overflow: hidden; position: relative;
+  }
+  .bg-stars { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+  .bg-stars circle { fill: #fff; animation: twinkle 3s ease-in-out infinite; }
+
+  .galaxy-header { text-align: center; margin-bottom: 6px; opacity: 0; animation: fu 0.6s var(--ease-spring) forwards; position: relative; z-index: 1; }
+  .galaxy-eyebrow { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.2em; text-transform: uppercase; color: #b89ee8; margin-bottom: 8px; }
+  .galaxy-title { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 700; color: #fbf3e4; }
+  .galaxy-sub { font-size: 12.5px; color: #cbb9ae; margin-top: 6px; }
+
+  .galaxy-stage { width: 100%; max-width: 760px; position: relative; z-index: 1; opacity: 0; animation: fu 0.8s var(--ease-spring) 0.15s forwards; }
+  .galaxy-stage svg { width: 100%; height: auto; display: block; overflow: visible; }
+
+  .star-node { cursor: pointer; }
+  .star-node .star-dot { transition: r 0.25s var(--ease), filter 0.25s var(--ease); }
+  .star-node:hover .star-dot, .star-node:focus-visible .star-dot { filter: brightness(1.4) drop-shadow(0 0 10px currentColor); }
+  .star-node--locked { cursor: not-allowed; opacity: 0.35; }
+  .star-node--locked:hover .star-dot { filter: none; }
+  .star-label { font-family: 'Be Vietnam Pro', sans-serif; font-weight: 600; font-size: 12px; fill: #fbf3e4; text-anchor: middle; pointer-events: none; }
+  .star-lock { font-size: 9.5px; fill: #cbb9ae; text-anchor: middle; pointer-events: none; }
+
+  .orbit-line { fill: none; stroke: rgba(184,158,232,0.18); stroke-width: 1; stroke-dasharray: 3 5; }
+  .constellation-line { stroke: rgba(184,158,232,0.14); stroke-width: 1; }
+
+  .logo-badge { cursor: default; }
+  .logo-badge__ring { animation: rotate-ring 30s linear infinite; transform-origin: center; }
+  @keyframes rotate-ring { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+  .galaxy-back { margin-top: 10px; background: none; border: none; color: #cbb9ae; font-size: 12.5px; cursor: pointer; text-decoration: underline; opacity: 0; animation: fu 0.6s var(--ease-spring) 0.3s forwards; position: relative; z-index: 1; }
+
+  @keyframes fu { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes twinkle { 0%,100% { opacity: 0.2; } 50% { opacity: 0.9; } }
+  @media (prefers-reduced-motion: reduce) {
+    *, .logo-badge__ring, .bg-stars circle { animation: none !important; opacity: 1 !important; }
+  }
+</style>
+</head>
+<body>
+
+<svg class="bg-stars" id="bgStars"></svg>
+
+<div class="galaxy-header">
+  <div class="galaxy-eyebrow">CRM — KHỐI TRUNG TÂM</div>
+  <div class="galaxy-title">Chọn trung tâm</div>
+  <div class="galaxy-sub" id="gxSub">Đang tải danh sách trung tâm...</div>
+</div>
+
+<div class="galaxy-stage">
+  <svg id="gxSvg" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Dải ngân hà các trung tâm"></svg>
+</div>
+
+<button class="galaxy-back" id="btnBack">← Về màn chọn thế giới</button>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="/env.js"></script>
+<script type="module" src="/js/crmGalaxy.js"></script>
+</body>
+</html>

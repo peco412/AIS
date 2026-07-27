@@ -243,6 +243,12 @@ document.getElementById('logoutBtn').addEventListener('click', async () => {
 (async () => {
   try {
     PROFILE = await bootSocialShell();
+    // MOI — an cac muc "Trang chu/Vi AIScoins/Tai khoan" (chi danh cho
+    // phu huynh) khoi thanh dieu huong khi dang la phien NHAN VIEN —
+    // bam vao se dan toi trang chi phu huynh moi dung duoc, gay nham lan.
+    if (PROFILE.type === 'employee') {
+      document.querySelectorAll('.nav-parent-only').forEach((el) => { el.style.display = 'none'; });
+    }
     // MOI — bang tin va cong cu dang bai gio KHONG con phu thuoc vao co
     // gan trung tam hay khong nua — ai dang nhap duoc cung dang bai
     // duoc, dung dinh nghia mang xa hoi mo, khong khoa theo trung tam.

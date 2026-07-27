@@ -49,7 +49,7 @@ export async function bootParentShell() {
   try {
     return await bootParentShellInner(sessionData);
   } catch (e) {
-    if (e.message === 'NO_SESSION') throw e; // da dieu huong roi, khong can bao gi them
+    if (e.message === 'NO_SESSION' || e.message === 'EMPLOYEE_SESSION') throw e; // da dieu huong roi, khong can bao gi them
     console.error('bootParentShell lỗi:', e);
     const main = document.querySelector('main') || document.body;
     const banner = document.createElement('div');
@@ -61,6 +61,27 @@ export async function bootParentShell() {
 }
 
 async function bootParentShellInner(sessionData) {
+  // SUA LOI THAT NGHIEM TRONG — day chinh la nguyen nhan that cua loi
+  // "duplicate key... parent_accounts_phone_key" ban gap: ham nay TRUOC
+  // DAY khong he kiem tra xem phien dang nhap co phai la NHAN VIEN hay
+  // khong — mot nhan vien (dang nhap qua nut "tai khoan nhan vien" o
+  // trang cho) neu lo bam vao "Trang chu"/"Vi AIScoins"/"Tai khoan" tren
+  // thanh dieu huong duoi (cac trang CHI DANH CHO PHU HUYNH) se boi ham
+  // nay co gan/tao 1 ho so parent_accounts CHO HO — nhung nhan vien
+  // khong co "phone" trong phien dang nhap (ho dang nhap bang email
+  // noi bo), nen roi vao "unknown", va va phai loi trung khi da co
+  // nguoi khac (hoac chinh ho lan truoc) cung roi vao "unknown" nay.
+  // Chan tu goc: kiem tra co phai nhan vien truoc, neu dung thi dua ve
+  // dung khu vuc danh cho ho (Cong dong), khong co gang tao ho so
+  // phu huynh gia cho mot nguoi khong phai phu huynh.
+  const { data: asEmployee } = await supabase.from('employees').select('id').eq('auth_user_id', sessionData.session.user.id).maybeSingle();
+  if (asEmployee) {
+    if (!window.location.pathname.endsWith('/community.html') && !window.location.pathname.endsWith('/messages.html')) {
+      window.location.href = '/community.html';
+    }
+    throw new Error('EMPLOYEE_SESSION'); // khong phai loi that, chi de dung lai boot cho trang phu huynh
+  }
+
   const phone = sessionData.session.user.phone || sessionData.session.user.user_metadata?.phone;
   let { data: parent } = await supabase.from('parent_accounts').select('*').eq('auth_user_id', sessionData.session.user.id).maybeSingle();
 
@@ -97,8 +118,23 @@ async function bootParentShellInner(sessionData) {
       full_name: realName || 'Phụ huynh (chưa cập nhật tên)',
       phone: phone || 'unknown',
     }).select('*').single();
-    if (error) { console.error('Không tạo được hồ sơ phụ huynh:', error.message); throw error; }
-    parent = created;
+    if (error) {
+      // SUA LOI THAT — neu that bai vi SDT nay DA CO SAN 1 ho so khac
+      // (loi 409, rang buoc unique tren cot phone), thu goi lai
+      // claim_parent_account() 1 lan nua truoc khi bo cuoc — ham nay da
+      // duoc sua de nhan lai DUNG dong co san do ve dung phien hien tai,
+      // thay vi de nguoi dung ket qua bi ket loi hoan toan.
+      if (error.code === '23505' || error.message?.includes('parent_accounts_phone_key')) {
+        const { data: reclaimed } = await supabase.rpc('claim_parent_account').maybeSingle();
+        if (reclaimed?.id) { parent = reclaimed; }
+        else { console.error('Không tạo được hồ sơ phụ huynh:', error.message); throw error; }
+      } else {
+        console.error('Không tạo được hồ sơ phụ huynh:', error.message);
+        throw error;
+      }
+    } else {
+      parent = created;
+    }
   }
 
   if (!parent || !parent.id) {
