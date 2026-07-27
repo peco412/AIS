@@ -67,15 +67,12 @@ async function loadTeacherShortcuts() {
 // giong het cach da sua ben community.js.
 async function fetchProfilesMap(parentIds, employeeIds) {
   const map = new Map();
-  const tasks = [];
-  if (parentIds.length > 0) tasks.push(supabase.from('social_profiles').select('parent_account_id, display_name, avatar_url').in('parent_account_id', parentIds));
-  if (employeeIds.length > 0) tasks.push(supabase.from('social_profiles').select('employee_id, display_name, avatar_url').in('employee_id', employeeIds));
-  const results = await Promise.all(tasks);
-  results.forEach(({ data }) => {
-    (data || []).forEach((r) => {
-      const key = r.parent_account_id ? `parent:${r.parent_account_id}` : `employee:${r.employee_id}`;
-      map.set(key, { name: r.display_name, avatar: r.avatar_url });
-    });
+  if (parentIds.length === 0 && employeeIds.length === 0) return map;
+  const { data, error } = await supabase.rpc('get_social_profiles_batch', { p_parent_ids: parentIds, p_employee_ids: employeeIds });
+  if (error) { console.warn('Không lấy được hồ sơ hiển thị:', error.message); return map; }
+  (data || []).forEach((r) => {
+    const key = `${r.owner_type}:${r.owner_id}`;
+    map.set(key, { name: r.display_name, avatar: r.avatar_url });
   });
   return map;
 }

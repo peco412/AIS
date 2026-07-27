@@ -95,16 +95,18 @@ btnPost.addEventListener('click', async () => {
 // hien thi cong khai — phai truy van social_profiles RIENG roi ghep
 // lai o client. Dung 1 ham chung cho ca bang tin lan binh luan.
 async function fetchProfilesMap(parentIds, employeeIds) {
-  const map = new Map(); // key: `parent:<id>` hoac `employee:<id>` -> { name, avatar }
-  const tasks = [];
-  if (parentIds.length > 0) tasks.push(supabase.from('social_profiles').select('parent_account_id, display_name, avatar_url').in('parent_account_id', parentIds));
-  if (employeeIds.length > 0) tasks.push(supabase.from('social_profiles').select('employee_id, display_name, avatar_url').in('employee_id', employeeIds));
-  const results = await Promise.all(tasks);
-  results.forEach(({ data }) => {
-    (data || []).forEach((r) => {
-      const key = r.parent_account_id ? `parent:${r.parent_account_id}` : `employee:${r.employee_id}`;
-      map.set(key, { name: r.display_name, avatar: r.avatar_url });
-    });
+  const map = new Map();
+  if (parentIds.length === 0 && employeeIds.length === 0) return map;
+  // SUA — truoc day truy van THANG social_profiles, neu ai chua tung
+  // vao trang nay 1 lan (chua tu tao ho so) se bi ROI VAO GIA TRI DU
+  // PHONG chung chung "Nhân viên"/"Phụ huynh" thay vi ten that. Gio goi
+  // 1 ham rieng TU DONG LAY TEN THAT tu bang goc (va tao luon ho so
+  // cho lan sau), dam bao luon co ten dung.
+  const { data, error } = await supabase.rpc('get_social_profiles_batch', { p_parent_ids: parentIds, p_employee_ids: employeeIds });
+  if (error) { console.warn('Không lấy được hồ sơ hiển thị:', error.message); return map; }
+  (data || []).forEach((r) => {
+    const key = `${r.owner_type}:${r.owner_id}`;
+    map.set(key, { name: r.display_name, avatar: r.avatar_url });
   });
   return map;
 }
