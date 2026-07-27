@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Tin nhắn — AIS Center</title>
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#0094D9" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/parent.css" />
+<style>
+  .conv-row { display: flex; align-items: center; gap: 12px; padding: 12px 4px; border-bottom: 1px solid var(--border); cursor: pointer; }
+  .conv-row__avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--accent-tint); color: var(--accent-deep); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 15px; flex-shrink: 0; }
+  .conv-row__name { font-weight: 700; font-size: 13.5px; color: var(--ink); }
+  .conv-row__preview { font-size: 12px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
+  .conv-row__time { font-size: 10.5px; color: var(--muted); margin-left: auto; flex-shrink: 0; }
+
+  .new-msg-bar { display: flex; gap: 8px; margin-bottom: 14px; }
+  .new-msg-bar input { flex: 1; padding: 10px 14px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface-fill); font-size: 13px; outline: none; }
+  .search-results { background: var(--surface-card); border: 1px solid var(--border); border-radius: var(--radius-md); margin-top: 6px; overflow: hidden; display: none; }
+  .search-results.show { display: block; }
+  .search-result-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; cursor: pointer; font-size: 13px; }
+  .search-result-row:hover { background: var(--surface-fill); }
+
+  /* Man hinh thread — an list, hien chat */
+  #threadView { display: none; position: fixed; inset: 0; background: var(--surface); z-index: 200; flex-direction: column; }
+  #threadView.show { display: flex; }
+  .thread-topbar { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--border); background: var(--surface-card); }
+  .thread-topbar button { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--ink); }
+  .thread-topbar__name { font-weight: 700; font-size: 14px; }
+  .thread-messages { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+  .msg-bubble { max-width: 75%; padding: 9px 13px; border-radius: 16px; font-size: 13.5px; line-height: 1.4; }
+  .msg-bubble.mine { align-self: flex-end; background: var(--accent); color: #fff; border-bottom-right-radius: 4px; }
+  .msg-bubble.theirs { align-self: flex-start; background: var(--surface-card); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+  .msg-time { font-size: 9.5px; opacity: 0.65; margin-top: 3px; }
+  .thread-input-bar { display: flex; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--border); background: var(--surface-card); }
+  .thread-input-bar input { flex: 1; padding: 10px 14px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface-fill); font-size: 13.5px; outline: none; }
+  .thread-input-bar button { padding: 0 18px; border-radius: 999px; border: none; background: var(--accent); color: #fff; font-weight: 700; cursor: pointer; }
+
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body class="app-body">
+
+<header class="topbar">
+  <div class="topbar__title">Tin nhắn</div>
+  <div class="topbar__right"><button class="icon-btn" id="logoutBtn" title="Đăng xuất">⏻</button></div>
+</header>
+
+<main class="main">
+  <div class="new-msg-bar">
+    <input type="text" id="searchInput" placeholder="Tìm người để nhắn tin..." />
+  </div>
+  <div class="search-results" id="searchResults"></div>
+
+  <div id="convList"><div class="empty-state">Đang tải...</div></div>
+</main>
+
+<div id="threadView">
+  <div class="thread-topbar">
+    <button id="btnBackToList">←</button>
+    <div class="thread-topbar__name" id="threadName">—</div>
+  </div>
+  <div class="thread-messages" id="threadMessages"></div>
+  <div class="thread-input-bar">
+    <input type="text" id="msgInput" placeholder="Nhắn tin..." />
+    <button id="btnSendMsg">Gửi</button>
+  </div>
+</div>
+
+<nav class="bottom-nav">
+  <div class="bottom-nav__inner">
+    <a href="home.html"><svg class="icon icon--nav" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10"/></svg>Trang chủ</a>
+    <a href="community.html"><svg class="icon icon--nav" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 12h8M8 8h8M8 16h5"/></svg>Cộng đồng</a>
+    <a href="messages.html" class="active"><svg class="icon icon--nav" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-4-1L3 20l1-5.5a8.5 8.5 0 1 1 17-3z"/></svg>Tin nhắn</a>
+    <a href="wallet.html"><svg class="icon icon--nav" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Ví AIScoins</a>
+    <a href="account.html"><svg class="icon icon--nav" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>Tài khoản</a>
+  </div>
+</nav>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="env.js"></script>
+<script type="module" src="js/messages.js"></script>
+</body>
+</html>

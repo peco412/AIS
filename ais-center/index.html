@@ -21,9 +21,13 @@
 
   <div class="form-error" id="loginError"></div>
 
-  <div class="field">
+  <div class="field" id="fieldPhone">
     <label for="phone">Số điện thoại</label>
     <input type="tel" id="phone" placeholder="09xxxxxxxx" autocomplete="tel" />
+  </div>
+  <div class="field" id="fieldUsername" style="display:none;">
+    <label for="username">Tên đăng nhập nhân viên</label>
+    <input type="text" id="username" placeholder="vd: nguyenvana" autocomplete="username" />
   </div>
   <div class="field">
     <label for="password">Mật khẩu</label>
@@ -34,6 +38,9 @@
   <div style="display:flex; justify-content:space-between; margin-top:6px;">
     <button class="btn-link" id="btnForgot" style="width:auto; padding:8px 0;">Quên mật khẩu?</button>
     <button class="btn-link" id="btnGoRegister" style="width:auto; padding:8px 0;">Chưa có tài khoản? Đăng ký</button>
+  </div>
+  <div style="text-align:center; margin-top:10px; border-top:1px solid var(--border, #eee); padding-top:10px;">
+    <button class="btn-link" id="btnToggleStaffLogin" style="width:auto; padding:6px 0; font-size:12.5px;">👤 Đăng nhập bằng tài khoản nhân viên</button>
   </div>
 </div>
 

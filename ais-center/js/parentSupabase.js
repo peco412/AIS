@@ -154,3 +154,44 @@ export function getSelectedStudentId(students) {
 export function setSelectedStudentId(id) {
   localStorage.setItem('ais_center_selected_student', id);
 }
+
+// =====================================================================
+// MOI — Khoi tao rieng cho cac trang MANG XA HOI (community.html,
+// messages.html) — KHAC voi bootParentShell() o tren vi trang nay dung
+// duoc cho CA phu huynh LAN nhan vien (nhan vien dang nhap bang tai
+// khoan noi bo @ais.local rieng, xem lam-o-index-html). Khong sua
+// bootParentShell hien co de tranh anh huong toi toan bo cac trang
+// khac dang dung no on dinh tu truoc.
+// =====================================================================
+export async function bootSocialShell() {
+  const { data: sessionData } = await supabase.auth.getSession();
+  if (!sessionData.session) { window.location.href = '/index.html'; throw new Error('NO_SESSION'); }
+  const uid = sessionData.session.user.id;
+
+  const { data: parent } = await supabase.from('parent_accounts').select('id, full_name, phone').eq('auth_user_id', uid).maybeSingle();
+  if (parent) {
+    const { data: links } = await supabase.from('parent_student_links').select('students(center_id, centers(name))').eq('parent_account_id', parent.id);
+    const centerIds = [...new Set((links || []).map((l) => l.students?.center_id).filter(Boolean))];
+    return { type: 'parent', id: parent.id, name: parent.full_name, centerIds, defaultCenterId: centerIds[0] || null, canPickAnyCenter: false };
+  }
+
+  const { data: employee } = await supabase.from('employees').select('id, full_name, center_id, departments(code), system_roles(code)').eq('auth_user_id', uid).maybeSingle();
+  if (employee) {
+    // MOI — nhan vien Ban dieu hanh/Ke toan/Truong-Pho phong/Tech (dung
+    // DUNG quy tac "sees_all_centers()" ben SQL) khong gan co dinh 1
+    // trung tam nao (hoac co nhung van duoc phep xem het) — cho ho TU
+    // CHON trung tam muon xem/dang bai, thay vi khoa cung vao dung 1
+    // trung tam nhu nhan vien thuong.
+    const roleCode = employee.system_roles?.code;
+    const deptCode = employee.departments?.code;
+    const canPickAnyCenter = ['EXECUTIVE', 'TECH', 'DEPT_HEAD', 'DEPT_DEPUTY'].includes(roleCode) || deptCode === 'ACC';
+    let centerIds = employee.center_id ? [employee.center_id] : [];
+    if (canPickAnyCenter) {
+      const { data: allCenters } = await supabase.from('centers').select('id').eq('is_active', true);
+      centerIds = (allCenters || []).map((c) => c.id);
+    }
+    return { type: 'employee', id: employee.id, name: employee.full_name, centerIds, defaultCenterId: employee.center_id || centerIds[0] || null, canPickAnyCenter };
+  }
+
+  throw new Error('Không tìm thấy hồ sơ phụ huynh hoặc nhân viên tương ứng với tài khoản này.');
+}

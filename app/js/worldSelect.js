@@ -372,26 +372,34 @@ function launchWarpJump(satelliteEl, onDone) {
   const stage = document.getElementById('crmStage');
   if (!stage || REDUCE_MOTION) { onDone(); return; } // giam chuyen dong: chuyen thang, khong hieu ung
 
+  // MOI — veil va vet sang gio gan vao document.body (khong con nam
+  // trong khung crm-stage nho 560px nua), dung "position: fixed" de
+  // PHU KIN TOAN BO MAN HINH thay vi chi 1 o nho giua trang.
   const veil = document.createElement('div');
   veil.className = 'crm-warp-veil';
-  stage.appendChild(veil);
+  document.body.appendChild(veil);
 
   stage.querySelectorAll('.crm-satellite, .crm-logo, .crm-orbit').forEach((el) => {
     if (el !== satelliteEl) el.classList.add('crm-warp-fade');
   });
   satelliteEl.classList.add('crm-warp-zoom');
 
-  // Vai vet sang toe ra tu tam, mo phong toc do anh sang.
-  for (let i = 0; i < 10; i++) {
+  // Vet sang xuat phat tu chinh giua man hinh (diem hoi tu thi giac khi
+  // "bay toi truoc"), bay toa ra khap 4 phia man hinh.
+  const originX = window.innerWidth / 2;
+  const originY = window.innerHeight / 2;
+  for (let i = 0; i < 14; i++) {
     const streak = document.createElement('div');
     streak.className = 'crm-warp-streak';
+    streak.style.left = originX + 'px';
+    streak.style.top = originY + 'px';
     const angle = Math.random() * 360;
     streak.style.setProperty('--streak-angle', angle + 'deg');
-    streak.style.animationDelay = (Math.random() * 80) + 'ms';
-    stage.appendChild(streak);
+    streak.style.animationDelay = (Math.random() * 250) + 'ms';
+    document.body.appendChild(streak);
   }
 
-  setTimeout(onDone, 620);
+  setTimeout(onDone, 1780);
 }
 
 // =====================================================================

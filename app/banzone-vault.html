@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Banzone — Dữ liệu gốc — AIS OFFICE</title>
+<link rel="manifest" href="/manifest.json" />
+<meta name="theme-color" content="#140f26" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/css/tokens.css" />
+<style>
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: 'Be Vietnam Pro', sans-serif;
+    background: radial-gradient(ellipse 900px 600px at 50% 0%, rgba(93,66,160,0.22) 0%, transparent 60%), linear-gradient(180deg, #140f26 0%, #1e1638 45%, #120d20 100%);
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+    min-height: 100vh; padding: 40px 16px 28px;
+  }
+  .vault-header { text-align: center; margin-bottom: 22px; opacity: 0; animation: fu 0.6s var(--ease-spring) forwards; }
+  .vault-eyebrow { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.2em; text-transform: uppercase; color: #b89ee8; margin-bottom: 8px; }
+  .vault-title { font-family: 'Playfair Display', serif; font-size: 27px; font-weight: 700; color: #fbf3e4; }
+  .vault-sub { font-size: 12.5px; color: #cbb9ae; margin-top: 6px; }
+
+  .vault-panel { width: 100%; max-width: 480px; opacity: 0; animation: fu 0.7s var(--ease-spring) 0.12s forwards; }
+
+  .drawer {
+    display: flex; align-items: center; gap: 14px; width: 100%; padding: 18px 18px;
+    background: linear-gradient(180deg, rgba(93,66,160,0.16), rgba(40,30,60,0.5));
+    border: 1px solid rgba(184,158,232,0.28); border-radius: 14px; margin-bottom: 10px; cursor: pointer;
+    transition: transform 0.2s var(--ease-spring), border-color 0.2s var(--ease);
+  }
+  .drawer:hover { transform: translateX(4px); border-color: rgba(184,158,232,0.55); }
+  .drawer__icon { font-size: 24px; width: 42px; height: 42px; border-radius: 10px; background: rgba(184,158,232,0.14); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .drawer__text { flex: 1; }
+  .drawer__name { font-family: 'Playfair Display', serif; font-weight: 700; font-size: 15.5px; color: #fbf3e4; }
+  .drawer__count { font-size: 11px; color: #b89ee8; margin-top: 2px; }
+  .drawer__arrow { color: #b89ee8; font-size: 16px; transition: transform 0.2s var(--ease); }
+  .drawer.is-open .drawer__arrow { transform: rotate(90deg); }
+
+  .drawer-items { display: none; padding: 4px 8px 12px 60px; }
+  .drawer-items.is-visible { display: block; animation: fu 0.35s var(--ease-spring) forwards; }
+  .drawer-item {
+    display: flex; align-items: center; gap: 10px; padding: 10px 12px; margin-bottom: 6px;
+    background: rgba(20,15,32,0.5); border: 1px solid rgba(184,158,232,0.14); border-radius: 10px;
+    cursor: pointer; transition: background 0.15s var(--ease);
+  }
+  .drawer-item:hover:not(.drawer-item--locked) { background: rgba(184,158,232,0.1); }
+  .drawer-item--locked { cursor: not-allowed; opacity: 0.4; }
+  .drawer-item__name { font-size: 12.5px; color: #ece5f5; flex: 1; }
+  .drawer-item__lock { font-size: 10px; color: #cbb9ae; }
+
+  .vault-back { margin-top: 18px; background: none; border: none; color: #cbb9ae; font-size: 12.5px; cursor: pointer; text-decoration: underline; opacity: 0; animation: fu 0.6s var(--ease-spring) 0.3s forwards; }
+
+  @keyframes fu { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; opacity: 1 !important; } }
+</style>
+</head>
+<body>
+
+<div class="vault-header">
+  <div class="vault-eyebrow">BANZONE — DỮ LIỆU GỐC</div>
+  <div class="vault-title">Kho lưu trữ dữ liệu</div>
+  <div class="vault-sub">Mở 1 ngăn để xem chi tiết bên trong</div>
+</div>
+
+<div class="vault-panel" id="vaultPanel"></div>
+
+<button class="vault-back" id="btnBack">← Về màn chọn thế giới</button>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="/env.js"></script>
+<script type="module" src="/js/banzoneVault.js"></script>
+</body>
+</html>
