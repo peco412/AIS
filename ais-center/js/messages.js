@@ -13,6 +13,51 @@ function timeShort(dateStr) {
 }
 
 // ---------------------------------------------------------------------
+// MOI — "Giao vien phu trach" — de phu huynh nhan tin nhanh cho dung
+// giao vien cua con minh, khong phai tu go ten tim kiem thu cong.
+// ---------------------------------------------------------------------
+async function loadTeacherShortcuts() {
+  if (PROFILE.type !== 'parent') return; // chi phu huynh moi can loi tat nay
+  const box = document.getElementById('teacherShortcuts');
+
+  const { data: links } = await supabase
+    .from('parent_student_links')
+    .select('students(full_name, classes(id, name, teacher_id, employees:teacher_id(id, full_name, positions(name))))')
+    .eq('parent_account_id', PROFILE.id);
+
+  const teacherMap = new Map();
+  (links || []).forEach((l) => {
+    const cls = l.students?.classes;
+    const teacher = cls?.employees;
+    if (!teacher) return;
+    if (!teacherMap.has(teacher.id)) teacherMap.set(teacher.id, { id: teacher.id, name: teacher.full_name, position: teacher.positions?.name, classNames: new Set(), studentNames: new Set() });
+    teacherMap.get(teacher.id).classNames.add(cls.name);
+    teacherMap.get(teacher.id).studentNames.add(l.students.full_name);
+  });
+
+  if (teacherMap.size === 0) { box.innerHTML = ''; return; }
+
+  box.innerHTML = `
+    <div class="teacher-shortcuts">
+      <div class="teacher-shortcuts__title">👩‍🏫 Giáo viên phụ trách</div>
+      ${[...teacherMap.values()].map((t) => `
+        <div class="teacher-chip">
+          <div class="teacher-chip__avatar">${esc(initials(t.name))}</div>
+          <div>
+            <div class="teacher-chip__name">${esc(t.name)}</div>
+            <div class="teacher-chip__sub">Lớp ${esc([...t.classNames].join(', '))} — con: ${esc([...t.studentNames].join(', '))}</div>
+          </div>
+          <button class="teacher-chip__btn" data-msg-teacher="${t.id}" data-teacher-name="${esc(t.name)}">Nhắn tin</button>
+        </div>
+      `).join('')}
+    </div>
+  `;
+  box.querySelectorAll('[data-msg-teacher]').forEach((btn) => {
+    btn.addEventListener('click', () => startConversationWith('employee', btn.dataset.msgTeacher, btn.dataset.teacherName));
+  });
+}
+
+// ---------------------------------------------------------------------
 // Danh sach hoi thoai
 // ---------------------------------------------------------------------
 async function loadConversations() {
@@ -234,6 +279,7 @@ document.getElementById('logoutBtn').addEventListener('click', async () => {
 (async () => {
   try {
     PROFILE = await bootSocialShell();
+    await loadTeacherShortcuts();
     await loadConversations();
   } catch (e) {
     document.getElementById('convList').innerHTML = `<div class="empty-state">${esc(e.message)}</div>`;

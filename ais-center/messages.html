@@ -40,6 +40,17 @@
   .thread-input-bar button { padding: 0 18px; border-radius: 999px; border: none; background: var(--accent); color: #fff; font-weight: 700; cursor: pointer; }
 
   .empty-state { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 13px; }
+
+  .teacher-shortcuts { margin-bottom: 16px; }
+  .teacher-shortcuts__title { font-size: 11.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 8px; }
+  .teacher-chip {
+    display: flex; align-items: center; gap: 10px; background: var(--surface-card); border: 1px solid var(--border);
+    border-radius: var(--radius-md); padding: 10px 12px; margin-bottom: 8px; box-shadow: var(--shadow-xs);
+  }
+  .teacher-chip__avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--accent-tint); color: var(--accent-deep); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; flex-shrink: 0; }
+  .teacher-chip__name { font-weight: 700; font-size: 13px; }
+  .teacher-chip__sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
+  .teacher-chip__btn { margin-left: auto; padding: 6px 14px; border-radius: 999px; border: none; background: var(--accent); color: #fff; font-weight: 700; font-size: 11.5px; cursor: pointer; flex-shrink: 0; }
 </style>
 </head>
 <body class="app-body">
@@ -54,6 +65,8 @@
     <input type="text" id="searchInput" placeholder="Tìm người để nhắn tin..." />
   </div>
   <div class="search-results" id="searchResults"></div>
+
+  <div id="teacherShortcuts"></div>
 
   <div id="convList"><div class="empty-state">Đang tải...</div></div>
 </main>

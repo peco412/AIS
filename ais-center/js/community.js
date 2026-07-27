@@ -98,9 +98,9 @@ async function loadFeed() {
       id, caption, image_url, created_at,
       author_parent_id, author_employee_id,
       parent_accounts:author_parent_id(full_name),
-      employees:author_employee_id(full_name)
+      employees:author_employee_id(full_name),
+      centers:center_id(name)
     `)
-    .eq('center_id', PROFILE.defaultCenterId)
     .order('created_at', { ascending: false })
     .limit(50);
 
@@ -127,7 +127,7 @@ async function loadFeed() {
           <div class="post-card__avatar">${esc(initials(authorName))}</div>
           <div>
             <div class="post-card__name">${esc(authorName)}${isStaffAuthor ? '<span class="post-card__badge">Nhân viên</span>' : ''}</div>
-            <div class="post-card__meta">${timeAgo(p.created_at)}</div>
+            <div class="post-card__meta">${timeAgo(p.created_at)}${p.centers?.name ? ` · 📍 ${esc(p.centers.name)}` : ''}</div>
           </div>
         </div>
         ${p.caption ? `<div class="post-card__caption">${esc(p.caption)}</div>` : ''}
@@ -243,21 +243,12 @@ document.getElementById('logoutBtn').addEventListener('click', async () => {
 (async () => {
   try {
     PROFILE = await bootSocialShell();
+    // MOI — bang tin gio hien TAT CA trung tam gop chung (dung dinh
+    // nghia "mang xa hoi"), khong con can chon truoc 1 trung tam de xem
+    // nua. Chi con dung defaultCenterId de GAN NHAN cho bai MOI minh
+    // dang (biet bai do "tu" trung tam nao), khong dung de loc xem.
     if (!PROFILE.defaultCenterId) {
-      document.getElementById('feedList').innerHTML = '<div class="empty-state">Tài khoản của bạn chưa gắn với 1 trung tâm cụ thể nên chưa xem được bảng tin cộng đồng.</div>';
       document.querySelector('.composer').style.display = 'none';
-      return;
-    }
-    // MOI — neu xem duoc nhieu hon 1 trung tam (BDH/Tech/Ke toan, hoac
-    // phu huynh co con hoc o nhieu trung tam), hien o chon de doi qua
-    // lai, thay vi khoa cung dung 1 trung tam mac dinh.
-    if (PROFILE.centerIds.length > 1) {
-      const { data: centers } = await supabase.from('centers').select('id, name').in('id', PROFILE.centerIds).order('name');
-      const select = document.getElementById('centerSelect');
-      select.innerHTML = (centers || []).map((c) => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
-      select.value = PROFILE.defaultCenterId;
-      select.style.display = 'inline-block';
-      select.addEventListener('change', () => { PROFILE.defaultCenterId = select.value; loadFeed(); });
     }
     await loadFeed();
   } catch (e) {
