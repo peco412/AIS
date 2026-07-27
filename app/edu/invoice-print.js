@@ -69,6 +69,26 @@ async function loadInvoice() {
 }
 
 (async () => {
+  // SUA LOI GOC — trang nay mo o TAB/CUA SO MOI, nhung phien dang nhap
+  // (tu sau khi doi sang sessionStorage de "bat buoc dang nhap moi
+  // lan") CHI ton tai trong DUNG 1 tab — tab moi mo ra se KHONG THAY
+  // duoc phien cua tab goc, du nguoi dung van dang dang nhap binh
+  // thuong. Neu tab nay duoc MO TU 1 tab khac CUNG GOC (window.opener
+  // ton tai va truy cap duoc — dieu nay dung voi truong hop mo trang
+  // in bang window.open()/target=_blank tu chinh he thong), sao chep
+  // lai session tu tab goc TRUOC KHI kiem tra, thay vi vo tinh coi nhu
+  // "chua dang nhap".
+  try {
+    if (window.opener && window.opener.sessionStorage && window.opener.sessionStorage.length > 0) {
+      for (let i = 0; i < window.opener.sessionStorage.length; i++) {
+        const key = window.opener.sessionStorage.key(i);
+        if (key && key.startsWith('sb-')) {
+          window.sessionStorage.setItem(key, window.opener.sessionStorage.getItem(key));
+        }
+      }
+    }
+  } catch (e) { /* khac goc (cross-origin) thi bo qua, roi ve kiem tra binh thuong o duoi */ }
+
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) { window.location.href = '/index.html'; return; }
   await loadInvoice();

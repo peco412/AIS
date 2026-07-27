@@ -46,6 +46,21 @@ async function loadSale() {
 }
 
 (async () => {
+  // SUA LOI GOC — xem giai thich chi tiet o invoice-print.js: trang mo
+  // o tab moi khong thay duoc session cua tab goc (dung sessionStorage
+  // rieng biet tung tab) — sao chep lai tu window.opener neu co truoc
+  // khi kiem tra.
+  try {
+    if (window.opener && window.opener.sessionStorage && window.opener.sessionStorage.length > 0) {
+      for (let i = 0; i < window.opener.sessionStorage.length; i++) {
+        const key = window.opener.sessionStorage.key(i);
+        if (key && key.startsWith('sb-')) {
+          window.sessionStorage.setItem(key, window.opener.sessionStorage.getItem(key));
+        }
+      }
+    }
+  } catch (e) { /* khac goc thi bo qua */ }
+
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) { window.location.href = '/index.html'; return; }
   await loadSale();
