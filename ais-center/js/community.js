@@ -1,6 +1,7 @@
 import { supabase, esc, fmtDateTime, bootSocialShell } from './parentSupabase.js';
 
 let PROFILE = null;
+let MY_PROFILE_ID = null;
 let PENDING_PHOTO = null;
 
 function initials(name) {
@@ -106,13 +107,13 @@ async function fetchProfilesMap(parentIds, employeeIds) {
   if (error) { console.warn('Không lấy được hồ sơ hiển thị:', error.message); return map; }
   (data || []).forEach((r) => {
     const key = `${r.owner_type}:${r.owner_id}`;
-    map.set(key, { name: r.display_name, avatar: r.avatar_url });
+    map.set(key, { name: r.display_name, avatar: r.avatar_url, profileId: r.profile_id });
   });
   return map;
 }
 function profileFor(map, parentId, employeeId) {
   const key = parentId ? `parent:${parentId}` : `employee:${employeeId}`;
-  return map.get(key) || { name: parentId ? 'Phụ huynh' : 'Nhân viên', avatar: null };
+  return map.get(key) || { name: parentId ? 'Phụ huynh' : 'Nhân viên', avatar: null, profileId: null };
 }
 
 async function loadFeed() {
@@ -135,6 +136,19 @@ async function loadFeed() {
     [...new Set(posts.filter((p) => p.author_employee_id).map((p) => p.author_employee_id))]
   );
 
+  // MOI — nut "+ Kết bạn" thang tren bang tin — can biet profile_id cua
+  // CHINH MINH (de an nut o bai cua chinh minh) va tinh trang ket ban
+  // voi tung tac gia (de hien dung nut/trang thai).
+  if (!MY_PROFILE_ID) {
+    const { data: myId } = await supabase.rpc('get_my_social_profile_id');
+    MY_PROFILE_ID = myId;
+  }
+  const authorProfileIds = [...new Set(posts.map((p) => profileFor(profilesMap, p.author_parent_id, p.author_employee_id).profileId).filter(Boolean))];
+  const { data: friendStatuses } = authorProfileIds.length > 0
+    ? await supabase.rpc('get_friendship_statuses', { p_profile_ids: authorProfileIds })
+    : { data: [] };
+  const friendStatusMap = new Map((friendStatuses || []).map((f) => [f.other_profile_id, f.status]));
+
   const { data: likeRows } = await supabase.from('social_post_likes').select('post_id, liker_parent_id, liker_employee_id').in('post_id', posts.map((p) => p.id));
   const likeCounts = {};
   const myLikes = new Set();
@@ -150,14 +164,23 @@ async function loadFeed() {
     const isStaffAuthor = !!p.author_employee_id;
     const liked = myLikes.has(p.id);
     const count = likeCounts[p.id] || 0;
+    const isMyOwnPost = authorProfile.profileId && authorProfile.profileId === MY_PROFILE_ID;
+    const friendStatus = authorProfile.profileId ? friendStatusMap.get(authorProfile.profileId) : null;
+    let friendBtnHtml = '';
+    if (!isMyOwnPost && authorProfile.profileId) {
+      if (friendStatus === 'accepted') friendBtnHtml = '<span class="post-card__friendbtn is-friend">✓ Bạn bè</span>';
+      else if (friendStatus === 'pending') friendBtnHtml = '<span class="post-card__friendbtn is-pending">Đã gửi lời mời</span>';
+      else friendBtnHtml = `<button class="post-card__friendbtn" data-quick-friend="${authorProfile.profileId}">+ Kết bạn</button>`;
+    }
     return `
       <div class="post-card" data-post="${p.id}">
         <div class="post-card__head">
           <div class="post-card__avatar">${authorProfile.avatar ? `<img src="${esc(authorProfile.avatar)}" alt="" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" />` : esc(initials(authorName))}</div>
-          <div>
+          <div style="flex:1;">
             <div class="post-card__name">${esc(authorName)}${isStaffAuthor ? '<span class="post-card__badge">Nhân viên</span>' : ''}</div>
             <div class="post-card__meta">${timeAgo(p.created_at)}${p.centers?.name ? ` · 📍 ${esc(p.centers.name)}` : ''}</div>
           </div>
+          ${friendBtnHtml}
         </div>
         ${p.caption ? `<div class="post-card__caption">${esc(p.caption)}</div>` : ''}
         ${p.image_url ? `<img class="post-card__img" src="${esc(p.image_url)}" alt="Ảnh bài đăng" loading="lazy" />` : ''}
@@ -184,6 +207,14 @@ async function loadFeed() {
 
   feedList.querySelectorAll('[data-like]').forEach((btn) => {
     btn.addEventListener('click', () => toggleLike(btn));
+  });
+  feedList.querySelectorAll('[data-quick-friend]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      btn.disabled = true; btn.textContent = 'Đang gửi...';
+      const { error } = await supabase.rpc('send_friend_request', { p_addressee_profile_id: btn.dataset.quickFriend });
+      if (error) { alert('Không gửi được lời mời: ' + error.message); btn.disabled = false; btn.textContent = '+ Kết bạn'; return; }
+      btn.outerHTML = '<span class="post-card__friendbtn is-pending">Đã gửi lời mời</span>';
+    });
   });
   feedList.querySelectorAll('[data-toggle-comments]').forEach((btn) => {
     btn.addEventListener('click', () => toggleComments(btn.dataset.toggleComments));
