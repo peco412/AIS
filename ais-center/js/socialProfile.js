@@ -89,7 +89,7 @@ async function searchPeople(q) {
 
 async function sendFriendRequest(otherProfileId, btn) {
   btn.disabled = true; btn.textContent = 'Đang gửi...';
-  const { error } = await supabase.from('social_friendships').insert({ requester_profile_id: MY_PROFILE_ID, addressee_profile_id: otherProfileId });
+  const { error } = await supabase.rpc('send_friend_request', { p_addressee_profile_id: otherProfileId });
   if (error) { alert('Không gửi được lời mời: ' + error.message); btn.disabled = false; btn.textContent = '+ Kết bạn'; return; }
   btn.className = 'btn-pending'; btn.textContent = 'Đã gửi lời mời';
 }
@@ -141,14 +141,14 @@ async function renderFriendsTab() {
 
     box.querySelectorAll('[data-accept]').forEach((btn) => {
       btn.addEventListener('click', async () => {
-        await supabase.from('social_friendships').update({ status: 'accepted', responded_at: new Date().toISOString() }).eq('id', btn.dataset.accept);
+        await supabase.rpc('respond_friend_request', { p_friendship_id: btn.dataset.accept, p_accept: true });
         renderFriendsTab();
         updateRequestBadge();
       });
     });
     box.querySelectorAll('[data-reject]').forEach((btn) => {
       btn.addEventListener('click', async () => {
-        await supabase.from('social_friendships').delete().eq('id', btn.dataset.reject);
+        await supabase.rpc('respond_friend_request', { p_friendship_id: btn.dataset.reject, p_accept: false });
         renderFriendsTab();
         updateRequestBadge();
       });
@@ -164,7 +164,13 @@ async function updateRequestBadge() {
 (async () => {
   try {
     PROFILE = await bootSocialShell();
-    MY_PROFILE_ID = PROFILE.profileId;
+    // MOI — lay lai profileId qua RPC rieng (dam bao chac chan co gia
+    // tri, khong phu thuoc vao ket qua tu bootSocialShell co the vi ly
+    // do nao do chua kip co) — day chinh la nguyen nhan that khien
+    // "kết bạn" khong hoat dong duoc truoc do.
+    const { data: myId, error: myIdErr } = await supabase.rpc('get_my_social_profile_id');
+    if (myIdErr || !myId) { alert('Không xác định được hồ sơ của bạn: ' + (myIdErr?.message || 'không rõ nguyên nhân')); return; }
+    MY_PROFILE_ID = myId;
     document.getElementById('displayNameInput').value = PROFILE.displayName;
     renderAvatarPreview();
     await renderFriendsTab();
