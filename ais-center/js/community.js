@@ -57,7 +57,7 @@ btnPost.addEventListener('click', async () => {
     let imageUrl = null;
     if (PENDING_PHOTO) {
       const ext = PENDING_PHOTO.name.split('.').pop() || 'jpg';
-      const path = `${PROFILE.defaultCenterId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const path = `${PROFILE.defaultCenterId || 'chung'}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
       const { error: upErr } = await supabase.storage.from('social-media').upload(path, PENDING_PHOTO);
       if (upErr) throw upErr;
       const { data: urlData } = supabase.storage.from('social-media').getPublicUrl(path);
@@ -243,13 +243,9 @@ document.getElementById('logoutBtn').addEventListener('click', async () => {
 (async () => {
   try {
     PROFILE = await bootSocialShell();
-    // MOI — bang tin gio hien TAT CA trung tam gop chung (dung dinh
-    // nghia "mang xa hoi"), khong con can chon truoc 1 trung tam de xem
-    // nua. Chi con dung defaultCenterId de GAN NHAN cho bai MOI minh
-    // dang (biet bai do "tu" trung tam nao), khong dung de loc xem.
-    if (!PROFILE.defaultCenterId) {
-      document.querySelector('.composer').style.display = 'none';
-    }
+    // MOI — bang tin va cong cu dang bai gio KHONG con phu thuoc vao co
+    // gan trung tam hay khong nua — ai dang nhap duoc cung dang bai
+    // duoc, dung dinh nghia mang xa hoi mo, khong khoa theo trung tam.
     await loadFeed();
   } catch (e) {
     document.getElementById('feedList').innerHTML = `<div class="empty-state">${esc(e.message)}</div>`;

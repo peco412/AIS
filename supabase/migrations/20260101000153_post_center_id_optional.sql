@@ -1,0 +1,11 @@
+-- =====================================================================
+-- File 153: BO KHOA "PHAI CO TRUNG TAM" KHI DANG BAI (27/07/2026)
+-- =====================================================================
+-- Truoc day cot center_id tren bai dang la BAT BUOC (not null) — nghia
+-- la ai khong gan co dinh 1 trung tam nao (vd 1 so vai tro van phong)
+-- se KHONG DANG BAI DUOC, dan toi cong cu dang bai bi an di tren giao
+-- dien. Sua: cho phep center_id ĐE TRONG — bai dang van co the ghi kem
+-- "tu trung tam nao" khi nguoi dang co gan trung tam, nhung khong con
+-- la dieu kien bat buoc de dang bai duoc nua.
+-- =====================================================================
+alter table social_posts alter column center_id drop not null;
