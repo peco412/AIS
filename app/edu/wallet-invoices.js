@@ -102,7 +102,7 @@ function renderOverview() {
             <td class="mono">${fmtMoney(net)} đ</td>
             <td><span class="badge badge-${STATUS_BADGE[inv.status]}">${STATUS_LABEL[inv.status] || inv.status}</span></td>
             <td>
-              <a href="/edu/invoice-print.html?id=${inv.id}" target="_blank" class="btn btn-outline btn-sm">Xem</a>
+              <a href="/edu/invoice-print.html?id=${inv.id}" class="btn btn-outline btn-sm">Xem</a>
               <button class="btn btn-accent btn-sm" data-open-student="${inv.student_id}">Xử lý</button>
             </td>
           </tr>

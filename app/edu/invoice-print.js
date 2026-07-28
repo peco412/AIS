@@ -69,24 +69,13 @@ async function loadInvoice() {
 }
 
 (async () => {
-  // SUA LOI GOC (LAN 2) — cach truoc chi sao chep DU LIEU THO trong
-  // sessionStorage, nhung luc do client cua trang nay DA KHOI TAO XONG
-  // roi (ngay khi import '/js/supabase.js'), voi trang thai "chua co
-  // phien" da duoc ghi nho san — sao chep du lieu thô sau do KHONG lam
-  // client tu doc lai. Lan nay lay THANG phien (access_token/refresh_
-  // token) tu client cua tab goc (qua window.opener.__supabaseClient),
-  // roi GOI RO RANG supabase.auth.setSession(...) — cach nay BUOC
-  // client phai nhan va ap dung phien ngay, khong phu thuoc viec doc
-  // lai storage dung luc hay khong.
-  try {
-    if (window.opener && window.opener.__supabaseClient) {
-      const { data: { session: openerSession } } = await window.opener.__supabaseClient.auth.getSession();
-      if (openerSession) {
-        await supabase.auth.setSession({ access_token: openerSession.access_token, refresh_token: openerSession.refresh_token });
-      }
-    }
-  } catch (e) { /* khac goc (cross-origin) hoac khong co opener thi bo qua, roi kiem tra binh thuong o duoi */ }
-
+  // SUA LOI GOC — DUT DIEM: truoc day trang nay mo o TAB MOI (target=
+  // "_blank"), lam mat phien dang nhap do sessionStorage rieng biet
+  // tung tab — da thu sua 2 lan (sao chep du lieu, roi goi setSession)
+  // nhung van con truong hop that bai. Lan nay bo hang GOC RE — doi han
+  // sang mo CUNG 1 TAB (sua o wallet-invoices.js, khong con target=
+  // "_blank" nua) — khong con tab moi thi khong con van de gi ve phien
+  // dang nhap ca, vi sessionStorage van la CUNG 1 noi luu tru.
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) { window.location.href = '/index.html'; return; }
   await loadInvoice();
