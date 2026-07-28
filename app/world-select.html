@@ -152,9 +152,6 @@
     transform-origin: left center; pointer-events: none; z-index: 9992;
     animation: crm-warp-streak-kf 1350ms ease-in forwards;
   }
-  @media (prefers-reduced-motion: reduce) {
-    .crm-warp-zoom, .crm-warp-fade, .crm-warp-streak, .crm-warp-veil { animation: none !important; }
-  }
 
   .crm-logo {
     position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
@@ -175,7 +172,6 @@
   .crm-satellite--locked:hover { transform: none; box-shadow: var(--shadow-sm); }
   .crm-satellite__full { display: none; position: absolute; top: 100%; margin-top: 6px; left: 50%; transform: translateX(-50%); font-size: 11px; font-weight: 700; color: var(--ink); white-space: nowrap; background: var(--surface-card); padding: 3px 8px; border-radius: var(--radius-sm); box-shadow: var(--shadow-sm); }
   .crm-satellite:hover .crm-satellite__full { display: block; }
-  @media (prefers-reduced-motion: reduce) { .crm-satellite { transition: none !important; } }
 
   /* ---- ROOM flat grid ---- */
   .room-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }

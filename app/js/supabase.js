@@ -31,6 +31,14 @@ export const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON
   },
 });
 
+// MOI — lo ra instance client nay len window (KHONG phai lo lo bi mat gi
+// — day van la client dung anon/public key, bao mat that nam o RLS) —
+// de CUA SO/TAB CON mo tu trang nay (vd trang in hoa don mo o tab moi)
+// co the LAY DUNG PHIEN dang nhap cua tab goc qua window.opener, thay
+// vi chi sao chep du lieu tho trong sessionStorage (khong du, vi client
+// da khoi tao xong truoc do voi trang thai "chua co phien").
+window.__supabaseClient = supabase;
+
 // Quy ước: tên đăng nhập nội bộ (VMTDTP) được map sang email giả để dùng
 // Supabase Auth (yêu cầu email). Domain nội bộ cố định, không phải email thật.
 export const USERNAME_DOMAIN = '@ais.local';

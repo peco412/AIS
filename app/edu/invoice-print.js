@@ -69,25 +69,23 @@ async function loadInvoice() {
 }
 
 (async () => {
-  // SUA LOI GOC — trang nay mo o TAB/CUA SO MOI, nhung phien dang nhap
-  // (tu sau khi doi sang sessionStorage de "bat buoc dang nhap moi
-  // lan") CHI ton tai trong DUNG 1 tab — tab moi mo ra se KHONG THAY
-  // duoc phien cua tab goc, du nguoi dung van dang dang nhap binh
-  // thuong. Neu tab nay duoc MO TU 1 tab khac CUNG GOC (window.opener
-  // ton tai va truy cap duoc — dieu nay dung voi truong hop mo trang
-  // in bang window.open()/target=_blank tu chinh he thong), sao chep
-  // lai session tu tab goc TRUOC KHI kiem tra, thay vi vo tinh coi nhu
-  // "chua dang nhap".
+  // SUA LOI GOC (LAN 2) — cach truoc chi sao chep DU LIEU THO trong
+  // sessionStorage, nhung luc do client cua trang nay DA KHOI TAO XONG
+  // roi (ngay khi import '/js/supabase.js'), voi trang thai "chua co
+  // phien" da duoc ghi nho san — sao chep du lieu thô sau do KHONG lam
+  // client tu doc lai. Lan nay lay THANG phien (access_token/refresh_
+  // token) tu client cua tab goc (qua window.opener.__supabaseClient),
+  // roi GOI RO RANG supabase.auth.setSession(...) — cach nay BUOC
+  // client phai nhan va ap dung phien ngay, khong phu thuoc viec doc
+  // lai storage dung luc hay khong.
   try {
-    if (window.opener && window.opener.sessionStorage && window.opener.sessionStorage.length > 0) {
-      for (let i = 0; i < window.opener.sessionStorage.length; i++) {
-        const key = window.opener.sessionStorage.key(i);
-        if (key && key.startsWith('sb-')) {
-          window.sessionStorage.setItem(key, window.opener.sessionStorage.getItem(key));
-        }
+    if (window.opener && window.opener.__supabaseClient) {
+      const { data: { session: openerSession } } = await window.opener.__supabaseClient.auth.getSession();
+      if (openerSession) {
+        await supabase.auth.setSession({ access_token: openerSession.access_token, refresh_token: openerSession.refresh_token });
       }
     }
-  } catch (e) { /* khac goc (cross-origin) thi bo qua, roi ve kiem tra binh thuong o duoi */ }
+  } catch (e) { /* khac goc (cross-origin) hoac khong co opener thi bo qua, roi kiem tra binh thuong o duoi */ }
 
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) { window.location.href = '/index.html'; return; }
