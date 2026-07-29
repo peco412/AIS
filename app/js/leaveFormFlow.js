@@ -9,7 +9,7 @@ const STATUS_LABEL = new Proxy({}, { get: (_, code) => t('status.leaveform_' + c
 // riêng theo nhóm gây ra lỗi thiếu đường dẫn menu cho tư vấn viên/quản lý
 // trung tâm) — form vẫn tự động lọc đúng 4 loại theo ĐÚNG nhóm của người
 // tạo đơn, không hiển thị nhầm loại của nhóm khác.
-const FORM_TYPES = {
+export const FORM_TYPES = {
   office: [
     { code: '06.Donxinhoandoingaynghi', label: 'Hoán đổi ngày nghỉ hàng tuần', balanceImpact: 'none' },
     { code: '07.Donxinnghiphepcanbo', label: 'Nghỉ phép', balanceImpact: 'annual' },
@@ -23,7 +23,7 @@ const FORM_TYPES = {
     { code: '13.Donxinnghikhongluonggiaovien', label: 'Nghỉ không lương', balanceImpact: 'unpaid' },
   ],
 };
-const ALL_FORMS = [...FORM_TYPES.office, ...FORM_TYPES.teacher];
+export const ALL_FORMS = [...FORM_TYPES.office, ...FORM_TYPES.teacher];
 
 export async function initLeaveFormFlow() {
   let PROFILE = null;

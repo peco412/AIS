@@ -1,6 +1,7 @@
 import { bootShell } from '/js/shell.js';
 import { supabase, esc, uploadPrivateFile, openFile, resolveFileUrl } from '/js/supabase.js';
 import { openPdfEditor } from '/js/pdfEditor.js';
+import { ALL_FORMS } from '/js/leaveFormFlow.js';
 
 const CATEGORY_LABEL = {
   labor_contract: 'Hợp đồng lao động', service_contract: 'Hợp đồng dịch vụ', admin_paper: 'Giấy tờ hành chính',
@@ -160,11 +161,20 @@ async function loadTemplates() {
       <td>
         <button class="btn btn-outline btn-sm" data-open="${esc(t.file_url)}">Xem / tải</button>
         ${canDesign ? `<button class="btn btn-outline btn-sm" data-design="${t.id}" data-url="${esc(t.file_url)}">Thiết kế vị trí</button>` : ''}
+        ${canDesign ? `<button class="btn btn-outline btn-sm" data-delete-template="${t.id}" data-name="${esc(t.name)}">🗑️ Xoá</button>` : ''}
       </td>
     </tr>
   `).join('') || '<tr><td colspan="6" class="empty-cell">Chưa có biểu mẫu.</td></tr>';
   tbody.querySelectorAll('[data-open]').forEach((b) => b.addEventListener('click', () => openFile(b.dataset.open)));
   tbody.querySelectorAll('[data-design]').forEach((b) => b.addEventListener('click', () => openTemplateDesigner(b.dataset.design, b.dataset.url)));
+  tbody.querySelectorAll('[data-delete-template]').forEach((b) => {
+    b.addEventListener('click', async () => {
+      if (!confirm(`Xoá biểu mẫu "${b.dataset.name}"? Các đơn/hợp đồng đã tạo trước đó KHÔNG bị ảnh hưởng, chỉ không còn dùng để tạo mới được nữa.`)) return;
+      const { error } = await supabase.from('document_templates').delete().eq('id', b.dataset.deleteTemplate);
+      if (error) { alert('Xoá thất bại: ' + error.message); return; }
+      await loadTemplates();
+    });
+  });
 }
 
 // Cho TECH/HR đặt sẵn vị trí ký/điền 1 lần cho mỗi loại biểu mẫu — những
@@ -205,6 +215,32 @@ const uploadError = document.getElementById('uploadError');
 document.getElementById('btnUpload').addEventListener('click', () => {
   uploadError.classList.remove('show');
   document.getElementById('uploadForm').reset();
+
+  const isTemplateUpload = ACTIVE_DEPT === 'TEMPLATES';
+  document.getElementById('uploadModalTitle').textContent = isTemplateUpload ? 'Tải biểu mẫu lên' : 'Tải file lên kho lưu trữ';
+  document.getElementById('uploadModalSub').textContent = isTemplateUpload
+    ? 'Chọn đúng loại biểu mẫu — nếu đã có sẵn, bản mới sẽ thay thế bản cũ.'
+    : 'File sẽ được lưu vào phòng ban đang chọn ở danh sách bên trái.';
+  document.getElementById('fieldUploadCategory').style.display = isTemplateUpload ? 'none' : 'block';
+  document.getElementById('fieldTemplateCode').style.display = isTemplateUpload ? 'block' : 'none';
+  document.getElementById('uploadCategory').required = !isTemplateUpload;
+  document.getElementById('uploadTemplateCode').required = isTemplateUpload;
+
+  if (isTemplateUpload) {
+    // MOI — truoc day tai bieu mau len se TU DUNG TEN FILE lam ma
+    // ("code"), trong khi he thong don nghi phep (leaveFormFlow.js) can
+    // DUNG 8 ma co dinh (vd "06.Donxinhoandoingaynghi") de tim dung mau
+    // — tai theo ten file se KHONG BAO GIO khop, khien mau tai len
+    // "khong hoat dong duoc" nhu da gap phai. Gio cho chon dung loai
+    // trong danh sach co san (dung chung 1 nguon voi leaveFormFlow.js,
+    // luon dong bo), cong them lua chon "Khac" cho cac loai bieu mau
+    // ngoai don nghi phep sau nay.
+    const select = document.getElementById('uploadTemplateCode');
+    select.innerHTML = '<option value="">— Chọn loại biểu mẫu —</option>' +
+      ALL_FORMS.map((f) => `<option value="${f.code}">${esc(f.label)} (${f.code.match(/^0[6-9]\./) ? 'Văn phòng' : 'Giáo viên'})</option>`).join('') +
+      '<option value="__custom__">Khác (nhập mã riêng)…</option>';
+  }
+
   uploadModal.classList.add('show');
 });
 document.getElementById('closeUploadModal').addEventListener('click', () => uploadModal.classList.remove('show'));
@@ -222,9 +258,22 @@ document.getElementById('uploadForm').addEventListener('submit', async (e) => {
     if (!file) throw new Error('Vui lòng chọn file.');
 
     if (ACTIVE_DEPT === 'TEMPLATES') {
+      let code = document.getElementById('uploadTemplateCode').value;
+      if (!code) throw new Error('Vui lòng chọn loại biểu mẫu.');
+      let label = ALL_FORMS.find((f) => f.code === code)?.label;
+      if (code === '__custom__') {
+        code = (prompt('Nhập mã riêng cho biểu mẫu này (không dấu, không khoảng trắng — vd: 14.Bieumaukhac):') || '').trim();
+        if (!code) throw new Error('Vui lòng nhập mã biểu mẫu.');
+        label = file.name;
+      }
       const path = `templates/${Date.now()}_${file.name}`;
       const storedPath = await uploadPrivateFile(path, file);
-      const { error } = await supabase.from('document_templates').insert({ code: file.name, name: file.name, file_url: storedPath });
+      // upsert theo "code" — neu bieu mau nay DA CO san, TAI LEN LA THAY
+      // THE ban cu (dung y bo sung nut "xoa/thay bieu mau cu" con thieu),
+      // dat lai field_map ve rong vi vi tri ky/dien cu co the khong con
+      // dung voi file moi, can Tech/HR thiet ke lai.
+      const { error } = await supabase.from('document_templates')
+        .upsert({ code, name: label || code, file_url: storedPath, field_map: null, updated_at: new Date().toISOString() }, { onConflict: 'code' });
       if (error) throw error;
       await loadTemplates();
     } else {
