@@ -1,5 +1,6 @@
 import { bootShell } from '/js/shell.js';
 import { supabase, esc } from '/js/supabase.js';
+import { showConfirm } from '/js/confirmDialog.js';
 
 const TYPE_LABEL = {
   asset: 'Tài sản', liability: 'Nợ phải trả', equity: 'Vốn chủ sở hữu', revenue: 'Doanh thu', expense: 'Chi phí',
@@ -41,7 +42,7 @@ function render() {
   tbody.querySelectorAll('[data-toggle]').forEach((btn) => btn.addEventListener('click', async () => {
     const code = btn.dataset.toggle;
     const nextActive = btn.dataset.active !== 'true';
-    if (!nextActive && !confirm(`Ngừng dùng tài khoản ${code}? Các bút toán cũ vẫn giữ nguyên, chỉ không cho chọn tài khoản này cho giao dịch mới.`)) return;
+    if (!nextActive && !(await showConfirm(`Ngừng dùng tài khoản ${code}? Các bút toán cũ vẫn giữ nguyên, chỉ không cho chọn tài khoản này cho giao dịch mới.`, { danger: true, confirmLabel: 'Ngừng dùng' }))) return;
     const { error } = await supabase.from('chart_of_accounts').update({ is_active: nextActive }).eq('code', code);
     if (error) { alert('Lỗi: ' + error.message); return; }
     await loadRows();

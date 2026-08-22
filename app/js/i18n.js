@@ -25,6 +25,7 @@ const DICT = {
   // ---------- Điều hướng (sidebar) ----------
   'nav.dashboard': { vi: 'Trang chủ', en: 'Home' },
   'nav.notifications': { vi: 'Thông báo', en: 'Notifications' },
+  'nav.approvalCenter': { vi: 'Trung tâm phê duyệt', en: 'Approval center' },
   'nav.directory': { vi: 'Thông tin liên lạc', en: 'Directory' },
   'nav.profile': { vi: 'Hồ sơ cá nhân', en: 'My profile' },
   'nav.myPayroll': { vi: 'Bảng lương của tôi', en: 'My payslip' },

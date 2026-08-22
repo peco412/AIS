@@ -1,5 +1,6 @@
 import { bootShell } from '/js/shell.js';
 import { supabase, esc } from '/js/supabase.js';
+import { showConfirm } from '/js/confirmDialog.js';
 
 let PROFILE = null;
 let ALL_ROWS = [];
@@ -37,7 +38,7 @@ function render() {
 
   tbody.querySelectorAll('[data-edit]').forEach((b) => b.addEventListener('click', () => openEdit(b.dataset.edit)));
   tbody.querySelectorAll('[data-delete]').forEach((b) => b.addEventListener('click', async () => {
-    if (!confirm('Xoá size này? Sẽ không còn gợi ý được cho khoảng chiều cao/cân nặng tương ứng nữa.')) return;
+    if (!(await showConfirm('Xoá size này? Sẽ không còn gợi ý được cho khoảng chiều cao/cân nặng tương ứng nữa.', { danger: true, confirmLabel: 'Xoá' }))) return;
     const { error } = await supabase.from('size_charts').delete().eq('id', b.dataset.delete);
     if (error) { alert('Lỗi: ' + error.message); return; }
     await loadRows();

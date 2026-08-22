@@ -1,6 +1,7 @@
 import { bootShell } from '/js/shell.js';
 import { supabase, esc, notifyDepartmentHeads } from '/js/supabase.js';
 import { t } from '/js/i18n.js';
+import { showConfirm, showPromptDialog } from '/js/confirmDialog.js';
 
 const STATUS_LABEL = new Proxy({}, { get: (_, code) => t('status.' + code, { pending: 'Chờ duyệt', approved: 'Đã duyệt', rejected: 'Từ chối' }[code] || code) });
 const STATUS_BADGE = { pending: 'submitted', approved: 'active', rejected: 'rejected' };
@@ -47,7 +48,7 @@ async function loadRows() {
 }
 
 async function decide(id, status) {
-  if (!confirm(status === 'approved' ? 'Duyệt đơn này? Ngày chấm công trễ sẽ được tính là đúng giờ khi tính lương.' : 'Từ chối đơn này?')) return;
+  if (!(await showConfirm(status === 'approved' ? 'Duyệt đơn này? Ngày chấm công trễ sẽ được tính là đúng giờ khi tính lương.' : 'Từ chối đơn này?', { danger: status !== 'approved', confirmLabel: status === 'approved' ? 'Duyệt' : 'Từ chối' }))) return;
   const { error } = await supabase.from('late_clockin_requests').update({ status, approved_by: PROFILE.id, approved_at: new Date().toISOString() }).eq('id', id);
   if (error) { alert('Lỗi: ' + error.message); return; }
   await loadRows();

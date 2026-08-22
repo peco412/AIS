@@ -1,5 +1,6 @@
 import { bootShell } from '/js/shell.js';
 import { supabase, esc } from '/js/supabase.js';
+import { showConfirm } from '/js/confirmDialog.js';
 
 let PROFILE = null;
 let EDIT_ID = null;
@@ -35,7 +36,7 @@ async function loadRows() {
     await loadRows();
   }));
   tbody.querySelectorAll('[data-delete]').forEach((btn) => btn.addEventListener('click', async () => {
-    if (!confirm('Xoá chương trình này? Không thể hoàn tác.')) return;
+    if (!(await showConfirm('Xoá chương trình này? Không thể hoàn tác.', { danger: true, confirmLabel: 'Xoá' }))) return;
     await supabase.from('extracurricular_programs').delete().eq('id', btn.dataset.delete);
     await loadRows();
   }));

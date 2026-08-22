@@ -1,6 +1,7 @@
 import { bootShell } from '/js/shell.js';
 import { supabase, esc } from '/js/supabase.js';
 import { t } from '/js/i18n.js';
+import { showConfirm, showPromptDialog } from '/js/confirmDialog.js';
 
 let PROFILE = null;
 let IS_ACC = false;
@@ -93,7 +94,7 @@ function render() {
 }
 
 async function decide(id, status, field) {
-  if (!confirm(status === 'rejected' ? 'Từ chối phiếu này?' : 'Xác nhận duyệt phiếu này?')) return;
+  if (!(await showConfirm(status === 'rejected' ? 'Từ chối phiếu này?' : 'Xác nhận duyệt phiếu này?', { danger: status === 'rejected', confirmLabel: status === 'rejected' ? 'Từ chối' : 'Duyệt' }))) return;
   const payload = { status };
   if (field === 'manager') { payload.manager_signed_by = PROFILE.id; payload.manager_signed_at = new Date().toISOString(); }
   if (field === 'accountant') { payload.accountant_signed_by = PROFILE.id; payload.accountant_signed_at = new Date().toISOString(); }
@@ -174,8 +175,9 @@ document.getElementById('btnSubmitPo').addEventListener('click', async () => {
     });
     const check = budgetCheck?.[0];
     if (check?.would_exceed) {
-      const proceed = confirm(
-        `CẢNH BÁO VƯỢT TRẦN NGÂN SÁCH\n\nHạng mục này đã chi ${Number(check.already_spent).toLocaleString('vi-VN')} đ / trần ${Number(check.monthly_cap).toLocaleString('vi-VN')} đ tháng này.\nPhiếu này (${totalAmount.toLocaleString('vi-VN')} đ) sẽ làm VƯỢT trần.\n\nVẫn muốn tiếp tục tạo phiếu?`
+      const proceed = await showConfirm(
+        `CẢNH BÁO VƯỢT TRẦN NGÂN SÁCH\nHạng mục này đã chi ${Number(check.already_spent).toLocaleString('vi-VN')} đ / trần ${Number(check.monthly_cap).toLocaleString('vi-VN')} đ tháng này.\nPhiếu này (${totalAmount.toLocaleString('vi-VN')} đ) sẽ làm VƯỢT trần.\nVẫn muốn tiếp tục tạo phiếu?`,
+        { danger: true, confirmLabel: 'Vẫn tạo phiếu' }
       );
       if (!proceed) return;
     }
@@ -221,8 +223,16 @@ document.getElementById('btnSubmitPo').addEventListener('click', async () => {
     const { data: emp } = await supabase.from('employees').select('department_id, center_id, departments(code)').eq('id', profile.id).single();
     PROFILE = { ...profile, departmentId: emp?.department_id, centerId: emp?.center_id, departmentCode: emp?.departments?.code };
     IS_ACC = PROFILE.departmentCode === 'ACC' && ['DEPT_HEAD', 'DEPT_DEPUTY'].includes(profile.roleCode);
-    IS_EXEC = ['EXECUTIVE', 'TECH'].includes(profile.roleCode);
-    if (IS_ACC || IS_EXEC || ['DEPT_HEAD', 'DEPT_DEPUTY', 'CENTER_MANAGER'].includes(profile.roleCode)) {
+    // CHUẨN HOÁ 22/08/2026: trước đây IS_EXEC = EXECUTIVE+TECH dùng chung cho
+    // cả "được xem toàn bộ" LẪN "được duyệt cấp cuối" — khiến TECH có quyền
+    // duyệt/ký Phiếu mua hàng trong hệ thống thật, khác với 5 luồng duyệt
+    // còn lại (chỉ EXECUTIVE). Theo quyết định của MIA: TECH được xem tất cả
+    // nhưng dùng công cụ test riêng, không thao tác trong hệ thống đang chạy
+    // thật — tách thành 2 biến riêng, IS_EXEC giờ CHỈ dùng cho hành động
+    // duyệt (khớp các luồng khác), CAN_VIEW_ALL dùng riêng cho việc xem.
+    IS_EXEC = profile.roleCode === 'EXECUTIVE';
+    const CAN_VIEW_ALL = ['EXECUTIVE', 'TECH'].includes(profile.roleCode);
+    if (IS_ACC || CAN_VIEW_ALL || ['DEPT_HEAD', 'DEPT_DEPUTY', 'CENTER_MANAGER'].includes(profile.roleCode)) {
       document.getElementById('allScopeOption').style.display = 'block';
     }
 

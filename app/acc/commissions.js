@@ -1,5 +1,6 @@
 import { bootShell } from '/js/shell.js';
 import { supabase, esc } from '/js/supabase.js';
+import { showConfirm, showPromptDialog } from '/js/confirmDialog.js';
 
 function fmtMoney(n) { return Number(n || 0).toLocaleString('vi-VN'); }
 
@@ -30,9 +31,9 @@ async function loadRules() {
 }
 
 document.getElementById('btnAddRule')?.addEventListener('click', async () => {
-  const name = prompt('Tên quy tắc (VD: "Hoa hồng chuẩn 2026"):');
+  const name = await showPromptDialog('Tên quy tắc (VD: "Hoa hồng chuẩn 2026"):', { title: 'Thêm quy tắc hoa hồng' });
   if (!name?.trim()) return;
-  const rateStr = prompt('Tỷ lệ % trên hoá đơn đầu tiên (VD: 5 = 5%):', '5');
+  const rateStr = await showPromptDialog('Tỷ lệ % trên hoá đơn đầu tiên (VD: 5 = 5%):', { defaultValue: '5', title: 'Thêm quy tắc hoa hồng' });
   const rate = Number(rateStr) / 100;
   if (isNaN(rate) || rate < 0 || rate > 1) { alert('Tỷ lệ không hợp lệ.'); return; }
   const { error } = await supabase.from('commission_rules').insert({ name: name.trim(), rate, created_by: PROFILE.id });
@@ -100,7 +101,7 @@ function renderPayoutPanel(year, month, consultantId) {
     <button class="btn btn-accent" id="btnMarkPaid">Xác nhận đã trả (ghi sổ kế toán)</button>
   `;
   document.getElementById('btnMarkPaid').addEventListener('click', async () => {
-    if (!confirm(`Xác nhận đã trả ${fmtMoney(total)} đ hoa hồng? Thao tác này sẽ ghi sổ kế toán ngay.`)) return;
+    if (!(await showConfirm(`Xác nhận đã trả ${fmtMoney(total)} đ hoa hồng? Thao tác này sẽ ghi sổ kế toán ngay.`, { confirmLabel: 'Xác nhận đã trả' }))) return;
     const { error } = await supabase.rpc('mark_commissions_paid', { p_consultant_id: consultantId, p_year: year, p_month: month, p_actor_id: PROFILE.id });
     if (error) { alert('Lỗi: ' + error.message); return; }
     alert('Đã ghi nhận trả hoa hồng thành công.');

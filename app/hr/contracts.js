@@ -213,7 +213,13 @@ document.getElementById('openFillEditor').addEventListener('click', async () => 
     PROFILE.signatureUrl = emp?.signature_url || null;
 
     IS_HR_HEAD = profile.departmentCode === 'HR' && ['DEPT_HEAD', 'DEPT_DEPUTY'].includes(profile.roleCode);
-    IS_EXEC = ['EXECUTIVE', 'TECH'].includes(profile.roleCode);
+    // CHUẨN HOÁ 22/08/2026: theo quyết định của MIA — TECH được xem tất cả
+    // (đã có qua RLS chung, không đổi) nhưng KHÔNG thao tác (duyệt/tạo mới)
+    // trong hệ thống thật, có công cụ test riêng để không làm nhiễu dữ liệu
+    // đang chạy thật. Trước đây IS_EXEC = EXECUTIVE+TECH khiến TECH vừa
+    // duyệt được cấp cuối vừa tạo được hợp đồng lao động thật — khác biệt
+    // so với các luồng phê duyệt khác trong hệ thống (chỉ EXECUTIVE).
+    IS_EXEC = profile.roleCode === 'EXECUTIVE';
     CAN_CREATE = profile.departmentCode === 'HR' || IS_EXEC;
     document.getElementById('btnAdd').style.display = CAN_CREATE ? 'inline-flex' : 'none';
 

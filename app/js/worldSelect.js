@@ -140,7 +140,7 @@ function timeGreeting() {
   return t('lobby.greeting.evening', 'Chào buổi tối');
 }
 
-const EXEC_ICONS = { '/exec/reports.html': '📊', '/exec/sign.html': '✍️' };
+const EXEC_ICONS = { '/exec/reports.html': '📊' };
 const DEPT_ICON = { 'Phòng nhân sự': '👥', 'Phòng kế toán': '💰', 'Phòng truyền thông': '📣', 'Phòng cơ sở vật chất': '🔧' };
 // MOI — moi phong ban co MAU RIENG khi mo ra (banner chu de), khong con
 // dung chung 1 mau xanh nhu truoc.

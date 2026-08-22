@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="vi" data-division="aloha">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Trung tâm phê duyệt — AIS OFFICE</title>
+<link rel="manifest" href="/manifest.json" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="AIS OFFICE" />
+<link rel="apple-touch-icon" href="/assets/icon-192.png" />
+<meta name="theme-color" content="#0094D9" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/css/tokens.css" />
+<link rel="stylesheet" href="/css/dashboard.css" />
+<link rel="stylesheet" href="/css/module.css" />
+<style>
+  /* Thẻ tổng số theo từng nhóm — bấm để lọc nhanh, giống kiểu "chip filter"
+     hay dùng trong app hiện đại, không cần vào từng trang mới lọc được. */
+  .approval-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+  .approval-chip {
+    display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px;
+    border: 1px solid var(--border); background: var(--surface-card); cursor: pointer;
+    font-size: 13px; font-weight: 600; color: var(--ink-soft); transition: all var(--dur-fast) var(--ease);
+    min-height: 40px; /* đủ lớn để bấm thoải mái trên điện thoại */
+  }
+  .approval-chip:hover { border-color: var(--accent); color: var(--ink); }
+  .approval-chip.is-active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .approval-chip__count {
+    background: rgba(0,0,0,0.12); border-radius: 999px; padding: 1px 8px; font-size: 11.5px;
+  }
+  .approval-chip.is-active .approval-chip__count { background: rgba(255,255,255,0.28); }
+
+  .approval-row {
+    display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-bottom: 1px solid var(--separator);
+  }
+  .approval-row:last-child { border-bottom: none; }
+  .approval-row__icon {
+    flex: 0 0 auto; width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center;
+    justify-content: center; background: var(--accent-tint); color: var(--accent-deep);
+  }
+  .approval-row__body { flex: 1 1 auto; min-width: 0; }
+  .approval-row__title { font-weight: 700; font-size: 14px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .approval-row__meta { font-size: 12.5px; color: var(--ink-soft); margin-top: 2px; }
+  .approval-row__step { display: inline-block; margin-top: 4px; font-size: 11.5px; font-weight: 700; color: var(--accent-deep); background: var(--accent-tint); padding: 2px 8px; border-radius: 6px; }
+  .approval-row__action { flex: 0 0 auto; }
+  .approval-empty { padding: 60px 20px; text-align: center; color: var(--ink-soft); }
+  .approval-empty svg { width: 48px; height: 48px; color: var(--separator); margin-bottom: 12px; }
+  .approval-group-title { font-size: 12.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; color: var(--ink-soft); padding: 16px 16px 6px; }
+</style>
+</head>
+<body data-page="/approval-center.html">
+
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar__brand"><span class="dot"></span><div>AIS OFFICE<small data-i18n="brand.subtitle">Hệ thống quản trị nội bộ</small></div></div>
+    <nav id="sidebarNav"></nav>
+    <div class="sidebar__footer">© 2026 AIS OFFICE</div>
+  </aside>
+  <header class="topbar">
+    <div class="topbar__left">
+      <button class="menu-toggle" id="menuToggle"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg></button>
+    </div>
+    <div class="topbar__right">
+      <button class="icon-btn" onclick="location.href='/notifications.html'"><svg class="icon" viewBox="0 0 24 24"><path d="M6 8a6 6 0 1 1 12 0c0 4 1.5 6 2 6.5H4c.5-.5 2-2.5 2-6.5z"/><path d="M9.5 18a2.5 2.5 0 0 0 5 0"/></svg><span class="badge" id="notifBadge" style="display:none;">0</span></button>
+      <div class="user-chip" onclick="location.href='/profile.html'">
+        <div class="user-chip__avatar" id="userChipAvatar">--</div>
+        <div class="user-chip__meta"><div class="name" id="userChipName">Đang tải...</div><div class="role" id="userChipRole">—</div></div>
+      </div>
+      <button class="icon-btn" id="logoutBtn"><svg class="icon" viewBox="0 0 24 24"><path d="M9 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h4"/><path d="M15 16l4-4-4-4"/><path d="M19 12H9"/></svg></button>
+    </div>
+  </header>
+
+  <main class="main">
+    <div class="page-header">
+      <div>
+        <h1>Trung tâm phê duyệt</h1>
+        <div class="sub">Tất cả phiếu/đơn đang chờ ĐÚNG bạn xử lý ở bước hiện tại — gom từ mọi phòng ban vào 1 nơi, không cần tìm từng trang.</div>
+      </div>
+      <button class="btn btn-outline" id="btnRefresh">↻ Tải lại</button>
+    </div>
+
+    <div class="approval-chips" id="approvalChips"></div>
+
+    <div class="data-table-wrap" style="overflow-x: visible;">
+      <div id="approvalList">
+        <div class="approval-empty">Đang tải dữ liệu từ tất cả phòng ban...</div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="/env.js"></script>
+<script type="module" src="/js/approvalCenter.js"></script>
+<script src="/js/pwa.js"></script>
+</body>
+</html>

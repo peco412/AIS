@@ -44,6 +44,8 @@
 }
 .btn:active { transform: scale(0.97); }
 .btn-accent { background: var(--accent); color: #fff; box-shadow: 0 1px 3px rgba(var(--accent-rgb), 0.35); }
+.btn-danger { background: var(--danger); color: #fff; box-shadow: 0 1px 3px rgba(211, 53, 47, 0.35); }
+.btn-danger:hover { background: #b82c27; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(211, 53, 47, 0.28); }
 .btn-accent:hover { background: var(--accent-deep); transform: translateY(-1px); box-shadow: 0 4px 10px rgba(var(--accent-rgb), 0.28); }
 .btn-outline { background: var(--surface-fill); color: var(--ink); }
 .btn-outline:hover { background: var(--surface-sunken); }
@@ -168,7 +170,11 @@ table.data-table { width: 100%; min-width: 640px; border-collapse: collapse; fon
   align-items: flex-start;
   justify-content: center;
   padding: 48px 16px;
-  z-index: 100;
+  /* SỬA LỖI THẬT: trước là z-index:100 — THẤP HƠN .mobile-bottom-nav (400)
+     và .hub-overlay (500) trong dashboard.css, nên trên điện thoại, thanh
+     điều hướng dưới cùng và menu "Thế giới" đè lên phần dưới của mọi modal
+     thêm/sửa (nút Lưu/Huỷ bị che khuất). Đưa modal lên trên cùng cả 2. */
+  z-index: 600;
   overflow-y: auto;
 }
 .modal-overlay.show { display: flex; animation: modalFadeIn var(--dur-base) var(--ease); }

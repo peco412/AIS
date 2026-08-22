@@ -1,3 +1,11 @@
+// =====================================================================
+// KHÔNG CÒN ĐƯỢC DÙNG (22/08/2026) — exec/sign.html đã chuyển hướng sang
+// /approval-center.html (Trung tâm phê duyệt), nơi gộp đủ 15 luồng duyệt
+// (bản cũ ở đây chỉ có 9) và mở cho mọi vai trò tự lọc theo quyền của
+// mình (bản cũ giới hạn chỉ EXEC/TECH/trưởng phòng liên quan xem được).
+// Giữ file này lại để tham chiếu lịch sử, KHÔNG xoá code, nhưng không
+// còn trang HTML nào load file này nữa.
+// =====================================================================
 import { bootShell } from '/js/shell.js';
 import { supabase, esc } from '/js/supabase.js';
 

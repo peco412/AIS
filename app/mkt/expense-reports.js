@@ -1,5 +1,6 @@
 import { bootShell } from '/js/shell.js';
 import { supabase, esc, notifyDepartmentHeads } from '/js/supabase.js';
+import { showConfirm, showPromptDialog } from '/js/confirmDialog.js';
 
 let PROFILE = null;
 let chartInstance = null;
@@ -10,7 +11,10 @@ function fmtDate(d) { return d ? new Date(d).toLocaleDateString('vi-VN') : '—'
 
 function isHead() { return PROFILE.departmentCode === 'MKT' && ['DEPT_HEAD', 'DEPT_DEPUTY'].includes(PROFILE.roleCode); }
 function isAcc() { return PROFILE.departmentCode === 'ACC'; }
-function isExec() { return ['EXECUTIVE', 'TECH'].includes(PROFILE.roleCode); }
+// CHUẨN HOÁ 22/08/2026: trước đây EXECUTIVE+TECH đều duyệt được — theo
+// quyết định của MIA, TECH chỉ xem (RLS vẫn cho xem toàn bộ, không đổi) và
+// dùng công cụ test riêng, KHÔNG thao tác duyệt trong hệ thống thật.
+function isExec() { return PROFILE.roleCode === 'EXECUTIVE'; }
 
 const STATUS_LABEL = { draft: 'Chờ Trưởng phòng MKT duyệt', approved_1: 'Chờ Kế toán duyệt', approved_2: 'Chờ Ban điều hành duyệt', approved_3: 'Đã duyệt & ghi sổ', rejected: 'Đã từ chối' };
 const STATUS_BADGE = { draft: 'submitted', approved_1: 'submitted', approved_2: 'submitted', approved_3: 'active', rejected: 'rejected' };
@@ -65,9 +69,9 @@ async function loadChart() {
 }
 
 function actionFor(row) {
-  if (row.status === 'draft' && (isHead() || isExec())) return { label: 'Duyệt (Trưởng phòng)', next: 'approved_1', signedByField: 'dept_head_signed_by', signedAtField: 'dept_head_signed_at' };
-  if (row.status === 'approved_1' && (isAcc() || isExec())) return { label: 'Duyệt (Kế toán)', next: 'approved_2', signedByField: 'accountant_signed_by', signedAtField: 'accountant_signed_at' };
-  if (row.status === 'approved_2' && isExec()) return { label: 'Duyệt (Ban điều hành)', next: 'approved_3', isFinal: true };
+  if (row.status === 'draft' && (isHead() || isExec())) return { label: 'Trưởng phòng MKT duyệt', next: 'approved_1', signedByField: 'dept_head_signed_by', signedAtField: 'dept_head_signed_at' };
+  if (row.status === 'approved_1' && (isAcc() || isExec())) return { label: 'Kế toán duyệt', next: 'approved_2', signedByField: 'accountant_signed_by', signedAtField: 'accountant_signed_at' };
+  if (row.status === 'approved_2' && isExec()) return { label: 'Ban điều hành duyệt', next: 'approved_3', isFinal: true };
   return null;
 }
 
@@ -118,7 +122,7 @@ async function handleApprove(id) {
     return;
   }
 
-  if (!confirm(`Xác nhận "${action.label}" cho khoản chi ${row.code}?`)) return;
+  if (!(await showConfirm(`Xác nhận "${action.label}" cho khoản chi ${row.code}?`, { confirmLabel: 'Xác nhận' }))) return;
   const payload = { status: action.next, [action.signedByField]: PROFILE.id, [action.signedAtField]: new Date().toISOString() };
   const { error } = await supabase.from('mkt_ad_expenses').update(payload).eq('id', id);
   if (error) { alert('Lỗi: ' + error.message); return; }
@@ -137,8 +141,8 @@ document.getElementById('confirmPaymentMethod').addEventListener('click', async 
 });
 
 async function handleReject(id) {
-  const reason = prompt('Lý do từ chối:');
-  if (!reason?.trim()) { alert('Bắt buộc ghi lý do từ chối.'); return; }
+  const reason = await showPromptDialog('Lý do từ chối:', { title: 'Từ chối chi phí quảng cáo', required: true });
+  if (reason === null) return;
   const { error } = await supabase.from('mkt_ad_expenses').update({ status: 'rejected', reject_reason: reason }).eq('id', id);
   if (error) { alert('Lỗi: ' + error.message); return; }
   await loadTable();
@@ -171,7 +175,7 @@ document.getElementById('expenseForm').addEventListener('submit', async (e) => {
     });
     const check = budgetCheck?.[0];
     if (check?.would_exceed) {
-      const proceed = confirm(`CẢNH BÁO VƯỢT TRẦN NGÂN SÁCH\n\nHạng mục này đã chi ${fmtMoney(check.already_spent)} đ / trần ${fmtMoney(check.monthly_cap)} đ tháng này.\nKhoản này (${fmtMoney(amount)} đ) sẽ làm VƯỢT trần.\n\nVẫn muốn tiếp tục gửi duyệt?`);
+      const proceed = await showConfirm(`CẢNH BÁO VƯỢT TRẦN NGÂN SÁCH\nHạng mục này đã chi ${fmtMoney(check.already_spent)} đ / trần ${fmtMoney(check.monthly_cap)} đ tháng này.\nKhoản này (${fmtMoney(amount)} đ) sẽ làm VƯỢT trần.\nVẫn muốn tiếp tục gửi duyệt?`, { danger: true, confirmLabel: 'Vẫn gửi duyệt' });
       if (!proceed) return;
     }
   }

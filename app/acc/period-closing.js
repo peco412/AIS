@@ -1,5 +1,6 @@
 import { bootShell } from '/js/shell.js';
 import { supabase, esc } from '/js/supabase.js';
+import { showConfirm, showPromptDialog } from '/js/confirmDialog.js';
 
 function fmtMoney(n) { return Number(n || 0).toLocaleString('vi-VN'); }
 
@@ -106,7 +107,7 @@ async function loadPeriodStatus() {
     document.getElementById('btnReopen')?.addEventListener('click', async () => {
       const reason = document.getElementById('reopenReason').value.trim();
       if (!reason) { alert('Bắt buộc ghi lý do.'); return; }
-      if (!confirm(`Xác nhận MỞ KHOÁ lại kỳ ${month}/${year}? Đây là thao tác nhạy cảm, sẽ được ghi lại đầy đủ.`)) return;
+      if (!(await showConfirm(`Xác nhận MỞ KHOÁ lại kỳ ${month}/${year}? Đây là thao tác nhạy cảm, sẽ được ghi lại đầy đủ.`, { danger: true, confirmLabel: 'Mở khoá lại' }))) return;
       const { error } = await supabase.rpc('reopen_period', { p_year: year, p_month: month, p_actor_id: PROFILE.id, p_reason: reason });
       if (error) { alert('Lỗi: ' + error.message); return; }
       await loadPeriodStatus();
@@ -120,7 +121,7 @@ async function loadPeriodStatus() {
       <button class="btn btn-accent" id="btnClose">Khoá sổ kỳ ${month}/${year}</button>
     `;
     document.getElementById('btnClose')?.addEventListener('click', async () => {
-      if (!confirm(`Xác nhận KHOÁ SỔ kỳ ${month}/${year}? Sau khi khoá, không ai ghi thêm bút toán cho kỳ này được nữa (trừ khi BĐH/Kỹ thuật mở khoá lại).`)) return;
+      if (!(await showConfirm(`Xác nhận KHOÁ SỔ kỳ ${month}/${year}? Sau khi khoá, không ai ghi thêm bút toán cho kỳ này được nữa (trừ khi BĐH/Kỹ thuật mở khoá lại).`, { confirmLabel: 'Khoá sổ' }))) return;
       const { error } = await supabase.rpc('close_period', { p_year: year, p_month: month, p_actor_id: PROFILE.id });
       if (error) { alert('Lỗi: ' + error.message); return; }
       await loadPeriodStatus();

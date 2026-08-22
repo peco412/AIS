@@ -1,5 +1,6 @@
 import { bootShell } from '/js/shell.js';
 import { supabase, esc } from '/js/supabase.js';
+import { showConfirm } from '/js/confirmDialog.js';
 
 let PROFILE = null;
 let ALL_ROWS = [];
@@ -39,7 +40,7 @@ function render() {
 
   tbody.querySelectorAll('[data-edit]').forEach((btn) => btn.addEventListener('click', () => openEdit(btn.dataset.edit)));
   tbody.querySelectorAll('[data-delete]').forEach((btn) => btn.addEventListener('click', async () => {
-    if (!confirm(`Xoá trung tâm "${btn.dataset.name}"? Chỉ xoá được nếu KHÔNG còn học sinh/nhân viên/lớp học nào gắn với trung tâm này — nếu tạo nhầm và chưa dùng gì thì xoá được ngay, còn nếu đã có dữ liệu thì nên "Ngừng hoạt động" thay vì xoá.`)) return;
+    if (!(await showConfirm(`Xoá trung tâm "${btn.dataset.name}"? Chỉ xoá được nếu KHÔNG còn học sinh/nhân viên/lớp học nào gắn với trung tâm này — nếu tạo nhầm và chưa dùng gì thì xoá được ngay, còn nếu đã có dữ liệu thì nên "Ngừng hoạt động" thay vì xoá.`, { danger: true, confirmLabel: 'Xoá' }))) return;
     const { error } = await supabase.from('centers').delete().eq('id', btn.dataset.delete);
     if (error) { alert('Không xoá được — trung tâm này vẫn còn dữ liệu gắn với nó, dùng "Ngừng hoạt động" thay vì xoá:\n' + error.message); return; }
     await loadRows();

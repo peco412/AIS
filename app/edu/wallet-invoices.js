@@ -1,5 +1,6 @@
 import { bootShell } from '/js/shell.js';
 import { supabase, esc } from '/js/supabase.js';
+import { showConfirm, showPromptDialog } from '/js/confirmDialog.js';
 
 let PROFILE = null;
 let ACTIVE_STUDENT = null;
@@ -357,7 +358,7 @@ async function loadInvoices() {
   tbody.querySelectorAll('[data-adjust]').forEach((btn) => btn.addEventListener('click', () => openAdjustDiscount(btn.dataset.adjust, Number(btn.dataset.current))));
   tbody.querySelectorAll('[data-refund]').forEach((btn) => btn.addEventListener('click', () => openPlanRefund(btn.dataset.refund, Number(btn.dataset.total), Number(btn.dataset.amount))));
   tbody.querySelectorAll('[data-delete]').forEach((btn) => btn.addEventListener('click', async () => {
-    if (!confirm(`Xoá hoá đơn ${btn.dataset.code || ''}? Không thể hoàn tác.`)) return;
+    if (!(await showConfirm(`Xoá hoá đơn ${btn.dataset.code || ''}? Không thể hoàn tác.`, { danger: true, confirmLabel: 'Xoá' }))) return;
     const { error } = await supabase.from('invoices').delete().eq('id', btn.dataset.delete);
     if (error) { alert('Không xoá được — hoá đơn này đã có giao dịch gắn với nó:\n' + error.message); return; }
     await loadInvoices();
@@ -371,22 +372,23 @@ async function loadInvoices() {
 // Ưu đãi hoá đơn — chỉ 1 trong 2 (theo trường hợp / theo chương trình)
 // ---------------------------------------------------------------------
 async function openAdjustDiscount(invoiceId, currentDiscount) {
-  const choice = prompt(
+  const choice = await showPromptDialog(
     'Chọn loại ưu đãi cho khoản thu này (chỉ được chọn 1):\n' +
     '1 = Giảm theo trường hợp (nhập tay số tiền + lý do)\n' +
     '2 = Áp dụng ưu đãi chương trình đang có cho trung tâm\n' +
     '3 = Diện ưu đãi đặc biệt (con/cháu HĐQT, con hiệu trưởng...)\n' +
-    '0 = Bỏ ưu đãi\n\nNhập 0, 1, 2 hoặc 3:'
+    '0 = Bỏ ưu đãi\nNhập 0, 1, 2 hoặc 3:',
+    { title: 'Ưu đãi hoá đơn', placeholder: '0, 1, 2 hoặc 3' }
   );
   if (choice === null) return;
 
   try {
     if (choice === '1') {
-      const amountStr = prompt('Số tiền ưu đãi (VNĐ):', currentDiscount || 0);
+      const amountStr = await showPromptDialog('Số tiền ưu đãi (VNĐ):', { defaultValue: String(currentDiscount || 0), title: 'Giảm theo trường hợp' });
       if (amountStr === null) return;
       const amount = Number(amountStr);
       if (isNaN(amount) || amount < 0) { alert('Số tiền không hợp lệ.'); return; }
-      const reason = prompt('Lý do (bắt buộc):');
+      const reason = await showPromptDialog('Lý do (bắt buộc):', { title: 'Giảm theo trường hợp', required: true });
       if (!reason) { alert('Cần nhập lý do.'); return; }
       const { error } = await supabase.rpc('apply_case_discount_to_invoice', { p_invoice_id: invoiceId, p_amount_vnd: amount, p_note: reason });
       if (error) throw error;
@@ -394,11 +396,11 @@ async function openAdjustDiscount(invoiceId, currentDiscount) {
       const { error } = await supabase.rpc('apply_program_discount_to_invoice', { p_invoice_id: invoiceId, p_approver_id: PROFILE.id });
       if (error) throw error;
     } else if (choice === '3') {
-      const catChoice = prompt('Chọn diện ưu đãi:\n1 = Con HĐQT\n2 = Cháu HĐQT\n3 = Con hiệu trưởng\n4 = Khác\n\nNhập 1-4:');
+      const catChoice = await showPromptDialog('Chọn diện ưu đãi:\n1 = Con HĐQT\n2 = Cháu HĐQT\n3 = Con hiệu trưởng\n4 = Khác\nNhập 1-4:', { title: 'Diện ưu đãi đặc biệt', placeholder: '1-4' });
       const catMap = { '1': 'board_child', '2': 'board_grandchild', '3': 'principal_child', '4': 'other' };
       const category = catMap[catChoice];
       if (!category) return;
-      const amountStr = prompt('Số tiền ưu đãi (VNĐ):', currentDiscount || 0);
+      const amountStr = await showPromptDialog('Số tiền ưu đãi (VNĐ):', { defaultValue: String(currentDiscount || 0), title: 'Diện ưu đãi đặc biệt' });
       if (amountStr === null) return;
       const amount = Number(amountStr);
       if (isNaN(amount) || amount < 0) { alert('Số tiền không hợp lệ.'); return; }
@@ -420,14 +422,14 @@ async function openAdjustDiscount(invoiceId, currentDiscount) {
 // Hoàn phí gói (đã sửa công thức — không nhân chiết khấu 2 lần)
 // ---------------------------------------------------------------------
 async function openPlanRefund(purchaseId, totalCourses, totalAmount) {
-  const completedStr = prompt(`Gói này gồm ${totalCourses} khoá, đã thu ${fmtMoney(totalAmount)} đ.\nXác nhận học viên đã học xong bao nhiêu khoá (0-${totalCourses})?`, '0');
+  const completedStr = await showPromptDialog(`Gói này gồm ${totalCourses} khoá, đã thu ${fmtMoney(totalAmount)} đ.\nXác nhận học viên đã học xong bao nhiêu khoá (0-${totalCourses})?`, { defaultValue: '0', title: 'Hoàn phí gói' });
   if (completedStr === null) return;
   const completed = Number(completedStr);
   if (isNaN(completed) || completed < 0 || completed > totalCourses) { alert('Số khoá không hợp lệ.'); return; }
 
   const perCourse = totalAmount / totalCourses;
   const refund = totalAmount - completed * perCourse;
-  if (!confirm(`Giá trị 1 khoá: ${fmtMoney(perCourse)} đ\nSố tiền hoàn: ${fmtMoney(refund)} đ\n\nXác nhận hoàn phí? Không hoàn tác được.`)) return;
+  if (!(await showConfirm(`Giá trị 1 khoá: ${fmtMoney(perCourse)} đ\nSố tiền hoàn: ${fmtMoney(refund)} đ\nXác nhận hoàn phí? Không hoàn tác được.`, { confirmLabel: 'Hoàn phí' }))) return;
 
   const { error } = await supabase.rpc('process_plan_refund', { p_purchase_id: purchaseId, p_courses_completed: completed, p_approver_id: PROFILE.id });
   if (error) { alert('Lỗi: ' + error.message); return; }

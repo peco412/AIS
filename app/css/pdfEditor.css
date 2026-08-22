@@ -5,7 +5,10 @@
    ===================================================================== */
 
 .pdfed-overlay {
-  position: fixed; inset: 0; z-index: 200;
+  /* SỬA LỖI THẬT: z-index:200 thấp hơn .mobile-bottom-nav (400) và
+     .hub-overlay (500) — trên điện thoại, thanh nav dưới cùng đè lên toolbar
+     ký/lưu của trình xem PDF. Nâng lên ngang .modal-overlay (600). */
+  position: fixed; inset: 0; z-index: 600;
   background: rgba(20, 20, 22, 0.6);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);

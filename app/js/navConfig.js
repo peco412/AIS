@@ -32,6 +32,7 @@ export const NAV_CONFIG = [
     items: [
       { labelKey: 'nav.dashboard', label: 'Trang chủ', href: '/dashboard.html', icon: '<svg class="icon" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10"/></svg>', visible: () => true },
       { labelKey: 'nav.notifications', label: 'Thông báo', href: '/notifications.html', icon: '<svg class="icon" viewBox="0 0 24 24"><path d="M6 8a6 6 0 1 1 12 0c0 4 1.5 6 2 6.5H4c.5-.5 2-2.5 2-6.5z"/><path d="M9.5 18a2.5 2.5 0 0 0 5 0"/></svg>', visible: () => true },
+      { labelKey: 'nav.approvalCenter', label: 'Trung tâm phê duyệt', href: '/approval-center.html', icon: '<svg class="icon" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>', visible: () => true },
     ],
   },
   {
@@ -155,7 +156,6 @@ export const NAV_CONFIG = [
     sectionKey: 'nav.section.exec', section: 'Ban điều hành', layer: 'executive',
     items: [
       { labelKey: 'nav.exec.reports', label: 'Báo cáo tổng hợp', href: '/exec/reports.html', icon: '<svg class="icon" viewBox="0 0 24 24"><path d="M4 20V10M12 20V4M20 20v-7"/></svg>', visible: (p) => isExecOrTech(p) },
-      { labelKey: 'nav.sign', label: 'Ký số hồ sơ', href: '/exec/sign.html', icon: '<svg class="icon" viewBox="0 0 24 24"><path d="M12 19l7-7 3 3-7 7-3.5.5.5-3.5z"/><path d="M16 5l3 3"/></svg>', visible: (p) => isExecOrTech(p) },
       { labelKey: 'nav.exec.broadcast', label: 'Ban hành thông báo', href: '/exec/broadcast.html', icon: '<svg class="icon" viewBox="0 0 24 24"><path d="M3 10v4h3l5 4V6l-5 4H3z"/><path d="M14 8a4 4 0 0 1 0 8"/><path d="M17 5a8 8 0 0 1 0 14"/></svg>', visible: (p) => isHeadOnlyOrCenterManager(p) || isExecOrTech(p) },
       { labelKey: 'nav.exec.orders', label: 'Lệnh yêu cầu', href: '/exec/orders.html', icon: '<svg class="icon" viewBox="0 0 24 24"><path d="M3 12h5l2 3h4l2-3h5"/><path d="M5 5h14l2 7v7a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-7l2-7z"/></svg>', visible: (p) => p.roleCode === 'EXECUTIVE' || p.roleCode === 'TECH' },
       { labelKey: 'nav.exec.archive', label: 'Kho lưu trữ điều hành', href: '/exec/archive.html', icon: '<svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9"/><path d="M10 13h4"/></svg>', visible: (p) => p.roleCode === 'EXECUTIVE' || p.roleCode === 'TECH' },

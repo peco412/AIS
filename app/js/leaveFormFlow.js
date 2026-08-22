@@ -47,12 +47,17 @@ export async function initLeaveFormFlow() {
     return PROFILE.departmentCode === row.employee_department_code && ['DEPT_HEAD', 'DEPT_DEPUTY'].includes(PROFILE.roleCode);
   }
   function canApproveLevel2() { return IS_HR; }
-  function canApproveLevel3() { return ['EXECUTIVE', 'TECH'].includes(PROFILE.roleCode); }
+  // CHUẨN HOÁ 22/08/2026: trước đây EXECUTIVE+TECH đều "vượt cấp" duyệt được
+  // cả 3 cấp — theo quyết định của MIA, TECH chỉ xem (đã có qua groupFilterEl
+  // bên dưới, không đổi) và dùng công cụ test riêng, KHÔNG thao tác duyệt
+  // trong hệ thống thật. Giờ chỉ EXECUTIVE, khớp payment-requests/advance-
+  // requests/business-trips/fac-purchase-requests/event-proposals/proposals.
+  function canApproveLevel3() { return PROFILE.roleCode === 'EXECUTIVE'; }
 
   function actionFor(row) {
-    if (row.status === 'submitted' && (canApproveLevel1(row) || canApproveLevel3())) return { label: 'Duyệt cấp 1 (Trưởng phòng)', step: 'level1', next: 'approved_1' };
-    if (row.status === 'approved_1' && (canApproveLevel2() || canApproveLevel3())) return { label: 'Duyệt cấp 2 (Nhân sự)', step: 'level2', next: 'approved_2' };
-    if (row.status === 'approved_2' && canApproveLevel3()) return { label: 'Duyệt cấp 3 (Ban điều hành)', step: 'level3', next: 'approved_3' };
+    if (row.status === 'submitted' && (canApproveLevel1(row) || canApproveLevel3())) return { label: 'Trưởng phòng duyệt (cấp 1)', step: 'level1', next: 'approved_1' };
+    if (row.status === 'approved_1' && (canApproveLevel2() || canApproveLevel3())) return { label: 'Nhân sự duyệt (cấp 2)', step: 'level2', next: 'approved_2' };
+    if (row.status === 'approved_2' && canApproveLevel3()) return { label: 'Ban điều hành duyệt (cấp 3)', step: 'level3', next: 'approved_3' };
     return null;
   }
 

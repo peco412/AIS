@@ -1,5 +1,6 @@
 import { bootShell } from '/js/shell.js';
 import { supabase, esc } from '/js/supabase.js';
+import { showConfirm, showPromptDialog } from '/js/confirmDialog.js';
 
 let PROFILE = null;
 let WORKING_CENTER_ID = null;
@@ -51,13 +52,13 @@ async function loadWalletPurchases() {
   `).join('');
 
   tbody.querySelectorAll('[data-confirm-purchase]').forEach((b) => b.addEventListener('click', async () => {
-    if (!confirm('Xác nhận đã kiểm tra đủ hàng thực tế? Sẽ trừ ví + trừ kho ngay, không hoàn tác được.')) return;
+    if (!(await showConfirm('Xác nhận đã kiểm tra đủ hàng thực tế? Sẽ trừ ví + trừ kho ngay, không hoàn tác được.', { confirmLabel: 'Xác nhận' }))) return;
     const { error: err } = await supabase.rpc('confirm_wallet_purchase', { p_request_id: b.dataset.confirmPurchase, p_confirmer_id: PROFILE.id });
     if (err) { alert('Lỗi: ' + err.message); return; }
     await Promise.all([loadWalletPurchases(), loadStock()]);
   }));
   tbody.querySelectorAll('[data-reject-purchase]').forEach((b) => b.addEventListener('click', async () => {
-    const reason = prompt('Lý do từ chối:');
+    const reason = await showPromptDialog('Lý do từ chối:', { title: 'Từ chối yêu cầu' });
     if (reason === null) return;
     const { error: err } = await supabase.rpc('reject_wallet_purchase', { p_request_id: b.dataset.rejectPurchase, p_confirmer_id: PROFILE.id, p_reason: reason });
     if (err) { alert('Lỗi: ' + err.message); return; }

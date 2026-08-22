@@ -22,6 +22,8 @@
 // =====================================================================
 
 const HTML2CANVAS_VERSION = '1.4.1';
+import { showConfirm } from '/js/confirmDialog.js';
+
 const JSPDF_VERSION = '2.5.1';
 
 let html2canvasReady = null;
@@ -124,8 +126,8 @@ export function openRichEditor({ title = 'Soạn thảo văn bản', onExportPdf
   function close() {
     overlay.remove();
   }
-  overlay.querySelector('#rtedClose').addEventListener('click', () => {
-    if (page.textContent.trim() && !confirm('Đóng trình soạn thảo? Nội dung chưa xuất PDF sẽ bị mất.')) return;
+  overlay.querySelector('#rtedClose').addEventListener('click', async () => {
+    if (page.textContent.trim() && !(await showConfirm('Đóng trình soạn thảo? Nội dung chưa xuất PDF sẽ bị mất.', { danger: true, confirmLabel: 'Đóng' }))) return;
     close();
   });
 

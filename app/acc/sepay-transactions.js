@@ -1,5 +1,6 @@
 import { bootShell } from '/js/shell.js';
 import { supabase, esc } from '/js/supabase.js';
+import { showConfirm, showPromptDialog } from '/js/confirmDialog.js';
 
 let PROFILE = null;
 let ALL_ROWS = [];
@@ -71,7 +72,7 @@ document.getElementById('submitReconcile').addEventListener('click', async () =>
   errBox.classList.remove('show');
   const requestId = document.getElementById('reconcileRequestSelect').value;
   if (!requestId) { errBox.textContent = 'Vui lòng chọn 1 yêu cầu.'; errBox.classList.add('show'); return; }
-  if (!confirm('Xác nhận khớp lệnh này với đúng yêu cầu đã chọn? Thao tác này sẽ cộng Coin ngay và không thể hoàn tác.')) return;
+  if (!(await showConfirm('Xác nhận khớp lệnh này với đúng yêu cầu đã chọn? Thao tác này sẽ cộng Coin ngay và không thể hoàn tác.', { confirmLabel: 'Xác nhận' }))) return;
 
   const btn = document.getElementById('submitReconcile');
   btn.disabled = true; btn.textContent = 'Đang xử lý...';

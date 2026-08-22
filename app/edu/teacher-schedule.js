@@ -1,5 +1,6 @@
 import { bootShell } from '/js/shell.js';
 import { supabase, esc } from '/js/supabase.js';
+import { showConfirm } from '/js/confirmDialog.js';
 
 const DAY_LABEL = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'];
 let PROFILE = null;
@@ -178,7 +179,7 @@ document.getElementById('cancelModal').addEventListener('click', () => modal.cla
 
 deleteBtn.addEventListener('click', async () => {
   const id = document.getElementById('schedId').value;
-  if (!id || !confirm('Xoá buổi dạy này?')) return;
+  if (!id || !(await showConfirm('Xoá buổi dạy này?', { danger: true, confirmLabel: 'Xoá' }))) return;
   const { error } = await supabase.from('teacher_weekly_schedules').delete().eq('id', id);
   if (error) { formError.textContent = error.message; formError.classList.add('show'); return; }
   modal.classList.remove('show');

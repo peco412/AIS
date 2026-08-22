@@ -2,6 +2,7 @@ import { bootShell } from '/js/shell.js';
 import { supabase, esc } from '/js/supabase.js';
 import { createGoogleMeetEvent } from '/js/googleCalendar.js';
 import { attachPlaceAutocomplete } from '/js/googleMaps.js';
+import { showConfirm } from '/js/confirmDialog.js';
 
 let GENERATED_MEET_LINK = null;
 let GENERATED_EVENT_ID = null;
@@ -187,7 +188,7 @@ function render() {
   `).join('');
 
   list.querySelectorAll('[data-delete]').forEach((btn) => btn.addEventListener('click', async () => {
-    if (!confirm('Xoá cuộc họp này? Không thể hoàn tác.')) return;
+    if (!(await showConfirm('Xoá cuộc họp này? Không thể hoàn tác.', { danger: true, confirmLabel: 'Xoá' }))) return;
     const { error } = await supabase.from('meetings').delete().eq('id', btn.dataset.delete);
     if (error) { alert('Lỗi: ' + error.message); return; }
     await loadMeetings();

@@ -2,6 +2,7 @@ import { bootShell } from '/js/shell.js';
 import { supabase, esc, uploadPrivateFile, openFile, resolveFileUrl } from '/js/supabase.js';
 import { openPdfEditor } from '/js/pdfEditor.js';
 import { ALL_FORMS } from '/js/leaveFormFlow.js';
+import { showConfirm, showPromptDialog } from '/js/confirmDialog.js';
 
 const CATEGORY_LABEL = {
   labor_contract: 'Hợp đồng lao động', service_contract: 'Hợp đồng dịch vụ', admin_paper: 'Giấy tờ hành chính',
@@ -169,7 +170,7 @@ async function loadTemplates() {
   tbody.querySelectorAll('[data-design]').forEach((b) => b.addEventListener('click', () => openTemplateDesigner(b.dataset.design, b.dataset.url)));
   tbody.querySelectorAll('[data-delete-template]').forEach((b) => {
     b.addEventListener('click', async () => {
-      if (!confirm(`Xoá biểu mẫu "${b.dataset.name}"? Các đơn/hợp đồng đã tạo trước đó KHÔNG bị ảnh hưởng, chỉ không còn dùng để tạo mới được nữa.`)) return;
+      if (!(await showConfirm(`Xoá biểu mẫu "${b.dataset.name}"? Các đơn/hợp đồng đã tạo trước đó KHÔNG bị ảnh hưởng, chỉ không còn dùng để tạo mới được nữa.`, { danger: true, confirmLabel: 'Xoá' }))) return;
       const { error } = await supabase.from('document_templates').delete().eq('id', b.dataset.deleteTemplate);
       if (error) { alert('Xoá thất bại: ' + error.message); return; }
       await loadTemplates();
@@ -262,7 +263,7 @@ document.getElementById('uploadForm').addEventListener('submit', async (e) => {
       if (!code) throw new Error('Vui lòng chọn loại biểu mẫu.');
       let label = ALL_FORMS.find((f) => f.code === code)?.label;
       if (code === '__custom__') {
-        code = (prompt('Nhập mã riêng cho biểu mẫu này (không dấu, không khoảng trắng — vd: 14.Bieumaukhac):') || '').trim();
+        code = ((await showPromptDialog('Nhập mã riêng cho biểu mẫu này (không dấu, không khoảng trắng — vd: 14.Bieumaukhac):', { title: 'Mã biểu mẫu riêng', required: true })) || '').trim();
         if (!code) throw new Error('Vui lòng nhập mã biểu mẫu.');
         label = file.name;
       }

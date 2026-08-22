@@ -7,7 +7,8 @@ const STATUS_LABEL = new Proxy({}, { get: (_, code) => t('status.proposal_' + co
 
 let PROFILE = null;
 let ALL_ROWS = [];
-let IS_EXEC = false;
+let IS_EXEC = false; // CHUẨN HOÁ 22/08/2026: chỉ EXECUTIVE — dùng riêng cho hành động DUYỆT, khớp các luồng phê duyệt khác trong hệ thống
+let CAN_VIEW_ALL = false; // EXECUTIVE + TECH — TECH được xem toàn bộ nhưng không duyệt trong hệ thống thật (có công cụ test riêng)
 let CURRENT_PAGE = 1;
 const PAGE_SIZE = 20;
 
@@ -255,11 +256,12 @@ document.getElementById('btnClearMonth').addEventListener('click', () => {
     const { profile } = await bootShell();
     const { data: emp } = await supabase.from('employees').select('signature_url, department_id, center_id').eq('id', profile.id).single();
     PROFILE = { ...profile, signatureUrl: emp?.signature_url || null, departmentId: emp?.department_id, centerId: emp?.center_id };
-    IS_EXEC = ['EXECUTIVE', 'TECH'].includes(profile.roleCode);
+    IS_EXEC = profile.roleCode === 'EXECUTIVE';
+    CAN_VIEW_ALL = ['EXECUTIVE', 'TECH'].includes(profile.roleCode);
     if (['DEPT_HEAD', 'DEPT_DEPUTY', 'EXECUTIVE', 'TECH'].includes(profile.roleCode)) {
       document.getElementById('deptScopeOption').style.display = 'block';
     }
-    if (IS_EXEC) {
+    if (CAN_VIEW_ALL) {
       document.getElementById('allScopeOption').style.display = 'block';
       // Ban điều hành/Kỹ thuật cần duyệt đề xuất từ MỌI phòng ban, không
       // chỉ đề xuất của chính mình — mặc định "Tất cả" để không bị ẩn mất

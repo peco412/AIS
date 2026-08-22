@@ -1,5 +1,6 @@
 import { bootShell } from '/js/shell.js';
 import { supabase, esc } from '/js/supabase.js';
+import { showConfirm, showPromptDialog } from '/js/confirmDialog.js';
 
 let CAN_EDIT = false;
 let LOADED_PROGRAMS = []; // cache du lieu da sap xep, dung de tinh anh/chi em khi bam mui ten (khong can doc lai DOM)
@@ -264,16 +265,16 @@ function wireEvents(container) {
   });
 
   container.querySelectorAll('[data-add-course]').forEach((btn) => btn.addEventListener('click', async () => {
-    const name = prompt('Tên khoá học mới:');
+    const name = await showPromptDialog('Tên khoá học mới:', { title: 'Thêm khoá học' });
     if (!name?.trim()) return;
-    const price = prompt('Học phí gốc (VNĐ):', '0');
+    const price = await showPromptDialog('Học phí gốc (VNĐ):', { defaultValue: '0', title: 'Thêm khoá học' });
     const { error } = await supabase.from('program_courses').insert({ sublevel_id: btn.dataset.addCourse, name: name.trim(), price_vnd: Number(price) || 0 });
     if (error) { alert('Lỗi: ' + error.message); return; }
     await loadPricing();
   }));
 
   container.querySelectorAll('[data-add-sublevel]').forEach((btn) => btn.addEventListener('click', async () => {
-    const name = prompt('Tên cấp độ con mới (VD: "Movers 1"):');
+    const name = await showPromptDialog('Tên cấp độ con mới (VD: "Movers 1"):', { title: 'Thêm cấp độ con' });
     if (!name?.trim()) return;
     const { error } = await supabase.from('program_sublevels').insert({ level_id: btn.dataset.addSublevel, name: name.trim() });
     if (error) { alert('Lỗi: ' + error.message); return; }
@@ -281,7 +282,7 @@ function wireEvents(container) {
   }));
 
   container.querySelectorAll('[data-add-level]').forEach((btn) => btn.addEventListener('click', async () => {
-    const name = prompt('Tên cấp độ mới (VD: "Movers"):');
+    const name = await showPromptDialog('Tên cấp độ mới (VD: "Movers"):', { title: 'Thêm cấp độ' });
     if (!name?.trim()) return;
     const { error } = await supabase.from('program_levels').insert({ program_id: btn.dataset.addLevel, name: name.trim() });
     if (error) { alert('Lỗi: ' + error.message); return; }
@@ -289,29 +290,29 @@ function wireEvents(container) {
   }));
 
   container.querySelectorAll('[data-del-course]').forEach((btn) => btn.addEventListener('click', async () => {
-    if (!confirm('Xoá khoá học này? Không ảnh hưởng học sinh đã đóng phí trước đó, chỉ ẩn khỏi bảng giá từ giờ về sau.')) return;
+    if (!(await showConfirm('Xoá khoá học này? Không ảnh hưởng học sinh đã đóng phí trước đó, chỉ ẩn khỏi bảng giá từ giờ về sau.', { danger: true, confirmLabel: 'Xoá' }))) return;
     const { error } = await supabase.from('program_courses').delete().eq('id', btn.dataset.delCourse);
     if (error) { alert('Lỗi: ' + error.message); return; }
     await loadPricing();
   }));
 
   container.querySelectorAll('[data-del-sublevel]').forEach((btn) => btn.addEventListener('click', async () => {
-    if (!confirm(`Xoá cấp độ con "${btn.dataset.name}"? TẤT CẢ khoá học bên trong sẽ bị xoá theo. Không thể hoàn tác.`)) return;
+    if (!(await showConfirm(`Xoá cấp độ con "${btn.dataset.name}"? TẤT CẢ khoá học bên trong sẽ bị xoá theo. Không thể hoàn tác.`, { danger: true, confirmLabel: 'Xoá' }))) return;
     const { error } = await supabase.from('program_sublevels').delete().eq('id', btn.dataset.delSublevel);
     if (error) { alert('Lỗi: ' + error.message); return; }
     await loadPricing();
   }));
 
   container.querySelectorAll('[data-del-level]').forEach((btn) => btn.addEventListener('click', async () => {
-    if (!confirm(`Xoá cấp độ "${btn.dataset.name}"? TẤT CẢ cấp độ con và khoá học bên trong sẽ bị xoá theo. Không thể hoàn tác.`)) return;
+    if (!(await showConfirm(`Xoá cấp độ "${btn.dataset.name}"? TẤT CẢ cấp độ con và khoá học bên trong sẽ bị xoá theo. Không thể hoàn tác.`, { danger: true, confirmLabel: 'Xoá' }))) return;
     const { error } = await supabase.from('program_levels').delete().eq('id', btn.dataset.delLevel);
     if (error) { alert('Lỗi: ' + error.message); return; }
     await loadPricing();
   }));
 
   container.querySelectorAll('[data-del-program]').forEach((btn) => btn.addEventListener('click', async () => {
-    if (!confirm(`XOÁ TOÀN BỘ chương trình "${btn.dataset.name}"? Toàn bộ cấp độ/cấp độ con/khoá học bên trong sẽ mất hết. Không thể hoàn tác. Gõ đúng tên chương trình để xác nhận.`)) return;
-    const typed = prompt(`Gõ lại chính xác "${btn.dataset.name}" để xác nhận xoá:`);
+    if (!(await showConfirm(`XOÁ TOÀN BỘ chương trình "${btn.dataset.name}"? Toàn bộ cấp độ/cấp độ con/khoá học bên trong sẽ mất hết. Không thể hoàn tác. Gõ đúng tên chương trình để xác nhận.`, { danger: true, confirmLabel: 'Tiếp tục xoá' }))) return;
+    const typed = await showPromptDialog(`Gõ lại chính xác "${btn.dataset.name}" để xác nhận xoá:`, { title: 'Xác nhận xoá chương trình', required: true });
     if (typed !== btn.dataset.name) { alert('Tên không khớp, đã huỷ thao tác xoá.'); return; }
     const { error } = await supabase.from('programs').delete().eq('id', btn.dataset.delProgram);
     if (error) { alert('Lỗi: ' + error.message); return; }
@@ -320,7 +321,7 @@ function wireEvents(container) {
 }
 
 document.getElementById('btnAddProgram')?.addEventListener('click', async () => {
-  const name = prompt('Tên chương trình học mới (VD: "Tiếng Anh Thiếu Nhi"):');
+  const name = await showPromptDialog('Tên chương trình học mới (VD: "Tiếng Anh Thiếu Nhi"):', { title: 'Thêm chương trình học' });
   if (!name?.trim()) return;
   const { error } = await supabase.from('programs').insert({ name: name.trim(), code: slugifyCode(name.trim()) + '_' + Date.now().toString(36).toUpperCase() });
   if (error) { alert('Lỗi: ' + error.message); return; }

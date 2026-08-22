@@ -138,6 +138,21 @@ button { font-family: inherit; }
   * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
 }
 
+/* =====================================================================
+   SỬA LỖI THẬT: Safari trên iPhone tự động phóng to (zoom) toàn màn hình
+   mỗi khi chạm vào 1 ô input/select/textarea có font-size < 16px. Rất
+   nhiều class trong hệ thống (.text-input, .select-input, .field input,
+   input trong <style> riêng từng trang...) đang để 12.5px–15px nên bị lỗi
+   này ở KHẮP mọi form. Quy tắc chung này đặt ở file gốc (tokens.css, load
+   đầu tiên ở mọi trang) và dùng !important có chủ đích, vì mục tiêu duy
+   nhất là đảm bảo không còn chỗ nào lọt lưới trong hàng trăm khai báo rải
+   rác — không dùng !important cho việc gì khác trong file này. Chỉ áp
+   dụng trên màn hình hẹp (điện thoại), desktop giữ nguyên cỡ chữ hiện tại.
+   ===================================================================== */
+@media (max-width: 768px) {
+  input, select, textarea { font-size: 16px !important; }
+}
+
 /* ---------- Hệ icon SVG dùng chung (thay emoji) ----------
    Icon nét đơn giản, kế thừa màu qua currentColor — dùng thống nhất ở
    topbar/menu thay cho emoji nhiều màu trước đây (🔔🔎☰⎋🏠...). */

@@ -1,6 +1,7 @@
 import { bootShell } from '/js/shell.js';
 import { supabase, esc, resolveFileUrl, notifyDepartmentHeads } from '/js/supabase.js';
 import { t } from '/js/i18n.js';
+import { showConfirm, showPromptDialog } from '/js/confirmDialog.js';
 import { openPdfEditor } from '/js/pdfEditor.js';
 
 const STATUS_LABEL = new Proxy({}, { get: (_, code) => t('status.advance_' + code, code) });
@@ -96,15 +97,15 @@ function render() {
 
 async function settleRow(id) {
   const row = ALL_ROWS.find((r) => r.id === id);
-  const actualSpentStr = prompt(`Khoản tạm ứng "${row.code}" — ${fmtMoney(row.amount)} đ.\n\nSố tiền THỰC SỰ đã chi (có chứng từ):`, row.amount);
+  const actualSpentStr = await showPromptDialog(`Khoản tạm ứng "${row.code}" — ${fmtMoney(row.amount)} đ.\nSố tiền THỰC SỰ đã chi (có chứng từ):`, { defaultValue: String(row.amount), required: true, title: 'Hoàn ứng' });
   if (actualSpentStr === null) return;
   const actualSpent = Number(actualSpentStr);
   if (isNaN(actualSpent) || actualSpent < 0) { alert('Số tiền không hợp lệ.'); return; }
-  const notes = prompt('Diễn giải các khoản đã chi (VD: "Mua văn phòng phẩm 2tr, taxi công tác 500k..."):', '');
+  const notes = await showPromptDialog('Diễn giải các khoản đã chi (VD: "Mua văn phòng phẩm 2tr, taxi công tác 500k..."):', { multiline: true, title: 'Hoàn ứng' });
 
   const diff = row.amount - actualSpent;
   const diffMsg = diff > 0 ? `Nhân viên cần TRẢ LẠI ${fmtMoney(diff)} đ.` : diff < 0 ? `Công ty cần BÙ THÊM ${fmtMoney(Math.abs(diff))} đ.` : 'Khớp đúng 100% số tạm ứng.';
-  if (!confirm(`Xác nhận hoàn ứng?\n\nTạm ứng: ${fmtMoney(row.amount)} đ\nThực chi: ${fmtMoney(actualSpent)} đ\n${diffMsg}\n\nThao tác này sẽ ghi sổ kế toán ngay.`)) return;
+  if (!(await showConfirm(`Xác nhận hoàn ứng?\nTạm ứng: ${fmtMoney(row.amount)} đ\nThực chi: ${fmtMoney(actualSpent)} đ\n${diffMsg}\nThao tác này sẽ ghi sổ kế toán ngay.`, { confirmLabel: 'Hoàn ứng' }))) return;
 
   const { error } = await supabase.rpc('settle_advance', { p_request_id: id, p_actual_spent: actualSpent, p_receipt_notes: notes, p_actor_id: PROFILE.id });
   if (error) { alert('Lỗi: ' + error.message); return; }

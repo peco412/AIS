@@ -1,5 +1,6 @@
 import { bootShell } from '/js/shell.js';
 import { supabase, esc } from '/js/supabase.js';
+import { showConfirm } from '/js/confirmDialog.js';
 
 const ROOT_CODES = ['BOARD_OUTSIDE', 'CAT_A', 'CAT_B', 'CAT_C', 'CAT_D'];
 let ALL_ROWS = [];
@@ -38,7 +39,7 @@ function render() {
   }).join('');
 
   container.querySelectorAll('[data-delete]').forEach((btn) => btn.addEventListener('click', async () => {
-    if (!confirm('Xoá phụ mục này? Các phiếu mua hàng đã dùng phụ mục này vẫn giữ nguyên dữ liệu cũ.')) return;
+    if (!(await showConfirm('Xoá phụ mục này? Các phiếu mua hàng đã dùng phụ mục này vẫn giữ nguyên dữ liệu cũ.', { danger: true, confirmLabel: 'Xoá' }))) return;
     const { error } = await supabase.from('expense_categories').delete().eq('id', btn.dataset.delete);
     if (error) { alert('Lỗi: ' + error.message); return; }
     await loadRows();

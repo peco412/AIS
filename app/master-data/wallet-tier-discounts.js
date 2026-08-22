@@ -1,5 +1,6 @@
 import { bootShell } from '/js/shell.js';
 import { supabase, esc } from '/js/supabase.js';
+import { showConfirm } from '/js/confirmDialog.js';
 
 let PROFILE = null;
 let CAN_EDIT = false;
@@ -33,7 +34,7 @@ function render() {
 
   tbody.querySelectorAll('[data-edit]').forEach((btn) => btn.addEventListener('click', () => openEdit(btn.dataset.edit)));
   tbody.querySelectorAll('[data-delete]').forEach((btn) => btn.addEventListener('click', async () => {
-    if (!confirm('Xoá bậc chiết khấu này? Các lượt nạp CŨ đã áp dụng bậc này vẫn giữ nguyên (không hồi tố), chỉ ảnh hưởng lượt nạp MỚI sau này.')) return;
+    if (!(await showConfirm('Xoá bậc chiết khấu này? Các lượt nạp CŨ đã áp dụng bậc này vẫn giữ nguyên (không hồi tố), chỉ ảnh hưởng lượt nạp MỚI sau này.', { danger: true, confirmLabel: 'Xoá' }))) return;
     const { error } = await supabase.from('wallet_tier_discounts').delete().eq('id', btn.dataset.delete);
     if (error) { alert('Lỗi: ' + error.message); return; }
     await loadRows();

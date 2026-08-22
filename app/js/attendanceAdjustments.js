@@ -1,5 +1,6 @@
 import { bootShell } from '/js/shell.js';
 import { supabase, esc } from '/js/supabase.js';
+import { showConfirm, showPromptDialog } from '/js/confirmDialog.js';
 
 let PROFILE = null;
 let SELECTED_EMPLOYEE = null; // { id, center_id }
@@ -59,7 +60,7 @@ async function loadRows() {
 }
 
 async function deleteRow(id) {
-  if (!confirm('Xoá dòng chấm công điều chỉnh tay này?')) return;
+  if (!(await showConfirm('Xoá dòng chấm công điều chỉnh tay này?', { danger: true, confirmLabel: 'Xoá' }))) return;
   const { error } = await supabase.from('attendance_checkins').delete().eq('id', id);
   if (error) { alert('Xoá thất bại: ' + error.message); return; }
   await loadRows();
@@ -93,7 +94,7 @@ document.getElementById('mAdjustSave').addEventListener('click', async () => {
     // center_id tren attendance_checkins van bat buoc, hoi chon truc
     // tiep 1 trung tam de gan cho dong nay.
     const { data: centers } = await supabase.from('centers').select('id, name').order('name');
-    const pick = prompt('Nhân viên này không gắn cố định 1 trung tâm — nhập đúng tên trung tâm để gán cho dòng chấm công này:\n' + (centers || []).map((c) => c.name).join(', '));
+    const pick = await showPromptDialog('Nhân viên này không gắn cố định 1 trung tâm — nhập đúng tên trung tâm để gán cho dòng chấm công này:\n' + (centers || []).map((c) => c.name).join(', '), { title: 'Chọn trung tâm' });
     const matched = (centers || []).find((c) => c.name.toLowerCase() === (pick || '').trim().toLowerCase());
     if (!matched) { alert('Không xác định được trung tâm — huỷ thao tác.'); return; }
     SELECTED_EMPLOYEE.center_id = matched.id;

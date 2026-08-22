@@ -1,6 +1,7 @@
 import { bootShell } from '/js/shell.js';
 import { supabase, esc, uploadPrivateFile, openFile, triggerPush, notifyDepartmentHeads } from '/js/supabase.js';
 import { t } from '/js/i18n.js';
+import { showConfirm } from '/js/confirmDialog.js';
 
 const TYPE_LABEL = { design: 'Thiết kế', print: 'In ấn', photo: 'Chụp ảnh', video: 'Quay phim', edit_video: 'Edit video', support: 'Hỗ trợ truyền thông' };
 const PRIORITY_LABEL = { low: 'Thấp', normal: 'Bình thường', high: 'Cao', urgent: 'Khẩn cấp' };
@@ -82,7 +83,7 @@ function render() {
 // quản lý trung tâm duyệt -> trưởng phòng tiếp nhận và phân việc").
 async function centerDecide(id, newStatus) {
   const row = ALL_ROWS.find((r) => r.id === id);
-  if (!confirm(newStatus === 'center_approved' ? 'Duyệt yêu cầu này để chuyển sang phòng Truyền thông xử lý?' : 'Từ chối yêu cầu này?')) return;
+  if (!(await showConfirm(newStatus === 'center_approved' ? 'Duyệt yêu cầu này để chuyển sang phòng Truyền thông xử lý?' : 'Từ chối yêu cầu này?', { danger: newStatus !== 'center_approved', confirmLabel: newStatus === 'center_approved' ? 'Duyệt' : 'Từ chối' }))) return;
 
   const { error } = await supabase.from('communication_requests').update({
     status: newStatus, center_approved_by: PROFILE.id, center_approved_at: new Date().toISOString(),

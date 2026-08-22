@@ -1,5 +1,6 @@
 import { bootShell } from '/js/shell.js';
 import { supabase, esc } from '/js/supabase.js';
+import { showConfirm, showPromptDialog } from '/js/confirmDialog.js';
 
 let PROFILE = null;
 let IS_ACC = false;
@@ -59,13 +60,13 @@ async function loadWalletRequests() {
   }).join('');
 
   tbody.querySelectorAll('[data-confirm]').forEach((b) => b.addEventListener('click', async () => {
-    if (!confirm('Xác nhận yêu cầu rút ví này để chuyển sang Kế toán duyệt?')) return;
+    if (!(await showConfirm('Xác nhận yêu cầu rút ví này để chuyển sang Kế toán duyệt?', { confirmLabel: 'Xác nhận' }))) return;
     const { error: err } = await supabase.rpc('center_confirm_withdrawal', { p_request_id: b.dataset.confirm, p_confirmer_id: PROFILE.id });
     if (err) { alert('Lỗi: ' + err.message); return; }
     await loadWalletRequests();
   }));
   tbody.querySelectorAll('[data-approve]').forEach((b) => b.addEventListener('click', async () => {
-    if (!confirm('Duyệt hoàn tiền ví này? Sẽ tất toán ví, không hoàn tác được.')) return;
+    if (!(await showConfirm('Duyệt hoàn tiền ví này? Sẽ tất toán ví, không hoàn tác được.', { confirmLabel: 'Duyệt' }))) return;
     const { error: err } = await supabase.rpc('approve_wallet_withdrawal', { p_request_id: b.dataset.approve, p_approver_id: PROFILE.id });
     if (err) { alert('Lỗi: ' + err.message); return; }
     alert('Đã duyệt. Vui lòng chuyển tiền hoàn thực tế cho phụ huynh.');
@@ -75,8 +76,8 @@ async function loadWalletRequests() {
   // "treo" mai o pending khi Trung tam khong dong y, Ke toan khong co gi
   // de bam (chi hien nut o dung status "center_confirmed").
   tbody.querySelectorAll('[data-reject]').forEach((b) => b.addEventListener('click', async () => {
-    const reason = prompt('Lý do từ chối (bắt buộc):');
-    if (!reason?.trim()) { if (reason !== null) alert('Bắt buộc ghi lý do.'); return; }
+    const reason = await showPromptDialog('Lý do từ chối (bắt buộc):', { title: 'Từ chối yêu cầu', required: true });
+    if (reason === null) return;
     const { error: err } = await supabase.rpc('reject_wallet_withdrawal', { p_request_id: b.dataset.reject, p_rejector_id: PROFILE.id, p_reason: reason });
     if (err) { alert('Lỗi: ' + err.message); return; }
     await loadWalletRequests();
@@ -118,14 +119,14 @@ async function loadCounterRequests() {
   `).join('');
 
   tbody.querySelectorAll('[data-approve-counter]').forEach((b) => b.addEventListener('click', async () => {
-    if (!confirm('Duyệt hoàn phí này?')) return;
+    if (!(await showConfirm('Duyệt hoàn phí này?', { confirmLabel: 'Duyệt' }))) return;
     const { error: err } = await supabase.rpc('approve_tuition_refund', { p_request_id: b.dataset.approveCounter, p_approver_id: PROFILE.id });
     if (err) { alert('Lỗi: ' + err.message); return; }
     alert('Đã duyệt. Vui lòng chuyển tiền hoàn thực tế cho phụ huynh.');
     await loadCounterRequests();
   }));
   tbody.querySelectorAll('[data-reject-counter]').forEach((b) => b.addEventListener('click', async () => {
-    const reason = prompt('Lý do từ chối:');
+    const reason = await showPromptDialog('Lý do từ chối:', { title: 'Từ chối hoàn phí' });
     if (reason === null) return;
     const { error: err } = await supabase.rpc('reject_tuition_refund', { p_request_id: b.dataset.rejectCounter, p_approver_id: PROFILE.id, p_reason: reason });
     if (err) { alert('Lỗi: ' + err.message); return; }

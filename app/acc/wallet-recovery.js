@@ -1,5 +1,6 @@
 import { bootShell } from '/js/shell.js';
 import { supabase, esc } from '/js/supabase.js';
+import { showConfirm, showPromptDialog } from '/js/confirmDialog.js';
 
 let PROFILE = null;
 let ALL_REQUESTS = [];
@@ -58,10 +59,10 @@ function renderRequests() {
 }
 
 async function processRequest(requestId, status) {
-  const note = prompt('Ghi chú xác minh (bắt buộc) — VD: "Đã kiểm tra sao kê ngân hàng, tiền đã về lúc 14:32 20/8":');
+  const note = await showPromptDialog('Ghi chú xác minh (bắt buộc) — VD: "Đã kiểm tra sao kê ngân hàng, tiền đã về lúc 14:32 20/8":', { title: 'Xác minh giao dịch' });
   if (note === null) return; // huỷ
   if (!note.trim()) { alert('Bắt buộc ghi chú xác minh trước khi xử lý.'); return; }
-  if (!confirm('Xác nhận tiền ĐÃ THỰC SỰ về tài khoản và cộng Coin ngay bây giờ? Thao tác này không thể hoàn tác.')) return;
+  if (!(await showConfirm('Xác nhận tiền ĐÃ THỰC SỰ về tài khoản và cộng Coin ngay bây giờ? Thao tác này không thể hoàn tác.', { confirmLabel: 'Xác nhận' }))) return;
 
   try {
     if (status === 'pending') {
@@ -126,7 +127,7 @@ document.getElementById('btnManualSubmit').addEventListener('click', async () =>
   if (!MANUAL_STUDENT) { errBox.textContent = 'Vui lòng chọn học sinh.'; errBox.classList.add('show'); return; }
   if (!coinAmount || coinAmount <= 0) { errBox.textContent = 'Vui lòng nhập đúng số Coin.'; errBox.classList.add('show'); return; }
   if (!reason) { errBox.textContent = 'Bắt buộc ghi rõ lý do.'; errBox.classList.add('show'); return; }
-  if (!confirm(`Xác nhận cộng ${coinAmount.toLocaleString('vi-VN')} Coin vào ví của ${MANUAL_STUDENT.full_name}?\n\nLý do: ${reason}\n\nThao tác này không thể hoàn tác.`)) return;
+  if (!(await showConfirm(`Xác nhận cộng ${coinAmount.toLocaleString('vi-VN')} Coin vào ví của ${MANUAL_STUDENT.full_name}?\nLý do: ${reason}\nThao tác này không thể hoàn tác.`, { confirmLabel: 'Xác nhận' }))) return;
 
   const btn = document.getElementById('btnManualSubmit');
   btn.disabled = true; btn.textContent = 'Đang xử lý...';

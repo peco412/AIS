@@ -349,3 +349,17 @@ button { font-family: inherit; -webkit-tap-highlight-color: transparent; }
 .plan-option-card__label { font-weight: 700; font-size: 14.5px; }
 .plan-option-card__price { font-weight: 800; font-size: 15.5px; color: var(--accent-deep); }
 .plan-option-card__note { font-size: 11.5px; color: var(--muted); }
+
+/* =====================================================================
+   SỬA LỖI THẬT: Safari trên iPhone tự động phóng to (zoom) toàn màn hình
+   mỗi khi chạm vào 1 ô input/select/textarea có font-size < 16px. Ô bình
+   luận, ô nhắn tin, ô tìm bạn... trong community.html/messages.html/
+   social-profile.html đang để 12.5px–15px nên bị lỗi này. Đặt ở file gốc
+   (parent.css, load ở mọi trang) và dùng !important có chủ đích, vì mục
+   tiêu duy nhất là đảm bảo không còn chỗ nào lọt lưới trong các khai báo
+   rải rác theo từng trang — không dùng !important cho việc gì khác trong
+   file này. Chỉ áp dụng trên màn hình hẹp (điện thoại).
+   ===================================================================== */
+@media (max-width: 768px) {
+  input, select, textarea { font-size: 16px !important; }
+}

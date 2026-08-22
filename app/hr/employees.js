@@ -1,6 +1,7 @@
 import { bootShell } from '/js/shell.js';
 import { supabase, usernameToEmail, esc } from '/js/supabase.js';
 import { t } from '/js/i18n.js';
+import { showConfirm } from '/js/confirmDialog.js';
 
 let PROFILE = null;
 let LOOKUPS = { departments: [], positions: [], centers: [], roles: [] };
@@ -145,7 +146,7 @@ function applyFilters() {
 // dua key do ra frontend) — hien mat khau tam DUNG 1 LAN de bao lai cho
 // nhan vien, giong het luong tao nhan vien moi da co san.
 async function resetEmployeePassword(employeeId, fullName) {
-  if (!confirm(`Đặt lại mật khẩu tạm cho "${fullName}"? Mật khẩu cũ sẽ không còn dùng được nữa.`)) return;
+  if (!(await showConfirm(`Đặt lại mật khẩu tạm cho "${fullName}"? Mật khẩu cũ sẽ không còn dùng được nữa.`, { danger: true, confirmLabel: 'Đặt lại' }))) return;
   try {
     const { data: sessionData } = await supabase.auth.getSession();
     const resp = await fetch(`${window.__ENV__?.SUPABASE_URL || 'https://iikflzntcpqliuxrzvdz.supabase.co'}/functions/v1/reset-employee-password`, {

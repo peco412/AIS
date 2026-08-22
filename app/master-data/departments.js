@@ -1,5 +1,6 @@
 import { bootShell } from '/js/shell.js';
 import { supabase, esc } from '/js/supabase.js';
+import { showConfirm } from '/js/confirmDialog.js';
 
 let ALL_ROWS = [];
 
@@ -45,7 +46,7 @@ function render() {
   }));
 
   tbody.querySelectorAll('[data-delete]').forEach((btn) => btn.addEventListener('click', async () => {
-    if (!confirm(`Xoá phòng ban "${btn.dataset.code}"? Chỉ xoá được nếu KHÔNG còn nhân viên/menu/dữ liệu nào gắn với phòng ban này — nếu còn, hệ thống sẽ báo lỗi và không xoá.`)) return;
+    if (!(await showConfirm(`Xoá phòng ban "${btn.dataset.code}"? Chỉ xoá được nếu KHÔNG còn nhân viên/menu/dữ liệu nào gắn với phòng ban này — nếu còn, hệ thống sẽ báo lỗi và không xoá.`, { danger: true, confirmLabel: 'Xoá' }))) return;
     const { error } = await supabase.from('departments').delete().eq('id', btn.dataset.delete);
     if (error) { alert('Không xoá được — phòng ban này vẫn còn dữ liệu gắn với nó:\n' + error.message); return; }
     await loadRows();

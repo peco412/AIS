@@ -1,6 +1,7 @@
 import { bootShell } from '/js/shell.js';
 import { supabase, esc, uploadPrivateFile, openFile, triggerPush, notifyDepartmentHeads } from '/js/supabase.js';
 import { t } from '/js/i18n.js';
+import { showConfirm, showPromptDialog } from '/js/confirmDialog.js';
 
 const TYPE_LABEL = { repair: 'Sửa chữa', new_supply: 'Cấp mới', purchase: 'Mua mới' };
 const STATUS_LABEL = new Proxy({}, { get: (_, code) => t('status.request_' + code, code) });
@@ -70,7 +71,7 @@ function render() {
 // tiếp nhận và phân việc" — trước đây bị bỏ sót bước duyệt này).
 async function centerDecide(id, newStatus) {
   const row = ALL_ROWS.find((r) => r.id === id);
-  if (!confirm(newStatus === 'center_approved' ? 'Duyệt yêu cầu này để chuyển sang phòng CSVC xử lý?' : 'Từ chối yêu cầu này?')) return;
+  if (!(await showConfirm(newStatus === 'center_approved' ? 'Duyệt yêu cầu này để chuyển sang phòng CSVC xử lý?' : 'Từ chối yêu cầu này?', { danger: newStatus !== 'center_approved', confirmLabel: newStatus === 'center_approved' ? 'Duyệt' : 'Từ chối' }))) return;
 
   const { error } = await supabase.from('facility_requests').update({
     status: newStatus, center_approved_by: PROFILE.id, center_approved_at: new Date().toISOString(),

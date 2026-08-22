@@ -7,7 +7,10 @@
    ===================================================================== */
 
 .rted-overlay {
-  position: fixed; inset: 0; z-index: 200;
+  /* SỬA LỖI THẬT: z-index:200 thấp hơn .mobile-bottom-nav (400) và
+     .hub-overlay (500) — trên điện thoại, thanh nav dưới cùng đè lên toolbar
+     lưu/xuất PDF của trình soạn thảo. Nâng lên ngang .modal-overlay (600). */
+  position: fixed; inset: 0; z-index: 600;
   background: var(--surface-sunken, #e8e8ed);
   display: flex; flex-direction: column;
   animation: modalFadeIn var(--dur-base) var(--ease);
