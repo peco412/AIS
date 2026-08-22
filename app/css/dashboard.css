@@ -441,26 +441,12 @@
 .loading-row { color: var(--muted); font-size: 13px; padding: 10px 0; }
 
 /* =====================================================================
-   HUB SCREEN — màn hình chọn phòng ban, KHÔNG dùng sidebar, full màn hình
-   kiểu app di động.
+   HUB SCREEN — nội dung Trang chủ (lưới 2 cột: Tổng quan + Phòng ban).
+   Topbar giờ dùng chung ĐÚNG .topbar chuẩn (xem block "Topbar" phía
+   trên) — không còn khung .hub-topbar riêng biệt như trước (đó chính là
+   nguyên nhân Trang chủ "lạc quẻ": thiếu footer, thiếu nút chuyển Thế
+   giới, layout topbar không khớp 120 trang còn lại).
    ===================================================================== */
-body.hub-body { background: var(--surface); }
-
-.hub-topbar {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 14px 28px;
-  background: var(--surface-card);
-  border-bottom: 1px solid var(--border);
-  position: sticky; top: 0; z-index: 30;
-}
-.hub-topbar__brand {
-  display: flex; align-items: center; gap: 10px;
-  font-family: var(--font-display); font-weight: 600; font-size: 17px; letter-spacing: -0.01em; color: var(--ink);
-}
-.hub-topbar__brand .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px rgba(var(--accent-rgb), 0.15); }
-.hub-topbar__brand small { display: block; font-weight: 500; font-size: 11px; color: var(--muted); margin-top: 2px; }
-.hub-topbar__right { display: flex; align-items: center; gap: 14px; }
-
 .hub-main { max-width: 1100px; margin: 0 auto; padding: 24px 20px 60px; }
 
 /* Hero chao mung ca nhan hoa — diem nhan chinh cua dashboard, gradient

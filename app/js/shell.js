@@ -240,9 +240,12 @@ export function worldsWithAccess(profile) {
 
 /**
  * Tên thương hiệu "AIS OFFICE" — trước đây CHỈ hiện ở trang Trang chủ
- * (dashboard.html có khung riêng .hub-topbar__brand), còn 90 trang khác
- * hoàn toàn KHÔNG có tên hệ thống nào hiện trên thanh trên cùng (sidebar
- * cũ có nhưng đã ẩn vĩnh viễn). Thêm lại ở đây — LUÔN hiện, mọi trang.
+ * (dashboard.html khi đó có khung riêng .hub-topbar__brand), còn 90 trang
+ * khác hoàn toàn KHÔNG có tên hệ thống nào hiện trên thanh trên cùng
+ * (sidebar cũ có nhưng đã ẩn vĩnh viễn). Thêm lại ở đây — LUÔN hiện, mọi
+ * trang. LÀM LẠI 22/08/2026: dashboard.html giờ cũng dùng chung đúng
+ * .topbar chuẩn (không còn .hub-topbar riêng), nên hàm này áp dụng thống
+ * nhất cho MỌI trang qua cùng 1 selector, không cần phân biệt nữa.
  */
 function injectBrandName() {
   const anchor = document.querySelector('.topbar__left');
@@ -262,7 +265,7 @@ function injectBrandName() {
  * dung the gioi vua chon (thi chi doi trang thai, khong dieu huong).
  */
 function injectWorldSwitcher(profile, currentWorld, currentPage) {
-  const anchor = document.querySelector('.topbar__left') || document.querySelector('.hub-topbar__brand');
+  const anchor = document.querySelector('.topbar__left');
   if (!anchor) return;
   document.getElementById('worldSwitcher')?.remove();
 
@@ -295,7 +298,7 @@ function injectHubLauncher(profile, currentWorld, currentPage) {
   // theo yeu cau "bam vao 1 chuc nang cu the khong co cach nao thoat ra
   // nhanh" — truoc day chi co nut Hub (⊞) hoi nho, de bi bo qua.
   if (!document.getElementById('homeBtn') && !currentPage?.endsWith('/dashboard.html')) {
-    const topbarRight = document.querySelector('.topbar__right, .hub-topbar__right');
+    const topbarRight = document.querySelector('.topbar__right');
     if (topbarRight) {
       const homeBtn = document.createElement('button');
       homeBtn.id = 'homeBtn';
@@ -309,9 +312,9 @@ function injectHubLauncher(profile, currentWorld, currentPage) {
 
   let menuToggle = document.getElementById('menuToggle');
   if (!menuToggle) {
-    // Trang khong san co nut hamburger (vd dashboard.html dung topbar
-    // rieng "hub-topbar") — tu tao 1 nut moi de mo Hub.
-    const anchor = document.querySelector('.topbar__left') || document.querySelector('.hub-topbar__brand');
+    // Trang chua co san nut hamburger tinh trong HTML (topbar__left rong,
+    // vd dashboard.html) — tu tao 1 nut moi de mo Hub.
+    const anchor = document.querySelector('.topbar__left');
     if (!anchor) return;
     menuToggle = document.createElement('button');
     menuToggle.id = 'menuToggle';
@@ -452,7 +455,7 @@ function esc(s) { return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&am
  * lại phần <header> của mọi trang HTML trong hệ thống.
  */
 function injectLangSwitcher(profileId) {
-  const topbarRight = document.querySelector('.topbar__right, .hub-topbar__right');
+  const topbarRight = document.querySelector('.topbar__right');
   if (!topbarRight || document.getElementById('langSwitcher')) return;
 
   const wrap = document.createElement('div');
@@ -484,7 +487,7 @@ function injectLangSwitcher(profileId) {
  * nơi nào để tải ứng dụng về máy, người dùng không biết là cài được.
  */
 function injectInstallButton() {
-  const topbarRight = document.querySelector('.topbar__right, .hub-topbar__right');
+  const topbarRight = document.querySelector('.topbar__right');
   if (!topbarRight || document.getElementById('installAppBtn')) return;
 
   const btn = document.createElement('button');
