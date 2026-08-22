@@ -153,7 +153,7 @@ table.data-table { width: 100%; min-width: 640px; border-collapse: collapse; fon
 }
 .badge-draft { background: var(--surface-sunken); color: var(--muted); }
 .badge-submitted { background: var(--warning-tint); color: var(--warning); }
-.badge-approved_1 { background: #e3effe; color: #1462c4; }
+.badge-approved_1 { background: var(--accent-tint); color: var(--accent-deep); }
 .badge-approved_2, .badge-active { background: var(--success-tint); color: var(--success); }
 .badge-archived { background: var(--surface-sunken); color: var(--ink-soft); }
 .badge-rejected, .badge-inactive { background: var(--danger-tint); color: var(--danger); }

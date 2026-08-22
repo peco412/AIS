@@ -660,8 +660,36 @@ export async function bootShell() {
   // con lai cua bootShell (dang xuat, thong bao... van chay binh thuong).
   try { injectDeptHeaderBadge(); } catch (e) { /* khong lam gi, chi la trang tri */ }
   try { setupMobileTableLabels(); } catch (e) { /* khong lam gi, bang van dung duoc, chi thieu nhan tren dien thoai */ }
+  // LÀM LẠI 22/08/2026 — footer mới: trước đây hệ thống KHÔNG có footer
+  // trang thật nào. Dựng bằng JS ở đây, gắn vào MỌI trang hiện có (áp
+  // dụng ngay, không cần sửa tay 121 file HTML) và mọi trang thêm sau này
+  // (chỉ cần gọi bootShell() như mọi trang khác đã làm).
+  try { injectFooter(); } catch (e) { /* khong lam gi, chi la trang tri */ }
 
   return { profile, supabase };
+}
+
+// LÀM LẠI 22/08/2026 — Footer dựng bằng JS, gắn vào MỌI trang gọi
+// bootShell() (tức là toàn bộ ~121 trang hiện có, tự động, không cần sửa
+// tay từng file HTML). Chỉ 1 nguồn duy nhất ở đây — sau này đổi nội dung
+// footer chỉ cần sửa 1 chỗ, không phải rà lại hàng trăm file.
+function injectFooter() {
+  if (document.getElementById('appFooter')) return; // đã có (vd F5 lại nhanh) — không chèn trùng
+  const shell = document.querySelector('.app-shell');
+  if (!shell) return; // trang không dùng khung chuẩn (vd trang đăng nhập) — bỏ qua, không phải lỗi
+  const year = new Date().getFullYear();
+  const footer = document.createElement('footer');
+  footer.className = 'app-footer';
+  footer.id = 'appFooter';
+  footer.innerHTML = `
+    <div class="app-footer__brand"><span class="dot" aria-hidden="true"></span>AIS OFFICE © ${year}</div>
+    <div class="app-footer__links">
+      <a href="/directory.html">Danh bạ</a>
+      <a href="/archive.html">Kho lưu trữ</a>
+      <a href="/permission-requests.html">Hỗ trợ quyền hạn</a>
+    </div>
+  `;
+  shell.appendChild(footer);
 }
 
 function injectDeptHeaderBadge() {

@@ -178,7 +178,26 @@ async function bootParentShellInner(sessionData) {
     if (notice) notice.style.display = 'block';
   }
 
+  try { injectAisCenterFooter(); } catch (e) { /* khong lam gi, chi la trang tri */ }
+
   return { parent, students };
+}
+
+// LÀM LẠI 22/08/2026 — footer mới cho AISCenter, đồng bộ với AIS OFFICE
+// (app/js/shell.js: injectFooter). Trước đây AISCenter KHÔNG có footer
+// trang nào. Chỉ gắn cho các trang dùng .app-main (Trang chủ, Ví, Học
+// phí, Bảng điểm...) — KHÔNG gắn ở Cộng đồng/Tin nhắn vì đó là giao diện
+// toàn màn hình kiểu chat/feed, thêm footer sẽ phá bố cục cuộn.
+function injectAisCenterFooter() {
+  if (document.getElementById('appFooter')) return;
+  const main = document.querySelector('.app-main');
+  if (!main) return;
+  const year = new Date().getFullYear();
+  const footer = document.createElement('footer');
+  footer.className = 'app-footer';
+  footer.id = 'appFooter';
+  footer.innerHTML = `<div class="app-footer__brand">AISCenter © ${year}</div>`;
+  main.appendChild(footer);
 }
 
 /** Lấy học sinh đang được chọn (lưu trong localStorage khi phụ huynh có nhiều con) */

@@ -1,80 +1,94 @@
 /* =====================================================================
-   ERP AIS — DESIGN TOKENS — phong cách Apple (macOS System Settings /
-   Big Sur–Sonoma): nền xám trung tính nhẹ, thẻ trắng nổi khối mềm, bo góc
-   lớn, chất liệu kính mờ (vibrancy) cho sidebar/topbar/modal, accent màu
-   bão hoà dùng tiết chế — đổi theo phân hệ đang chọn (data-division).
+   ERP AIS — DESIGN TOKENS (làm lại 22/08/2026)
+   Phong cách mới: "minimalist, premium education" — lấy cảm hứng từ các
+   nền tảng giáo dục cao cấp (Common App, Khan Academy premium, các
+   trường ĐH quốc tế): nền giấy ấm trung tính (không xám lạnh kiểu OS),
+   tiêu đề dùng serif tinh tế (Fraunces) tạo cảm giác uy tín/học thuật,
+   nội dung dùng sans hiện đại dễ đọc, bề mặt PHẲNG có viền mảnh thay vì
+   hiệu ứng kính mờ (vibrancy) — nghiêm túc, đáng tin cậy hơn là "công
+   nghệ tiêu dùng". Bo góc và đổ bóng tiết chế hơn bản cũ (đỡ "bồng bềnh").
    ===================================================================== */
 
 :root {
-  /* Nền & bề mặt — hệ xám trung tính kiểu macOS (systemGroupedBackground) */
-  --ink: #1d1d1f;
-  --ink-soft: #48484a;
-  --muted: #86868b;
-  --surface: #f5f5f7;
+  /* Nền & bề mặt — giấy ấm trung tính, KHÔNG còn xám xanh kiểu macOS */
+  --ink: #1c1a17;
+  --ink-soft: #55504a;
+  --muted: #8a837a;
+  --surface: #f8f6f2;
   --surface-card: #ffffff;
-  --surface-sunken: #ebebf0;
-  --surface-fill: #f0f0f3;          /* nền input/nút phụ kiểu "filled" của macOS */
-  --border: rgba(0, 0, 0, 0.08);
-  --border-strong: rgba(0, 0, 0, 0.14);
-  --separator: rgba(0, 0, 0, 0.07);
+  --surface-base: #ffffff;          /* alias = surface-card, dùng cho panel/overlay lớn */
+  --surface-sunken: #f0ece4;
+  --surface-fill: #f2efe9;          /* nền input/nút phụ */
+  --border: rgba(28, 26, 23, 0.10);
+  --border-strong: rgba(28, 26, 23, 0.16);
+  --separator: rgba(28, 26, 23, 0.08);
 
-  /* Vật liệu kính mờ (vibrancy) cho sidebar/topbar/modal overlay */
-  --glass-bg: rgba(246, 246, 248, 0.78);
-  --glass-bg-strong: rgba(255, 255, 255, 0.82);
-  --glass-blur: saturate(180%) blur(20px);
+  /* Giữ 2 biến này để không vỡ chỗ nào còn tham chiếu — nhưng KHÔNG còn
+     dùng blur ở sidebar/topbar/modal nữa (xem ghi chú trong dashboard.css
+     và module.css), chuyển sang bề mặt phẳng viền mảnh, đúng tinh thần
+     "minimalist premium" thay vì hiệu ứng kính mờ kiểu app tiêu dùng. */
+  --glass-bg: var(--surface-card);
+  --glass-bg-strong: var(--surface-card);
+  --glass-blur: none;
 
-  --success: #1d8a4c;
-  --success-tint: #e3f6e9;
-  --warning: #b9740a;
-  --warning-tint: #fdf1dc;
-  --danger: #d3352f;
-  --danger-tint: #fce7e6;
+  --success: #276b45;
+  --success-tint: #e7f1ea;
+  --warning: #9c6b1f;
+  --warning-tint: #f6eede;
+  --danger: #ad3a30;
+  --danger-tint: #f7e9e7;
 
-  /* Font: Be Vietnam Pro hỗ trợ dấu tiếng Việt tốt — dùng theo cách của
-     SF Pro: heading chặt tracking + đậm, body rộng rãi dễ đọc */
-  --font-display: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  /* Font: Fraunces (serif tinh tế, có dấu tiếng Việt) cho tiêu đề — tạo
+     cảm giác học thuật/uy tín "premium education"; Be Vietnam Pro cho
+     phần nội dung/giao diện (đã hỗ trợ dấu tiếng Việt tốt, giữ nguyên). */
+  --font-display: 'Fraunces', 'Be Vietnam Pro', ui-serif, Georgia, serif;
   --font-body: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', monospace;
 
-  /* Bo góc lớn dần, phong cách "continuous corner" của Apple */
-  --radius-sm: 8px;
-  --radius-md: 14px;
-  --radius-lg: 20px;
+  /* Bo góc tiết chế hơn bản cũ — chuyên nghiệp/trưởng thành hơn là "viên
+     kẹo" bo tròn nhiều của phong cách trước. */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
   --radius-pill: 999px;
 
-  /* Đổ bóng mềm, nhiều lớp, không gắt */
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
-  --shadow-lg: 0 20px 48px rgba(0, 0, 0, 0.16), 0 4px 12px rgba(0, 0, 0, 0.06);
+  /* Đổ bóng rất nhẹ, gần như phẳng — độ sâu chủ yếu đến từ viền mảnh
+     (--border) chứ không phải shadow, đúng tinh thần "minimalist". */
+  --shadow-xs: 0 1px 2px rgba(28, 26, 23, 0.04);
+  --shadow-sm: 0 1px 3px rgba(28, 26, 23, 0.06);
+  --shadow-md: 0 6px 20px rgba(28, 26, 23, 0.07);
+  --shadow-lg: 0 16px 40px rgba(28, 26, 23, 0.12);
 
   --ease: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
   --dur-fast: 0.15s;
   --dur-base: 0.22s;
+  --dur-med: 0.28s;
 
   --sidebar-w: 260px;
-  --topbar-h: 60px;
+  --topbar-h: 64px;
+  --footer-h: auto;
 
-  /* Mặc định trước khi chọn phân hệ */
-  --accent: #0094d9;
-  --accent-deep: #0072a8;
-  --accent-tint: #e5f4fc;
-  --accent-rgb: 0, 148, 217;
+  /* Mặc định trước khi chọn phân hệ — đã giảm độ bão hoà nhẹ để hợp với
+     nền giấy ấm mới (bản cũ chọn cho nền xanh lạnh, giờ trông chói). */
+  --accent: #0d6ea6;
+  --accent-deep: #0a5580;
+  --accent-tint: #e7f2f8;
+  --accent-rgb: 13, 110, 166;
 }
 
 html[data-division='aloha'] {
-  --accent: #0094d9;
-  --accent-deep: #0072a8;
-  --accent-tint: #e5f4fc;
-  --accent-rgb: 0, 148, 217;
+  --accent: #0d6ea6;
+  --accent-deep: #0a5580;
+  --accent-tint: #e7f2f8;
+  --accent-rgb: 13, 110, 166;
 }
 
 html[data-division='ilingo'] {
-  --accent: #0b6c37;
-  --accent-deep: #085228;
-  --accent-tint: #e3f3e9;
-  --accent-rgb: 11, 108, 55;
+  --accent: #2f6b41;
+  --accent-deep: #245231;
+  --accent-tint: #e8f1ea;
+  --accent-rgb: 47, 107, 65;
 }
 
 * { box-sizing: border-box; }
@@ -82,10 +96,9 @@ html[data-division='ilingo'] {
 html, body {
   margin: 0;
   padding: 0;
+  /* Nền phẳng, không còn dải gradient lớn phía trên (bản cũ) — "giấy" tĩnh
+     đồng nhất, đúng tinh thần minimalist, đỡ rối mắt trên trang dài. */
   background: var(--surface);
-  background-image: linear-gradient(180deg, var(--accent-tint) 0%, var(--surface) 420px);
-  background-repeat: no-repeat;
-  background-attachment: fixed;
   color: var(--ink);
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
@@ -96,13 +109,13 @@ body { min-height: 100vh; }
 
 h1, h2, h3, h4 {
   font-family: var(--font-display);
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-weight: 600;
+  letter-spacing: -0.01em;
   color: var(--ink);
   margin: 0;
 }
 
-p { line-height: 1.55; }
+p { line-height: 1.6; }
 
 a { color: var(--accent-deep); text-decoration: none; }
 
@@ -121,18 +134,18 @@ button { font-family: inherit; }
   border-radius: 6px;
 }
 
-::selection { background: rgba(var(--accent-rgb), 0.22); }
+::selection { background: rgba(var(--accent-rgb), 0.18); }
 
-/* Thanh cuộn mảnh, kiểu macOS */
+/* Thanh cuộn mảnh */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.18);
+  background: rgba(28, 26, 23, 0.16);
   border-radius: 999px;
   border: 2px solid transparent;
   background-clip: padding-box;
 }
-::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.3); background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover { background: rgba(28, 26, 23, 0.28); background-clip: padding-box; }
 
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
@@ -153,9 +166,7 @@ button { font-family: inherit; }
   input, select, textarea { font-size: 16px !important; }
 }
 
-/* ---------- Hệ icon SVG dùng chung (thay emoji) ----------
-   Icon nét đơn giản, kế thừa màu qua currentColor — dùng thống nhất ở
-   topbar/menu thay cho emoji nhiều màu trước đây (🔔🔎☰⎋🏠...). */
+/* ---------- Hệ icon SVG dùng chung (thay emoji) ---------- */
 .icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; fill: none; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; vertical-align: middle; }
 .icon--sm { width: 16px; height: 16px; }
 .icon--lg { width: 26px; height: 26px; }

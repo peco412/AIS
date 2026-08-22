@@ -1,50 +1,55 @@
 :root {
-  --accent: #0094d9;
-  --accent-deep: #0072a8;
-  --accent-tint: #e5f4fc;
-  --accent-rgb: 0, 148, 217;
-  --ink: #1d1d1f;
-  --ink-soft: #48484a;
-  --muted: #86868b;
-  --surface: #f5f5f7;
+  /* LÀM LẠI 22/08/2026 — đồng bộ tông màu/font với AIS OFFICE (app/css/
+     tokens.css): nền giấy ấm thay xám lạnh, font serif Fraunces cho tiêu
+     đề, bo góc/đổ bóng tiết chế hơn — phong cách "minimalist premium
+     education" áp dụng nhất quán cho cả 2 app. */
+  --accent: #0d6ea6;
+  --accent-deep: #0a5580;
+  --accent-tint: #e7f2f8;
+  --accent-rgb: 13, 110, 166;
+  --ink: #1c1a17;
+  --ink-soft: #55504a;
+  --muted: #8a837a;
+  --surface: #f8f6f2;
   --surface-card: #ffffff;
-  --surface-sunken: #ebebf0;
-  --surface-fill: #f0f0f3;
-  --border: rgba(0,0,0,0.08);
-  --border-strong: rgba(0, 0, 0, 0.14);
-  --separator: rgba(0, 0, 0, 0.07);
-  --success: #1d8a4c;
-  --success-tint: #e3f6e9;
-  --warning: #b9740a;
-  --warning-tint: #fdf1dc;
-  --danger: #d3352f;
-  --danger-tint: #fce7e6;
-  --radius: 16px;
-  --radius-sm: 8px;
-  --radius-md: 14px;
-  --radius-lg: 20px;
+  --surface-sunken: #f0ece4;
+  --surface-fill: #f2efe9;
+  --border: rgba(28, 26, 23, 0.10);
+  --border-strong: rgba(28, 26, 23, 0.16);
+  --separator: rgba(28, 26, 23, 0.08);
+  --success: #276b45;
+  --success-tint: #e7f1ea;
+  --warning: #9c6b1f;
+  --warning-tint: #f6eede;
+  --danger: #ad3a30;
+  --danger-tint: #f7e9e7;
+  --radius: 14px;
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
   --radius-pill: 999px;
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
-  --shadow-lg: 0 20px 48px rgba(0, 0, 0, 0.16), 0 4px 12px rgba(0, 0, 0, 0.06);
+  --shadow-xs: 0 1px 2px rgba(28, 26, 23, 0.04);
+  --shadow-sm: 0 1px 3px rgba(28, 26, 23, 0.06);
+  --shadow-md: 0 6px 20px rgba(28, 26, 23, 0.07);
+  --shadow-lg: 0 16px 40px rgba(28, 26, 23, 0.12);
   --ease: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
   --dur-fast: 0.15s;
   --dur-base: 0.22s;
   --font: 'Be Vietnam Pro', -apple-system, sans-serif;
+  --font-display: 'Fraunces', 'Be Vietnam Pro', ui-serif, Georgia, serif;
   /* Bo tim mau icon phang, chuyen nghiep hon — thay cho 5 gradient sac
      so voi truoc (moi "o" 1 mau gradient rieng nhin roi mat/thieu nhat
      quan) — gio dung 1 tong mau thuong hieu + xam trung tinh, chi khac
      nhau o DAM/NHAT de van phan biet duoc nhom chuc nang. */
   --tile-1: var(--accent-deep);
-  --tile-2: #3a3a3c;
+  --tile-2: #4a453e;
   --tile-3: var(--accent-deep);
-  --tile-4: #3a3a3c;
+  --tile-4: #4a453e;
   --tile-5: var(--accent-deep);
-  --tile-6: #3a3a3c;
+  --tile-6: #4a453e;
   --tile-7: var(--accent-deep);
-  --tile-8: #3a3a3c;
+  --tile-8: #4a453e;
   /* Chieu rong noi dung — dung chung cho tat ca breakpoint de doi giao
      dien Desktop/May tinh bang khong bi 1 cot hep bat thuong. */
   --content-w: 480px;
@@ -52,7 +57,7 @@
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; background: var(--surface); color: var(--ink); font-family: var(--font); -webkit-font-smoothing: antialiased; }
 body { min-height: 100vh; }
-h1, h2, h3 { font-weight: 700; letter-spacing: -0.01em; margin: 0; }
+h1, h2, h3 { font-family: var(--font-display); font-weight: 600; letter-spacing: -0.01em; margin: 0; }
 img, svg { display: block; }
 a { -webkit-tap-highlight-color: transparent; }
 button { font-family: inherit; -webkit-tap-highlight-color: transparent; }
@@ -72,7 +77,7 @@ button { font-family: inherit; -webkit-tap-highlight-color: transparent; }
 /* ---------- Trang đăng nhập ---------- */
 .auth-body { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
 .auth-card { width: 100%; max-width: 380px; background: var(--surface-card); border-radius: var(--radius-lg); padding: 32px 26px; box-shadow: var(--shadow-lg); }
-.auth-logo { display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 800; margin-bottom: 8px; }
+.auth-logo { display: flex; align-items: center; gap: 8px; font-family: var(--font-display); font-size: 21px; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 8px; }
 .auth-sub { color: var(--muted); font-size: 13.5px; margin: 0 0 24px; line-height: 1.5; }
 
 .field { margin-bottom: 16px; }
@@ -101,15 +106,15 @@ button { font-family: inherit; -webkit-tap-highlight-color: transparent; }
 .app-topbar {
   position: sticky; top: 0; z-index: 10;
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
-  padding: 14px 18px; background: rgba(255,255,255,0.85); backdrop-filter: blur(16px);
+  padding: 14px 18px; background: var(--surface-card);
   border-bottom: 1px solid var(--border);
 }
 .app-topbar__title {
-  font-size: 16px; font-weight: 800; min-width: 0;
+  font-family: var(--font-display); font-size: 17px; font-weight: 600; letter-spacing: -0.01em; min-width: 0;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.app-topbar__title span { font-weight: 800; }
-.app-topbar__back { display: flex; align-items: center; gap: 6px; background: none; border: none; padding: 0; color: var(--ink); font-size: 16px; font-weight: 800; cursor: pointer; }
+.app-topbar__title span { font-weight: 600; }
+.app-topbar__back { display: flex; align-items: center; gap: 6px; background: none; border: none; padding: 0; color: var(--ink); font-family: var(--font-display); font-size: 17px; font-weight: 600; cursor: pointer; }
 .app-topbar__right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 .icon-btn {
   display: flex; align-items: center; justify-content: center;
@@ -119,6 +124,14 @@ button { font-family: inherit; -webkit-tap-highlight-color: transparent; }
 .icon-btn:active { background: var(--surface-sunken); }
 
 .app-main { max-width: var(--content-w); margin: 0 auto; padding: 18px 16px 100px; }
+
+/* Footer mới (làm lại 22/08/2026) — tối giản, yên tĩnh, đúng tinh thần
+   "premium education". Nằm ở cuối .app-main (JS gắn qua appendChild),
+   padding-bottom:100px của .app-main đã tự chừa chỗ cho bottom-nav che. */
+.app-footer {
+  margin-top: 28px; padding-top: 18px; border-top: 1px solid var(--separator);
+  text-align: center; font-family: var(--font-display); font-size: 12px; color: var(--muted);
+}
 
 .student-switcher { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 18px; scrollbar-width: none; }
 .student-switcher::-webkit-scrollbar { display: none; }
@@ -289,9 +302,9 @@ button { font-family: inherit; -webkit-tap-highlight-color: transparent; }
 .bottom-nav {
   position: fixed; bottom: 0; left: 0; right: 0; z-index: 20;
   display: flex; justify-content: center;
-  background: rgba(255,255,255,0.94); backdrop-filter: blur(20px);
+  background: var(--surface-card);
   border-top: 1px solid var(--border); padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
-  box-shadow: 0 -4px 16px rgba(0,0,0,0.04);
+  box-shadow: 0 -1px 3px rgba(28, 26, 23, 0.05);
 }
 .bottom-nav__inner { display: flex; width: 100%; max-width: var(--content-w); }
 .bottom-nav a {
