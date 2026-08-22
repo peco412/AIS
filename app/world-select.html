@@ -39,31 +39,12 @@
   }
   .lobby-back:hover { color: var(--accent-deep); }
 
-  /* ---- Entry ---- */
-  .entry-header { text-align: center; margin: 30px 0 40px; }
-  .entry-eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
-  .entry-title { font-size: 30px; font-weight: 800; color: var(--ink); }
-  .entry-title span { color: var(--accent-deep); }
-  .entry-sub { font-size: 14px; color: var(--ink-soft); margin-top: 8px; }
-
-  .entry-cards { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; max-width: 640px; margin: 0 auto; }
-  @media (max-width: 640px) { .entry-cards { grid-template-columns: 1fr; } }
-
-  .entry-card {
-    background: var(--surface-card); border: 1px solid var(--border); border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-sm); padding: 28px 24px; cursor: pointer; text-align: left;
-    transition: transform var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
-  }
-  .entry-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); border-color: var(--accent); }
-  .entry-card--primary { background: var(--accent-tint); border-color: var(--accent); }
-  .entry-card__icon { font-size: 30px; margin-bottom: 12px; }
-  .entry-card__title { font-size: 17px; font-weight: 800; color: var(--ink); }
-  .entry-card__desc { font-size: 12.5px; color: var(--ink-soft); margin-top: 4px; }
-
-  /* ---- Branches grid (Launchpad) ---- */
-  .branches-header { text-align: center; margin-bottom: 26px; }
-  .branches-title { font-size: 22px; font-weight: 800; color: var(--ink); }
-  .branches-sub { font-size: 13px; color: var(--ink-soft); margin-top: 6px; }
+  /* ---- Branches grid (màn hình gốc — 4 khu vực) ---- */
+  .branches-header { text-align: center; margin: 10px 0 30px; }
+  .branches-eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+  .branches-title { font-family: var(--font-display); font-size: 26px; font-weight: 600; letter-spacing: -0.01em; color: var(--ink); }
+  .branches-title span { color: var(--accent-deep); }
+  .branches-sub { font-size: 13.5px; color: var(--ink-soft); margin-top: 8px; }
 
   .branch-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
   @media (max-width: 1024px) { .branch-grid { grid-template-columns: repeat(2, 1fr); } }
@@ -71,13 +52,24 @@
 
   .branch-card {
     background: var(--surface-card); border: 1px solid var(--border); border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-sm); padding: 26px 18px; text-align: center; cursor: pointer;
-    transition: transform var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
+    box-shadow: var(--shadow-xs); padding: 30px 20px; text-align: center; cursor: pointer;
+    transition: box-shadow var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
   }
-  .branch-card:hover { transform: scale(1.04); box-shadow: var(--shadow-md); border-color: var(--accent); }
+  .branch-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); border-color: var(--accent); }
   .branch-card:hover .branch-card__icon { color: var(--accent); }
   .branch-card--locked { opacity: 0.4; cursor: not-allowed; }
-  .branch-card--locked:hover { transform: none; box-shadow: var(--shadow-sm); border-color: var(--border); }
+  .branch-card--locked:hover { transform: none; box-shadow: var(--shadow-xs); border-color: var(--border); }
+
+  /* Nút "Chấm công nhanh" — trước đây là 1 thẻ lớn ở lớp cửa vào riêng
+     (đã bỏ), giờ chỉ là 1 hành động phụ nhỏ gọn dưới lưới 4 khu vực,
+     không tranh sự chú ý với 4 lựa chọn chính. */
+  .branches-checkin {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    margin: 22px auto 0; padding: 11px 22px; background: none; border: 1px solid var(--border);
+    border-radius: var(--radius-pill); color: var(--ink-soft); font-size: 13px; font-weight: 600; cursor: pointer;
+    transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+  }
+  .branches-checkin:hover { background: var(--surface-fill); color: var(--ink); }
   .branch-card--locked .branch-card__icon { color: var(--muted) !important; }
   .branch-card__icon { font-size: 32px; margin-bottom: 10px; color: var(--ink-soft); transition: color var(--dur-fast) var(--ease); }
   .branch-card__name { font-size: 16px; font-weight: 800; color: var(--ink); }
@@ -256,56 +248,39 @@
 
 <div class="lobby-wrap">
 
-  <!-- ================= LOP 0 — MAN HINH NGOAI ================= -->
-  <section class="lobby-layer is-active" id="layerEntry">
-    <div class="entry-header">
-      <div class="entry-eyebrow" id="greetingEyebrow">Chào buổi sáng</div>
-      <div class="entry-title">AIS OFFICE <span id="userNameSpan">...</span></div>
-      <div class="entry-sub" data-i18n="lobby.entry.sub">Chọn 1 mục để bắt đầu</div>
-    </div>
-    <div class="entry-cards">
-      <div class="entry-card entry-card--primary" id="btnEnterDoor">
-        <div class="entry-card__icon">🚪</div>
-        <div class="entry-card__title" data-i18n="lobby.entry.doorTitle">Vào cửa</div>
-        <div class="entry-card__desc" data-i18n="lobby.entry.doorDesc">Đi vào hệ thống — ERP, CRM, Room, Banzone</div>
-      </div>
-      <div class="entry-card" id="btnOpenCheckin">
-        <div class="entry-card__icon">🕐</div>
-        <div class="entry-card__title" data-i18n="lobby.entry.checkinTitle">Chấm công</div>
-        <div class="entry-card__desc" data-i18n="lobby.entry.checkinDesc">Check-in / Check-out nhanh</div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ================= LOP 1 — 4 NHANH ================= -->
-  <section class="lobby-layer" id="layerBranches">
-    <button class="lobby-back" data-back="layerEntry" data-i18n="lobby.back">← Quay lại</button>
+  <!-- ================= LOP 1 — 4 KHU VUC (mac dinh, khong con "cua vao") ================= -->
+  <section class="lobby-layer is-active" id="layerBranches">
     <div class="branches-header">
-      <div class="branches-title" data-i18n="lobby.branches.title">Chọn khu vực</div>
-      <div class="branches-sub" data-i18n="lobby.branches.sub">Bấm vào 1 thẻ để đi sâu vào bên trong</div>
+      <div class="branches-eyebrow" id="greetingEyebrow">Chào buổi sáng</div>
+      <div class="branches-title">AIS OFFICE <span id="userNameSpan">...</span></div>
+      <div class="branches-sub" data-i18n="lobby.branches.sub">Chọn 1 khu vực để bắt đầu</div>
     </div>
     <div class="branch-grid" id="branchGrid">
+      <div class="branch-card" data-branch="room">
+        <div class="branch-card__icon">👤</div>
+        <div class="branch-card__name" data-i18n="lobby.branch.room.name">Cá nhân</div>
+        <div class="branch-card__desc" data-i18n="lobby.branch.room.desc">Hồ sơ, lịch, đơn từ của bạn</div>
+      </div>
       <div class="branch-card" data-branch="erp">
         <div class="branch-card__icon">🏢</div>
-        <div class="branch-card__name" data-i18n="lobby.branch.erp.name">ERP</div>
-        <div class="branch-card__desc" data-i18n="lobby.branch.erp.desc">PHÒNG BAN</div>
+        <div class="branch-card__name" data-i18n="lobby.branch.erp.name">Hành chính</div>
+        <div class="branch-card__desc" data-i18n="lobby.branch.erp.desc">Ban điều hành, các phòng ban</div>
       </div>
       <div class="branch-card" data-branch="crm">
-        <div class="branch-card__icon">🌐</div>
-        <div class="branch-card__name" data-i18n="lobby.branch.crm.name">CRM</div>
-        <div class="branch-card__desc" data-i18n="lobby.branch.crm.desc">TRUNG TÂM</div>
-      </div>
-      <div class="branch-card" data-branch="room">
-        <div class="branch-card__icon">🚪</div>
-        <div class="branch-card__name" data-i18n="lobby.branch.room.name">ROOM</div>
-        <div class="branch-card__desc" data-i18n="lobby.branch.room.desc">CÁ NHÂN</div>
+        <div class="branch-card__icon">🎓</div>
+        <div class="branch-card__name" data-i18n="lobby.branch.crm.name">Trung tâm</div>
+        <div class="branch-card__desc" data-i18n="lobby.branch.crm.desc">Vận hành các trung tâm</div>
       </div>
       <div class="branch-card" data-branch="banzone">
         <div class="branch-card__icon">🗄️</div>
-        <div class="branch-card__name" data-i18n="lobby.branch.banzone.name">BANZONE</div>
-        <div class="branch-card__desc" data-i18n="lobby.branch.banzone.desc">DATABASE</div>
+        <div class="branch-card__name" data-i18n="lobby.branch.banzone.name">Dữ liệu</div>
+        <div class="branch-card__desc" data-i18n="lobby.branch.banzone.desc">Dữ liệu gốc toàn hệ thống</div>
       </div>
     </div>
+    <button class="branches-checkin" id="btnOpenCheckin">
+      <svg class="icon icon--sm" viewBox="0 0 24 24"><path d="M12 22s7-6.5 7-12a7 7 0 1 0-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg>
+      <span data-i18n="lobby.entry.checkinTitle">Chấm công nhanh</span>
+    </button>
   </section>
 
   <!-- ================= LOP 2a — ERP ================= -->

@@ -52,8 +52,10 @@ const WORLD_STORAGE_KEY = 'ais_current_world';
 // thai qua sessionStorage/history de F5 hoac bam Back trinh duyet van
 // mo dung lop dang xem, dung yeu cau trong dac ta.
 // =====================================================================
+// LÀM LẠI 22/08/2026: bỏ hẳn lớp "cửa vào" (layerEntry) theo yêu cầu —
+// layerBranches (4 khu vực: Cá nhân/Hành chính/Trung tâm/Dữ liệu) giờ là
+// màn hình gốc, không còn lớp cha nào phía trên nó nữa.
 const PARENT_OF = {
-  layerBranches: 'layerEntry',
   layerErp: 'layerBranches',
   layerDeptWorkspace: 'layerErp',
   layerCrm: 'layerBranches',
@@ -61,7 +63,7 @@ const PARENT_OF = {
   layerBanzone: 'layerBranches',
 };
 
-let currentLayer = 'layerEntry';
+let currentLayer = 'layerBranches';
 
 function showLayer(id, { push = true } = {}) {
   const from = document.getElementById(currentLayer);
@@ -80,7 +82,7 @@ function showLayer(id, { push = true } = {}) {
 }
 
 window.addEventListener('popstate', (e) => {
-  const layer = e.state?.layer || 'layerEntry';
+  const layer = e.state?.layer || 'layerBranches';
   showLayer(layer, { push: false });
   if (layer === 'layerCrm') startCrmAnimation(); else stopCrmAnimation();
 });
@@ -94,8 +96,6 @@ document.querySelectorAll('[data-back]').forEach((btn) => {
   // dang tin cay bat ke lich su trinh duyet dang the nao.
   btn.addEventListener('click', () => { showLayer(btn.dataset.back); stopCrmAnimation(); });
 });
-
-document.getElementById('btnEnterDoor').addEventListener('click', () => showLayer('layerBranches'));
 
 // =====================================================================
 // PHAN 2 — 4 nhanh: bam the -> mo dung lop noi dung, khoa theo quyen
@@ -266,14 +266,25 @@ async function renderCrm(profile) {
   // gio lay DUNG mau chinh thuc cua tung phan he (divisions.theme_color
   // — da co san trong du lieu goc: ALOHA xanh duong, iLingo xanh la),
   // dung 1 nguon du lieu THAT thay vi tu dat mau rieng.
-  const { data: centers, error } = await supabase
+  const { data: allCenters, error } = await supabase
     .from('centers')
     .select('id, name, code, divisions(code, theme_color)')
     .eq('is_active', true)
     .order('name');
   const sub = document.getElementById('crmSub');
   const stage = document.getElementById('crmStage');
-  if (error || !centers || centers.length === 0) { sub.textContent = t('lobby.crm.loadError', 'Không tải được danh sách trung tâm.'); return; }
+  if (error || !allCenters || allCenters.length === 0) { sub.textContent = t('lobby.crm.loadError', 'Không tải được danh sách trung tâm.'); return; }
+
+  // "Các trung tâm không thể thấy của nhau" — nhân sự bị giới hạn 1 trung
+  // tâm (xem điều kiện restrictedToOwnCenter ở dưới) sẽ KHÔNG thấy sự
+  // hiện diện của trung tâm khác trong danh sách này, chứ không chỉ bị
+  // khoá không vào được (trước đây vẫn thấy tên + icon khoá của mọi
+  // trung tâm khác, lộ ra tồn tại của các trung tâm không liên quan).
+  const willBeRestricted = !!profile.centerId
+    && !['EXECUTIVE', 'TECH'].includes(profile.roleCode)
+    && profile.departmentCode !== 'ACC';
+  const centers = willBeRestricted ? allCenters.filter((c) => c.id === profile.centerId) : allCenters;
+
   sub.textContent = `${centers.length} ${t('lobby.crm.activeCenters', 'trung tâm đang hoạt động')}`;
 
   let html = '<div class="crm-logo"><div class="crm-logo__title">AIS</div><div class="crm-logo__sub">OFFICE</div></div>';
@@ -288,7 +299,10 @@ async function renderCrm(profile) {
     const angleDeg = (137.5 * i) % 360;
     const color = c.divisions?.theme_color || '#94A3B8';
     const diameter = 44 + (i % 3) * 8; // 44/52/60px — hoi to hon truoc, do chu can nhieu cho hon
-    const isAccessible = !profile.isCenterManager || profile.centerId === c.id;
+    // Danh sách "centers" đã được lọc sẵn theo quyền ở đầu hàm
+    // (willBeRestricted) — tới đây mọi phần tử còn lại đều là trung tâm
+    // người dùng ĐƯỢC vào, không cần tính lại điều kiện khoá.
+    const isAccessible = true;
     // SUA — chu bi tran ra ngoai hanh tinh vi dung nguyen "code" trung
     // tam (co the dai 6-7 ky tu) o co chu co dinh — gio CAT NGAN toi da
     // 4 ky tu VA tu giam co chu neu ten van dai hon muc do rong cho phep.
@@ -671,8 +685,8 @@ document.getElementById('btnOpenCheckin').addEventListener('click', openCheckin)
   // DUYET (khac voi nut "Quay lai" trong app da sua rieng o tren) van bi
   // sai — gio dung lai DUNG chuoi tu goc truoc khi hien lop dich.
   const savedLayer = sessionStorage.getItem(STORAGE_KEY);
-  if (savedLayer && savedLayer !== 'layerEntry' && document.getElementById(savedLayer)) {
-    window.history.replaceState({ layer: 'layerEntry' }, '', '#entry');
+  if (savedLayer && savedLayer !== 'layerBranches' && document.getElementById(savedLayer)) {
+    window.history.replaceState({ layer: 'layerBranches' }, '', '#branches');
     const chain = [];
     let walk = savedLayer;
     while (walk) { chain.unshift(walk); walk = PARENT_OF[walk]; }
@@ -696,6 +710,6 @@ document.getElementById('btnOpenCheckin').addEventListener('click', openCheckin)
       if (savedLayer === 'layerCrm') startCrmAnimation();
     }
   } else {
-    window.history.replaceState({ layer: 'layerEntry' }, '', '#entry');
+    window.history.replaceState({ layer: 'layerBranches' }, '', '#branches');
   }
 })();
