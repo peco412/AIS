@@ -324,9 +324,7 @@
   background: radial-gradient(circle at 50% 42%, var(--accent-tint) 0%, #ffffff 72%);
   animation: loaderFadeIn 0.3s ease;
 }
-.login-loader.fade-out { animation: loaderFadeOut 0.35s ease forwards; }
 @keyframes loaderFadeIn { from { opacity: 0; } to { opacity: 1; } }
-@keyframes loaderFadeOut { to { opacity: 0; } }
 
 .login-loader__glow {
   position: absolute;

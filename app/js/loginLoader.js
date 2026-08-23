@@ -29,9 +29,6 @@ export function showLoginLoader({ division = 'aloha', message = 'Đang vào hệ
   });
 
   return new Promise((resolve) => {
-    setTimeout(() => {
-      el.classList.add('fade-out');
-      setTimeout(() => { el.remove(); resolve(); }, 350);
-    }, 1500);
+    setTimeout(resolve, 1500);
   });
 }

@@ -166,6 +166,57 @@ function checkBirthday(dob, fullName) {
   }
 }
 
+// LÀM LẠI 22/08/2026 — Bảng "Giao dịch tài chính gần đây": theo yêu cầu
+// "thông báo nạp ví/đóng học phí nên tách riêng, tránh bị miss báo cáo
+// quan trọng". Rà lại hệ thống thì phát hiện: hiện KHÔNG có cơ chế nào
+// tự tạo thông báo (bảng notifications) khi có người nạp ví/đóng học phí
+// — 2 việc này chỉ đổi trạng thái ở DB, không ai được báo. Thay vì thêm
+// thông báo mới (dễ quên gọi ở 1 trong nhiều chỗ, lại lặp lại đúng rủi ro
+// "miss" đang muốn tránh), lấy TRỰC TIẾP dữ liệu gốc mỗi lần vào Trang
+// chủ — luôn đúng 100%, không phụ thuộc có ai nhớ gọi thông báo hay
+// không. Chỉ hiện cho vai trò cần theo dõi tài chính (Kế toán/Quản lý
+// trung tâm/Ban điều hành) — nhân sự khác không liên quan sẽ không thấy.
+async function loadFinanceBoard(profile) {
+  const board = document.getElementById('financeBoard');
+  if (!board) return;
+  const canSee = profile.departmentCode === 'ACC' || profile.isCenterManager || ['EXECUTIVE', 'TECH'].includes(profile.roleCode);
+  if (!canSee) { board.style.display = 'none'; return; }
+
+  const [{ data: topups }, { data: payments }] = await Promise.all([
+    supabase.from('wallet_topup_requests')
+      .select('id, coin_amount, confirmed_at, wallets(students(full_name, centers(name)))')
+      .eq('status', 'confirmed').order('confirmed_at', { ascending: false }).limit(6),
+    supabase.from('debt_ledger')
+      .select('id, amount_vnd, created_at, invoices(students(full_name, centers(name)))')
+      .order('created_at', { ascending: false }).limit(6),
+  ]);
+
+  const items = [
+    ...(topups || []).filter((r) => r.wallets?.students).map((r) => ({
+      time: r.confirmed_at, icon: '💰',
+      text: `${esc(r.wallets.students.full_name)} vừa nạp ví ${Number(r.coin_amount).toLocaleString('vi-VN')} Coin`,
+      meta: r.wallets.students.centers?.name || '', href: '/acc/wallet-topup-requests.html',
+    })),
+    ...(payments || []).filter((r) => r.invoices?.students).map((r) => ({
+      time: r.created_at, icon: '🎓',
+      text: `${esc(r.invoices.students.full_name)} vừa đóng học phí ${Number(r.amount_vnd).toLocaleString('vi-VN')} đ`,
+      meta: r.invoices.students.centers?.name || '', href: '/edu/wallet-invoices.html',
+    })),
+  ].sort((a, b) => new Date(b.time) - new Date(a.time)).slice(0, 8);
+
+  const list = document.getElementById('financeBoardList');
+  if (items.length === 0) { list.innerHTML = '<div class="empty-cell">Chưa có giao dịch nào gần đây.</div>'; return; }
+  list.innerHTML = items.map((it) => `
+    <div class="notice-board__item" data-href="${it.href}">
+      <div class="notice-board__item__title">${it.icon} ${it.text}</div>
+      <div class="notice-board__item__meta">${it.meta ? it.meta + ' · ' : ''}${new Date(it.time).toLocaleString('vi-VN')}</div>
+    </div>
+  `).join('');
+  list.querySelectorAll('[data-href]').forEach((el) => {
+    el.addEventListener('click', () => { window.location.href = el.dataset.href; });
+  });
+}
+
 async function loadNoticeBoard() {
   const list = document.getElementById('noticeBoardList');
   if (!list) return;
@@ -470,14 +521,12 @@ async function renderCrm(profile) {
     el.addEventListener('click', () => {
       if (el.classList.contains('crm-satellite--locked')) return;
       const centerObj = centers.find((c) => c.id === el.dataset.center);
-      launchWarpJump(el, () => {
-        localStorage.setItem(WORLD_STORAGE_KEY, 'crm');
-        localStorage.setItem('ais_selected_center', el.dataset.center);
-        stopCrmAnimation();
-        openCrmWorkspace(centerObj, profile);
-        PARENT_OF.layerDeptWorkspace = 'layerCrm';
-        showLayer('layerDeptWorkspace');
-      });
+      localStorage.setItem(WORLD_STORAGE_KEY, 'crm');
+      localStorage.setItem('ais_selected_center', el.dataset.center);
+      stopCrmAnimation();
+      openCrmWorkspace(centerObj, profile);
+      PARENT_OF.layerDeptWorkspace = 'layerCrm';
+      showLayer('layerDeptWorkspace');
     });
   });
 }
@@ -530,45 +579,6 @@ function startCrmAnimation() {
 }
 function stopCrmAnimation() { if (crmAnimHandle) cancelAnimationFrame(crmAnimHandle); crmAnimHandle = null; }
 
-// MOI — hieu ung "du hanh vu tru": bam vao 1 hanh tinh se nhu dang lao
-// toi no o toc do anh sang truoc khi thuc su chuyen trang — dung hieu
-// ung phong to + mo dan + vai vet sang toe ra, dung tinh than "space
-// travel" ban yeu cau.
-function launchWarpJump(satelliteEl, onDone) {
-  stopCrmAnimation();
-  const stage = document.getElementById('crmStage');
-  if (!stage) { onDone(); return; }
-
-  // MOI — veil va vet sang gio gan vao document.body (khong con nam
-  // trong khung crm-stage nho 560px nua), dung "position: fixed" de
-  // PHU KIN TOAN BO MAN HINH thay vi chi 1 o nho giua trang.
-  const veil = document.createElement('div');
-  veil.className = 'crm-warp-veil';
-  document.body.appendChild(veil);
-
-  stage.querySelectorAll('.crm-satellite, .crm-logo, .crm-orbit').forEach((el) => {
-    if (el !== satelliteEl) el.classList.add('crm-warp-fade');
-  });
-  satelliteEl.classList.add('crm-warp-zoom');
-
-  // Vet sang xuat phat tu chinh giua man hinh (diem hoi tu thi giac khi
-  // "bay toi truoc"), bay toa ra khap 4 phia man hinh.
-  const originX = window.innerWidth / 2;
-  const originY = window.innerHeight / 2;
-  for (let i = 0; i < 14; i++) {
-    const streak = document.createElement('div');
-    streak.className = 'crm-warp-streak';
-    streak.style.left = originX + 'px';
-    streak.style.top = originY + 'px';
-    const angle = Math.random() * 360;
-    streak.style.setProperty('--streak-angle', angle + 'deg');
-    streak.style.animationDelay = (Math.random() * 250) + 'ms';
-    document.body.appendChild(streak);
-  }
-
-  setTimeout(onDone, 1780);
-}
-
 // =====================================================================
 // PHAN 5 — ROOM: luoi phang cac chuc nang ca nhan.
 // =====================================================================
@@ -598,10 +608,15 @@ function renderRoom(profile) {
 // =====================================================================
 // PHAN 6 — BANZONE: gop theo danh muc (accordion) + tim nhanh.
 // =====================================================================
+// LÀM LẠI 22/08/2026 — sắp xếp lại theo ĐÚNG PHÒNG BAN SỞ HỮU dữ liệu
+// (thay vì nhóm theo chủ đề trừu tượng cũ: Tổ chức/Tài chính/Vận hành) —
+// dễ tìm hơn vì khớp đúng cách người dùng nghĩ: "cái tôi cần là của Kế
+// toán hay của Trung tâm", theo đúng yêu cầu.
 const BANZONE_CATEGORIES = [
-  { name: t('lobby.banzone.catOrg', 'Tổ chức'), icon: '🏢', hrefs: ['/master-data/centers.html', '/master-data/departments.html', '/master-data/system-roles.html', '/master-data/divisions.html'] },
-  { name: t('lobby.banzone.catFinance', 'Tài chính'), icon: '💰', hrefs: ['/acc/suppliers.html', '/master-data/expense-categories.html', '/master-data/chart-of-accounts.html', '/master-data/wallet-tier-discounts.html', '/master-data/program-pricing.html', '/master-data/program-plan-discounts.html'] },
-  { name: t('lobby.banzone.catOps', 'Vận hành'), icon: '📦', hrefs: ['/master-data/size-chart.html', '/master-data/inventory-items.html'] },
+  { name: t('lobby.banzone.catAcc', 'Kế toán'), icon: '💰', hrefs: ['/master-data/chart-of-accounts.html', '/acc/suppliers.html', '/master-data/expense-categories.html', '/master-data/wallet-tier-discounts.html'] },
+  { name: t('lobby.banzone.catCenter', 'Trung tâm & Học vụ'), icon: '🎓', hrefs: ['/master-data/program-pricing.html', '/master-data/program-plan-discounts.html', '/master-data/size-chart.html'] },
+  { name: t('lobby.banzone.catWarehouse', 'Kho vận'), icon: '📦', hrefs: ['/master-data/inventory-items.html'] },
+  { name: t('lobby.banzone.catOrgSystem', 'Tổ chức hệ thống'), icon: '🏢', hrefs: ['/master-data/centers.html', '/master-data/departments.html', '/master-data/system-roles.html', '/master-data/divisions.html'] },
 ];
 function renderBanzone(profile) {
   const group = NAV_CONFIG.find((g) => g.section === 'Cấu hình dữ liệu gốc');
@@ -830,6 +845,7 @@ document.getElementById('btnOpenCheckin').addEventListener('click', openCheckin)
   renderRoom(fullProfile);
   renderBanzone(fullProfile);
   await renderCrm(fullProfile);
+  loadFinanceBoard(fullProfile).catch(console.warn);
 
   // Khoi phuc dung lop dang xem neu F5 / mo lai (dung sessionStorage) —
   // SUA: truoc day chi goi showLayer(..., {push:false}) — hien dung lop
