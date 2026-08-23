@@ -11,6 +11,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="/css/tokens.css" />
 <link rel="stylesheet" href="/css/dashboard.css" />
+<link rel="stylesheet" href="/css/module.css" />
 <style>
   /* ===================================================================
      Lobby — kế thừa tokens.css, không override nền/font gốc.
@@ -71,6 +72,46 @@
     transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
   }
   .branches-checkin:hover { background: var(--surface-fill); color: var(--ink); }
+
+  /* ---- Widget Tử vi / Xin quẻ (mới) ---- */
+  .fortune-fab {
+    position: fixed; right: 22px; bottom: 22px; z-index: 500;
+    width: 52px; height: 52px; border-radius: 50%; border: 1px solid var(--border);
+    background: var(--surface-card); box-shadow: var(--shadow-md); font-size: 24px;
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+    transition: transform var(--dur-fast) var(--ease-spring), box-shadow var(--dur-fast) var(--ease);
+  }
+  .fortune-fab:hover { transform: translateY(-2px) scale(1.05); box-shadow: var(--shadow-lg); }
+  @media (max-width: 640px) { .fortune-fab { right: 16px; bottom: 84px; } } /* 84px chừa chỗ mobile-bottom-nav */
+
+  .fortune-popup {
+    position: fixed; right: 22px; bottom: 86px; z-index: 501; width: min(340px, calc(100vw - 32px));
+    background: var(--surface-card); border: 1px solid var(--border); border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg); padding: 18px; display: none;
+    animation: slide-up-fade 220ms var(--ease-spring) forwards;
+  }
+  .fortune-popup.show { display: block; }
+  @media (max-width: 640px) { .fortune-popup { right: 16px; bottom: 148px; } }
+  .fortune-popup__head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .fortune-popup__title { font-family: var(--font-display); font-size: 15.5px; font-weight: 600; }
+  .fortune-popup__close { background: none; border: none; color: var(--muted); font-size: 15px; cursor: pointer; padding: 4px; }
+  .fortune-popup__tabs { display: flex; gap: 6px; margin-bottom: 14px; }
+  .fortune-tab {
+    flex: 1; padding: 8px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface-fill);
+    color: var(--ink-soft); font-size: 12px; font-weight: 700; cursor: pointer;
+    transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+  }
+  .fortune-tab.is-active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .fortune-popup__body { min-height: 120px; }
+  .fortune-result { text-align: center; padding: 8px 4px; }
+  .fortune-result__icon { font-size: 34px; margin-bottom: 10px; }
+  .fortune-result__level { font-family: var(--font-display); font-size: 15px; font-weight: 600; color: var(--accent-deep); margin-bottom: 6px; }
+  .fortune-result__text { font-size: 13px; color: var(--ink); line-height: 1.6; }
+  .fortune-redraw {
+    margin-top: 14px; width: 100%; padding: 9px; border-radius: var(--radius-pill); border: 1px solid var(--border);
+    background: var(--surface-fill); color: var(--ink-soft); font-size: 12.5px; font-weight: 700; cursor: pointer;
+  }
+  .fortune-redraw:hover { background: var(--accent-tint); color: var(--accent-deep); }
   .branch-card--locked .branch-card__icon { color: var(--muted) !important; }
   .branch-card__icon { font-size: 32px; margin-bottom: 10px; color: var(--ink-soft); transition: color var(--dur-fast) var(--ease); }
   .branch-card__name { font-size: 16px; font-weight: 800; color: var(--ink); }
@@ -374,6 +415,24 @@
     </div>
     <a href="/attendance-checkin.html" class="checkin-panel__more" data-i18n="lobby.checkin.moreLink">Xem đầy đủ lịch sử chấm công →</a>
   </div>
+</div>
+
+<!-- ================= WIDGET TỬ VI / XIN QUẺ (mới) =================
+     Nút nổi góc dưới bên phải — tăng tính tương tác, thuần vui/giải trí,
+     không ảnh hưởng tới nghiệp vụ chính. Toàn bộ nội dung random phía
+     JS (worldSelect.js), không cần gọi API/bảng dữ liệu nào. -->
+<button type="button" class="fortune-fab" id="fortuneFab" title="Tử vi & Xin quẻ" aria-label="Tử vi & Xin quẻ">🔮</button>
+
+<div class="fortune-popup" id="fortunePopup">
+  <div class="fortune-popup__head">
+    <div class="fortune-popup__title">✨ Tử vi & Xin quẻ</div>
+    <button type="button" class="fortune-popup__close" id="fortuneClose">✕</button>
+  </div>
+  <div class="fortune-popup__tabs">
+    <button type="button" class="fortune-tab is-active" data-tab="horoscope">🌟 Tử vi hôm nay</button>
+    <button type="button" class="fortune-tab" data-tab="quẻ">🎋 Xin quẻ</button>
+  </div>
+  <div class="fortune-popup__body" id="fortuneBody"></div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>

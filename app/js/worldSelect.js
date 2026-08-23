@@ -3,6 +3,7 @@ import { worldsWithAccess } from './shell.js';
 import { NAV_CONFIG } from './navConfig.js';
 import { t, getLang, setLang, syncLangFromProfile } from './i18n.js';
 import { registerInstallBanner } from './installPrompt.js';
+import { initFortuneWidget } from './fortuneWidget.js';
 
 // SUA LOI THAT NGHIEM TRONG: 2 bien nay truoc day khai bao o gan CUOI
 // file (bang "let"), nhung "paintLangSwitcher()" lai duoc GOI NGAY o
@@ -155,15 +156,62 @@ function renderGreeting(fullName) {
 
 // LÀM LẠI 22/08/2026 — 4 hàm dưới đây chuyển nguyên từ dashboard.js sang
 // (xem ghi chú đầu file: world-select.html giờ là "Trang chủ" duy nhất).
-function checkBirthday(dob, fullName) {
-  if (!dob) return;
+// LÀM LẠI 22/08/2026 — theo yêu cầu: "thông báo sinh nhật là thông báo
+// dành cho MỌI NGƯỜI biết" — trước đây chỉ đúng người có sinh nhật mới
+// tự thấy banner của chính mình (dùng profile.dob của người đang đăng
+// nhập). Giờ truy vấn TOÀN BỘ nhân viên có sinh nhật hôm nay (không phân
+// biệt ai đang xem), hiện cho tất cả, kèm nút "🎉 Chúc mừng" gửi lời
+// chúc (bảng birthday_wishes, mỗi người chỉ chúc được 1 lần/ngày/người).
+async function checkBirthday(currentEmployeeId) {
+  const banner = document.getElementById('birthdayBanner');
+  const textEl = document.getElementById('birthdayText');
+  if (!banner || !textEl) return;
+
   const today = new Date();
-  const d = new Date(dob);
-  if (d.getUTCDate() === today.getDate() && d.getUTCMonth() === today.getMonth()) {
-    document.getElementById('birthdayBanner')?.classList.add('show');
-    const textEl = document.getElementById('birthdayText');
-    if (textEl) textEl.textContent = `Hôm nay là sinh nhật của ${fullName}! Chúc bạn một ngày thật vui và nhiều sức khoẻ.`;
-  }
+  const { data: employees, error } = await supabase.from('employees').select('id, full_name, dob').not('dob', 'is', null);
+  if (error || !employees) return;
+  const todaysBirthdays = employees.filter((e) => {
+    const d = new Date(e.dob);
+    return d.getUTCDate() === today.getDate() && d.getUTCMonth() === today.getMonth();
+  });
+  if (todaysBirthdays.length === 0) return;
+
+  const ids = todaysBirthdays.map((e) => e.id);
+  const { data: wishes } = await supabase.from('birthday_wishes').select('employee_id, wisher_id').in('employee_id', ids).eq('wish_date', today.toISOString().slice(0, 10));
+  const wishCountByEmployee = {};
+  const iAlreadyWished = new Set();
+  (wishes || []).forEach((w) => {
+    wishCountByEmployee[w.employee_id] = (wishCountByEmployee[w.employee_id] || 0) + 1;
+    if (w.wisher_id === currentEmployeeId) iAlreadyWished.add(w.employee_id);
+  });
+
+  banner.classList.add('show');
+  textEl.innerHTML = todaysBirthdays.map((e) => {
+    const count = wishCountByEmployee[e.id] || 0;
+    const isSelf = e.id === currentEmployeeId;
+    const already = iAlreadyWished.has(e.id);
+    const btnDisabled = isSelf || already;
+    return `
+      <span class="birthday-wish-item">
+        🎂 <strong>${esc(e.full_name)}</strong>
+        ${count > 0 ? `<span class="birthday-wish-item__count">${count} lượt chúc</span>` : ''}
+        <button type="button" class="birthday-wish-btn" data-employee="${e.id}" ${btnDisabled ? 'disabled' : ''}>${already ? 'Đã chúc ✓' : '🎉 Chúc mừng'}</button>
+      </span>
+    `;
+  }).join(' &nbsp;·&nbsp; ');
+
+  textEl.querySelectorAll('.birthday-wish-btn:not(:disabled)').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      const { error: wishErr } = await supabase.from('birthday_wishes').insert({ employee_id: btn.dataset.employee, wisher_id: currentEmployeeId });
+      if (wishErr) { btn.disabled = false; return; }
+      btn.textContent = 'Đã chúc ✓';
+      const countEl = btn.closest('.birthday-wish-item').querySelector('.birthday-wish-item__count');
+      const newCount = (parseInt(countEl?.textContent) || 0) + 1;
+      if (countEl) countEl.textContent = `${newCount} lượt chúc`;
+      else btn.insertAdjacentHTML('beforebegin', `<span class="birthday-wish-item__count">1 lượt chúc</span> `);
+    });
+  });
 }
 
 // LÀM LẠI 22/08/2026 — Bảng "Giao dịch tài chính gần đây": theo yêu cầu
@@ -217,15 +265,27 @@ async function loadFinanceBoard(profile) {
   });
 }
 
+// Tái dùng ĐÚNG nhãn luồng đã có sẵn ở notifications.html (trang đầy đủ)
+// — tránh tạo 1 bộ nhãn riêng lệch nhau giữa 2 nơi.
+const SCOPE_LABEL = { system: 'Toàn hệ thống', center: 'Trung tâm', department: 'Phòng ban', personal: 'Cá nhân' };
+const SCOPE_BADGE_CLASS = { system: 'badge-rejected', center: 'badge-approved_1', department: 'badge-submitted', personal: 'badge-active' };
+
 async function loadNoticeBoard() {
   const list = document.getElementById('noticeBoardList');
   if (!list) return;
-  const { data, error } = await supabase.from('notifications').select('id, title, created_at').order('created_at', { ascending: false }).limit(6);
+  // LÀM LẠI 22/08/2026 — theo yêu cầu "đang hiện thông báo đẩy không
+  // phân luồng": thêm nhãn luồng (Toàn hệ thống/Trung tâm/Phòng ban/Cá
+  // nhân) vào mỗi thông báo, để phân biệt ngay được đây là việc chung
+  // hay chỉ liên quan riêng mình, không còn trộn lẫn mập mờ như trước.
+  const { data, error } = await supabase.from('notifications').select('id, scope, title, created_at').order('created_at', { ascending: false }).limit(6);
   if (error || !data || data.length === 0) { list.innerHTML = '<div class="empty-cell">Chưa có thông báo nào.</div>'; return; }
   list.innerHTML = data.map((n) => `
     <div class="notice-board__item" data-id="${n.id}">
       <div class="notice-board__item__title">${esc(n.title)}</div>
-      <div class="notice-board__item__meta">${new Date(n.created_at).toLocaleString('vi-VN')}</div>
+      <div class="notice-board__item__meta">
+        <span class="badge ${SCOPE_BADGE_CLASS[n.scope] || ''}" style="font-size:10px; padding:1px 7px;">${SCOPE_LABEL[n.scope] || n.scope}</span>
+        · ${new Date(n.created_at).toLocaleString('vi-VN')}
+      </div>
     </div>
   `).join('');
   list.querySelectorAll('[data-id]').forEach((el) => {
@@ -817,11 +877,12 @@ document.getElementById('btnOpenCheckin').addEventListener('click', openCheckin)
 
   if (!employee) return;
   renderGreeting(employee.full_name);
-  try { checkBirthday(employee.dob, employee.full_name?.split(' ').slice(-1)[0]); } catch (e) { console.warn('checkBirthday lỗi:', e); }
+  checkBirthday(employee.id).catch((e) => console.warn('checkBirthday lỗi:', e));
   const statPendingEl = document.getElementById('statPending');
   if (statPendingEl) statPendingEl.textContent = '—';
   loadStats(employee.id).catch(console.warn);
   loadNoticeBoard().catch(console.warn);
+  initFortuneWidget(employee.dob);
   const installCard = document.getElementById('installBanner');
   if (installCard) registerInstallBanner(installCard, installCard);
   PROFILE = { id: employee.id, centerId: employee.center_id };

@@ -483,25 +483,26 @@
 @media (max-width: 900px) { .hub-columns { grid-template-columns: 1fr; } }
 .hub-col--overview, .hub-col--nav { display: flex; flex-direction: column; }
 
-/* O chuc mung sinh nhat CHAY DONG (marquee ngang lien tuc) — nen gradient
-   am, khac han the trung tinh xung quanh de "an mung" dung nghia */
+/* O chuc mung sinh nhat — nen gradient am, khac han the trung tinh xung
+   quanh de "an mung" dung nghia. KHONG con chay chu ngang lien tuc (xem
+   ghi chu o duoi — co nut "Chuc mung" ben trong, chay chu se lam nut la
+   muc tieu di chuyen khong bam duoc). */
 .birthday-banner--marquee {
-  overflow: hidden; position: relative;
   background: linear-gradient(120deg, #fff1e6, #ffe6f0);
   border-color: rgba(217, 119, 87, 0.18);
 }
 .birthday-banner--marquee .birthday-banner__marquee-track {
-  overflow: hidden; white-space: nowrap; flex: 1;
+  flex: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 4px; font-size: 13.5px;
 }
-.birthday-banner--marquee .birthday-banner__marquee-track span {
-  display: inline-block; padding-left: 100%;
-  animation: marquee-scroll 14s linear infinite;
-  font-weight: 600; color: var(--ink);
+.birthday-wish-item { display: inline-flex; align-items: center; gap: 8px; }
+.birthday-wish-item__count { font-size: 11.5px; color: var(--muted); font-weight: 600; }
+.birthday-wish-btn {
+  border: 1px solid rgba(217, 119, 87, 0.3); background: #fff; color: #b5560f;
+  border-radius: var(--radius-pill); padding: 4px 12px; font-size: 12px; font-weight: 700; cursor: pointer;
+  transition: background var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
 }
-@keyframes marquee-scroll {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-100%); }
-}
+.birthday-wish-btn:hover:not(:disabled) { background: #ffe6d5; transform: translateY(-1px); }
+.birthday-wish-btn:disabled { opacity: 0.55; cursor: default; }
 
 /* Bang thong bao day — dong bo dung phong cach the trang/bong mem cua
    he thong (khong con kieu "giay note vang" lac tong truoc do), moi dong
