@@ -1,3 +1,14 @@
+// =====================================================================
+// KHÔNG CÒN ĐƯỢC DÙNG (22/08/2026) — dashboard.html đã chuyển hướng sang
+// /world-select.html theo yêu cầu "phần thế giới chính là dashboard".
+// Toàn bộ logic Tổng quan (chào mừng, sinh nhật, thống kê, bảng thông
+// báo, nút cài app) đã chuyển sang js/worldSelect.js. Phần renderHub()/
+// appHub (lưới liệt kê lại các phòng ban) KHÔNG chuyển sang vì đã dư thừa
+// — mỗi khu vực trong 4 thẻ ở world-select.html giờ tự hiện đúng chức
+// năng của nó khi bấm vào (xem openCrmWorkspace/openDeptWorkspace).
+// Giữ file này lại để tham chiếu lịch sử, KHÔNG xoá code, nhưng không
+// còn trang HTML nào load file này nữa.
+// =====================================================================
 import { bootShell, MOBILE_ALLOWED_HREFS, isMobileViewport, WORLD_LAYERS, getSavedWorld, layerToWorld, openSectionHub, openItemsHub } from './shell.js';
 import { supabase } from './supabase.js';
 import { NAV_CONFIG } from './navConfig.js';

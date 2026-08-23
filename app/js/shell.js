@@ -22,7 +22,7 @@ function initials(name) {
 // CSVC, và toàn bộ nhóm "chức năng cá nhân" — các module nghiệp vụ theo
 // phòng ban (nhân sự/kế toán/CSVC quản trị...) chỉ dùng trên web/máy tính.
 export const MOBILE_ALLOWED_HREFS = new Set([
-  '/dashboard.html', '/notifications.html', '/profile.html', '/directory.html',
+  '/world-select.html', '/notifications.html', '/profile.html', '/directory.html',
   '/meetings.html', '/attendance-checkin.html', '/hr/late-clockin-requests.html',
   '/proposals.html', '/archive.html', '/permission-requests.html',
   '/hr/leave-requests.html', '/hr/business-trips.html', '/hr/contracts.html', '/my-payroll.html',
@@ -139,10 +139,9 @@ function renderNav(profile, currentPage) {
 
   const currentWorld = resolveCurrentWorld(currentPage, profile);
   injectBrandName();
-  injectWorldSwitcher(profile, currentWorld, currentPage);
   injectHubLauncher(profile, currentWorld, currentPage);
   injectMobileBottomNav(profile, currentWorld, currentPage);
-  if (!currentPage?.endsWith('/dashboard.html')) injectSiblingStrip(profile, currentPage);
+  if (!currentPage?.endsWith('/world-select.html')) injectSiblingSidebar(profile, currentPage);
 }
 
 /**
@@ -161,7 +160,7 @@ function injectMobileBottomNav(profile, currentWorld, currentPage) {
   nav.id = 'mobileBottomNav';
   nav.className = 'mobile-bottom-nav';
   nav.innerHTML = `
-    <a href="/dashboard.html" class="${isOn('/dashboard.html') ? 'active' : ''}">
+    <a href="/world-select.html" class="${isOn('/world-select.html') ? 'active' : ''}">
       <svg class="icon icon--nav" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10"/></svg>
       <span>Trang chủ</span>
     </a>
@@ -202,25 +201,43 @@ function injectMobileBottomNav(profile, currentWorld, currentPage) {
  * cac chuc nang khac cung hub de tien di chuyen". Chi hien khi nhom hien
  * tai co NHIEU HON 1 muc (khong hien neu chi minh trang dang dung).
  */
-function injectSiblingStrip(profile, currentPage) {
-  document.getElementById('siblingStrip')?.remove();
+function injectSiblingSidebar(profile, currentPage) {
+  document.getElementById('subSidebar')?.remove();
+  const oldWrap = document.querySelector('.main-content-area');
+  const main = document.querySelector('.main');
+  if (oldWrap && main) { while (oldWrap.firstChild) main.insertBefore(oldWrap.firstChild, oldWrap); oldWrap.remove(); main.classList.remove('main--with-subsidebar'); }
+  if (!main) return;
 
   const group = findActiveGroup(currentPage, profile);
   if (!group) return;
   const items = group.items.filter((item) => canAccess(item, profile));
-  if (items.length <= 1) return; // chi 1 muc (chinh trang nay) thi khong can dai gi ca
+  if (items.length <= 1) return; // chi 1 muc (chinh trang nay) thi khong can sidebar phu
 
-  const main = document.querySelector('.main');
-  if (!main) return;
+  // Bọc toàn bộ nội dung .main hiện có vào 1 wrapper riêng, rồi đặt
+  // sidebar phụ bên cạnh — hoàn toàn bằng JS, không cần sửa tay 121 file
+  // HTML. LÀM LẠI 22/08/2026: trước đây là 1 dải pill cuộn ngang ở đầu
+  // trang ("sibling-strip") — nhiều mục thì tràn dài, rối mắt, không rõ
+  // đây là điều hướng phụ hay nội dung trang. Đổi thành sidebar dọc thật
+  // sự, tách bạch rõ ràng khỏi nội dung chính, giống mẫu ứng dụng desktop
+  // chuyên nghiệp hơn.
+  const contentWrap = document.createElement('div');
+  contentWrap.className = 'main-content-area';
+  while (main.firstChild) contentWrap.appendChild(main.firstChild);
 
-  const strip = document.createElement('div');
-  strip.id = 'siblingStrip';
-  strip.className = 'sibling-strip';
-  strip.innerHTML = items.map((item) => {
-    const active = currentPage && currentPage.endsWith(item.href);
-    return `<a href="${item.href}" class="sibling-strip__item ${active ? 'active' : ''}">${item.icon} ${esc(t(item.labelKey, item.label))}</a>`;
-  }).join('');
-  main.insertBefore(strip, main.firstChild);
+  const subSidebar = document.createElement('nav');
+  subSidebar.id = 'subSidebar';
+  subSidebar.className = 'sub-sidebar';
+  subSidebar.innerHTML = `
+    <div class="sub-sidebar__title">${esc(t(group.sectionKey, group.section || ''))}</div>
+    ${items.map((item) => {
+      const active = currentPage && currentPage.endsWith(item.href);
+      return `<a href="${item.href}" class="sub-sidebar__item ${active ? 'active' : ''}">${item.icon}<span>${esc(t(item.labelKey, item.label))}</span></a>`;
+    }).join('')}
+  `;
+
+  main.classList.add('main--with-subsidebar');
+  main.appendChild(subSidebar);
+  main.appendChild(contentWrap);
 }
 
 // Danh sach the gioi ma nguoi nay THUC SU co it nhat 1 muc dung duoc —
@@ -259,45 +276,15 @@ function injectBrandName() {
 }
 
 /**
- * Nut chon The gioi tren thanh tren cung — bam vao mo menu 4 lua chon
- * (ERP/CRM/Database/Ca nhan), chon xong luu lai va tu dieu huong ve trang
- * chu cua the gioi do (dashboard.html), tru khi dang o san 1 trang thuoc
- * dung the gioi vua chon (thi chi doi trang thai, khong dieu huong).
- */
-function injectWorldSwitcher(profile, currentWorld, currentPage) {
-  const anchor = document.querySelector('.topbar__left');
-  if (!anchor) return;
-  document.getElementById('worldSwitcher')?.remove();
-
-  const available = worldsWithAccess(profile);
-  if (available.length <= 1) return; // chi 1 the gioi thi khong can nut nay
-
-  // SUA — truoc day day la 1 menu tha xuong tu chon 4 the gioi NGAY
-  // TRONG topbar (trung lap voi trang cho/lobby moi xay, vua rac roi vua
-  // khong dep bang). Gio don gian hoa thanh 1 nut DUY NHAT dan thang ve
-  // dung trang lobby — noi DA CO SAN giao dien chon the gioi rat truc
-  // quan (toa nha, dai ngan ha...), khong can lam lai 1 ban rut gon o
-  // day nua.
-  const meta = WORLD_META[currentWorld];
-  const wrap = document.createElement('a');
-  wrap.id = 'worldSwitcher';
-  wrap.href = '/world-select.html';
-  wrap.className = 'world-switcher-link';
-  wrap.style.cssText = `--world-color:${meta.color};`;
-  wrap.innerHTML = `<span class="world-switcher-link__icon">${meta.icon}</span><span>Sảnh chính</span>`;
-  anchor.appendChild(wrap);
-}
-
-/**
  * Nut mo Hub (thay cho nut hamburger cu tung dung de dong/mo sidebar) —
  * bam vao hien 1 lop phu day man hinh voi luoi icon cua DUNG the gioi
  * dang chon, thay hoan toan cho viec di chuyen bang cay sidebar truoc day.
  */
 function injectHubLauncher(profile, currentWorld, currentPage) {
-  // Nut "Trang chu" — thoat nhanh ve dashboard tu bat ky trang nao, dung
-  // theo yeu cau "bam vao 1 chuc nang cu the khong co cach nao thoat ra
-  // nhanh" — truoc day chi co nut Hub (⊞) hoi nho, de bi bo qua.
-  if (!document.getElementById('homeBtn') && !currentPage?.endsWith('/dashboard.html')) {
+  // Nut "Trang chu" — thoat nhanh ve /world-select.html tu bat ky trang
+  // nao, dung theo yeu cau "bam vao 1 chuc nang cu the khong co cach nao
+  // thoat ra nhanh" — truoc day chi co nut Hub (⊞) hoi nho, de bi bo qua.
+  if (!document.getElementById('homeBtn') && !currentPage?.endsWith('/world-select.html')) {
     const topbarRight = document.querySelector('.topbar__right');
     if (topbarRight) {
       const homeBtn = document.createElement('button');
@@ -305,7 +292,7 @@ function injectHubLauncher(profile, currentWorld, currentPage) {
       homeBtn.className = 'icon-btn';
       homeBtn.title = t('common.backToHome', 'Về trang chủ');
       homeBtn.innerHTML = '<svg class="icon" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10"/></svg>';
-      homeBtn.onclick = () => { window.location.href = '/dashboard.html'; };
+      homeBtn.onclick = () => { window.location.href = '/world-select.html'; };
       topbarRight.insertBefore(homeBtn, topbarRight.firstChild);
     }
   }
@@ -401,7 +388,7 @@ function openHubOverlay(profile, currentWorld, currentPage) {
   const personalGroup = NAV_CONFIG.find((g) => g.alwaysShow);
   const effectiveGroups = currentWorld === 'personal' && personalGroup ? [personalGroup] : groups;
 
-  // Neu khong nhom nao khop trang hien tai (vd dang o dashboard.html) ->
+  // Neu khong nhom nao khop trang hien tai (vd dang o world-select.html) ->
   // tu mo san nhom DAU TIEN co the hien thi duoc, tranh ngan keo trong
   // rong khi vua mo ra.
   const anyMatchesCurrent = effectiveGroups.some((g) => g.items.some((item) => canAccess(item, profile) && currentPage && currentPage.endsWith(item.href)));
@@ -465,7 +452,12 @@ function injectLangSwitcher(profileId) {
     <button type="button" data-lang="vi" style="border:none;background:transparent;padding:5px 10px;border-radius:999px;font-size:11.5px;font-weight:700;cursor:pointer;color:var(--muted);">VI</button>
     <button type="button" data-lang="en" style="border:none;background:transparent;padding:5px 10px;border-radius:999px;font-size:11.5px;font-weight:700;cursor:pointer;color:var(--muted);">EN</button>
   `;
-  topbarRight.insertBefore(wrap, topbarRight.firstChild);
+  // Chèn NGAY SAU nút Home (nếu có) — khớp đúng thứ tự chuẩn topbar:
+  // AIS OFFICE, Home, Đổi ngôn ngữ, Thông báo, Hồ sơ cá nhân, Đăng xuất.
+  const homeBtn = document.getElementById('homeBtn');
+  if (homeBtn && homeBtn.nextSibling) topbarRight.insertBefore(wrap, homeBtn.nextSibling);
+  else if (homeBtn) topbarRight.appendChild(wrap);
+  else topbarRight.insertBefore(wrap, topbarRight.firstChild);
 
   function paint() {
     const current = getLang();

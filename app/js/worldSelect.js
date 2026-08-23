@@ -2,6 +2,7 @@ import { supabase, esc } from './supabase.js';
 import { worldsWithAccess } from './shell.js';
 import { NAV_CONFIG } from './navConfig.js';
 import { t, getLang, setLang, syncLangFromProfile } from './i18n.js';
+import { registerInstallBanner } from './installPrompt.js';
 
 // SUA LOI THAT NGHIEM TRONG: 2 bien nay truoc day khai bao o gan CUOI
 // file (bang "let"), nhung "paintLangSwitcher()" lai duoc GOI NGAY o
@@ -24,7 +25,7 @@ function paintLangSwitcher() {
   document.querySelectorAll('#langSwitcher button').forEach((b) => {
     b.classList.toggle('is-active', b.dataset.lang === current);
   });
-  document.getElementById('greetingEyebrow').textContent = timeGreeting();
+  if (FULL_PROFILE) renderGreeting(FULL_PROFILE.fullName);
   // Ve lai cac khu vuc co nhan dich duoc (ERP/Room/Banzone) de doi ngon
   // ngu xong hien dung ngay, khong can tai lai trang.
   if (FULL_PROFILE) {
@@ -140,6 +141,73 @@ function timeGreeting() {
   return t('lobby.greeting.evening', 'Chào buổi tối');
 }
 
+// LÀM LẠI 22/08/2026 — chuyển từ dashboard.js sang đây (world-select.html
+// giờ là "Trang chủ" duy nhất, xem ghi chú đầu file). Thay cho eyebrow
+// đơn giản "Chào buổi sáng" trước đây — hiện đủ ngày tháng + tên, đúng
+// mẫu Tổng quan cũ.
+function renderGreeting(fullName) {
+  const firstName = fullName?.trim().split(/\s+/).slice(-1)[0] || 'bạn';
+  const titleEl = document.querySelector('.hero-greeting__title');
+  if (titleEl) titleEl.innerHTML = `${timeGreeting()}, <span id="heroName">${esc(firstName)}</span>`;
+  const dateEl = document.getElementById('heroDate');
+  if (dateEl) dateEl.textContent = new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+// LÀM LẠI 22/08/2026 — 4 hàm dưới đây chuyển nguyên từ dashboard.js sang
+// (xem ghi chú đầu file: world-select.html giờ là "Trang chủ" duy nhất).
+function checkBirthday(dob, fullName) {
+  if (!dob) return;
+  const today = new Date();
+  const d = new Date(dob);
+  if (d.getUTCDate() === today.getDate() && d.getUTCMonth() === today.getMonth()) {
+    document.getElementById('birthdayBanner')?.classList.add('show');
+    const textEl = document.getElementById('birthdayText');
+    if (textEl) textEl.textContent = `Hôm nay là sinh nhật của ${fullName}! Chúc bạn một ngày thật vui và nhiều sức khoẻ.`;
+  }
+}
+
+async function loadNoticeBoard() {
+  const list = document.getElementById('noticeBoardList');
+  if (!list) return;
+  const { data, error } = await supabase.from('notifications').select('id, title, created_at').order('created_at', { ascending: false }).limit(6);
+  if (error || !data || data.length === 0) { list.innerHTML = '<div class="empty-cell">Chưa có thông báo nào.</div>'; return; }
+  list.innerHTML = data.map((n) => `
+    <div class="notice-board__item" data-id="${n.id}">
+      <div class="notice-board__item__title">${esc(n.title)}</div>
+      <div class="notice-board__item__meta">${new Date(n.created_at).toLocaleString('vi-VN')}</div>
+    </div>
+  `).join('');
+  list.querySelectorAll('[data-id]').forEach((el) => {
+    el.addEventListener('click', () => { window.location.href = '/notifications.html'; });
+  });
+}
+
+async function loadUnreadCount() {
+  const { data, error } = await supabase.rpc('unread_notification_count');
+  const unread = error ? 0 : Math.max(data ?? 0, 0);
+  const el = document.getElementById('statUnread');
+  if (el) el.textContent = String(unread);
+}
+
+async function loadStats(profileId) {
+  const now = new Date();
+  const { data: balance } = await supabase
+    .from('leave_balances')
+    .select('annual_leave_accrued, annual_leave_used, compensatory_leave')
+    .eq('employee_id', profileId).eq('year', now.getFullYear()).eq('month', now.getMonth() + 1).maybeSingle();
+  const leaveEl = document.getElementById('statLeave');
+  if (leaveEl) leaveEl.textContent = balance
+    ? (Number(balance.annual_leave_accrued) - Number(balance.annual_leave_used) + Number(balance.compensatory_leave)).toFixed(1)
+    : '0';
+
+  const { count: meetingCount } = await supabase
+    .from('meeting_participants').select('meeting_id', { count: 'exact', head: true }).eq('employee_id', profileId);
+  const meetingsEl = document.getElementById('statMeetings');
+  if (meetingsEl) meetingsEl.textContent = meetingCount ?? 0;
+
+  await loadUnreadCount().catch(() => {});
+}
+
 const EXEC_ICONS = { '/exec/reports.html': '📊' };
 const DEPT_ICON = { 'Phòng nhân sự': '👥', 'Phòng kế toán': '💰', 'Phòng truyền thông': '📣', 'Phòng cơ sở vật chất': '🔧' };
 // MOI — moi phong ban co MAU RIENG khi mo ra (banner chu de), khong con
@@ -167,7 +235,20 @@ const ITEM_ICONS = {
   '/mkt/tasks.html': '✅', '/mkt/sign.html': '✍️',
   '/fac/requests.html': '🛠️', '/fac/purchase-requests.html': '🛒', '/fac/stats.html': '📦',
   '/fac/tasks.html': '✅', '/fac/sign.html': '✍️',
+  // Khối trung tâm — bổ sung khi mở lưới chức năng NGAY trong world-select.html
+  // thay vì phải bay sang dashboard.html (xem openCrmWorkspace).
+  '/edu/wallet-invoices.html': '🧾', '/acc/wallet-topup-requests.html': '💰', '/edu/wallet-payment-log.html': '📄',
+  '/edu/debt-overview.html': '📋', '/edu/program-pricing.html': '💲', '/edu/inventory.html': '📦',
+  '/edu/retail-sale.html': '🛍️', '/acc/purchase-orders.html': '🧾', '/edu/center-overview.html': '🏫',
+  '/edu/attendance-overview.html': '✅', '/edu/duty-schedule.html': '🗓️', '/edu/teacher-schedule.html': '📚',
+  '/edu/class-assignment.html': '🧩', '/edu/students.html': '🎒', '/edu/parent-links.html': '🔗',
+  '/edu/grades.html': '📝', '/edu/sign.html': '✍️', '/edu/classes.html': '🏷️', '/edu/teachers.html': '🧑‍🏫',
+  '/teacher/classes.html': '🏷️', '/teacher/attendance.html': '✅', '/teacher/grades.html': '📝',
+  '/teacher/trial-students.html': '🆕', '/teacher/schedule.html': '📅',
+  '/consultant/leads.html': '📇', '/consultant/stats.html': '📊', '/consultant/trial-registration.html': '🆕',
 };
+
+const CRM_WORKSPACE_CENTER_KEY = 'ais_lobby_crm_center';
 
 document.querySelectorAll('.erp-tab').forEach((tab) => {
   tab.addEventListener('click', () => {
@@ -208,7 +289,7 @@ function renderErp(profile) {
     el.addEventListener('click', () => { if (el.dataset.href) window.location.href = el.dataset.href; });
   });
   document.querySelectorAll('#deptGrid .item-card:not(.item-card--locked)').forEach((el) => {
-    el.addEventListener('click', () => { openDeptWorkspace(el.dataset.dept, profile); showLayer('layerDeptWorkspace'); });
+    el.addEventListener('click', () => { openDeptWorkspace(el.dataset.dept, profile); PARENT_OF.layerDeptWorkspace = 'layerErp'; showLayer('layerDeptWorkspace'); });
   });
 }
 
@@ -218,9 +299,68 @@ function renderErp(profile) {
 // dang hien, nhung QUEN mat dang xem phong ban nao BEN TRONG lop do, nen
 // hien ra 1 man hinh trong khong — day chinh la loi ban gap.
 const DEPT_WORKSPACE_KEY = 'ais_lobby_dept';
+const CRM_SUBGROUP_META = {
+  tuition: { icon: '🧾', label: 'Thu học phí' },
+  warehouse: { icon: '📦', label: 'Kho & Vận hành' },
+  role: { icon: '🧑‍💼', label: 'Chức năng riêng' },
+};
+
+function openCrmWorkspace(center, profile) {
+  const group = NAV_CONFIG.find((g) => g.layer === 'centers');
+  if (!group || !center) return;
+  sessionStorage.removeItem(DEPT_WORKSPACE_KEY); // tránh nhập nhằng với ERP khi khôi phục lúc F5
+  sessionStorage.setItem(CRM_WORKSPACE_CENTER_KEY, JSON.stringify({ id: center.id, name: center.name, theme: center.divisions?.theme_color }));
+  const theme = center.divisions?.theme_color || center.theme || 'var(--accent)';
+  const allItems = group.items.filter((it) => it.visible(profile));
+
+  document.getElementById('deptWorkspaceBanner').innerHTML = `
+    <div class="dept-workspace-banner" style="background:${theme}1a; border-color:${theme}40;">
+      <span class="dept-workspace-banner__icon" style="background:${theme};">🎓</span>
+      <div><div class="dept-workspace-banner__name">${esc(center.name)}</div><div class="dept-workspace-banner__count">${allItems.length} ${t('lobby.erp.functionCount', 'chức năng')}</div></div>
+    </div>
+  `;
+
+  function renderSubgroupTiles() {
+    document.getElementById('deptWorkspaceGrid').innerHTML = Object.keys(CRM_SUBGROUP_META).map((sgKey) => {
+      const sgItems = allItems.filter((it) => it.subgroup === sgKey);
+      if (sgItems.length === 0) return '';
+      const meta = CRM_SUBGROUP_META[sgKey];
+      return `
+        <div class="item-card" data-subgroup="${sgKey}" style="border-color:${theme}30;">
+          <span class="item-card__icon" style="background:${theme}1a; border-radius:8px; width:32px; height:32px; display:flex; align-items:center; justify-content:center;">${meta.icon}</span>
+          <span class="item-card__name">${meta.label}</span>
+        </div>
+      `;
+    }).join('') || `<div class="content-sub">${t('lobby.erp.noItems', 'Không có mục nào.')}</div>`;
+    document.querySelectorAll('#deptWorkspaceGrid [data-subgroup]').forEach((c) => {
+      c.addEventListener('click', () => renderItemList(c.dataset.subgroup));
+    });
+  }
+
+  function renderItemList(sgKey) {
+    const sgItems = allItems.filter((it) => it.subgroup === sgKey);
+    document.getElementById('deptWorkspaceGrid').innerHTML = `
+      <button type="button" class="crm-workspace-back">← ${esc(CRM_SUBGROUP_META[sgKey].label)}</button>
+      ${sgItems.map((it) => `
+        <div class="item-card" data-href="${it.href}" style="border-color:${theme}30;">
+          <span class="item-card__icon" style="background:${theme}1a; border-radius:8px; width:32px; height:32px; display:flex; align-items:center; justify-content:center;">${ITEM_ICONS[it.href] || '📄'}</span>
+          <span class="item-card__name">${t(it.labelKey, it.label)}</span>
+        </div>
+      `).join('')}
+    `;
+    document.querySelector('.crm-workspace-back').addEventListener('click', renderSubgroupTiles);
+    document.querySelectorAll('#deptWorkspaceGrid .item-card').forEach((c) => {
+      c.addEventListener('click', () => { window.location.href = c.dataset.href; });
+    });
+  }
+
+  renderSubgroupTiles();
+}
+
 function openDeptWorkspace(dept, profile) {
   const group = NAV_CONFIG.find((g) => g.section === dept);
   if (!group) return;
+  sessionStorage.removeItem(CRM_WORKSPACE_CENTER_KEY); // tránh nhập nhằng với CRM khi khôi phục lúc F5
   sessionStorage.setItem(DEPT_WORKSPACE_KEY, dept);
   const items = group.items.filter((it) => it.visible(profile));
   const theme = DEPT_THEME[dept] || 'var(--accent)';
@@ -329,10 +469,14 @@ async function renderCrm(profile) {
   satelliteEls.forEach((el) => {
     el.addEventListener('click', () => {
       if (el.classList.contains('crm-satellite--locked')) return;
+      const centerObj = centers.find((c) => c.id === el.dataset.center);
       launchWarpJump(el, () => {
         localStorage.setItem(WORLD_STORAGE_KEY, 'crm');
         localStorage.setItem('ais_selected_center', el.dataset.center);
-        window.location.href = '/dashboard.html';
+        stopCrmAnimation();
+        openCrmWorkspace(centerObj, profile);
+        PARENT_OF.layerDeptWorkspace = 'layerCrm';
+        showLayer('layerDeptWorkspace');
       });
     });
   });
@@ -641,7 +785,7 @@ document.getElementById('btnOpenCheckin').addEventListener('click', openCheckin)
 // BOOT
 // =====================================================================
 (async () => {
-  document.getElementById('greetingEyebrow').textContent = timeGreeting();
+  // renderGreeting() gọi bên dưới sau khi có employee.full_name
 
   const { data: sessionData } = await supabase.auth.getSession();
   if (!sessionData.session) { window.location.href = '/index.html'; return; }
@@ -649,7 +793,7 @@ document.getElementById('btnOpenCheckin').addEventListener('click', openCheckin)
   const { data: employee } = await supabase
     .from('employees')
     .select(`
-      id, full_name, center_id, language_preference,
+      id, full_name, center_id, language_preference, dob,
       departments ( code ), positions ( name ),
       system_roles ( code ), centers ( id, name )
     `)
@@ -657,13 +801,21 @@ document.getElementById('btnOpenCheckin').addEventListener('click', openCheckin)
     .single();
 
   if (!employee) return;
-  document.getElementById('userNameSpan').textContent = employee.full_name || '';
+  renderGreeting(employee.full_name);
+  try { checkBirthday(employee.dob, employee.full_name?.split(' ').slice(-1)[0]); } catch (e) { console.warn('checkBirthday lỗi:', e); }
+  const statPendingEl = document.getElementById('statPending');
+  if (statPendingEl) statPendingEl.textContent = '—';
+  loadStats(employee.id).catch(console.warn);
+  loadNoticeBoard().catch(console.warn);
+  const installCard = document.getElementById('installBanner');
+  if (installCard) registerInstallBanner(installCard, installCard);
   PROFILE = { id: employee.id, centerId: employee.center_id };
   syncLangFromProfile(employee.language_preference);
   paintLangSwitcher();
 
   const fullProfile = {
     id: employee.id,
+    fullName: employee.full_name || '',
     departmentCode: employee.departments?.code || null,
     positionName: employee.positions?.name || '',
     roleCode: employee.system_roles?.code || 'STAFF',
@@ -686,6 +838,13 @@ document.getElementById('btnOpenCheckin').addEventListener('click', openCheckin)
   // sai — gio dung lai DUNG chuoi tu goc truoc khi hien lop dich.
   const savedLayer = sessionStorage.getItem(STORAGE_KEY);
   if (savedLayer && savedLayer !== 'layerBranches' && document.getElementById(savedLayer)) {
+    // Nếu đang khôi phục layerDeptWorkspace, xác định TRƯỚC nó thuộc về
+    // Hành chính hay Trung tâm — để chuỗi lịch sử (chain) bên dưới tính
+    // đúng ngay từ đầu, thay vì tính xong mới sửa lại.
+    if (savedLayer === 'layerDeptWorkspace') {
+      const savedDept = sessionStorage.getItem(DEPT_WORKSPACE_KEY);
+      PARENT_OF.layerDeptWorkspace = (savedDept && NAV_CONFIG.find((g) => g.section === savedDept)) ? 'layerErp' : 'layerCrm';
+    }
     window.history.replaceState({ layer: 'layerBranches' }, '', '#branches');
     const chain = [];
     let walk = savedLayer;
@@ -699,9 +858,18 @@ document.getElementById('btnOpenCheckin').addEventListener('click', openCheckin)
     // thay vi hien 1 man rong.
     if (savedLayer === 'layerDeptWorkspace') {
       const savedDept = sessionStorage.getItem(DEPT_WORKSPACE_KEY);
+      const savedCenterRaw = sessionStorage.getItem(CRM_WORKSPACE_CENTER_KEY);
       if (savedDept && NAV_CONFIG.find((g) => g.section === savedDept)) {
         openDeptWorkspace(savedDept, fullProfile);
         showLayer(savedLayer, { push: false });
+      } else if (savedCenterRaw) {
+        try {
+          const savedCenter = JSON.parse(savedCenterRaw);
+          openCrmWorkspace(savedCenter, fullProfile);
+          showLayer(savedLayer, { push: false });
+        } catch (e) {
+          showLayer('layerBranches', { push: false });
+        }
       } else {
         showLayer('layerErp', { push: false });
       }

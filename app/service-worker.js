@@ -14,7 +14,7 @@
 const CACHE_NAME = 'ais-shell-v120';
 const APP_SHELL = [
   '/index.html',
-  '/dashboard.html',
+  '/world-select.html',
   '/css/tokens.css',
   '/css/login.css',
   '/css/dashboard.css',

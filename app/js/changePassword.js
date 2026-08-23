@@ -46,5 +46,5 @@ form.addEventListener('submit', async (e) => {
     .update({ temp_password_flag: false })
     .eq('auth_user_id', userData.user.id);
 
-  window.location.href = 'dashboard.html';
+  window.location.href = '/world-select.html';
 });

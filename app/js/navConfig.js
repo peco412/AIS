@@ -30,7 +30,7 @@ export const NAV_CONFIG = [
   {
     section: null, layer: 'overview', // luôn hiển thị, không tiêu đề nhóm — đúng 2 mục "Bảng tổng quan" + "Thông báo"
     items: [
-      { labelKey: 'nav.dashboard', label: 'Trang chủ', href: '/dashboard.html', icon: '<svg class="icon" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10"/></svg>', visible: () => true },
+      { labelKey: 'nav.dashboard', label: 'Trang chủ', href: '/world-select.html', icon: '<svg class="icon" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10"/></svg>', visible: () => true },
       { labelKey: 'nav.notifications', label: 'Thông báo', href: '/notifications.html', icon: '<svg class="icon" viewBox="0 0 24 24"><path d="M6 8a6 6 0 1 1 12 0c0 4 1.5 6 2 6.5H4c.5-.5 2-2.5 2-6.5z"/><path d="M9.5 18a2.5 2.5 0 0 0 5 0"/></svg>', visible: () => true },
       { labelKey: 'nav.approvalCenter', label: 'Trung tâm phê duyệt', href: '/approval-center.html', icon: '<svg class="icon" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>', visible: () => true },
     ],

@@ -635,21 +635,9 @@
 
 /* =========================================================================
    HE THONG "4 THE GIOI" (ERP/CRM/Database/Ca nhan) — thay the sidebar cay
-   thu muc. World Switcher (dropdown chon the gioi) + Hub Overlay (luoi
-   icon toan man hinh thay cho viec di chuyen bang cay muc luc).
+   thu muc. Hub Overlay (luoi icon toan man hinh thay cho viec di chuyen
+   bang cay muc luc).
    ========================================================================= */
-
-.world-switcher-link {
-  display: flex; align-items: center; gap: 6px; margin-left: 12px; text-decoration: none;
-  background: color-mix(in srgb, var(--world-color) 10%, transparent);
-  border: 1px solid color-mix(in srgb, var(--world-color) 25%, transparent);
-  color: var(--world-color);
-  border-radius: 999px; padding: 6px 14px 6px 10px;
-  font-size: 12.5px; font-weight: 700; cursor: pointer;
-  transition: background var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease-spring);
-}
-.world-switcher-link:hover { background: color-mix(in srgb, var(--world-color) 16%, transparent); transform: translateY(-1px); }
-.world-switcher-link__icon { font-size: 14px; }
 
 .hub-overlay {
   position: fixed; inset: 0; z-index: 500;
@@ -759,7 +747,6 @@
 }
 
 @media (max-width: 640px) {
-  .world-switcher-link span:last-child { display: none; }
   /* SỬA — Material Design: trên điện thoại, đổi từ LƯỚI Ô VUÔNG (mỗi mục
      to, chỉ thấy 6-8 mục/màn hình, phải cuộn nhiều) sang DANH SÁCH DÒNG
      NGANG (icon + tên trên cùng 1 dòng, kiểu List đúng chuẩn Material cho
@@ -798,20 +785,38 @@
   body { padding-bottom: env(safe-area-inset-bottom); }
 }
 
-/* Dai "cac chuc nang cung nhom" — hien ngay dau moi trang, cuon ngang
-   duoc, giup di chuyen nhanh giua cac trang lien quan ma khong can mo
-   Hub overlay day du. */
-.sibling-strip {
-  display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 18px;
-  border-bottom: 1px solid var(--border);
+/* Sidebar phụ trong trang — hiện các trang "cùng nhóm" (VD trong Nhân sự:
+   Nhân viên/Nghỉ phép/Công tác/Hợp đồng...) để chuyển nhanh mà không cần
+   mở Hub. LÀM LẠI 22/08/2026: trước đây là 1 dải pill cuộn ngang ở đầu
+   trang, nhiều mục thì tràn dài rối mắt — đổi thành cột dọc thật sự, tách
+   bạch khỏi nội dung, giống mẫu ứng dụng desktop chuyên nghiệp. */
+.main--with-subsidebar { display: flex; align-items: flex-start; gap: 28px; }
+.main-content-area { flex: 1 1 auto; min-width: 0; }
+.sub-sidebar {
+  flex: 0 0 208px; display: flex; flex-direction: column; gap: 1px;
+  position: sticky; top: calc(var(--topbar-h) + 24px);
 }
-.sibling-strip::-webkit-scrollbar { height: 4px; }
-.sibling-strip::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
-.sibling-strip__item {
-  flex-shrink: 0; display: flex; align-items: center; gap: 6px;
-  padding: 7px 14px; border-radius: 999px; background: var(--surface-fill);
-  color: var(--ink-soft); font-size: 12.5px; font-weight: 600; text-decoration: none;
-  border: 1px solid transparent; transition: all var(--dur-fast) var(--ease);
+.sub-sidebar__title {
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+  color: var(--muted); padding: 0 12px 10px;
 }
-.sibling-strip__item:hover { background: var(--accent-tint); color: var(--accent-deep); }
-.sibling-strip__item.active { background: var(--accent); color: #fff; }
+.sub-sidebar__item {
+  display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: var(--radius-sm);
+  color: var(--ink-soft); font-size: 13.5px; font-weight: 600; text-decoration: none;
+  transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+.sub-sidebar__item .icon { width: 18px; height: 18px; flex-shrink: 0; }
+.sub-sidebar__item:hover { background: var(--surface-fill); color: var(--ink); }
+.sub-sidebar__item.active { background: var(--accent-tint); color: var(--accent-deep); }
+
+@media (max-width: 900px) {
+  .main--with-subsidebar { flex-direction: column; gap: 4px; }
+  .sub-sidebar {
+    position: static; flex-direction: row; width: 100%; overflow-x: auto;
+    gap: 6px; padding-bottom: 10px; margin-bottom: 14px; border-bottom: 1px solid var(--border);
+  }
+  .sub-sidebar::-webkit-scrollbar { height: 4px; }
+  .sub-sidebar__title { display: none; } /* trên điện thoại, tên nhóm đã có sẵn ở tiêu đề trang */
+  .sub-sidebar__item { flex-shrink: 0; padding: 7px 14px; border-radius: var(--radius-pill); background: var(--surface-fill); }
+  .sub-sidebar__item span { white-space: nowrap; }
+}

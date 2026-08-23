@@ -10,6 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="/css/tokens.css" />
+<link rel="stylesheet" href="/css/dashboard.css" />
 <style>
   /* ===================================================================
      Lobby — kế thừa tokens.css, không override nền/font gốc.
@@ -103,6 +104,16 @@
   .item-card__icon { font-size: 20px; flex-shrink: 0; }
   .item-card__name { font-size: 13px; font-weight: 600; color: var(--ink); flex: 1; }
   .item-card__lock { font-size: 15px; }
+
+  /* Nút quay lại 3 ô nhóm lớn (Thu học phí/Kho & Vận hành/Chức năng
+     riêng) khi đang xem danh sách chức năng bên trong 1 nhóm — xem
+     openCrmWorkspace() trong worldSelect.js. */
+  .crm-workspace-back {
+    grid-column: 1 / -1; display: flex; align-items: center; gap: 6px;
+    background: none; border: none; padding: 4px 2px 10px; margin: 0;
+    font-size: 13px; font-weight: 700; color: var(--ink-soft); cursor: pointer; text-align: left;
+  }
+  .crm-workspace-back:hover { color: var(--accent-deep); }
 
   .dept-workspace-banner {
     display: flex; align-items: center; gap: 14px; padding: 16px 18px; border-radius: var(--radius-lg);
@@ -250,9 +261,36 @@
 
   <!-- ================= LOP 1 — 4 KHU VUC (mac dinh, khong con "cua vao") ================= -->
   <section class="lobby-layer is-active" id="layerBranches">
+    <div class="hero-greeting" id="heroGreeting">
+      <div class="hero-greeting__text">
+        <div class="hero-greeting__eyebrow" id="heroDate">—</div>
+        <h1 class="hero-greeting__title">Chào buổi sáng, <span id="heroName">bạn</span></h1>
+      </div>
+    </div>
+
+    <div class="birthday-banner birthday-banner--marquee" id="birthdayBanner">
+      <div class="birthday-banner__icon"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="10" width="18" height="10" rx="1"/><path d="M3 14h18"/><path d="M12 10v10"/><path d="M12 10c-1.5-4-6-4-6-1.2C6 10 8 10 12 10z"/><path d="M12 10c1.5-4 6-4 6-1.2C18 10 16 10 12 10z"/></svg></div>
+      <div class="birthday-banner__marquee-track"><span id="birthdayText"></span></div>
+    </div>
+
+    <div class="install-guide-card" id="installBanner" style="display:none;">
+      <div class="install-guide-card__icon"><svg class="icon" viewBox="0 0 24 24"><path d="M12 3v13"/><path d="M7 11l5 5 5-5"/><path d="M4 19h16"/></svg></div>
+      <div class="install-guide-card__text">
+        <strong>Cài ứng dụng về máy để dùng nhanh hơn</strong>
+        <span>Xem hướng dẫn cho iPhone, Android, Windows, macOS</span>
+      </div>
+      <div class="install-guide-card__arrow">›</div>
+    </div>
+
+    <div class="stat-grid hub-stats">
+      <div class="stat-card"><div class="label">Thông báo chưa đọc</div><div class="value mono" id="statUnread">–</div></div>
+      <div class="stat-card"><div class="label">Ngày phép còn lại</div><div class="value mono" id="statLeave">–</div></div>
+      <div class="stat-card"><div class="label">Việc đang chờ duyệt</div><div class="value mono" id="statPending">–</div></div>
+      <div class="stat-card"><div class="label">Cuộc họp sắp tới</div><div class="value mono" id="statMeetings">–</div></div>
+    </div>
+
     <div class="branches-header">
-      <div class="branches-eyebrow" id="greetingEyebrow">Chào buổi sáng</div>
-      <div class="branches-title">AIS OFFICE <span id="userNameSpan">...</span></div>
+      <div class="branches-eyebrow">AIS OFFICE</div>
       <div class="branches-sub" data-i18n="lobby.branches.sub">Chọn 1 khu vực để bắt đầu</div>
     </div>
     <div class="branch-grid" id="branchGrid">
@@ -281,6 +319,11 @@
       <svg class="icon icon--sm" viewBox="0 0 24 24"><path d="M12 22s7-6.5 7-12a7 7 0 1 0-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg>
       <span data-i18n="lobby.entry.checkinTitle">Chấm công nhanh</span>
     </button>
+
+    <div class="notice-board" id="noticeBoard" style="margin-top:28px;">
+      <h3 class="notice-board__title">Bảng thông báo đẩy</h3>
+      <div class="notice-board__list" id="noticeBoardList"><div class="empty-cell">Đang tải...</div></div>
+    </div>
   </section>
 
   <!-- ================= LOP 2a — ERP ================= -->
