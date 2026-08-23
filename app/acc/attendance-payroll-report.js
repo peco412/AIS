@@ -20,7 +20,7 @@ async function loadReport() {
   const monthEnd = new Date(year, month, 1).toISOString();
 
   let query = supabase.from('attendance_checkins')
-    .select('employee_id, center_id, check_type, checked_at, employees(full_name), centers(name)')
+    .select('employee_id, center_id, check_type, checked_at, employees!attendance_checkins_employee_id_fkey(full_name), centers(name)')
     .gte('checked_at', monthStart).lt('checked_at', monthEnd)
     .order('checked_at', { ascending: true });
   if (centerId) query = query.eq('center_id', centerId);
