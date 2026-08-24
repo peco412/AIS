@@ -311,8 +311,13 @@ export async function initLeaveFormFlow() {
     if (action.step === 'level1') { updatePayload.level1_approver_id = PROFILE.id; updatePayload.level1_approved_at = nowIso; }
     if (action.step === 'level2') { updatePayload.level2_approver_id = PROFILE.id; updatePayload.level2_approved_at = nowIso; }
 
-    const { error } = await supabase.from('leave_requests').update(updatePayload).eq('id', row.id);
+    const { data, error } = await supabase.from('leave_requests').update(updatePayload).eq('id', row.id).select('id');
     if (error) { alert('Lỗi: ' + error.message); return; }
+    if (!data || data.length === 0) {
+      alert('Không thể duyệt đơn này — có thể bạn không đúng quyền duyệt ở cấp hiện tại của đơn, hoặc đơn đã được người khác xử lý trước đó. Tải lại trang và kiểm tra lại trạng thái đơn.');
+      await loadRows();
+      return;
+    }
 
     // MỚI — báo cho ĐÚNG người ở cấp tiếp theo, tránh tình trạng "im lặng"
     // khiến quản lý không biết đến lượt mình duyệt (xem notifyApprovers).
@@ -333,10 +338,19 @@ export async function initLeaveFormFlow() {
     const reason = await showPromptDialog(`Lý do từ chối đơn "${formLabel(row.form_code)}" của ${row.employees?.full_name || ''}:`, { title: 'Từ chối đơn', required: true });
     if (reason === null) return;
 
-    const { error } = await supabase.from('leave_requests').update({
+    const { data, error } = await supabase.from('leave_requests').update({
       status: 'rejected', reject_reason: reason, rejected_by: PROFILE.id, rejected_at: new Date().toISOString(),
-    }).eq('id', row.id);
+    }).eq('id', row.id).select('id');
     if (error) { alert('Lỗi: ' + error.message); return; }
+    // SỬA LỖI THẬT: Supabase/PostgREST KHÔNG báo lỗi khi RLS âm thầm chặn
+    // UPDATE — chỉ đơn giản không cập nhật được dòng nào, error vẫn null.
+    // Phải tự kiểm tra data rỗng để phát hiện, không thì sẽ "im lặng
+    // thành công giả" (giao diện tưởng xong nhưng dữ liệu không đổi).
+    if (!data || data.length === 0) {
+      alert('Không thể từ chối đơn này — có thể bạn không đúng quyền duyệt ở cấp hiện tại của đơn, hoặc đơn đã được người khác xử lý trước đó. Tải lại trang và kiểm tra lại trạng thái đơn.');
+      await loadRows();
+      return;
+    }
 
     const notifPayload = {
       scope: 'personal', target_employee_id: row.employee_id,
