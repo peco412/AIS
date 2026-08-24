@@ -4,6 +4,7 @@ import { NAV_CONFIG } from './navConfig.js';
 import { t, getLang, setLang, syncLangFromProfile } from './i18n.js';
 import { registerInstallBanner } from './installPrompt.js';
 import { initFortuneWidget } from './fortuneWidget.js';
+import { getPendingApprovalCount } from './approvalCenter.js';
 
 // SUA LOI THAT NGHIEM TRONG: 2 bien nay truoc day khai bao o gan CUOI
 // file (bang "let"), nhung "paintLangSwitcher()" lai duoc GOI NGAY o
@@ -878,8 +879,6 @@ document.getElementById('btnOpenCheckin').addEventListener('click', openCheckin)
   if (!employee) return;
   renderGreeting(employee.full_name);
   checkBirthday(employee.id).catch((e) => console.warn('checkBirthday lỗi:', e));
-  const statPendingEl = document.getElementById('statPending');
-  if (statPendingEl) statPendingEl.textContent = '—';
   loadStats(employee.id).catch(console.warn);
   loadNoticeBoard().catch(console.warn);
   initFortuneWidget(employee.dob);
@@ -900,6 +899,16 @@ document.getElementById('btnOpenCheckin').addEventListener('click', openCheckin)
     isCenterManager: employee.system_roles?.code === 'CENTER_MANAGER',
   };
   FULL_PROFILE = fullProfile;
+  document.getElementById('cardUnread')?.addEventListener('click', () => { window.location.href = '/notifications.html'; });
+  document.getElementById('cardPending')?.addEventListener('click', () => { window.location.href = '/approval-center.html'; });
+
+  // MỚI — nối dữ liệu thật cho ô "Việc đang chờ duyệt" (trước đây luôn
+  // hiện dấu "—" vì chưa từng tính). Dùng lại ĐÚNG logic 14 nguồn của
+  // Trung tâm phê duyệt (js/approvalCenter.js) — không viết trùng.
+  getPendingApprovalCount(fullProfile).then((count) => {
+    const el = document.getElementById('statPending');
+    if (el) el.textContent = String(count);
+  }).catch((e) => console.warn('Không đếm được việc chờ duyệt:', e));
 
   applyBranchLocks(fullProfile);
   renderErp(fullProfile);

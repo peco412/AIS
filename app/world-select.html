@@ -73,6 +73,17 @@
   }
   .branches-checkin:hover { background: var(--surface-fill); color: var(--ink); }
 
+  /* MỚI — lối vào nhanh (Trung tâm phê duyệt/Thông báo/Hồ sơ cá nhân) —
+     Trang chủ không có menu ☰ như các trang khác nên cần lối vào riêng. */
+  .quick-links-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+  .quick-link-chip {
+    display: flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: var(--radius-pill);
+    border: 1px solid var(--border); background: var(--surface-card); color: var(--ink-soft);
+    font-size: 12.5px; font-weight: 600; text-decoration: none;
+    transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
+  }
+  .quick-link-chip:hover { background: var(--accent-tint); color: var(--accent-deep); border-color: var(--accent); }
+
   /* ---- Widget Tử vi / Xin quẻ (mới) ---- */
   .fortune-fab {
     position: fixed; right: 22px; bottom: 22px; z-index: 500;
@@ -297,10 +308,29 @@
     </div>
 
     <div class="stat-grid hub-stats">
-      <div class="stat-card"><div class="label">Thông báo chưa đọc</div><div class="value mono" id="statUnread">–</div></div>
+      <div class="stat-card" id="cardUnread" style="cursor:pointer;" title="Xem thông báo"><div class="label">Thông báo chưa đọc</div><div class="value mono" id="statUnread">–</div></div>
       <div class="stat-card"><div class="label">Ngày phép còn lại</div><div class="value mono" id="statLeave">–</div></div>
-      <div class="stat-card"><div class="label">Việc đang chờ duyệt</div><div class="value mono" id="statPending">–</div></div>
+      <div class="stat-card" id="cardPending" style="cursor:pointer;" title="Vào Trung tâm phê duyệt"><div class="label">Việc đang chờ duyệt</div><div class="value mono" id="statPending">–</div></div>
       <div class="stat-card"><div class="label">Cuộc họp sắp tới</div><div class="value mono" id="statMeetings">–</div></div>
+    </div>
+
+    <!-- MỚI — lối vào nhanh, luôn hiện, không phụ thuộc phải bấm vào 1
+         khu vực trước mới thấy menu (Trang chủ trước đây KHÔNG có menu
+         ☰ như các trang khác, không có cách nào vào thẳng các trang dùng
+         chung như Trung tâm phê duyệt/Thông báo/Hồ sơ cá nhân). -->
+    <div class="quick-links-row">
+      <a href="/approval-center.html" class="quick-link-chip">
+        <svg class="icon icon--sm" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+        Trung tâm phê duyệt
+      </a>
+      <a href="/notifications.html" class="quick-link-chip">
+        <svg class="icon icon--sm" viewBox="0 0 24 24"><path d="M6 8a6 6 0 1 1 12 0c0 4 1.5 6 2 6.5H4c.5-.5 2-2.5 2-6.5z"/><path d="M9.5 18a2.5 2.5 0 0 0 5 0"/></svg>
+        Thông báo
+      </a>
+      <a href="/profile.html" class="quick-link-chip">
+        <svg class="icon icon--sm" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>
+        Hồ sơ cá nhân
+      </a>
     </div>
 
     <div class="branches-header">

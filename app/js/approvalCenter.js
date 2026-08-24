@@ -408,6 +408,16 @@ function render() {
   el.querySelectorAll('[data-go]').forEach((b) => b.addEventListener('click', () => { window.location.href = b.dataset.go; }));
 }
 
+// MỚI — cho phép trang khác (world-select.html) hiện đúng số việc đang
+// chờ duyệt (ô "Việc đang chờ duyệt" ở Trang chủ trước đây luôn hiện dấu
+// "—" vì chưa từng nối dữ liệu) — dùng lại ĐÚNG 14 nguồn đã có ở trên,
+// không viết trùng logic lọc theo quyền ở nơi khác (dễ lệch nhau).
+export async function getPendingApprovalCount(profile) {
+  PROFILE = profile;
+  const results = await Promise.all(SOURCES.map((fn) => fn().catch(() => [])));
+  return results.flat().length;
+}
+
 async function loadAll() {
   document.getElementById('approvalList').innerHTML = '<div class="approval-empty">Đang tải dữ liệu từ tất cả phòng ban...</div>';
   const results = await Promise.all(SOURCES.map((fn) => fn().catch((e) => { console.error(fn.name, e); return []; })));

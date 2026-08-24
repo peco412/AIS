@@ -1,5 +1,5 @@
 import { bootShell } from '/js/shell.js';
-import { supabase, esc, resolveFileUrl, notifyDepartmentHeads, triggerPush } from '/js/supabase.js';
+import { supabase, esc, resolveFileUrl, uploadPrivateFile, triggerPush } from '/js/supabase.js';
 import { t } from '/js/i18n.js';
 import { openPdfEditor } from '/js/pdfEditor.js';
 import { showConfirm, showPromptDialog } from '/js/confirmDialog.js';
@@ -220,6 +220,37 @@ export async function initLeaveFormFlow() {
   }
   document.getElementById('closeDetailViewModal').addEventListener('click', () => document.getElementById('detailViewModal').classList.remove('show'));
 
+  // MỚI — theo phản ánh "không có thông báo thì làm sao quản lý biết mà
+  // duyệt": trước đây CHỈ thông báo lúc tạo đơn (và cấp 1 cho giáo viên
+  // còn bị SAI — gửi nhầm cho trưởng phòng Học vụ thay vì đúng Quản lý
+  // trung tâm của họ), hoàn toàn không có thông báo khi đơn chuyển sang
+  // cấp 2 (HR) hay cấp 3 (Ban điều hành). Hàm này xác định ĐÚNG người cần
+  // báo cho từng cấp, dùng ở mọi điểm chuyển trạng thái.
+  async function notifyApprovers(row, level, title, content) {
+    let targetIds = [];
+    if (level === 1) {
+      if (groupOf(row.form_code) === 'teacher') {
+        const { data } = await supabase.from('employees').select('id, system_roles(code)').eq('center_id', row.employee_center_id);
+        targetIds = (data || []).filter((e) => e.system_roles?.code === 'CENTER_MANAGER').map((e) => e.id);
+      } else {
+        const { data } = await supabase.from('employees').select('id, system_roles(code)').eq('department_id', row.employees?.department_id);
+        targetIds = (data || []).filter((e) => ['DEPT_HEAD', 'DEPT_DEPUTY'].includes(e.system_roles?.code)).map((e) => e.id);
+      }
+    } else if (level === 2) {
+      const { data: hrDept } = await supabase.from('departments').select('id').eq('code', 'HR').single();
+      const { data } = await supabase.from('employees').select('id, system_roles(code)').eq('department_id', hrDept?.id);
+      targetIds = (data || []).filter((e) => ['DEPT_HEAD', 'DEPT_DEPUTY'].includes(e.system_roles?.code)).map((e) => e.id);
+    } else if (level === 3) {
+      const { data } = await supabase.from('employees').select('id, system_roles(code)');
+      targetIds = (data || []).filter((e) => e.system_roles?.code === 'EXECUTIVE').map((e) => e.id);
+    }
+    for (const employeeId of targetIds) {
+      const notif = { scope: 'personal', target_employee_id: employeeId, title, content, link_url: '/hr/leave-requests.html', created_by: PROFILE.id };
+      await supabase.from('notifications').insert(notif);
+      triggerPush(notif);
+    }
+  }
+
   async function viewRow(id) {
     const row = ALL_ROWS.find((r) => r.id === id);
     if (!row.file_url) return;
@@ -282,6 +313,14 @@ export async function initLeaveFormFlow() {
 
     const { error } = await supabase.from('leave_requests').update(updatePayload).eq('id', row.id);
     if (error) { alert('Lỗi: ' + error.message); return; }
+
+    // MỚI — báo cho ĐÚNG người ở cấp tiếp theo, tránh tình trạng "im lặng"
+    // khiến quản lý không biết đến lượt mình duyệt (xem notifyApprovers).
+    const nextLevel = action.step === 'level1' ? 2 : 3;
+    await notifyApprovers(row, nextLevel,
+      `Có đơn "${formLabel(row.form_code)}" cần duyệt`,
+      `Đơn ${row.code} của ${row.employees?.full_name || ''} đã qua cấp trước, đang chờ bạn duyệt.`);
+
     await loadRows();
   }
 
@@ -401,6 +440,7 @@ export async function initLeaveFormFlow() {
     document.getElementById('days').value = '';
     document.getElementById('returnDate').value = '';
     document.getElementById('reasonNote').value = '';
+    document.getElementById('signedFileInput').value = '';
     renderDetailSection(formCodeSelect.value);
     createModal.classList.add('show');
   });
@@ -421,6 +461,10 @@ export async function initLeaveFormFlow() {
 
     const detailItems = collectDetailItems();
     const TEMPLATE = TEMPLATES[formCode];
+    const signedFile = document.getElementById('signedFileInput').files[0];
+
+    const submitBtn = document.getElementById('submitCreate');
+    submitBtn.disabled = true; submitBtn.textContent = 'Đang gửi...';
 
     const { data: inserted, error } = await supabase.from('leave_requests').insert({
       employee_id: PROFILE.id, form_code: formCode, staff_group: MY_GROUP, template_id: TEMPLATE?.id || null,
@@ -430,20 +474,34 @@ export async function initLeaveFormFlow() {
       reason_note: document.getElementById('reasonNote').value || null,
       detail_items: detailItems && detailItems.length > 0 ? detailItems : null,
       status: 'submitted',
-    }).select('id').single();
-    if (error) { createError.textContent = 'Lỗi: ' + error.message; createError.classList.add('show'); return; }
+    }).select('id, code').single();
+    if (error) { createError.textContent = 'Lỗi: ' + error.message; createError.classList.add('show'); submitBtn.disabled = false; submitBtn.textContent = 'Gửi đơn'; return; }
+
+    // MỚI — theo đúng luồng mới: mỗi người TỰ tải lên file PDF đã có chữ
+    // ký của mình ngay lúc tạo đơn, KHÔNG cần hệ thống mở biểu mẫu trống
+    // để điền/ký nữa. Các cấp duyệt sau này sẽ ký ĐÈ LÊN đúng file này
+    // (xem signDocument — nút "✍️ Ký vào mẫu đơn" trong bảng danh sách).
+    if (signedFile) {
+      try {
+        const path = `leave-requests-v2/${inserted.id}/current.pdf`;
+        await uploadPrivateFile(path, signedFile, { contentType: 'application/pdf', upsert: true });
+        await supabase.from('leave_requests').update({ file_url: path }).eq('id', inserted.id);
+      } catch (e) {
+        alert('Đơn đã gửi nhưng tải file PDF lên thất bại: ' + (e.message || 'Có lỗi xảy ra.') + ' — có thể tải lại sau bằng nút "✍️ Ký vào mẫu đơn".');
+      }
+    }
 
     createModal.classList.remove('show');
+    submitBtn.disabled = false; submitBtn.textContent = 'Gửi đơn';
 
-    const deptCode = MY_GROUP === 'teacher' ? 'EDU' : (PROFILE.departmentCode || 'HR');
-    notifyDepartmentHeads(deptCode, `Có đơn "${formLabel(formCode)}" mới cần duyệt`,
-      `${PROFILE.fullName} vừa gửi đơn ${formLabel(formCode)} — vào duyệt ngay.`, location.pathname, PROFILE.id);
+    await notifyApprovers(
+      { form_code: formCode, code: inserted.code || '', employees: { full_name: PROFILE.fullName, department_id: PROFILE.departmentId }, employee_center_id: PROFILE.centerId },
+      1,
+      `Có đơn "${formLabel(formCode)}" mới cần duyệt`,
+      `${PROFILE.fullName} vừa gửi đơn ${formLabel(formCode)} — vào duyệt ngay.`
+    );
 
     await loadRows();
-
-    if (!TEMPLATE) {
-      alert(`Đơn đã gửi thành công. Lưu ý: chưa có biểu mẫu PDF cho loại đơn "${formLabel(formCode)}" trong Kho lưu trữ > Biểu mẫu — khi cần ký, liên hệ bộ phận kỹ thuật để tải mẫu lên trước.`);
-    }
   });
 
   document.getElementById('viewScope').addEventListener('change', loadRows);
@@ -454,7 +512,7 @@ export async function initLeaveFormFlow() {
     const { data: emp } = await supabase.from('employees').select('signature_url, department_id, center_id, departments(code)').eq('id', profile.id).single();
     PROFILE = {
       ...profile, signatureUrl: emp?.signature_url || null,
-      departmentCode: emp?.departments?.code, centerId: emp?.center_id,
+      departmentCode: emp?.departments?.code, departmentId: emp?.department_id, centerId: emp?.center_id,
     };
     MY_GROUP = profile.isTeacher ? 'teacher' : 'office';
     IS_HR = PROFILE.departmentCode === 'HR' && ['DEPT_HEAD', 'DEPT_DEPUTY'].includes(profile.roleCode);

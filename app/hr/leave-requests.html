@@ -85,6 +85,16 @@
     <div class="field"><label for="returnDate">Ngày đi làm lại</label><input type="date" id="returnDate" /></div>
     <div class="field"><label for="reasonNote">Lý do</label><textarea id="reasonNote" rows="2"></textarea></div>
 
+    <!-- MỚI — tải lên file PDF đã có chữ ký của người làm đơn. Các cấp
+         duyệt sau này sẽ ký ĐÈ LÊN đúng file này (xem nút "Ký vào mẫu
+         đơn" trong bảng danh sách), không cần hệ thống tự mở biểu mẫu
+         trống theo template nữa. -->
+    <div class="field">
+      <label for="signedFileInput">File đơn đã ký (PDF)</label>
+      <input type="file" id="signedFileInput" accept="application/pdf" />
+      <div class="cell-muted" style="font-size:11.5px; margin-top:4px;">Tải lên bản đã có chữ ký của bạn — có thể bổ sung sau nếu chưa có sẵn ngay bây giờ.</div>
+    </div>
+
     <!-- MỚI — khung bảng chi tiết, hiện/ẩn + đổi cột tuỳ loại đơn đã chọn
          (xem DETAIL_SCHEMAS trong leaveFormFlow.js). VD: bàn giao công
          việc/lớp dạy, hoán đổi ngày nghỉ/lịch dạy — đúng thông tin cấp
