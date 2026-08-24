@@ -271,14 +271,22 @@ async function loadFinanceBoard(profile) {
 const SCOPE_LABEL = { system: 'Toàn hệ thống', center: 'Trung tâm', department: 'Phòng ban', personal: 'Cá nhân' };
 const SCOPE_BADGE_CLASS = { system: 'badge-rejected', center: 'badge-approved_1', department: 'badge-submitted', personal: 'badge-active' };
 
+let ACTIVE_NOTICE_TYPE = 'info';
+
 async function loadNoticeBoard() {
   const list = document.getElementById('noticeBoardList');
   if (!list) return;
-  // LÀM LẠI 22/08/2026 — theo yêu cầu "đang hiện thông báo đẩy không
-  // phân luồng": thêm nhãn luồng (Toàn hệ thống/Trung tâm/Phòng ban/Cá
-  // nhân) vào mỗi thông báo, để phân biệt ngay được đây là việc chung
-  // hay chỉ liên quan riêng mình, không còn trộn lẫn mập mờ như trước.
-  const { data, error } = await supabase.from('notifications').select('id, scope, title, created_at').order('created_at', { ascending: false }).limit(6);
+  list.innerHTML = '<div class="empty-cell">Đang tải...</div>';
+  // LÀM LẠI 24/08/2026 — theo yêu cầu tách "thông báo thông tin" (con
+  // người chủ động soạn — vd Ban hành thông báo) và "thông báo hệ thống"
+  // (tự sinh theo nghiệp vụ — vd yêu cầu nạp ví), dùng ĐÚNG cột
+  // notification_type đã có sẵn ở database, khớp cách trang Thông báo
+  // đầy đủ (notifications.html) đã phân loại — không tạo cách phân loại
+  // riêng lệch nhau giữa 2 nơi. Nhãn luồng (Toàn hệ thống/Trung tâm/
+  // Phòng ban/Cá nhân) vẫn giữ — đây là 2 chiều phân loại khác nhau (loại
+  // nội dung vs. phạm vi ai xem được), không thay thế nhau.
+  const { data, error } = await supabase.from('notifications').select('id, scope, title, created_at')
+    .eq('notification_type', ACTIVE_NOTICE_TYPE).order('created_at', { ascending: false }).limit(6);
   if (error || !data || data.length === 0) { list.innerHTML = '<div class="empty-cell">Chưa có thông báo nào.</div>'; return; }
   list.innerHTML = data.map((n) => `
     <div class="notice-board__item" data-id="${n.id}">
@@ -293,6 +301,15 @@ async function loadNoticeBoard() {
     el.addEventListener('click', () => { window.location.href = '/notifications.html'; });
   });
 }
+
+document.querySelectorAll('.notice-board__tab').forEach((tab) => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.notice-board__tab').forEach((t) => t.classList.remove('is-active'));
+    tab.classList.add('is-active');
+    ACTIVE_NOTICE_TYPE = tab.dataset.notifType;
+    loadNoticeBoard();
+  });
+});
 
 async function loadUnreadCount() {
   const { data, error } = await supabase.rpc('unread_notification_count');
@@ -527,15 +544,16 @@ async function renderCrm(profile) {
   const stage = document.getElementById('crmStage');
   if (error || !allCenters || allCenters.length === 0) { sub.textContent = t('lobby.crm.loadError', 'Không tải được danh sách trung tâm.'); return; }
 
-  // "Các trung tâm không thể thấy của nhau" — nhân sự bị giới hạn 1 trung
-  // tâm (xem điều kiện restrictedToOwnCenter ở dưới) sẽ KHÔNG thấy sự
-  // hiện diện của trung tâm khác trong danh sách này, chứ không chỉ bị
-  // khoá không vào được (trước đây vẫn thấy tên + icon khoá của mọi
-  // trung tâm khác, lộ ra tồn tại của các trung tâm không liên quan).
-  const willBeRestricted = !!profile.centerId
+  // "Các trung tâm không thể thấy của nhau" (dữ liệu) vẫn giữ đúng — chỉ
+  // đổi lại CÁCH THỂ HIỆN theo phản hồi: hiện TẤT CẢ trung tâm cho đẹp
+  // mắt (hiệu ứng vệ tinh quay quanh cần nhiều hành tinh mới sinh động,
+  // 1 hành tinh lẻ loi nhìn trống trải), nhưng KHOÁ không bấm vào được
+  // với trung tâm ngoài quyền — không lộ DỮ LIỆU bên trong, chỉ lộ TÊN +
+  // icon khoá 🔒, tương tự cách "Hành chính" khoá phòng ban không có quyền.
+  const restrictedToOwnCenter = !!profile.centerId
     && !['EXECUTIVE', 'TECH'].includes(profile.roleCode)
     && profile.departmentCode !== 'ACC';
-  const centers = willBeRestricted ? allCenters.filter((c) => c.id === profile.centerId) : allCenters;
+  const centers = allCenters;
 
   sub.textContent = `${centers.length} ${t('lobby.crm.activeCenters', 'trung tâm đang hoạt động')}`;
 
@@ -551,10 +569,9 @@ async function renderCrm(profile) {
     const angleDeg = (137.5 * i) % 360;
     const color = c.divisions?.theme_color || '#94A3B8';
     const diameter = 44 + (i % 3) * 8; // 44/52/60px — hoi to hon truoc, do chu can nhieu cho hon
-    // Danh sách "centers" đã được lọc sẵn theo quyền ở đầu hàm
-    // (willBeRestricted) — tới đây mọi phần tử còn lại đều là trung tâm
-    // người dùng ĐƯỢC vào, không cần tính lại điều kiện khoá.
-    const isAccessible = true;
+    // Khoá đúng trung tâm KHÁC trung tâm của mình khi bị giới hạn — trung
+    // tâm của chính mình (nếu có trong danh sách) vẫn luôn mở được.
+    const isAccessible = !restrictedToOwnCenter || c.id === profile.centerId;
     // SUA — chu bi tran ra ngoai hanh tinh vi dung nguyen "code" trung
     // tam (co the dai 6-7 ky tu) o co chu co dinh — gio CAT NGAN toi da
     // 4 ky tu VA tu giam co chu neu ten van dai hon muc do rong cho phep.

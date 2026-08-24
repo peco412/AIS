@@ -45,7 +45,7 @@
     <div class="page-header">
       <div>
         <h1>Phiếu đề nghị mua sắm / sửa chữa</h1>
-        <div class="sub">Quy trình: Người đề nghị ký → Trưởng phòng CSVC duyệt → Ban điều hành ký → Lưu trữ.</div>
+        <div class="sub">Người đề nghị gửi phiếu → Trưởng phòng CSVC duyệt → Ban điều hành duyệt → Lưu trữ. Ký vào mẫu đơn là bước riêng.</div>
       </div>
       <button class="btn btn-accent" id="btnAdd">+ Tạo phiếu mới</button>
     </div>
@@ -68,9 +68,11 @@
 </div>
 
 <div class="modal-overlay" id="createModal">
-  <div class="modal-box">
+  <div class="modal-box" style="max-width:520px;">
     <button class="modal-close" id="closeCreateModal"><svg class="icon icon--sm" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     <h3>Tạo phiếu đề nghị</h3>
+    <p class="modal-sub">Điền đầy đủ thông tin để cấp trên duyệt được ngay — không bắt buộc phải ký vào mẫu đơn lúc này, có thể ký sau.</p>
+    <div class="form-error" id="createError"></div>
     <div class="field">
       <label>Loại phiếu *</label>
       <div style="display:flex; gap:16px; margin-top:6px;">
@@ -78,12 +80,26 @@
         <label style="display:flex; align-items:center; gap:6px; font-weight:500;"><input type="radio" name="reqType" value="repair" /> Đề nghị sửa chữa</label>
       </div>
     </div>
-    <p class="modal-sub">Điền nội dung trực tiếp lên biểu mẫu PDF rồi ký.</p>
-    <div class="form-error" id="createError"></div>
+    <div class="field"><label for="reqDescription">Mô tả nội dung *</label><textarea id="reqDescription" rows="2" required placeholder="VD: Mua 5 máy chiếu cho phòng học A1-A5"></textarea></div>
+    <div class="field"><label for="reqEstimatedAmount">Số tiền dự kiến (VNĐ)</label><input type="number" id="reqEstimatedAmount" min="0" /></div>
+    <div class="field">
+      <label for="signedFileInput">File phiếu đã ký (PDF)</label>
+      <input type="file" id="signedFileInput" accept="application/pdf" />
+      <p class="cell-muted" style="margin-top:4px;">Tải lên bản đã có chữ ký của bạn — có thể bổ sung sau nếu chưa có sẵn.</p>
+    </div>
     <div class="modal-actions">
       <button type="button" class="btn btn-outline" id="cancelCreate"><span data-i18n="common.cancel">Huỷ</span></button>
-      <button type="button" class="btn btn-accent" id="openFillEditor">Điền &amp; ký biểu mẫu →</button>
+      <button type="button" class="btn btn-accent" id="submitCreate">Gửi phiếu</button>
     </div>
+  </div>
+</div>
+
+<!-- MỚI — xem chi tiết dữ liệu phiếu để duyệt không cần mở PDF -->
+<div class="modal-overlay" id="detailViewModal">
+  <div class="modal-box" style="max-width:520px;">
+    <button class="modal-close" id="closeDetailViewModal"><svg class="icon icon--sm" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    <h3 id="detailViewTitle">Chi tiết phiếu</h3>
+    <div id="detailViewBody"></div>
   </div>
 </div>
 

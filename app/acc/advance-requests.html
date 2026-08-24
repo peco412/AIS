@@ -45,7 +45,7 @@
     <div class="page-header">
       <div>
         <h1>Phiếu đề nghị tạm ứng</h1>
-        <div class="sub">Quy trình: Người đề nghị ký → Kế toán ký → Ban điều hành ký → Lưu trữ.</div>
+        <div class="sub">Người đề nghị gửi phiếu → Quản lý trực tiếp duyệt → Kế toán duyệt → Ban điều hành duyệt → Lưu trữ. Ký vào mẫu đơn là bước riêng.</div>
       </div>
       <button class="btn btn-accent" id="btnAdd">+ Tạo phiếu mới</button>
     </div>
@@ -68,17 +68,31 @@
 </div>
 
 <div class="modal-overlay" id="createModal">
-  <div class="modal-box">
+  <div class="modal-box" style="max-width:520px;">
     <button class="modal-close" id="closeCreateModal"><svg class="icon icon--sm" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     <h3>Tạo phiếu đề nghị tạm ứng</h3>
-    <p class="modal-sub">Nhập thông tin cơ bản, sau đó điền chi tiết lên biểu mẫu PDF và ký.</p>
+    <p class="modal-sub">Điền đầy đủ thông tin để cấp trên duyệt được ngay — không bắt buộc phải ký vào mẫu đơn lúc này, có thể ký sau.</p>
     <div class="form-error" id="createError"></div>
     <div class="field"><label for="amount">Số tiền tạm ứng (VNĐ) *</label><input type="number" id="amount" min="0" required /></div>
     <div class="field"><label for="reason">Lý do tạm ứng *</label><textarea id="reason" rows="2" required></textarea></div>
+    <div class="field">
+      <label for="signedFileInput">File phiếu đã ký (PDF)</label>
+      <input type="file" id="signedFileInput" accept="application/pdf" />
+      <p class="cell-muted" style="margin-top:4px;">Tải lên bản đã có chữ ký của bạn — có thể bổ sung sau nếu chưa có sẵn.</p>
+    </div>
     <div class="modal-actions">
       <button type="button" class="btn btn-outline" id="cancelCreate"><span data-i18n="common.cancel">Huỷ</span></button>
-      <button type="button" class="btn btn-accent" id="openFillEditor">Tiếp tục điền &amp; ký biểu mẫu →</button>
+      <button type="button" class="btn btn-accent" id="submitCreate">Gửi phiếu</button>
     </div>
+  </div>
+</div>
+
+<!-- MỚI — xem chi tiết dữ liệu phiếu để duyệt không cần mở PDF -->
+<div class="modal-overlay" id="detailViewModal">
+  <div class="modal-box" style="max-width:520px;">
+    <button class="modal-close" id="closeDetailViewModal"><svg class="icon icon--sm" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    <h3 id="detailViewTitle">Chi tiết phiếu</h3>
+    <div id="detailViewBody"></div>
   </div>
 </div>
 

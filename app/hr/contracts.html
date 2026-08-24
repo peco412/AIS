@@ -45,7 +45,7 @@
     <div class="page-header">
       <div>
         <h1>Hợp đồng lao động</h1>
-        <div class="sub">Quy trình ký: Nhân viên → Trưởng phòng nhân sự → Ban điều hành → Lưu trữ.</div>
+        <div class="sub">Nhân viên xác nhận → Trưởng phòng nhân sự duyệt → Ban điều hành duyệt → Lưu trữ. Ký vào mẫu đơn là bước riêng, có thể làm trước/sau khi duyệt.</div>
       </div>
       <button class="btn btn-accent" id="btnAdd">+ Tạo hợp đồng mới</button>
     </div>
@@ -63,12 +63,12 @@
   </main>
 </div>
 
-<!-- Modal chọn nhân viên khi tạo hợp đồng mới -->
+<!-- Modal tạo hợp đồng mới -->
 <div class="modal-overlay" id="createModal">
-  <div class="modal-box">
+  <div class="modal-box" style="max-width:560px;">
     <button class="modal-close" id="closeCreateModal"><svg class="icon icon--sm" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     <h3>Tạo hợp đồng mới</h3>
-    <p class="modal-sub">Chọn nhân viên, sau đó điền nội dung trực tiếp lên biểu mẫu PDF.</p>
+    <p class="modal-sub">Điền đầy đủ nội dung hợp đồng để cấp trên duyệt được ngay — không bắt buộc phải ký vào mẫu đơn lúc này, có thể ký sau.</p>
     <div class="form-error" id="createError"></div>
     <div class="field">
       <label for="employeeSelect">Nhân viên *</label>
@@ -83,10 +83,30 @@
         <option value="service">Hợp đồng dịch vụ</option>
       </select>
     </div>
+    <div class="field-grid-2">
+      <div class="field"><label for="contractStartDate">Ngày bắt đầu *</label><input type="date" id="contractStartDate" required /></div>
+      <div class="field"><label for="contractEndDate">Ngày kết thúc</label><input type="date" id="contractEndDate" /></div>
+    </div>
+    <div class="field-grid-2">
+      <div class="field"><label for="contractPosition">Chức danh</label><input type="text" id="contractPosition" class="text-input" placeholder="VD: Giáo viên tiếng Anh" /></div>
+      <div class="field"><label for="contractSalary">Lương (đ/tháng)</label><input type="number" id="contractSalary" class="text-input" min="0" step="100000" /></div>
+    </div>
+    <div class="field"><label for="contractWorkLocation">Nơi làm việc</label><input type="text" id="contractWorkLocation" class="text-input" /></div>
+    <div class="field"><label for="contractNotes">Ghi chú thêm</label><textarea id="contractNotes" rows="2"></textarea></div>
     <div class="modal-actions">
       <button type="button" class="btn btn-outline" id="cancelCreate"><span data-i18n="common.cancel">Huỷ</span></button>
-      <button type="button" class="btn btn-accent" id="openFillEditor">Tiếp tục điền biểu mẫu →</button>
+      <button type="button" class="btn btn-accent" id="submitCreate">Gửi hợp đồng</button>
     </div>
+  </div>
+</div>
+
+<!-- MỚI — modal xem chi tiết nội dung hợp đồng, để cấp trên duyệt dựa
+     trên dữ liệu thật mà không bắt buộc mở PDF. -->
+<div class="modal-overlay" id="detailViewModal">
+  <div class="modal-box" style="max-width:560px;">
+    <button class="modal-close" id="closeDetailViewModal"><svg class="icon icon--sm" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    <h3 id="detailViewTitle">Chi tiết hợp đồng</h3>
+    <div id="detailViewBody"></div>
   </div>
 </div>
 

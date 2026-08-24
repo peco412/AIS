@@ -84,6 +84,14 @@
   }
   .quick-link-chip:hover { background: var(--accent-tint); color: var(--accent-deep); border-color: var(--accent); }
 
+  .notice-board__tabs { display: flex; gap: 4px; background: var(--surface-fill); border-radius: var(--radius-pill); padding: 3px; }
+  .notice-board__tab {
+    border: none; background: transparent; padding: 6px 14px; border-radius: var(--radius-pill);
+    font-size: 12px; font-weight: 700; color: var(--ink-soft); cursor: pointer;
+    transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+  }
+  .notice-board__tab.is-active { background: var(--surface-card); color: var(--accent-deep); box-shadow: var(--shadow-xs); }
+
   /* ---- Widget Tử vi / Xin quẻ (mới) ---- */
   .fortune-fab {
     position: fixed; right: 22px; bottom: 22px; z-index: 500;
@@ -370,7 +378,13 @@
     </div>
 
     <div class="notice-board" id="noticeBoard" style="margin-top:16px;">
-      <h3 class="notice-board__title">Bảng thông báo đẩy</h3>
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+        <h3 class="notice-board__title" style="margin:0;">Bảng thông báo đẩy</h3>
+        <div class="notice-board__tabs">
+          <button type="button" class="notice-board__tab is-active" data-notif-type="info">Thông tin</button>
+          <button type="button" class="notice-board__tab" data-notif-type="system">Hệ thống</button>
+        </div>
+      </div>
       <div class="notice-board__list" id="noticeBoardList"><div class="empty-cell">Đang tải...</div></div>
     </div>
   </section>
