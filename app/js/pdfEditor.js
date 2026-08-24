@@ -82,6 +82,7 @@ export async function openPdfEditor({
       <span class="title">${title}</span>
       ${readOnly ? '' : `
         <button type="button" id="pdfedAddText">Thêm văn bản</button>
+        <button type="button" id="pdfedEditText" title="Che chữ cũ và gõ chữ mới đè lên — PDF không sửa chữ tại chỗ được như Word, đây là cách các công cụ sửa PDF vẫn dùng">Sửa chữ</button>
         <button type="button" id="pdfedAddSig" ${signatureUrl ? '' : 'disabled title="Bạn chưa có chữ ký cá nhân — cập nhật ở Hồ sơ cá nhân"'}>Chèn chữ ký</button>
         ${isTemplateDesigner ? '<button type="button" id="pdfedSaveFieldMap">Lưu vị trí mẫu</button>' : ''}
         <span class="hint" id="pdfedHint"></span>
@@ -103,7 +104,7 @@ export async function openPdfEditor({
   const body = overlay.querySelector('#pdfedBody');
   const hint = overlay.querySelector('#pdfedHint');
 
-  let armedTool = null; // 'text' | 'signature' | null
+  let armedTool = null; // 'text' | 'whiteout' | 'signature' | null
   const overlays = []; // { pageIndex, el, type, xPct, yPct, wPct, hPct, get text() }
   let originalBytes = null;
 
@@ -111,8 +112,12 @@ export async function openPdfEditor({
     armedTool = tool;
     overlay.querySelectorAll('.pdfed-page').forEach((p) => p.classList.toggle('place-armed', !!tool));
     overlay.querySelector('#pdfedAddText')?.classList.toggle('armed', tool === 'text');
+    overlay.querySelector('#pdfedEditText')?.classList.toggle('armed', tool === 'whiteout');
     overlay.querySelector('#pdfedAddSig')?.classList.toggle('armed', tool === 'signature');
-    if (hint) hint.textContent = tool ? 'Nhấp vào vị trí trên trang để đặt' : '';
+    if (hint) {
+      hint.textContent = tool === 'whiteout' ? 'Nhấp đúng chỗ chữ cũ cần sửa — kéo khung vừa đủ che hết chữ cũ rồi gõ chữ mới vào'
+        : tool ? 'Nhấp vào vị trí trên trang để đặt' : '';
+    }
   }
 
   function makeDraggable(el, pageEl) {
@@ -159,7 +164,7 @@ export async function openPdfEditor({
 
   function addOverlayItem(pageEl, pageIndex, x, y, type, opts = {}) {
     const el = document.createElement('div');
-    el.className = 'pdfed-overlay-item';
+    el.className = 'pdfed-overlay-item' + (type === 'whiteout' ? ' pdfed-overlay-item--whiteout' : '');
     const w = opts.width || (type === 'signature' ? 150 : 200);
     const h = opts.height || (type === 'signature' ? 60 : 30);
     // opts.exact = true -> x/y đã là toạ độ góc trên-trái thật (dùng khi đặt
@@ -182,7 +187,7 @@ export async function openPdfEditor({
       el.appendChild(img);
     } else {
       const ta = document.createElement('textarea');
-      ta.placeholder = opts.label || 'Nhập nội dung...';
+      ta.placeholder = opts.label || (type === 'whiteout' ? 'Chữ mới thay thế...' : 'Nhập nội dung...');
       if (opts.textValue) ta.value = opts.textValue;
       el.appendChild(ta);
     }
@@ -243,6 +248,7 @@ export async function openPdfEditor({
   }
 
   overlay.querySelector('#pdfedAddText')?.addEventListener('click', () => setArmed(armedTool === 'text' ? null : 'text'));
+  overlay.querySelector('#pdfedEditText')?.addEventListener('click', () => setArmed(armedTool === 'whiteout' ? null : 'whiteout'));
   overlay.querySelector('#pdfedAddSig')?.addEventListener('click', () => setArmed(armedTool === 'signature' ? null : 'signature'));
   overlay.querySelector('#pdfedSaveFieldMap')?.addEventListener('click', async () => {
     const pageEls = Array.from(body.querySelectorAll('.pdfed-page'));
@@ -407,6 +413,18 @@ export async function openPdfEditor({
 
         if (item.type === 'signature' && sigImageEmbed) {
           pdfPage.drawImage(sigImageEmbed, { x: xPts, y: yPts, width: wPts, height: hPts });
+        } else if (item.type === 'whiteout') {
+          // Che kín chữ cũ bằng hình chữ nhật trắng TRƯỚC — đây là bước
+          // then chốt tạo hiệu ứng "sửa chữ" (PDF không hỗ trợ xoá/sửa
+          // chữ tại chỗ như Word, phải che rồi viết chữ mới đè lên).
+          pdfPage.drawRectangle({ x: xPts, y: yPts, width: wPts, height: hPts, color: rgb(1, 1, 1) });
+          const text = item.el.querySelector('textarea')?.value || '';
+          if (text.trim()) {
+            pdfPage.drawText(text, {
+              x: xPts + 2, y: yPts + hPts - 12, size: 11, font, color: rgb(0.07, 0.09, 0.12),
+              maxWidth: wPts - 4, lineHeight: 13,
+            });
+          }
         } else if (item.type === 'text') {
           const text = item.el.querySelector('textarea')?.value || '';
           if (text.trim()) {

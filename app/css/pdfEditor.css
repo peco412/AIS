@@ -112,6 +112,11 @@
   cursor: move;
   user-select: none;
 }
+.pdfed-overlay-item--whiteout {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: var(--warning);
+}
+.pdfed-overlay-item--whiteout textarea { background: transparent; font-weight: 600; }
 .pdfed-overlay-item img { width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
 .pdfed-overlay-item textarea {
   width: 100%; height: 100%; border: none; background: transparent;

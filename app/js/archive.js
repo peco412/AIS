@@ -161,12 +161,14 @@ async function loadTemplates() {
       <td class="cell-muted">${fmtDate(t.updated_at)}</td>
       <td>
         <button class="btn btn-outline btn-sm" data-open="${esc(t.file_url)}">Xem / tải</button>
+        ${canDesign ? `<button class="btn btn-outline btn-sm" data-edit-content="${t.id}" data-url="${esc(t.file_url)}" title="Che chữ cũ và gõ chữ mới đè lên — dùng khi cần sửa chữ đã in sẵn trong mẫu (VD tên sai, lỗi chính tả)">✏️ Sửa nội dung</button>` : ''}
         ${canDesign ? `<button class="btn btn-outline btn-sm" data-design="${t.id}" data-url="${esc(t.file_url)}">Thiết kế vị trí</button>` : ''}
         ${canDesign ? `<button class="btn btn-outline btn-sm" data-delete-template="${t.id}" data-name="${esc(t.name)}">🗑️ Xoá</button>` : ''}
       </td>
     </tr>
   `).join('') || '<tr><td colspan="6" class="empty-cell">Chưa có biểu mẫu.</td></tr>';
   tbody.querySelectorAll('[data-open]').forEach((b) => b.addEventListener('click', () => openFile(b.dataset.open)));
+  tbody.querySelectorAll('[data-edit-content]').forEach((b) => b.addEventListener('click', () => openTemplateContentEditor(b.dataset.editContent, b.dataset.url)));
   tbody.querySelectorAll('[data-design]').forEach((b) => b.addEventListener('click', () => openTemplateDesigner(b.dataset.design, b.dataset.url)));
   tbody.querySelectorAll('[data-delete-template]').forEach((b) => {
     b.addEventListener('click', async () => {
@@ -180,6 +182,34 @@ async function loadTemplates() {
 
 // Cho TECH/HR đặt sẵn vị trí ký/điền 1 lần cho mỗi loại biểu mẫu — những
 // lần điền/ký sau (hợp đồng, phiếu thanh toán...) sẽ tự có sẵn đúng chỗ.
+async function openTemplateContentEditor(templateId, storedUrl) {
+  let pdfUrl;
+  try {
+    pdfUrl = await resolveFileUrl(storedUrl, 1800);
+  } catch (e) {
+    alert('Không thể mở biểu mẫu: ' + (e.message || 'Có lỗi xảy ra.'));
+    return;
+  }
+  await openPdfEditor({
+    pdfUrl,
+    signatureUrl: null, // sửa nội dung mẫu gốc — không cần chèn chữ ký cá nhân ở đây
+    title: 'Sửa nội dung biểu mẫu (che chữ cũ, gõ chữ mới đè lên)',
+    onSave: async (blob) => {
+      // Lưu đè lên ĐÚNG đường dẫn file cũ trong Storage (upsert:true) —
+      // giữ nguyên file_url và field_map hiện có, vì đây chỉ là sửa vài
+      // chữ trong CÙNG 1 bố cục, không phải thay bằng biểu mẫu khác hẳn
+      // (khác với việc "Tải mẫu mới lên" ở nơi khác, vốn đổi hẳn file nên
+      // phải đặt lại field_map).
+      const path = storedUrl.replace(/^https?:\/\/[^?]*\/attachments\//, ''); // phòng khi storedUrl là public URL cũ
+      await supabase.storage.from('attachments').upload(path, blob, { upsert: true });
+      const { error } = await supabase.from('document_templates').update({ updated_at: new Date().toISOString() }).eq('id', templateId);
+      if (error) throw error;
+      alert('Đã lưu nội dung mới cho biểu mẫu.');
+      await loadTemplates();
+    },
+  });
+}
+
 async function openTemplateDesigner(templateId, storedUrl) {
   let pdfUrl;
   try {

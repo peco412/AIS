@@ -55,6 +55,9 @@
           <option value="office">Cán bộ khối văn phòng</option>
           <option value="teacher">Giáo viên</option>
         </select>
+        <select class="select-input" id="filterCenter" style="display:none; min-width:160px;">
+          <option value="">Tất cả đơn vị</option>
+        </select>
       </div>
       <div class="cell-muted" id="resultCount"></div>
     </div>
@@ -69,10 +72,10 @@
 </div>
 
 <div class="modal-overlay" id="createModal">
-  <div class="modal-box">
+  <div class="modal-box" style="max-width:640px;">
     <button class="modal-close" id="closeCreateModal"><svg class="icon icon--sm" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     <h3>Tạo đơn mới</h3>
-    <p class="modal-sub">Chọn đúng loại đơn — hệ thống sẽ mở đúng biểu mẫu tương ứng để điền &amp; ký.</p>
+    <p class="modal-sub">Điền đầy đủ thông tin để cấp trên duyệt được ngay — không bắt buộc phải ký vào mẫu đơn lúc này, có thể ký sau.</p>
     <div class="form-error" id="createError"></div>
     <div class="field"><label for="formCode">Loại đơn *</label><select id="formCode"></select></div>
     <div class="field-grid-2">
@@ -81,10 +84,36 @@
     </div>
     <div class="field"><label for="returnDate">Ngày đi làm lại</label><input type="date" id="returnDate" /></div>
     <div class="field"><label for="reasonNote">Lý do</label><textarea id="reasonNote" rows="2"></textarea></div>
+
+    <!-- MỚI — khung bảng chi tiết, hiện/ẩn + đổi cột tuỳ loại đơn đã chọn
+         (xem DETAIL_SCHEMAS trong leaveFormFlow.js). VD: bàn giao công
+         việc/lớp dạy, hoán đổi ngày nghỉ/lịch dạy — đúng thông tin cấp
+         trên cần để duyệt, khớp với bảng biểu trong từng mẫu Word gốc. -->
+    <div id="detailSection" style="display:none;">
+      <label style="display:block; font-size:12.5px; font-weight:600; color:var(--ink-soft); margin-bottom:6px;" id="detailTitle"></label>
+      <div class="data-table-wrap" style="margin-bottom:10px;">
+        <table class="data-table" id="detailTable" style="min-width:0;">
+          <thead><tr id="detailTableHead"></tr></thead>
+          <tbody id="detailTableBody"></tbody>
+        </table>
+      </div>
+      <button type="button" class="btn btn-outline btn-sm" id="btnAddDetailRow">+ Thêm dòng</button>
+    </div>
+
     <div class="modal-actions">
       <button type="button" class="btn btn-outline" id="cancelCreate"><span data-i18n="common.cancel">Huỷ</span></button>
-      <button type="button" class="btn btn-accent" id="openFillEditor">Tiếp tục điền &amp; ký biểu mẫu →</button>
+      <button type="button" class="btn btn-accent" id="submitCreate">Gửi đơn</button>
     </div>
+  </div>
+</div>
+
+<!-- MỚI — modal xem chi tiết đơn (bảng chi tiết theo loại đơn), để cấp
+     trên duyệt dựa trên dữ liệu thật mà không bắt buộc mở PDF. -->
+<div class="modal-overlay" id="detailViewModal">
+  <div class="modal-box" style="max-width:640px;">
+    <button class="modal-close" id="closeDetailViewModal"><svg class="icon icon--sm" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    <h3 id="detailViewTitle">Chi tiết đơn</h3>
+    <div id="detailViewBody"></div>
   </div>
 </div>
 
