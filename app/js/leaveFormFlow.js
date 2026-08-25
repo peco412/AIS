@@ -93,13 +93,29 @@ export async function initLeaveFormFlow() {
 
   function fmtDate(d) { return d ? new Date(d).toLocaleDateString('vi-VN') : '—'; }
   function formLabel(code) { return ALL_FORMS.find((f) => f.code === code)?.label || code; }
-  function groupOf(formCode) { return formCode?.match(/^0[6-9]\./) ? 'office' : 'teacher'; }
+
+  // SỬA LỖI THẬT: trước đây MỌI chỗ (nhãn hiển thị, bộ lọc, VÀ — nghiêm
+  // trọng hơn — cả quyền duyệt cấp 1) đều suy ra nhóm cán bộ/giáo viên từ
+  // groupOf(form_code) — tức LOẠI ĐƠN của từng đơn riêng lẻ, không phải
+  // chức danh thật của người đó. Vì 1 số loại đơn (Nghỉ bù/Nghỉ không
+  // lương) dùng CHUNG 1 mẫu cho cả 2 nhóm nhưng có 2 mã form_code riêng
+  // (08 văn phòng / 12 giáo viên), nếu 1 đơn lỡ dùng nhầm mã thì (a) nhãn
+  // hiển thị sai — như ảnh chụp màn hình phản ánh (cùng 1 người "tea"
+  // nhưng đơn Nghỉ bù hiện "Cán bộ", 2 đơn Nghỉ phép hiện "Giáo viên"),
+  // và (b) NGHIÊM TRỌNG HƠN: canApproveLevel1() cũng bị sai theo — trao
+  // quyền duyệt cho SAI NGƯỜI (vd Trưởng phòng thay vì đúng Quản lý
+  // trung tâm), khiến người có thẩm quyền thật KHÔNG duyệt được. Giờ
+  // dùng ĐÚNG chức danh thật của nhân viên (is_teacher_eligible/
+  // can_teach) — luôn nhất quán bất kể đơn đó lỡ dùng mã nào.
+  function employeeGroup(row) {
+    return (row.employees?.positions?.is_teacher_eligible || row.employees?.can_teach) ? 'teacher' : 'office';
+  }
 
   // "Trưởng phòng" cấp 1: văn phòng dùng DEPT_HEAD/DEPT_DEPUTY cùng phòng;
   // giáo viên/tư vấn dùng Quản lý trung tâm cùng trung tâm (đúng nguyên tắc
   // "trưởng phòng tương đương quản lý trung tâm" cho khối học vụ).
   function canApproveLevel1(row) {
-    const rowGroup = groupOf(row.form_code);
+    const rowGroup = employeeGroup(row);
     if (rowGroup === 'teacher') {
       return PROFILE.roleCode === 'CENTER_MANAGER' && PROFILE.centerId === row.employee_center_id;
     }
@@ -134,7 +150,7 @@ export async function initLeaveFormFlow() {
 
     let query = supabase
       .from('leave_requests')
-      .select('id, code, form_code, start_date, days, return_date, reason_note, detail_items, status, file_url, employee_id, employees!leave_requests_employee_id_fkey(full_name, employee_code, department_id, center_id, departments(code))')
+      .select('id, code, form_code, start_date, days, return_date, reason_note, detail_items, status, file_url, employee_id, employees!leave_requests_employee_id_fkey(full_name, employee_code, department_id, center_id, can_teach, departments(code), positions(is_teacher_eligible))')
       .order('created_at', { ascending: false })
       .limit(300);
     if (scope === 'mine') query = query.eq('employee_id', PROFILE.id);
@@ -150,10 +166,19 @@ export async function initLeaveFormFlow() {
     render();
   }
 
+  // SỬA LỖI THẬT: trước đây nhãn Cán bộ/Giáo viên VÀ bộ lọc đều suy ra
+  // từ groupOf(form_code) — tức LOẠI ĐƠN của từng đơn riêng lẻ, không
+  // phải chức danh thật của người đó. Vì 1 số loại đơn (Nghỉ bù/Nghỉ
+  // không lương) dùng CHUNG 1 mẫu cho cả 2 nhóm nhưng có 2 mã form_code
+  // riêng (08 văn phòng / 12 giáo viên), nếu 1 đơn lỡ dùng nhầm mã thì
+  // SỬA LỖI THẬT: xem chú thích đầy đủ ở employeeGroup() phía trên (cạnh
+  // groupOf()) — nhãn hiển thị Cán bộ/Giáo viên giờ dùng đúng chức danh
+  // thật của nhân viên, không còn suy từ form_code của từng đơn riêng lẻ.
+
   function render() {
     const groupFilter = document.getElementById('filterGroup')?.value || '';
     const centerFilter = document.getElementById('filterCenter')?.value || '';
-    const rows = ALL_ROWS.filter((r) => (!groupFilter || groupOf(r.form_code) === groupFilter) && (!centerFilter || r.employee_center_id === centerFilter));
+    const rows = ALL_ROWS.filter((r) => (!groupFilter || employeeGroup(r) === groupFilter) && (!centerFilter || r.employee_center_id === centerFilter));
 
     document.getElementById('resultCount').textContent = `${rows.length} đơn`;
     const tbody = document.getElementById('tableBody');
@@ -164,7 +189,7 @@ export async function initLeaveFormFlow() {
       return `
       <tr>
         <td class="cell-code">${esc(r.code)}</td>
-        <td>${esc(r.employees?.full_name || '—')}<div class="cell-muted" style="font-weight:400;">${groupOf(r.form_code) === 'teacher' ? 'Giáo viên' : 'Cán bộ'}</div></td>
+        <td>${esc(r.employees?.full_name || '—')}<div class="cell-muted" style="font-weight:400;">${employeeGroup(r) === 'teacher' ? 'Giáo viên' : 'Cán bộ'}</div></td>
         <td class="cell-muted">${esc(formLabel(r.form_code))}</td>
         <td class="cell-muted">${fmtDate(r.start_date)} (${r.days} ngày)</td>
         <td><span class="badge badge-${r.status}">${esc(STATUS_LABEL[r.status] || r.status)}</span></td>
@@ -229,7 +254,7 @@ export async function initLeaveFormFlow() {
   async function notifyApprovers(row, level, title, content) {
     let targetIds = [];
     if (level === 1) {
-      if (groupOf(row.form_code) === 'teacher') {
+      if (employeeGroup(row) === 'teacher') {
         const { data } = await supabase.from('employees').select('id, system_roles(code)').eq('center_id', row.employee_center_id);
         targetIds = (data || []).filter((e) => e.system_roles?.code === 'CENTER_MANAGER').map((e) => e.id);
       } else {
@@ -509,7 +534,7 @@ export async function initLeaveFormFlow() {
     submitBtn.disabled = false; submitBtn.textContent = 'Gửi đơn';
 
     await notifyApprovers(
-      { form_code: formCode, code: inserted.code || '', employees: { full_name: PROFILE.fullName, department_id: PROFILE.departmentId }, employee_center_id: PROFILE.centerId },
+      { form_code: formCode, code: inserted.code || '', employees: { full_name: PROFILE.fullName, department_id: PROFILE.departmentId, positions: { is_teacher_eligible: MY_GROUP === 'teacher' } }, employee_center_id: PROFILE.centerId },
       1,
       `Có đơn "${formLabel(formCode)}" mới cần duyệt`,
       `${PROFILE.fullName} vừa gửi đơn ${formLabel(formCode)} — vào duyệt ngay.`

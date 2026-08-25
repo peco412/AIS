@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Cộng đồng — AIS Center</title>
 <link rel="manifest" href="manifest.json" />
-<meta name="theme-color" content="#0094D9" />
+<meta name="theme-color" content="#0d6ea6" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -34,7 +34,7 @@
   .post-card__img { width: 100%; max-height: 480px; object-fit: cover; display: block; background: var(--surface-fill); }
   .post-card__actions { display: flex; align-items: center; gap: 16px; padding: 8px 16px 12px; }
   .post-card__actionbtn { display: flex; align-items: center; gap: 5px; background: none; border: none; cursor: pointer; font-size: 12.5px; font-weight: 600; color: var(--muted); padding: 4px; }
-  .post-card__actionbtn.is-liked { color: #E85D5D; }
+  .post-card__actionbtn.is-liked { color: var(--danger); }
   .post-card__actionbtn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; }
   .post-card__actionbtn.is-liked svg { fill: currentColor; }
 
@@ -97,7 +97,7 @@
 <header class="app-topbar">
   <div class="app-topbar__title">Cộng đồng</div>
   <div class="app-topbar__right">
-    <button class="icon-btn" onclick="location.href='notifications-social.html'" id="btnNotifBell" title="Thông báo" style="position:relative;">🔔<span id="notifBadge" style="display:none; position:absolute; top:2px; right:2px; width:9px; height:9px; border-radius:50%; background:#e0453c;"></span></button>
+    <button class="icon-btn" onclick="location.href='notifications-social.html'" id="btnNotifBell" title="Thông báo" style="position:relative;">🔔<span id="notifBadge" style="display:none; position:absolute; top:2px; right:2px; width:9px; height:9px; border-radius:50%; background:var(--danger);"></span></button>
     <button class="icon-btn" onclick="location.href='social-profile.html'" title="Hồ sơ của tôi">👤</button>
     <button class="icon-btn" id="logoutBtn" title="Đăng xuất">⏻</button>
   </div>

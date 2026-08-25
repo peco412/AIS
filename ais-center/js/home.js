@@ -2,6 +2,32 @@ import { supabase, esc, fmtMoney, bootParentShell } from './parentSupabase.js';
 
 let STUDENTS = [];
 
+function initials(name) { return (name || '?').trim().split(/\s+/).slice(-2).map((w) => w[0]).join('').toUpperCase(); }
+
+// LÀM LẠI — SỬA LỖI THẬT: hàm THẬT thay cho renderSwitcher() bị gọi mà
+// chưa từng tồn tại (xem ghi chú trong home.html). Ban đầu định làm kiểu
+// "chọn 1 con, ẩn con khác" — nhưng rà lại các trang khác (Bảng điểm,
+// Công nợ, Đóng học phí) thì thấy triết lý UX đã CHỦ ĐỘNG từ chối kiểu
+// đó từ trước (xem chú thích trong grades.js: "nhóm theo tên con... để
+// dễ phân biệt mà KHÔNG CẦN bấm chuyển qua lại" — ít thao tác hơn, xem
+// được hết ngay). Đổi lại cho ĐÚNG NHẤT QUÁN: chỉ hiện tên tất cả con
+// dạng thẻ tĩnh (không bấm chuyển đổi gì) — Trang chủ hiện chưa có nội
+// dung nào thật sự riêng theo từng con để mà cần chọn.
+function renderSwitcher() {
+  const box = document.getElementById('studentSwitcher');
+  if (STUDENTS.length <= 1) { box.style.display = 'none'; return; }
+  box.style.display = 'flex';
+  box.innerHTML = STUDENTS.map((s) => `
+    <div class="student-chip is-active">
+      <span class="student-chip__avatar">${esc(initials(s.full_name))}</span>
+      <span>
+        <div class="student-chip__name">${esc(s.full_name)}</div>
+        <div class="student-chip__sub">${esc(s.centers?.name || '')}</div>
+      </span>
+    </div>
+  `).join('');
+}
+
 // SUA — theo yeu cau: bo hien "Chuong trinh uu dai" (giam gia hoc phi —
 // van CHAY NGAM de tinh tien hoa don, chi khong con la noi dung noi bat
 // tren trang chu nua) — thay bang "Chuong trinh ngoai khoa", moi chuong
@@ -53,8 +79,24 @@ async function loadAnnouncements() {
 
 (async () => {
   try {
-    const { students } = await bootParentShell();
+    const { parent, students } = await bootParentShell();
     STUDENTS = students;
+
+    // MỚI — cá nhân hoá lời chào bằng tên thật + thời điểm trong ngày,
+    // thay vì câu chào chung chung cố định — bootParentShell() vốn đã
+    // trả về "parent" từ trước nhưng chưa từng được dùng tới ở đây.
+    const hour = new Date().getHours();
+    const timeGreeting = hour < 11 ? 'Chào buổi sáng' : hour < 14 ? 'Chào buổi trưa' : hour < 18 ? 'Chào buổi chiều' : 'Chào buổi tối';
+    const firstParentName = (parent?.full_name || '').trim().split(/\s+/).slice(-1)[0];
+    document.getElementById('promoBannerTitle').textContent = firstParentName ? `${timeGreeting}, ${firstParentName}!` : 'Chào mừng đến với ALOHA/iLingo';
+
+    // MỚI — SỬA LỖI THẬT: tải thông báo TRƯỚC bước kiểm tra "chưa liên
+    // kết học sinh" — trước đây nếu chưa có học sinh nào, hàm return
+    // sớm ở dưới, khiến thông báo "Toàn hệ thống" (đáng lẽ ai đăng nhập
+    // cũng xem được, không cần đã liên kết học sinh) không bao giờ được
+    // tải, dù đã đăng và đang ở trạng thái "Đang hiện".
+    await loadAnnouncements();
+
     if (STUDENTS.length === 0) {
       document.getElementById('noStudentNotice').style.display = 'block';
       return;
@@ -62,6 +104,16 @@ async function loadAnnouncements() {
 
     document.getElementById('content').style.display = 'block';
     renderSwitcher();
-    await Promise.all([loadExtracurricularPrograms(), loadAnnouncements()]);
-  } catch (e) { /* bootParentShell tự điều hướng nếu chưa đăng nhập */ }
+    await loadExtracurricularPrograms();
+  } catch (e) {
+    // SỬA — trước đây bắt lỗi HOÀN TOÀN im lặng (chỉ có comment, không
+    // làm gì cả) — đây chính là lý do lỗi "renderSwitcher không tồn
+    // tại" phá vỡ toàn bộ trang trong âm thầm suốt thời gian qua mà
+    // không ai phát hiện ra. bootParentShell() tự điều hướng khi chưa
+    // đăng nhập (ném lỗi NO_SESSION/EMPLOYEE_SESSION) — những lỗi đó bỏ
+    // qua là đúng, nhưng lỗi NGOÀI 2 trường hợp đó cần được ghi lại.
+    if (e.message !== 'NO_SESSION' && e.message !== 'EMPLOYEE_SESSION') {
+      console.error('Lỗi khi tải Trang chủ:', e);
+    }
+  }
 })();

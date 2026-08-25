@@ -886,8 +886,8 @@ document.getElementById('btnOpenCheckin').addEventListener('click', openCheckin)
   const { data: employee } = await supabase
     .from('employees')
     .select(`
-      id, full_name, center_id, language_preference, dob,
-      departments ( code ), positions ( name ),
+      id, full_name, center_id, language_preference, dob, can_teach,
+      departments ( code ), positions ( name, is_teacher_eligible ),
       system_roles ( code ), centers ( id, name )
     `)
     .eq('auth_user_id', sessionData.session.user.id)
@@ -914,6 +914,7 @@ document.getElementById('btnOpenCheckin').addEventListener('click', openCheckin)
     centerId: employee.centers?.id || null,
     centerName: employee.centers?.name || '',
     isCenterManager: employee.system_roles?.code === 'CENTER_MANAGER',
+    isTeacher: !!employee.positions?.is_teacher_eligible || !!employee.can_teach,
   };
   FULL_PROFILE = fullProfile;
   document.getElementById('cardUnread')?.addEventListener('click', () => { window.location.href = '/notifications.html'; });

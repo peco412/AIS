@@ -214,6 +214,21 @@ button { font-family: inherit; -webkit-tap-highlight-color: transparent; }
 .promo-banner__title { font-size: 16px; font-weight: 800; margin-bottom: 4px; }
 .promo-banner__sub { font-size: 12.5px; opacity: 0.92; }
 
+/* MỚI — dải thẻ hiện tên tất cả con (tĩnh, không bấm chuyển đổi — xem
+   ghi chú trong home.js về việc nhất quán với Bảng điểm/Công nợ) */
+.student-switcher { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 12px; -webkit-overflow-scrolling: touch; }
+.student-switcher::-webkit-scrollbar { display: none; }
+.student-chip {
+  flex-shrink: 0; display: flex; align-items: center; gap: 7px; padding: 8px 14px 8px 8px;
+  border-radius: 999px; border: 1.5px solid var(--accent); background: var(--accent-tint);
+}
+.student-chip__avatar {
+  width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: #fff;
+  display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 11px; flex-shrink: 0;
+}
+.student-chip__name { font-size: 12.5px; font-weight: 700; color: var(--ink); white-space: nowrap; }
+.student-chip__sub { font-size: 10px; color: var(--muted); white-space: nowrap; }
+
 /* Hub icon — cùng hệ icon nét đơn sắc + nền tint nhạt, gọn và nhất quán
    với action-grid ở trên thay vì mỗi nơi 1 kiểu. */
 .hub-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px 8px; margin-bottom: 20px; }

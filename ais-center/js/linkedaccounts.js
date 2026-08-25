@@ -18,7 +18,7 @@ function renderRow(link, myPhone) {
         ${phoneMatch.length ? `<div style="font-size:12px; margin-top:4px; color:var(--accent-deep);">Khớp theo: ${phoneMatch.join(', ')}</div>` : ''}
       </div>
       <button class="btn-unlink" data-id="${s.id}" data-name="${esc(s.full_name)}"
-        style="white-space:nowrap; border:1px solid #ff4d4f; color:#ff4d4f; background:none; border-radius:8px; padding:6px 10px; font-size:12px; cursor:pointer;">
+        style="white-space:nowrap; border:1px solid var(--danger); color:var(--danger); background:none; border-radius:8px; padding:6px 10px; font-size:12px; cursor:pointer;">
         Không phải con tôi?
       </button>
     </div>
