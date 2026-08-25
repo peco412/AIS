@@ -294,6 +294,17 @@ document.getElementById('logoutBtn').addEventListener('click', async () => {
     }
     await loadTeacherShortcuts();
     await loadConversations();
+
+    // MỚI — cho phép mở thẳng 1 hội thoại từ trang khác (VD nút "Nhắn
+    // tin" ở trang xem hồ sơ người khác) qua URL, không cần tự tìm kiếm
+    // lại trong danh sách.
+    const params = new URLSearchParams(location.search);
+    const withType = params.get('with_type');
+    const withId = params.get('with_id');
+    const withName = params.get('with_name');
+    if (withType && withId) {
+      await startConversationWith(withType, withId, withName || 'Người dùng');
+    }
   } catch (e) {
     document.getElementById('convList').innerHTML = `<div class="empty-state">${esc(e.message)}</div>`;
   }

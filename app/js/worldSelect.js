@@ -691,8 +691,8 @@ function renderRoom(profile) {
 // dễ tìm hơn vì khớp đúng cách người dùng nghĩ: "cái tôi cần là của Kế
 // toán hay của Trung tâm", theo đúng yêu cầu.
 const BANZONE_CATEGORIES = [
-  { name: t('lobby.banzone.catAcc', 'Kế toán'), icon: '💰', hrefs: ['/master-data/chart-of-accounts.html', '/acc/suppliers.html', '/master-data/expense-categories.html', '/master-data/wallet-tier-discounts.html'] },
-  { name: t('lobby.banzone.catCenter', 'Trung tâm & Học vụ'), icon: '🎓', hrefs: ['/master-data/program-pricing.html', '/master-data/program-plan-discounts.html', '/master-data/size-chart.html'] },
+  { name: t('lobby.banzone.catAcc', 'Kế toán'), icon: '💰', hrefs: ['/master-data/chart-of-accounts.html', '/master-data/expense-categories.html', '/master-data/wallet-tier-discounts.html'] },
+  { name: t('lobby.banzone.catCenter', 'Trung tâm & Học vụ'), icon: '🎓', hrefs: ['/acc/suppliers.html', '/master-data/program-pricing.html', '/master-data/program-plan-discounts.html', '/master-data/size-chart.html'] },
   { name: t('lobby.banzone.catWarehouse', 'Kho vận'), icon: '📦', hrefs: ['/master-data/inventory-items.html'] },
   { name: t('lobby.banzone.catOrgSystem', 'Tổ chức hệ thống'), icon: '🏢', hrefs: ['/master-data/centers.html', '/master-data/departments.html', '/master-data/system-roles.html', '/master-data/divisions.html'] },
 ];

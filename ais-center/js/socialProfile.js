@@ -165,13 +165,23 @@ async function renderFriendsTab() {
       .select('id, requester_profile_id, addressee_profile_id, requester:requester_profile_id(id, display_name, avatar_url), addressee:addressee_profile_id(id, display_name, avatar_url)')
       .eq('status', 'accepted')
       .or(`requester_profile_id.eq.${MY_PROFILE_ID},addressee_profile_id.eq.${MY_PROFILE_ID}`);
-    const friends = (data || []).map((f) => f.requester_profile_id === MY_PROFILE_ID ? f.addressee : f.requester);
+    const friends = (data || []).map((f) => ({ ...(f.requester_profile_id === MY_PROFILE_ID ? f.addressee : f.requester), friendshipId: f.id }));
     box.innerHTML = friends.map((p) => `
       <div class="friend-row">
-        <div class="friend-row__avatar">${avatarHtml(p.avatar_url, p.display_name)}</div>
-        <div class="friend-row__name">${esc(p.display_name)}</div>
+        <a href="view-profile.html?id=${p.id}" class="friend-row__avatar" style="text-decoration:none;">${avatarHtml(p.avatar_url, p.display_name)}</a>
+        <a href="view-profile.html?id=${p.id}" class="friend-row__name" style="text-decoration:none; color:inherit;">${esc(p.display_name)}</a>
+        <button class="btn-reject" data-unfriend="${p.friendshipId}" data-unfriend-name="${esc(p.display_name)}">Huỷ kết bạn</button>
       </div>
     `).join('') || '<div class="empty-state">Chưa có bạn bè nào — tìm kiếm ở trên để kết bạn.</div>';
+
+    box.querySelectorAll('[data-unfriend]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        if (!confirm(`Huỷ kết bạn với ${btn.dataset.unfriendName}?`)) return;
+        const { error } = await supabase.from('social_friendships').delete().eq('id', btn.dataset.unfriend);
+        if (error) { alert('Không huỷ được: ' + error.message); return; }
+        renderFriendsTab();
+      });
+    });
   } else {
     const { data } = await supabase
       .from('social_friendships')
@@ -224,6 +234,9 @@ async function updateRequestBadge() {
     await loadMyPosts();
     await renderFriendsTab();
     await updateRequestBadge();
+    const { data: unreadCount } = await supabase.rpc('unread_social_notification_count');
+    const badge = document.getElementById('notifBadge');
+    if (badge) badge.style.display = (unreadCount > 0) ? 'block' : 'none';
   } catch (e) {
     alert(e.message);
   }

@@ -59,6 +59,35 @@
   .composer__submit { padding: 7px 18px; border-radius: 999px; border: none; background: var(--accent); color: #fff; font-weight: 700; font-size: 12.5px; cursor: pointer; }
   .composer__submit:disabled { opacity: 0.4; cursor: not-allowed; }
 
+  /* MỚI — lưới xem trước nhiều ảnh/video lúc soạn bài */
+  .composer__preview-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 8px; }
+  .composer__preview-grid .preview-item { position: relative; aspect-ratio: 1; border-radius: var(--radius-sm); overflow: hidden; background: var(--surface-fill); }
+  .composer__preview-grid .preview-item img, .composer__preview-grid .preview-item video { width: 100%; height: 100%; object-fit: cover; }
+  .composer__preview-grid .preview-item button { position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,0.6); color: #fff; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; cursor: pointer; line-height: 1; }
+
+  /* MỚI — lưới nhiều ảnh/video trong bài đã đăng (1 ảnh: full width, 2+: lưới) */
+  .post-card__media-grid { display: grid; gap: 2px; }
+  .post-card__media-grid.count-1 { grid-template-columns: 1fr; }
+  .post-card__media-grid.count-2 { grid-template-columns: 1fr 1fr; }
+  .post-card__media-grid.count-3, .post-card__media-grid.count-4 { grid-template-columns: 1fr 1fr; }
+  .post-card__media-grid img, .post-card__media-grid video { width: 100%; height: 100%; max-height: 420px; object-fit: cover; display: block; background: var(--surface-fill); }
+
+  /* MỚI — bài chia sẻ lại: khung lồng hiện bài gốc */
+  .shared-post-embed { margin: 0 16px 10px; border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; }
+  .shared-post-embed__head { display: flex; align-items: center; gap: 8px; padding: 10px 12px 6px; }
+  .shared-post-embed__avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--accent-tint); color: var(--accent-deep); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 11px; }
+  .shared-post-embed__name { font-weight: 700; font-size: 12.5px; }
+  .shared-post-embed__caption { padding: 0 12px 10px; font-size: 12.5px; color: var(--ink); }
+  .shared-post-embed__deleted { padding: 16px; text-align: center; font-size: 12.5px; color: var(--muted); }
+
+  /* MỚI — bình luận trả lời lồng nhau + báo cáo/chặn/menu bài viết */
+  .comment-row.is-reply { margin-left: 34px; }
+  .comment-row__actions { display: flex; gap: 10px; margin-top: 2px; }
+  .comment-row__actions button { background: none; border: none; padding: 0; font-size: 11px; font-weight: 700; color: var(--muted); cursor: pointer; }
+  .reply-input-row { display: flex; gap: 8px; margin: 4px 0 8px 34px; }
+  .reply-input-row input { flex: 1; border: 1px solid var(--border); border-radius: 999px; padding: 6px 12px; font-size: 12px; outline: none; background: var(--surface-fill); }
+  .reply-input-row button { border: none; background: none; color: var(--accent-deep); font-weight: 700; font-size: 11.5px; cursor: pointer; }
+
   .empty-state { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 13px; }
   .skeleton-post { height: 160px; border-radius: var(--radius-lg); background: var(--surface-fill); margin-bottom: 14px; }
 </style>
@@ -68,6 +97,7 @@
 <header class="app-topbar">
   <div class="app-topbar__title">Cộng đồng</div>
   <div class="app-topbar__right">
+    <button class="icon-btn" onclick="location.href='notifications-social.html'" id="btnNotifBell" title="Thông báo" style="position:relative;">🔔<span id="notifBadge" style="display:none; position:absolute; top:2px; right:2px; width:9px; height:9px; border-radius:50%; background:#e0453c;"></span></button>
     <button class="icon-btn" onclick="location.href='social-profile.html'" title="Hồ sơ của tôi">👤</button>
     <button class="icon-btn" id="logoutBtn" title="Đăng xuất">⏻</button>
   </div>
@@ -76,17 +106,18 @@
 <main class="app-main">
   <div class="composer">
     <textarea id="composerText" placeholder="Chia sẻ khoảnh khắc, thông báo tới cộng đồng..." rows="2"></textarea>
-    <div class="composer__preview" id="composerPreview" style="display:none;">
-      <img id="composerPreviewImg" alt="Ảnh xem trước" />
-      <button type="button" id="btnRemovePhoto">✕</button>
-    </div>
+    <div class="composer__preview-grid" id="composerPreviewGrid" style="display:none;"></div>
     <div class="composer__bar">
       <label class="composer__photobtn">
-        📷 Thêm ảnh
-        <input type="file" id="photoInput" accept="image/*" />
+        📷 Thêm ảnh/video
+        <input type="file" id="photoInput" accept="image/*,video/*" multiple />
       </label>
       <button class="composer__submit" id="btnPost" disabled>Đăng</button>
     </div>
+  </div>
+
+  <div class="search-bar" style="margin: 12px 0;">
+    <input type="text" id="postSearchInput" placeholder="🔍 Tìm bài viết theo nội dung..." style="width:100%; padding:10px 14px; border-radius:999px; border:1px solid var(--border); font-size:13.5px;" />
   </div>
 
   <div id="feedList"><div class="skeleton-post"></div><div class="skeleton-post"></div></div>

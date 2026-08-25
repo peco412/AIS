@@ -109,15 +109,17 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
     const { data: emp } = await supabase.from('employees').select('departments(code)').eq('id', profile.id).single();
     PROFILE = { ...profile, departmentCode: emp?.departments?.code };
 
-    // Ma tran: BDH/Ky thuat deu duoc XEM (R) trang Master Data nay — chi
-    // rieng quyen GHI (W/A) moi dao nguoc: Ky thuat + Ke toan duoc sua,
-    // BDH (EXECUTIVE) thi CHI con xem, khong sua duoc.
-    const canView = PROFILE.departmentCode === 'ACC' || ['EXECUTIVE', 'TECH'].includes(profile.roleCode);
+    // MỚI 24/08/2026 — theo yêu cầu "nhà cung cấp thuộc phạm trù trung
+    // tâm nhập, không phải kế toán": thêm Quản lý trung tâm được XEM +
+    // SỬA — trước đây chỉ Kế toán/Kỹ thuật mới vào được trang này, Quản
+    // lý trung tâm hoàn toàn không thêm được nhà cung cấp mới, gây "kẹt"
+    // khi cần mua hàng từ nhà cung cấp chưa có sẵn trong danh sách.
+    const canView = PROFILE.departmentCode === 'ACC' || ['EXECUTIVE', 'TECH', 'CENTER_MANAGER'].includes(profile.roleCode);
     if (!canView) {
       document.querySelector('.main').innerHTML = '<div class="empty-cell">Bạn không có quyền xem trang này.</div>';
       return;
     }
-    const canEdit = PROFILE.departmentCode === 'ACC' || profile.roleCode === 'TECH';
+    const canEdit = PROFILE.departmentCode === 'ACC' || ['TECH', 'CENTER_MANAGER'].includes(profile.roleCode);
     if (!canEdit) document.getElementById('btnAdd').style.display = 'none';
     window.__SUPPLIER_CAN_EDIT__ = canEdit;
 
