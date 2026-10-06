@@ -79,6 +79,7 @@ form.addEventListener('submit', async (e) => {
   submitBtn.disabled = true;
   submitBtn.textContent = t('login.submitting');
 
+  try {
   const email = usernameToEmail(username);
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
@@ -131,9 +132,17 @@ form.addEventListener('submit', async (e) => {
 
   await showLoginLoader({ division: selectedDivision, message: t('login.loaderMessage', 'Đang vào hệ thống...') });
   window.location.href = 'world-select.html';
+  } catch (error) {
+    showError('Không thể kết nối. Vui lòng kiểm tra mạng và thử lại.');
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = t('login.submit');
+  }
 });
 
 // Nếu đã đăng nhập sẵn (session còn hiệu lực) thì chuyển tới màn chọn thế giới
 supabase.auth.getSession().then(({ data }) => {
   if (data.session) window.location.href = 'world-select.html';
 });
+
+document.getElementById('forgotLink').addEventListener('click', e => { e.preventDefault(); showError('Vui lòng liên hệ phòng nhân sự hoặc quản lý trung tâm để đặt lại mật khẩu.'); });

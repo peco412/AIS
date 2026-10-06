@@ -1,3 +1,4 @@
+import { manageDialog } from './dialogA11y.js';
 import { supabase } from './supabase.js';
 import { NAV_CONFIG } from './navConfig.js';
 import { t, applyTranslations, syncLangFromProfile, setLang, getLang } from './i18n.js';
@@ -32,7 +33,7 @@ export function isMobileViewport() {
   return window.matchMedia('(max-width: 960px)').matches;
 }
 
-function canAccess(item, profile) {
+export function canAccess(item, profile) {
   if (isMobileViewport() && !MOBILE_ALLOWED_HREFS.has(item.href)) return false;
   return item.visible(profile) || !!profile.grantedModules?.has(item.href);
 }
@@ -121,10 +122,10 @@ function setSavedWorld(world) {
 // qua lai bang nut tren thanh tren cung), khong co thi tu suy ra tu trang
 // dang dung (vd dang o /acc/... -> ERP), mac dinh ERP neu khong doan duoc.
 function resolveCurrentWorld(currentPage, profile) {
-  const saved = getSavedWorld();
-  if (saved && WORLD_LAYERS[saved]) return saved;
   const group = findActiveGroup(currentPage, profile);
   if (group?.layer) return layerToWorld(group.layer);
+  const saved = getSavedWorld();
+  if (saved && WORLD_LAYERS[saved]) return saved;
   return 'erp';
 }
 
@@ -231,7 +232,7 @@ function injectSiblingSidebar(profile, currentPage) {
     <div class="sub-sidebar__title">${esc(t(group.sectionKey, group.section || ''))}</div>
     ${items.map((item) => {
       const active = currentPage && currentPage.endsWith(item.href);
-      return `<a href="${item.href}" class="sub-sidebar__item ${active ? 'active' : ''}">${item.icon}<span>${esc(t(item.labelKey, item.label))}</span></a>`;
+      return `<a href="${item.href}" ${active ? 'aria-current="page"' : ''} class="sub-sidebar__item ${active ? 'active' : ''}">${item.icon}<span>${esc(t(item.labelKey, item.label))}</span></a>`;
     }).join('')}
   `;
 
@@ -267,7 +268,8 @@ export function worldsWithAccess(profile) {
 function injectBrandName() {
   const anchor = document.querySelector('.topbar__left');
   if (!anchor || document.getElementById('topbarBrand')) return;
-  const brand = document.createElement('div');
+  const brand = document.createElement('a');
+  brand.href = '/world-select.html';
   brand.id = 'topbarBrand';
   brand.className = 'topbar-brand';
   brand.innerHTML = '<span class="dot"></span><span>AIS OFFICE</span>';
@@ -360,10 +362,10 @@ function openOverlayPanel({ icon, color, label, bodyHtml }) {
   overlay.className = 'hub-overlay';
   overlay.innerHTML = `
     <div class="hub-overlay__backdrop" id="hubOverlayBackdrop"></div>
-    <div class="hub-overlay__panel">
+    <div class="hub-overlay__panel" aria-label="${esc(label)}">
       <div class="hub-overlay__header" style="--world-color:${color};">
         <div class="hub-overlay__header-title"><span>${icon}</span> ${esc(label)}</div>
-        <button type="button" class="icon-btn" id="hubOverlayClose"><svg class="icon icon--sm" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+        <button type="button" class="icon-btn" id="hubOverlayClose" aria-label="Đóng menu"><svg class="icon icon--sm" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
       </div>
       <div class="hub-overlay__body">
         ${bodyHtml || '<div class="empty-cell">Không có mục nào khả dụng.</div>'}
@@ -373,7 +375,9 @@ function openOverlayPanel({ icon, color, label, bodyHtml }) {
   document.body.appendChild(overlay);
   requestAnimationFrame(() => overlay.classList.add('show'));
 
-  const close = () => { overlay.classList.remove('show'); setTimeout(() => overlay.remove(), 200); };
+  let cleanup = () => {};
+  const close = () => { cleanup(); overlay.remove(); };
+  cleanup = manageDialog(overlay.querySelector('.hub-overlay__panel'), close, overlay.querySelector('#hubOverlayClose'));
   overlay.querySelector('#hubOverlayBackdrop').addEventListener('click', close);
   overlay.querySelector('#hubOverlayClose').addEventListener('click', close);
 }
@@ -400,7 +404,20 @@ function openHubOverlay(profile, currentWorld, currentPage) {
     if (forceOpen) forcedFirst = true;
     return renderSectionHtml(group, profile, currentPage, forceOpen);
   }).join('');
-  openOverlayPanel({ icon: meta.icon, color: meta.color, label: meta.label, bodyHtml });
+  const allowed = [...new Map(NAV_CONFIG.flatMap(g => g.items).filter(i => canAccess(i, profile)).map(i => [i.href, i])).values()];
+  const searchHtml = `<label class="nav-search-label" for="navSearch">Tìm chức năng</label><input id="navSearch" class="text-input" type="search" placeholder="Nhập tên chức năng…" autocomplete="off"><div id="navSearchResults" hidden></div><div id="navDefaultGroups">${bodyHtml}</div>`;
+  openOverlayPanel({ icon: meta.icon, color: meta.color, label: meta.label, bodyHtml: searchHtml });
+  const input = document.getElementById('navSearch');
+  const normalize = value => value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd');
+  input.addEventListener('input', () => {
+    const query = normalize(input.value.trim());
+    const result = document.getElementById('navSearchResults');
+    document.getElementById('navDefaultGroups').hidden = !!query;
+    result.hidden = !query;
+    if (!query) return;
+    const matches = allowed.filter(i => normalize(t(i.labelKey, i.label)).includes(query));
+    result.innerHTML = matches.length ? `<div class="hub-overlay__grid">${matches.map(i => hubTileHtml(i, profile, currentPage)).join('')}</div>` : '<p role="status">Không tìm thấy chức năng phù hợp.</p>';
+  });
 }
 
 /**
@@ -523,7 +540,7 @@ export async function bootShell() {
   const { data: employee, error } = await supabase
     .from('employees')
     .select(`
-      id, full_name, avatar_url, dob, language_preference, can_teach, is_academic_board,
+      id, full_name, avatar_url, dob, language_preference, can_teach, is_academic_board, status, temp_password_flag,
       departments ( code, name ),
       positions ( name, is_teacher_eligible ),
       system_roles ( code, name ),
@@ -542,6 +559,9 @@ export async function bootShell() {
     window.location.href = '/index.html';
     throw new Error('NO_EMPLOYEE');
   }
+
+  if (employee.status !== 'active') { await supabase.auth.signOut(); location.replace('/index.html'); throw new Error('INACTIVE'); }
+  if (employee.temp_password_flag) { location.replace('/change-password.html'); throw new Error('PASSWORD_CHANGE_REQUIRED'); }
 
   // Màu giao diện phải theo ĐÚNG trung tâm thật của nhân viên (qua division),
   // không phải theo lựa chọn tạm ở màn hình đăng nhập (localStorage) — nhân

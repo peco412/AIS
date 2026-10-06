@@ -1,9 +1,9 @@
+import { manageDialog } from './dialogA11y.js';
 import { supabase, esc } from './supabase.js';
-import { worldsWithAccess } from './shell.js';
+import { worldsWithAccess, canAccess } from './shell.js';
 import { NAV_CONFIG } from './navConfig.js';
 import { t, getLang, setLang, syncLangFromProfile } from './i18n.js';
 import { registerInstallBanner } from './installPrompt.js';
-import { initFortuneWidget } from './fortuneWidget.js';
 import { getPendingApprovalCount } from './approvalCenter.js';
 
 // SUA LOI THAT NGHIEM TRONG: 2 bien nay truoc day khai bao o gan CUOI
@@ -76,6 +76,7 @@ function showLayer(id, { push = true } = {}) {
     from.classList.add('is-leaving');
     setTimeout(() => { from.classList.remove('is-leaving'); }, 360);
   }
+  if (!to) return;
   to.classList.add('is-active', 'is-entering');
   setTimeout(() => { to.classList.remove('is-entering'); }, 360);
   currentLayer = id;
@@ -108,6 +109,9 @@ const BRANCH_TO_LAYER = { erp: 'layerErp', crm: 'layerCrm', room: 'layerRoom', b
 const BRANCH_TO_WORLD = { erp: 'erp', crm: 'crm', room: 'personal', banzone: 'database' };
 
 document.querySelectorAll('.branch-card').forEach((card) => {
+  card.setAttribute('role', 'button');
+  card.tabIndex = 0;
+  card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); card.click(); } });
   card.addEventListener('click', () => {
     if (card.classList.contains('branch-card--locked')) return;
     const layer = BRANCH_TO_LAYER[card.dataset.branch];
@@ -119,7 +123,7 @@ document.querySelectorAll('.branch-card').forEach((card) => {
 function hasAccessToSection(sectionName, profile) {
   const group = NAV_CONFIG.find((g) => g.section === sectionName);
   if (!group) return false;
-  return group.items.some((item) => item.visible(profile));
+  return group.items.some((item) => canAccess(item, profile));
 }
 
 function applyBranchLocks(profile) {
@@ -127,6 +131,7 @@ function applyBranchLocks(profile) {
   document.querySelectorAll('.branch-card[data-branch]').forEach((card) => {
     const world = BRANCH_TO_WORLD[card.dataset.branch];
     if (accessibleWorlds.has(world)) return;
+    card.hidden = true;
     card.classList.add('branch-card--locked');
     card.querySelector('.branch-card__desc').insertAdjacentHTML('afterend', `<div class="branch-card__lock">${t('lobby.locked', '🔒 Không có quyền')}</div>`);
   });
@@ -178,7 +183,7 @@ async function checkBirthday(currentEmployeeId) {
   if (todaysBirthdays.length === 0) return;
 
   const ids = todaysBirthdays.map((e) => e.id);
-  const { data: wishes } = await supabase.from('birthday_wishes').select('employee_id, wisher_id').in('employee_id', ids).eq('wish_date', today.toISOString().slice(0, 10));
+  const { data: wishes } = await supabase.from('birthday_wishes').select('employee_id, wisher_id').in('employee_id', ids).eq('wish_date', `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`);
   const wishCountByEmployee = {};
   const iAlreadyWished = new Set();
   (wishes || []).forEach((w) => {
@@ -337,46 +342,12 @@ async function loadStats(profileId) {
   await loadUnreadCount().catch(() => {});
 }
 
-const EXEC_ICONS = { '/exec/reports.html': '📊' };
-const DEPT_ICON = { 'Phòng nhân sự': '👥', 'Phòng kế toán': '💰', 'Phòng truyền thông': '📣', 'Phòng cơ sở vật chất': '🔧' };
-// MOI — moi phong ban co MAU RIENG khi mo ra (banner chu de), khong con
-// dung chung 1 mau xanh nhu truoc.
-const DEPT_THEME = {
-  'Phòng nhân sự': '#0094D9',
-  'Phòng kế toán': '#2FAE6B',
-  'Phòng truyền thông': '#A855C9',
-  'Phòng cơ sở vật chất': '#D97A3D',
-};
 // MOI — icon RIENG cho tung chuc nang cu the (truoc day dung chung 1
 // icon "📄" cho moi thu trong danh sach con, nhin rat "trong" — gio moi
 // muc co bieu tuong dac trung dung noi dung cua no).
-const ITEM_ICONS = {
-  '/hr/employees.html': '👤', '/hr/positions.html': '🏷️', '/hr/leave-balances.html': '📅',
-  '/hr/work-schedule.html': '🗓️', '/hr/contracts.html': '📜', '/hr/leave-requests.html': '✋',
-  '/hr/base-salary.html': '💵', '/hr/business-trips.html': '✈️', '/hr/tasks.html': '✅', '/hr/sign.html': '✍️',
-  '/acc/payment-requests.html': '🧾', '/acc/advance-requests.html': '💳', '/acc/reports.html': '📊',
-  '/acc/discount-programs.html': '🏷️', '/edu/refund-requests.html': '↩️', '/acc/wallet-links.html': '🔗',
-  '/acc/wallet-recovery.html': '🛠️', '/acc/sepay-transactions.html': '💸', '/acc/general-ledger.html': '📒',
-  '/acc/period-closing.html': '🔒', '/acc/commissions.html': '🎯', '/acc/budget-setup.html': '📈',
-  '/acc/attendance-payroll-report.html': '⏱️', '/acc/payroll.html': '💵', '/acc/tasks.html': '✅', '/acc/sign.html': '✍️',
-  '/mkt/requests.html': '📣', '/mkt/event-proposals.html': '🎉', '/mkt/expense-reports.html': '🧮',
-  '/mkt/accounts.html': '🔐', '/mkt/parent-announcements.html': '📢', '/mkt/extracurricular-programs.html': '🎨',
-  '/mkt/tasks.html': '✅', '/mkt/sign.html': '✍️',
-  '/fac/requests.html': '🛠️', '/fac/purchase-requests.html': '🛒', '/fac/stats.html': '📦',
-  '/fac/tasks.html': '✅', '/fac/sign.html': '✍️',
-  // Khối trung tâm — bổ sung khi mở lưới chức năng NGAY trong world-select.html
-  // thay vì phải bay sang dashboard.html (xem openCrmWorkspace).
-  '/edu/wallet-invoices.html': '🧾', '/acc/wallet-topup-requests.html': '💰', '/edu/wallet-payment-log.html': '📄',
-  '/edu/debt-overview.html': '📋', '/edu/program-pricing.html': '💲', '/edu/inventory.html': '📦',
-  '/edu/retail-sale.html': '🛍️', '/acc/purchase-orders.html': '🧾', '/edu/center-overview.html': '🏫',
-  '/edu/attendance-overview.html': '✅', '/edu/duty-schedule.html': '🗓️', '/edu/teacher-schedule.html': '📚',
-  '/edu/class-assignment.html': '🧩', '/edu/students.html': '🎒', '/edu/parent-links.html': '🔗',
-  '/edu/grades.html': '📝', '/edu/sign.html': '✍️', '/edu/classes.html': '🏷️', '/edu/teachers.html': '🧑‍🏫',
-  '/teacher/classes.html': '🏷️', '/teacher/attendance.html': '✅', '/teacher/grades.html': '📝',
-  '/teacher/trial-students.html': '🆕', '/teacher/schedule.html': '📅',
-  '/consultant/leads.html': '📇', '/consultant/stats.html': '📊', '/consultant/trial-registration.html': '🆕',
-};
 
+const DEPT_ICON = { 'Phòng nhân sự': '👥', 'Phòng kế toán': '💰', 'Phòng truyền thông': '📣', 'Phòng cơ sở vật chất': '🔧' };
+const DEPT_THEME = { 'Phòng nhân sự': '#0d6ea6', 'Phòng kế toán': '#0d6ea6', 'Phòng truyền thông': '#0d6ea6', 'Phòng cơ sở vật chất': '#0d6ea6' };
 const CRM_WORKSPACE_CENTER_KEY = 'ais_lobby_crm_center';
 
 document.querySelectorAll('.erp-tab').forEach((tab) => {
@@ -390,27 +361,27 @@ document.querySelectorAll('.erp-tab').forEach((tab) => {
 
 function renderErp(profile) {
   const execGroup = NAV_CONFIG.find((g) => g.section === 'Ban điều hành');
-  const execItems = (execGroup?.items || []).filter((it) => it.visible(profile));
+  const execItems = (execGroup?.items || []).filter((it) => canAccess(it, profile));
   document.getElementById('execGrid').innerHTML = execItems.length === 0
     ? `<div class="content-sub">${t('lobby.erp.noExecAccess', '🔒 Không có quyền truy cập Tầng Điều hành.')}</div>`
     : execItems.map((it) => `
-        <div class="item-card" data-href="${it.href}">
-          <span class="item-card__icon">${EXEC_ICONS[it.href] || '📁'}</span>
+        <a class="item-card" href="${it.href}" data-href="${it.href}">
+          <span class="item-card__icon">${it.icon}</span>
           <span class="item-card__name">${t(it.labelKey, it.label)}</span>
-        </div>
+        </a>
       `).join('');
 
-  const deptSections = ['Phòng nhân sự', 'Phòng kế toán', 'Phòng truyền thông', 'Phòng cơ sở vật chất'];
+  const deptSections = ['Phòng nhân sự', 'Phòng kế toán', 'Phòng truyền thông', 'Phòng cơ sở vật chất'].filter(name => hasAccessToSection(name, profile));
   document.getElementById('deptGrid').innerHTML = deptSections.map((s) => {
     const visible = hasAccessToSection(s, profile);
     const group = NAV_CONFIG.find((g) => g.section === s);
     const displayName = t(group?.sectionKey, s);
     return `
-      <div class="item-card ${visible ? '' : 'item-card--locked'}" data-dept="${s}">
+      <button type="button" class="item-card" data-dept="${s}">
         <span class="item-card__icon">${DEPT_ICON[s]}</span>
         <span class="item-card__name">${displayName}</span>
         ${visible ? '' : '<span class="item-card__lock">🔒</span>'}
-      </div>
+      </button>
     `;
   }).join('');
 
@@ -440,7 +411,7 @@ function openCrmWorkspace(center, profile) {
   sessionStorage.removeItem(DEPT_WORKSPACE_KEY); // tránh nhập nhằng với ERP khi khôi phục lúc F5
   sessionStorage.setItem(CRM_WORKSPACE_CENTER_KEY, JSON.stringify({ id: center.id, name: center.name, theme: center.divisions?.theme_color }));
   const theme = center.divisions?.theme_color || center.theme || 'var(--accent)';
-  const allItems = group.items.filter((it) => it.visible(profile));
+  const allItems = group.items.filter((it) => canAccess(it, profile));
 
   document.getElementById('deptWorkspaceBanner').innerHTML = `
     <div class="dept-workspace-banner" style="background:${theme}1a; border-color:${theme}40;">
@@ -455,10 +426,10 @@ function openCrmWorkspace(center, profile) {
       if (sgItems.length === 0) return '';
       const meta = CRM_SUBGROUP_META[sgKey];
       return `
-        <div class="item-card" data-subgroup="${sgKey}" style="border-color:${theme}30;">
+        <button type="button" class="item-card" data-subgroup="${sgKey}" style="border-color:${theme}30;">
           <span class="item-card__icon" style="background:${theme}1a; border-radius:8px; width:32px; height:32px; display:flex; align-items:center; justify-content:center;">${meta.icon}</span>
           <span class="item-card__name">${meta.label}</span>
-        </div>
+        </button>
       `;
     }).join('') || `<div class="content-sub">${t('lobby.erp.noItems', 'Không có mục nào.')}</div>`;
     document.querySelectorAll('#deptWorkspaceGrid [data-subgroup]').forEach((c) => {
@@ -471,10 +442,10 @@ function openCrmWorkspace(center, profile) {
     document.getElementById('deptWorkspaceGrid').innerHTML = `
       <button type="button" class="crm-workspace-back">← ${esc(CRM_SUBGROUP_META[sgKey].label)}</button>
       ${sgItems.map((it) => `
-        <div class="item-card" data-href="${it.href}" style="border-color:${theme}30;">
-          <span class="item-card__icon" style="background:${theme}1a; border-radius:8px; width:32px; height:32px; display:flex; align-items:center; justify-content:center;">${ITEM_ICONS[it.href] || '📄'}</span>
+        <a class="item-card" href="${it.href}" data-href="${it.href}" style="border-color:${theme}30;">
+          <span class="item-card__icon" style="background:${theme}1a; border-radius:8px; width:32px; height:32px; display:flex; align-items:center; justify-content:center;">${it.icon}</span>
           <span class="item-card__name">${t(it.labelKey, it.label)}</span>
-        </div>
+        </a>
       `).join('')}
     `;
     document.querySelector('.crm-workspace-back').addEventListener('click', renderSubgroupTiles);
@@ -491,7 +462,7 @@ function openDeptWorkspace(dept, profile) {
   if (!group) return;
   sessionStorage.removeItem(CRM_WORKSPACE_CENTER_KEY); // tránh nhập nhằng với CRM khi khôi phục lúc F5
   sessionStorage.setItem(DEPT_WORKSPACE_KEY, dept);
-  const items = group.items.filter((it) => it.visible(profile));
+  const items = group.items.filter((it) => canAccess(it, profile));
   const theme = DEPT_THEME[dept] || 'var(--accent)';
   const deptDisplayName = t(group.sectionKey, dept);
   document.getElementById('deptWorkspaceBanner').innerHTML = `
@@ -501,181 +472,68 @@ function openDeptWorkspace(dept, profile) {
     </div>
   `;
   document.getElementById('deptWorkspaceGrid').innerHTML = items.map((it) => `
-    <div class="item-card" data-href="${it.href}" style="border-color:${theme}30;">
-      <span class="item-card__icon" style="background:${theme}1a; border-radius:8px; width:32px; height:32px; display:flex; align-items:center; justify-content:center;">${ITEM_ICONS[it.href] || '📄'}</span>
+    <a class="item-card" href="${it.href}" data-href="${it.href}" style="border-color:${theme}30;">
+      <span class="item-card__icon" style="background:${theme}1a; border-radius:8px; width:32px; height:32px; display:flex; align-items:center; justify-content:center;">${it.icon}</span>
       <span class="item-card__name">${t(it.labelKey, it.label)}</span>
-    </div>
+    </a>
   `).join('') || `<div class="content-sub">${t('lobby.erp.noItems', 'Không có mục nào.')}</div>`;
   document.querySelectorAll('#deptWorkspaceGrid .item-card').forEach((c) => {
     c.addEventListener('click', () => { window.location.href = c.dataset.href; });
   });
 }
 
-// =====================================================================
-// PHAN 4 — CRM: quy dao ve tinh quanh logo, du lieu trung tam THAT.
-// =====================================================================
-// SUA LOI THAT (lan 2): cach cu dung CSS "animation: translateX(var(--
-// orbit-r)) + rotate" — ve mat ly thuyet dung, nhung tren thuc te van
-// khong an dinh duoc dung do vi thoi diem do offsetWidth (luc lop dang
-// an/vua hien) khong dang tin cay, va % trong translateX() lai tinh theo
-// KICH THUOC PHAN TU chu khong phai san khau. Lam lai HOAN TOAN khac —
-// bo CSS animation, tu tinh toa do bang JS qua requestAnimationFrame,
-// gan THANG top/left (khong qua transform/bien CSS nao ca) — chac chan
-// dung, khong con phu thuoc thoi diem do kich thuoc.
-let crmAnimHandle = null;
-let CRM_SATELLITES = []; // { el, angleDeg, radiusPct, speedDegPerSec }
-
-// MOI — moi trung tam gio la 1 "tieu hanh tinh" rieng: kich thuoc khac
-// nhau va CO QUY DAO RIENG cua no (dan xen ban kinh deu nhau tu gan ra
-// xa) — mau sac gio lay DUNG theo phan he (ALOHA/iLingo) tu du lieu that,
-// khong con dung bang mau cau vong tu dat nhu truoc.
-
+// Static, accessible center directory. Only authorized destinations are rendered.
+let crmLoaded = false;
+let crmLoading = null;
 async function renderCrm(profile) {
-  // SUA — truoc day chi lay id/name/code roi tu bia mau cau vong 8 mau —
-  // gio lay DUNG mau chinh thuc cua tung phan he (divisions.theme_color
-  // — da co san trong du lieu goc: ALOHA xanh duong, iLingo xanh la),
-  // dung 1 nguon du lieu THAT thay vi tu dat mau rieng.
-  const { data: allCenters, error } = await supabase
-    .from('centers')
-    .select('id, name, code, divisions(code, theme_color)')
-    .eq('is_active', true)
-    .order('name');
-  const sub = document.getElementById('crmSub');
-  const stage = document.getElementById('crmStage');
-  if (error || !allCenters || allCenters.length === 0) { sub.textContent = t('lobby.crm.loadError', 'Không tải được danh sách trung tâm.'); return; }
-
-  // "Các trung tâm không thể thấy của nhau" (dữ liệu) vẫn giữ đúng — chỉ
-  // đổi lại CÁCH THỂ HIỆN theo phản hồi: hiện TẤT CẢ trung tâm cho đẹp
-  // mắt (hiệu ứng vệ tinh quay quanh cần nhiều hành tinh mới sinh động,
-  // 1 hành tinh lẻ loi nhìn trống trải), nhưng KHOÁ không bấm vào được
-  // với trung tâm ngoài quyền — không lộ DỮ LIỆU bên trong, chỉ lộ TÊN +
-  // icon khoá 🔒, tương tự cách "Hành chính" khoá phòng ban không có quyền.
-  const restrictedToOwnCenter = !!profile.centerId
-    && !['EXECUTIVE', 'TECH'].includes(profile.roleCode)
-    && profile.departmentCode !== 'ACC';
-  const centers = allCenters;
-
-  sub.textContent = `${centers.length} ${t('lobby.crm.activeCenters', 'trung tâm đang hoạt động')}`;
-
-  let html = '<div class="crm-logo"><div class="crm-logo__title">AIS</div><div class="crm-logo__sub">OFFICE</div></div>';
-  const n = centers.length;
-  const minR = 0.18, maxR = 0.46;
-  const step = n > 1 ? (maxR - minR) / (n - 1) : 0;
-
-  CRM_SATELLITES = [];
-  centers.forEach((c, i) => {
-    const rPct = minR + step * i;
-    const sizePct = rPct * 200;
-    const angleDeg = (137.5 * i) % 360;
-    const color = c.divisions?.theme_color || '#94A3B8';
-    const diameter = 44 + (i % 3) * 8; // 44/52/60px — hoi to hon truoc, do chu can nhieu cho hon
-    // Khoá đúng trung tâm KHÁC trung tâm của mình khi bị giới hạn — trung
-    // tâm của chính mình (nếu có trong danh sách) vẫn luôn mở được.
-    const isAccessible = !restrictedToOwnCenter || c.id === profile.centerId;
-    // SUA — chu bi tran ra ngoai hanh tinh vi dung nguyen "code" trung
-    // tam (co the dai 6-7 ky tu) o co chu co dinh — gio CAT NGAN toi da
-    // 4 ky tu VA tu giam co chu neu ten van dai hon muc do rong cho phep.
-    const rawLabel = (c.code || c.name || '').toUpperCase().replace(/\s+/g, '').slice(0, 4);
-    const labelFontSize = rawLabel.length >= 4 ? 9.5 : rawLabel.length === 3 ? 10.5 : 11.5;
-    const isAloha = c.divisions?.code === 'ALOHA';
-
-    html += `<div class="crm-orbit" style="width:${sizePct}%; height:${sizePct}%; margin-left:-${sizePct / 2}%; margin-top:-${sizePct / 2}%;"></div>`;
-    html += `
-      <div class="crm-satellite ${isAccessible ? '' : 'crm-satellite--locked'}" data-center="${c.id}" data-division="${isAloha ? 'aloha' : 'ilingo'}"
-           style="width:${diameter}px; height:${diameter}px; ${isAccessible ? `background: radial-gradient(circle at 32% 30%, ${color}dd, ${color}); border-color:${color}; color:${color};` : ''}"
-           tabindex="${isAccessible ? '0' : '-1'}" role="button" aria-label="Vào trung tâm ${esc(c.name)}">
-        <span class="crm-satellite__label" style="${isAccessible ? `color:#fff; text-shadow:0 1px 2px rgba(0,0,0,0.35); font-size:${labelFontSize}px;` : `font-size:${labelFontSize}px;`}">${esc(rawLabel)}</span>
-        <span class="crm-satellite__full">${esc(c.name)}${isAccessible ? '' : ' — 🔒'}</span>
-      </div>
-    `;
-    CRM_SATELLITES.push({ angleDeg, radiusPct: rPct, speedDegPerSec: 360 / (45 + rPct * 90), half: diameter / 2 });
-  });
-
-  stage.innerHTML = html;
-  const satelliteEls = [...stage.querySelectorAll('.crm-satellite')];
-  satelliteEls.forEach((el, i) => { CRM_SATELLITES[i].el = el; });
-
-  satelliteEls.forEach((el) => {
-    el.addEventListener('click', () => {
-      if (el.classList.contains('crm-satellite--locked')) return;
-      const centerObj = centers.find((c) => c.id === el.dataset.center);
-      localStorage.setItem(WORLD_STORAGE_KEY, 'crm');
-      localStorage.setItem('ais_selected_center', el.dataset.center);
-      stopCrmAnimation();
-      openCrmWorkspace(centerObj, profile);
-      PARENT_OF.layerDeptWorkspace = 'layerCrm';
-      showLayer('layerDeptWorkspace');
-    });
-  });
-}
-
-function positionCrmSatellitesOnce() {
-  const stage = document.getElementById('crmStage');
-  const w = stage.clientWidth, h = stage.clientHeight;
-  if (!w || !h) return false;
-  CRM_SATELLITES.forEach((s) => {
-    const rad = (s.angleDeg * Math.PI) / 180;
-    const rx = w * s.radiusPct, ry = h * s.radiusPct;
-    const x = w / 2 + rx * Math.cos(rad) - s.half;
-    const y = h / 2 + ry * Math.sin(rad) - s.half;
-    s.el.style.left = x + 'px';
-    s.el.style.top = y + 'px';
-  });
-  return true;
-}
-
-function startCrmAnimation() {
-  stopCrmAnimation();
-  if (!positionCrmSatellitesOnce()) { setTimeout(startCrmAnimation, 80); return; }
-  // SUA — truoc day neu may dang bat "giam chuyen dong"
-  // (prefers-reduced-motion, thuong la cai dat tiet kiem pin cua may,
-  // khong han nguoi dung tu chon) thi TAT HAN xoay — nhin nhu bi dung
-  // hinh, du hanh tinh van bam duoc binh thuong. Gio van XOAY, chi cham
-  // hon han (theo dung tinh than "giam" chu khong phai "tat het"
-  // chuyen dong, dung chuan huong dan hop can bang giua tiep can va
-  // trai nghiem).
-  // MOI — theo yeu cau, bo han che toc do theo "giam chuyen dong" cua
-  // may — luon xoay dung toc do binh thuong, khong tu dong lam cham
-  // theo cai dat he dieu hanh nua.
-  const speedMultiplier = 1;
-  let last = performance.now();
-  function frame(now) {
-    const dt = (now - last) / 1000;
-    last = now;
+  if (crmLoaded) return;
+  if (crmLoading) return crmLoading;
+  crmLoading = (async () => {
     const stage = document.getElementById('crmStage');
-    const w = stage.clientWidth, h = stage.clientHeight;
-    CRM_SATELLITES.forEach((s) => {
-      s.angleDeg = (s.angleDeg + s.speedDegPerSec * dt * speedMultiplier) % 360;
-      const rad = (s.angleDeg * Math.PI) / 180;
-      const rx = w * s.radiusPct, ry = h * s.radiusPct;
-      s.el.style.left = (w / 2 + rx * Math.cos(rad) - s.half) + 'px';
-      s.el.style.top = (h / 2 + ry * Math.sin(rad) - s.half) + 'px';
+    const sub = document.getElementById('crmSub');
+    const { data, error } = await supabase.from('centers')
+      .select('id, name, code, divisions(code)').eq('is_active', true).order('name');
+    if (error) {
+      sub.textContent = 'Không tải được danh sách trung tâm.';
+      stage.innerHTML = '<button type="button" class="btn btn-outline" id="retryCenters">Thử lại</button>';
+      stage.querySelector('button').onclick = () => renderCrm(profile);
+      return;
+    }
+    const restricted = !!profile.centerId && !['EXECUTIVE', 'TECH'].includes(profile.roleCode) && profile.departmentCode !== 'ACC';
+    const centers = (data || []).filter(c => !restricted || c.id === profile.centerId);
+    sub.textContent = `${centers.length} trung tâm trong phạm vi của bạn`;
+    stage.innerHTML = centers.length ? centers.map(c => `<button type="button" class="center-card" data-center="${esc(c.id)}"><strong>${esc(c.name)}</strong><span>${esc(c.divisions?.code || 'AIS')} · ${esc(c.code || '')}</span><span>Mở công việc trung tâm →</span></button>`).join('') : '<p>Chưa có trung tâm trong phạm vi của bạn.</p>';
+    stage.querySelectorAll('[data-center]').forEach(el => {
+      el.onclick = () => {
+        const center = centers.find(c => c.id === el.dataset.center);
+        localStorage.setItem(WORLD_STORAGE_KEY, 'crm');
+        localStorage.setItem('ais_selected_center', center.id);
+        openCrmWorkspace(center, profile);
+        PARENT_OF.layerDeptWorkspace = 'layerCrm';
+        showLayer('layerDeptWorkspace');
+      };
     });
-    crmAnimHandle = requestAnimationFrame(frame);
-  }
-  crmAnimHandle = requestAnimationFrame(frame);
+    crmLoaded = true;
+  })();
+  try { await crmLoading; } finally { crmLoading = null; }
 }
-function stopCrmAnimation() { if (crmAnimHandle) cancelAnimationFrame(crmAnimHandle); crmAnimHandle = null; }
+function startCrmAnimation() { if (FULL_PROFILE) renderCrm(FULL_PROFILE).catch(console.warn); }
+function stopCrmAnimation() {} // compatibility with existing navigation callers
 
 // =====================================================================
 // PHAN 5 — ROOM: luoi phang cac chuc nang ca nhan.
 // =====================================================================
-const ROOM_ICONS = {
-  '/directory.html': '📇', '/profile.html': '👤', '/my-payroll.html': '💵', '/meetings.html': '🗓️',
-  '/attendance-checkin.html': '📍', '/hr/late-clockin-requests.html': '⏰', '/acc/purchase-orders.html': '🧾',
-  '/proposals.html': '💡', '/archive.html': '📚', '/permission-requests.html': '🔑', '/change-password.html': '🔒',
-};
 function renderRoom(profile) {
   const group = NAV_CONFIG.find((g) => g.section === 'Chức năng cá nhân');
   const grid = document.getElementById('roomGrid');
-  grid.innerHTML = group.items.map((item) => {
-    const visible = item.visible(profile);
+  grid.innerHTML = group.items.filter(item => canAccess(item, profile)).map((item) => {
+    const visible = canAccess(item, profile);
     return `
-      <div class="item-card ${visible ? '' : 'item-card--locked'}" data-href="${item.href}">
-        <span class="item-card__icon">${ROOM_ICONS[item.href] || '✨'}</span>
+      <a class="item-card" href="${item.href}" data-href="${item.href}">
+        <span class="item-card__icon">${item.icon}</span>
         <span class="item-card__name">${t(item.labelKey, item.label)}</span>
         ${visible ? '' : '<span class="item-card__lock">🔒</span>'}
-      </div>
+      </a>
     `;
   }).join('');
   grid.querySelectorAll('.item-card:not(.item-card--locked)').forEach((el) => {
@@ -707,8 +565,9 @@ function renderBanzone(profile) {
 
   const box = document.getElementById('banzoneAccordions');
   box.innerHTML = categories.map((cat, ci) => {
-    const items = cat.hrefs.map((h) => itemsByHref[h]).filter(Boolean);
-    const anyVisible = items.some((it) => it.visible(profile));
+    const items = cat.hrefs.map((h) => itemsByHref[h]).filter(it => it && canAccess(it, profile));
+    if (!items.length) return '';
+    const anyVisible = items.some((it) => canAccess(it, profile));
     return `
       <div class="accordion ${anyVisible ? '' : 'accordion--locked'}" data-cat="${ci}">
         <div class="accordion__head">
@@ -719,7 +578,7 @@ function renderBanzone(profile) {
         </div>
         <div class="accordion__body">
           ${items.map((it) => {
-            const visible = it.visible(profile);
+            const visible = canAccess(it, profile);
             const label = t(it.labelKey, it.label);
             return `<div class="accordion-row ${visible ? '' : 'accordion-row--locked'}" data-href="${it.href}" data-name="${label.toLowerCase()}">${label}${visible ? '' : ' 🔒'}</div>`;
           }).join('')}
@@ -735,14 +594,14 @@ function renderBanzone(profile) {
     row.addEventListener('click', (e) => { e.stopPropagation(); window.location.href = row.dataset.href; });
   });
 
-  document.getElementById('banzoneSearch').addEventListener('input', (e) => {
+  document.getElementById('banzoneSearch').oninput = (e) => {
     const q = e.target.value.trim().toLowerCase();
     box.querySelectorAll('.accordion-row').forEach((row) => {
       const match = !q || row.dataset.name.includes(q);
       row.classList.toggle('accordion-row--hidden', !match);
       if (match && q) row.closest('.accordion').classList.add('is-open');
     });
-  });
+  };
 }
 
 // =====================================================================
@@ -750,6 +609,11 @@ function renderBanzone(profile) {
 // =====================================================================
 let CENTER = null;
 let LAST_POSITION = null;
+let gpsWatchId = null;
+let checkinBusy = false;
+let cleanupCheckinDialog = () => {};
+function stopGpsWatch() { if (gpsWatchId !== null) navigator.geolocation.clearWatch(gpsWatchId); gpsWatchId = null; LAST_POSITION = null; }
+window.addEventListener('pagehide', stopGpsWatch);
 const RADIUS_LIMIT_M = 1000;
 
 function distanceMeters(lat1, lon1, lat2, lon2) {
@@ -763,9 +627,11 @@ function distanceMeters(lat1, lon1, lat2, lon2) {
 function fmtDistance(m) { return m >= 1000 ? `${(m / 1000).toFixed(2)} km` : `${Math.round(m)} m`; }
 
 function watchPosition() {
+  if (!document.getElementById('checkinOverlay').classList.contains('is-visible')) return;
   const hint = document.getElementById('ciGpsHint');
   if (!('geolocation' in navigator)) { hint.textContent = t('lobby.checkin.noGeo', 'Trình duyệt không hỗ trợ định vị vị trí.'); return; }
-  navigator.geolocation.watchPosition(
+  stopGpsWatch();
+  gpsWatchId = navigator.geolocation.watchPosition(
     (pos) => {
       LAST_POSITION = pos.coords;
       const dist = distanceMeters(pos.coords.latitude, pos.coords.longitude, CENTER.latitude, CENTER.longitude);
@@ -774,8 +640,8 @@ function watchPosition() {
       hint.style.color = inRange ? 'var(--success)' : 'var(--danger)';
       const btnIn = document.getElementById('btnCiIn');
       const btnOut = document.getElementById('btnCiOut');
-      if (btnIn.style.display !== 'none') btnIn.disabled = !inRange;
-      if (btnOut.style.display !== 'none') btnOut.disabled = !inRange;
+      if (btnIn.style.display !== 'none') btnIn.disabled = checkinBusy || !inRange;
+      if (btnOut.style.display !== 'none') btnOut.disabled = checkinBusy || !inRange;
     },
     (err) => { hint.textContent = t('lobby.checkin.gpsError', 'Không lấy được vị trí:') + ' ' + (err.message || t('lobby.checkin.gpsPermission', 'cần cho phép truy cập vị trí.')); hint.style.color = 'var(--danger)'; },
     { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 }
@@ -804,12 +670,14 @@ async function loadTodayStatus() {
 }
 
 async function doCheckin(type) {
+  if (checkinBusy || !CENTER) return;
   const errBox = document.getElementById('ciError');
   errBox.style.display = 'none';
   if (!LAST_POSITION) { errBox.textContent = t('lobby.checkin.waitLocating', 'Chưa xác định được vị trí — đợi vài giây rồi thử lại.'); errBox.style.display = 'block'; return; }
   const dist = distanceMeters(LAST_POSITION.latitude, LAST_POSITION.longitude, CENTER.latitude, CENTER.longitude);
   if (dist > RADIUS_LIMIT_M) { errBox.textContent = `${t('lobby.checkin.tooFar', 'Cách trung tâm')} ${fmtDistance(dist)} — ${t('lobby.checkin.outOfAllowedRange', 'ngoài phạm vi cho phép (1km).')}`; errBox.style.display = 'block'; return; }
   const btn = type === 'in' ? document.getElementById('btnCiIn') : document.getElementById('btnCiOut');
+  checkinBusy = true;
   btn.disabled = true; const oldText = btn.textContent; btn.textContent = t('lobby.checkin.submitting', 'Đang chấm công...');
   try {
     const { error } = await supabase.from('attendance_checkins').insert({
@@ -821,18 +689,22 @@ async function doCheckin(type) {
   } catch (err) {
     errBox.textContent = err.message || t('lobby.checkin.genericError', 'Có lỗi xảy ra.');
     errBox.style.display = 'block';
-    btn.disabled = false; btn.textContent = oldText;
+    btn.disabled = false;
+  } finally {
+    checkinBusy = false; btn.textContent = oldText;
   }
 }
 document.getElementById('btnCiIn').addEventListener('click', () => doCheckin('in'));
 document.getElementById('btnCiOut').addEventListener('click', () => doCheckin('out'));
-document.getElementById('btnCloseCheckin').addEventListener('click', () => { document.getElementById('checkinOverlay').classList.remove('is-visible'); });
-document.getElementById('checkinOverlay').addEventListener('click', (e) => { if (e.target.id === 'checkinOverlay') e.currentTarget.classList.remove('is-visible'); });
+function closeCheckin() { cleanupCheckinDialog(); stopGpsWatch(); document.getElementById('checkinOverlay').classList.remove('is-visible'); }
+document.getElementById('btnCloseCheckin').addEventListener('click', closeCheckin);
+document.getElementById('checkinOverlay').addEventListener('click', (e) => { if (e.target.id === 'checkinOverlay') closeCheckin(); });
 
 let checkinInitialized = false;
 async function openCheckin() {
   document.getElementById('checkinOverlay').classList.add('is-visible');
-  if (checkinInitialized) return;
+  cleanupCheckinDialog = manageDialog(document.querySelector('.checkin-panel'), closeCheckin, document.getElementById('btnCloseCheckin'));
+  if (checkinInitialized) { if (CENTER) watchPosition(); await loadTodayStatus(); return; }
   checkinInitialized = true;
   if (!PROFILE?.centerId) {
     // SUA — truoc day chi hien dong chu bao di dung trang day du, KHONG
@@ -845,7 +717,11 @@ async function openCheckin() {
     document.getElementById('ciGpsHint').textContent = '';
     const select = document.getElementById('ciCenterSelect');
     select.innerHTML = '<option value="">— Chọn trung tâm —</option>' + (centers || []).map((c) => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
-    select.addEventListener('change', () => {
+    select.onchange = () => {
+      stopGpsWatch();
+      CENTER = null;
+      document.getElementById('btnCiIn').disabled = true;
+      document.getElementById('btnCiOut').disabled = true;
       const chosen = (centers || []).find((c) => c.id === select.value);
       if (!chosen || !chosen.latitude || !chosen.longitude) {
         document.getElementById('btnCiIn').style.display = 'none';
@@ -857,7 +733,7 @@ async function openCheckin() {
       document.getElementById('btnCiIn').style.display = 'block';
       watchPosition();
       loadTodayStatus();
-    });
+    };
     return;
   }
   const { data: center } = await supabase.from('centers').select('id, name, latitude, longitude').eq('id', PROFILE.centerId).single();
@@ -886,19 +762,19 @@ document.getElementById('btnOpenCheckin').addEventListener('click', openCheckin)
   const { data: employee } = await supabase
     .from('employees')
     .select(`
-      id, full_name, center_id, language_preference, dob, can_teach,
+      id, full_name, center_id, language_preference, can_teach, is_academic_board, status, temp_password_flag,
       departments ( code ), positions ( name, is_teacher_eligible ),
       system_roles ( code ), centers ( id, name )
     `)
     .eq('auth_user_id', sessionData.session.user.id)
     .single();
 
-  if (!employee) return;
+  if (!employee || employee.status !== 'active') { await supabase.auth.signOut(); location.replace('/index.html'); return; }
+  if (employee.temp_password_flag) { location.replace('/change-password.html'); return; }
   renderGreeting(employee.full_name);
   checkBirthday(employee.id).catch((e) => console.warn('checkBirthday lỗi:', e));
   loadStats(employee.id).catch(console.warn);
   loadNoticeBoard().catch(console.warn);
-  initFortuneWidget(employee.dob);
   const installCard = document.getElementById('installBanner');
   if (installCard) registerInstallBanner(installCard, installCard);
   PROFILE = { id: employee.id, centerId: employee.center_id };
@@ -916,6 +792,9 @@ document.getElementById('btnOpenCheckin').addEventListener('click', openCheckin)
     isCenterManager: employee.system_roles?.code === 'CENTER_MANAGER',
     isTeacher: !!employee.positions?.is_teacher_eligible || !!employee.can_teach,
   };
+  fullProfile.isAcademicBoard = !!employee.is_academic_board;
+  const { data: grants } = await supabase.from('granted_permissions').select('module_key').eq('employee_id', employee.id);
+  fullProfile.grantedModules = new Set((grants || []).map(g => g.module_key));
   FULL_PROFILE = fullProfile;
   document.getElementById('cardUnread')?.addEventListener('click', () => { window.location.href = '/notifications.html'; });
   document.getElementById('cardPending')?.addEventListener('click', () => { window.location.href = '/approval-center.html'; });
@@ -932,7 +811,7 @@ document.getElementById('btnOpenCheckin').addEventListener('click', openCheckin)
   renderErp(fullProfile);
   renderRoom(fullProfile);
   renderBanzone(fullProfile);
-  await renderCrm(fullProfile);
+  // Center directory is fetched when its section is opened.
   loadFinanceBoard(fullProfile).catch(console.warn);
 
   // Khoi phuc dung lop dang xem neu F5 / mo lai (dung sessionStorage) —
@@ -984,4 +863,13 @@ document.getElementById('btnOpenCheckin').addEventListener('click', openCheckin)
   } else {
     window.history.replaceState({ layer: 'layerBranches' }, '', '#branches');
   }
-})();
+})().catch(error => {
+  console.error('Không tải được trang chủ:', error);
+  const main = document.querySelector('.lobby-wrap');
+  const notice = document.createElement('div');
+  notice.className = 'workspace-error';
+  notice.setAttribute('role', 'alert');
+  notice.innerHTML = '<p>Không tải được trang chủ. Vui lòng kiểm tra kết nối và thử lại.</p><button type="button" class="btn btn-outline">Thử lại</button>';
+  notice.querySelector('button').onclick = () => location.reload();
+  main?.prepend(notice);
+});

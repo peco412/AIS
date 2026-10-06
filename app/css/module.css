@@ -323,3 +323,25 @@ table.week-grid { width: 100%; border-collapse: collapse; font-size: 13px; min-w
 .week-cell.has-shift:hover { background: rgba(var(--accent-rgb), 0.18); }
 .week-cell .shift-label { font-size: 12px; font-weight: 600; color: var(--accent-deep); }
 .week-cell .shift-empty { font-size: 16px; color: var(--border-strong); }
+
+/* Workspace controls: readable density, restrained depth. */
+.btn, .select-input, .text-input { min-height: 40px; }
+.data-table thead th { color: var(--ink-soft); background: var(--surface-fill); }
+.data-table tbody td { line-height: 1.5; }
+.modal-overlay { backdrop-filter: none; -webkit-backdrop-filter: none; padding: 24px 16px; }
+.modal-box { border: 1px solid var(--border); max-height: calc(100dvh - 48px); overflow-y: auto; }
+.modal-actions { position: sticky; bottom: -28px; background: var(--surface-card); padding: 12px 0; }
+.nav-search-label { display:block; font-size:13px; font-weight:600; margin-bottom:8px; }
+#navSearch { width:100%; margin-bottom:16px; }
+@media(max-width:640px) {
+ .modal-overlay { padding:12px; }
+ .modal-box { max-height:calc(100dvh - 24px); }
+ /* Matrix/report tables must keep their column relationships. */
+ .data-table-wrap:has(td[colspan]), .data-table-wrap:has(th[colspan]) { overflow-x:auto; background:var(--surface-card); border:1px solid var(--border); }
+ .data-table-wrap:has(td[colspan]) .data-table, .data-table-wrap:has(th[colspan]) .data-table { display:table; min-width:640px; }
+ .data-table-wrap:has(td[colspan]) thead, .data-table-wrap:has(th[colspan]) thead { display:table-header-group; }
+ .data-table-wrap:has(td[colspan]) tbody, .data-table-wrap:has(th[colspan]) tbody { display:table-row-group; }
+ .data-table-wrap:has(td[colspan]) tr, .data-table-wrap:has(th[colspan]) tr { display:table-row; }
+ .data-table-wrap:has(td[colspan]) td, .data-table-wrap:has(th[colspan]) td { display:table-cell; text-align:left; padding:12px; }
+ .data-table-wrap:has(td[colspan]) td::before, .data-table-wrap:has(th[colspan]) td::before { display:none; }
+}

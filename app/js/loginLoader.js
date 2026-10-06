@@ -29,6 +29,6 @@ export function showLoginLoader({ division = 'aloha', message = 'Đang vào hệ
   });
 
   return new Promise((resolve) => {
-    setTimeout(resolve, 1500);
+    setTimeout(resolve, window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 150);
   });
 }

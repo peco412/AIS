@@ -1,3 +1,4 @@
+import { manageDialog } from './dialogA11y.js';
 // =====================================================================
 // HỘP THOẠI XÁC NHẬN / NHẬP LIỆU DÙNG CHUNG
 // -----------------------------------------------------------------------
@@ -37,7 +38,7 @@ function ensureRoot() {
 // đúng cách xuống dòng như cũ mà không phải sửa lại từng câu ở 26 file gọi.
 function toSafeHtml(text) {
   const escaped = String(text ?? '')
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   return escaped.replace(/\n/g, '<br>');
 }
 
@@ -46,7 +47,7 @@ function baseModal({ title, bodyHtml, danger }) {
   overlay.className = 'modal-overlay show';
   overlay.innerHTML = `
     <div class="modal-box" style="max-width:420px;" role="dialog" aria-modal="true">
-      <h3>${title}</h3>
+      <h3>${toSafeHtml(title)}</h3>
       ${bodyHtml}
       <div class="modal-actions" data-dialog-actions></div>
     </div>
@@ -68,10 +69,15 @@ export function showConfirm(message, options = {}) {
     });
     const actions = overlay.querySelector('[data-dialog-actions]');
     actions.innerHTML = `
-      <button type="button" class="btn btn-outline" data-cancel>${cancelLabel}</button>
-      <button type="button" class="btn ${danger ? 'btn-danger' : 'btn-accent'}" data-ok>${confirmLabel}</button>
+      <button type="button" class="btn btn-outline" data-cancel>${toSafeHtml(cancelLabel)}</button>
+      <button type="button" class="btn ${danger ? 'btn-danger' : 'btn-accent'}" data-ok>${toSafeHtml(confirmLabel)}</button>
     `;
+    let cleanup = () => {};
+    let settled = false;
     function close(result) {
+      if (settled) return;
+      settled = true;
+      cleanup();
       overlay.remove();
       resolve(result);
     }
@@ -79,7 +85,7 @@ export function showConfirm(message, options = {}) {
     actions.querySelector('[data-ok]').addEventListener('click', () => close(true));
     overlay.addEventListener('click', (e) => { if (e.target === overlay) close(false); });
     ensureRoot().appendChild(overlay);
-    actions.querySelector('[data-ok]').focus();
+    cleanup = manageDialog(overlay.querySelector('.modal-box'), () => close(false), actions.querySelector('[data-cancel]'));
   });
 }
 
@@ -104,11 +110,18 @@ export function showPromptDialog(message, options = {}) {
     });
     const actions = overlay.querySelector('[data-dialog-actions]');
     actions.innerHTML = `
-      <button type="button" class="btn btn-outline" data-cancel>${cancelLabel}</button>
-      <button type="button" class="btn btn-accent" data-ok>${confirmLabel}</button>
+      <button type="button" class="btn btn-outline" data-cancel>${toSafeHtml(cancelLabel)}</button>
+      <button type="button" class="btn btn-accent" data-ok>${toSafeHtml(confirmLabel)}</button>
     `;
     const input = overlay.querySelector(`#${inputId}`);
+    input.required = required;
+    input.setAttribute('aria-label', message);
+    let cleanup = () => {};
+    let settled = false;
     function close(result) {
+      if (settled) return;
+      settled = true;
+      cleanup();
       overlay.remove();
       resolve(result);
     }
@@ -122,6 +135,6 @@ export function showPromptDialog(message, options = {}) {
     input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !multiline) submit(); });
     overlay.addEventListener('click', (e) => { if (e.target === overlay) close(null); });
     ensureRoot().appendChild(overlay);
-    input.focus();
+    cleanup = manageDialog(overlay.querySelector('.modal-box'), () => close(null), input);
   });
 }

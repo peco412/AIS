@@ -1,22 +1,19 @@
 :root {
-  /* LÀM LẠI 22/08/2026 — đồng bộ tông màu/font với AIS OFFICE (app/css/
-     tokens.css): nền giấy ấm thay xám lạnh, font serif Fraunces cho tiêu
-     đề, bo góc/đổ bóng tiết chế hơn — phong cách "minimalist premium
-     education" áp dụng nhất quán cho cả 2 app. */
+  /* Same visual language as AIS OFFICE. */
   --accent: #0d6ea6;
   --accent-deep: #0a5580;
   --accent-tint: #e7f2f8;
   --accent-rgb: 13, 110, 166;
-  --ink: #1c1a17;
-  --ink-soft: #55504a;
-  --muted: #8a837a;
-  --surface: #f8f6f2;
+  --ink: #172b4d;
+  --ink-soft: #42526e;
+  --muted: #62718a;
+  --surface: #f4f7fb;
   --surface-card: #ffffff;
-  --surface-sunken: #f0ece4;
-  --surface-fill: #f2efe9;
-  --border: rgba(28, 26, 23, 0.10);
-  --border-strong: rgba(28, 26, 23, 0.16);
-  --separator: rgba(28, 26, 23, 0.08);
+  --surface-sunken: #e9eef5;
+  --surface-fill: #eef2f7;
+  --border: rgba(23, 43, 77, 0.10);
+  --border-strong: rgba(23, 43, 77, 0.16);
+  --separator: rgba(23, 43, 77, 0.08);
   --success: #276b45;
   --success-tint: #e7f1ea;
   --warning: #9c6b1f;
@@ -28,16 +25,16 @@
   --radius-md: 12px;
   --radius-lg: 18px;
   --radius-pill: 999px;
-  --shadow-xs: 0 1px 2px rgba(28, 26, 23, 0.04);
-  --shadow-sm: 0 1px 3px rgba(28, 26, 23, 0.06);
-  --shadow-md: 0 6px 20px rgba(28, 26, 23, 0.07);
-  --shadow-lg: 0 16px 40px rgba(28, 26, 23, 0.12);
+  --shadow-xs: 0 1px 2px rgba(23, 43, 77, 0.04);
+  --shadow-sm: 0 1px 3px rgba(23, 43, 77, 0.06);
+  --shadow-md: 0 6px 20px rgba(23, 43, 77, 0.07);
+  --shadow-lg: 0 16px 40px rgba(23, 43, 77, 0.12);
   --ease: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
   --dur-fast: 0.15s;
   --dur-base: 0.22s;
   --font: 'Be Vietnam Pro', -apple-system, sans-serif;
-  --font-display: 'Fraunces', 'Be Vietnam Pro', ui-serif, Georgia, serif;
+  --font-display: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   /* Bo tim mau icon phang, chuyen nghiep hon — thay cho 5 gradient sac
      so voi truoc (moi "o" 1 mau gradient rieng nhin roi mat/thieu nhat
      quan) — gio dung 1 tong mau thuong hieu + xam trung tinh, chi khac
@@ -319,7 +316,7 @@ button { font-family: inherit; -webkit-tap-highlight-color: transparent; }
   display: flex; justify-content: center;
   background: var(--surface-card);
   border-top: 1px solid var(--border); padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
-  box-shadow: 0 -1px 3px rgba(28, 26, 23, 0.05);
+  box-shadow: 0 -1px 3px rgba(23, 43, 77, 0.05);
 }
 .bottom-nav__inner { display: flex; width: 100%; max-width: var(--content-w); }
 .bottom-nav a {
@@ -390,4 +387,16 @@ button { font-family: inherit; -webkit-tap-highlight-color: transparent; }
    ===================================================================== */
 @media (max-width: 768px) {
   input, select, textarea { font-size: 16px !important; }
+}
+
+/* Shared workspace finish: legible forms, predictable touch targets. */
+button, input, select, textarea { font: inherit; }
+button, a { touch-action: manipulation; }
+button:disabled { cursor: not-allowed; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+input:not([type=checkbox]):not([type=radio]), select, textarea { border-color: var(--border-strong); }
+[hidden] { display: none !important; }
+@media (max-width: 768px) {
+  input, select, textarea { font-size: 16px !important; }
+  .btn, .btn-primary, .btn-outline, .icon-btn, .menu-toggle { min-height: 44px; }
 }

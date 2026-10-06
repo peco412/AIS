@@ -413,7 +413,8 @@ function render() {
 // "—" vì chưa từng nối dữ liệu) — dùng lại ĐÚNG 14 nguồn đã có ở trên,
 // không viết trùng logic lọc theo quyền ở nơi khác (dễ lệch nhau).
 export async function getPendingApprovalCount(profile) {
-  PROFILE = profile;
+  const { data: emp } = await supabase.from('employees').select('department_id').eq('id', profile.id).single();
+  PROFILE = { ...profile, departmentId: emp?.department_id || profile.departmentId };
   const results = await Promise.all(SOURCES.map((fn) => fn().catch(() => [])));
   return results.flat().length;
 }
@@ -426,7 +427,7 @@ async function loadAll() {
   render();
 }
 
-(async () => {
+if (document.getElementById('approvalList')) (async () => {
   const { profile } = await bootShell();
   // Cần thêm department_id (không có sẵn trong profile chuẩn từ bootShell,
   // xem js/proposals.js — cùng 1 cách xử lý) để so khớp "trưởng phòng cùng
