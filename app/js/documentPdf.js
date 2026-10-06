@@ -1,0 +1,17 @@
+let ready;
+function script(src){return new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=src;s.onload=resolve;s.onerror=()=>reject(new Error('Không tải được bộ tạo PDF.'));document.head.append(s);});}
+export async function documentLibs(){if(!ready)ready=(async()=>{if(!window.PDFLib)await script('/vendor/pdf-lib.min.js');if(!window.fontkit)await script('/vendor/fontkit.umd.min.js');})().catch(e=>{ready=null;throw e;});await ready;}
+export const SIGN_ROLES=['Người làm đơn','Cán bộ quản lý','Phòng HCNS','Giám đốc'];
+export async function buildDocumentPdf({title,code='',author='',fields=[],signatures=[]}){
+ await documentLibs();const {PDFDocument,rgb}=window.PDFLib;const doc=await PDFDocument.create();doc.registerFontkit(window.fontkit);const response=await fetch('/assets/fonts/document.ttf');if(!response.ok)throw new Error('Không tải được font tiếng Việt.');const font=await doc.embedFont(await response.arrayBuffer(),{subset:true});let page,y;
+ const newPage=()=>{page=doc.addPage([595.28,841.89]);y=780;page.drawText('AIS  /  HỆ THỐNG TRUNG TÂM NGOẠI NGỮ',{x:42,y,size:10,font,color:rgb(.15,.23,.34)});y-=24;page.drawLine({start:{x:42,y},end:{x:553,y},thickness:1,color:rgb(.68,.54,.30)});y-=30;};newPage();
+ const wrap=(value,size=11,width=510)=>{const text=String(value??'').replace(/\t/g,' ');const lines=[];for(const paragraph of text.split('\n')){let line='';for(const word of paragraph.split(' ')){if(font.widthOfTextAtSize(line?line+' '+word:word,size)>width&&line){lines.push(line);line='';}if(font.widthOfTextAtSize(word,size)>width){for(const char of word){if(font.widthOfTextAtSize(line+char,size)>width){lines.push(line);line='';}line+=char;}}else line+=(line?' ':'')+word;}lines.push(line);}return lines;};
+ const write=(text,size=11)=>{for(const line of wrap(text,size)){if(y<90)newPage();page.drawText(line,{x:42,y,size,font,color:rgb(.1,.15,.22)});y-=size+7;}y-=8;};
+ write(title.toUpperCase(),16);write(`Mã hồ sơ: ${code||'Bản xem trước'}`);write(`Người làm đơn: ${author}`);
+ for(const field of fields)write(`${field.label}: ${field.value??'—'}`);
+ if(y<250)newPage();y-=12;write('XÁC NHẬN VÀ KÝ DUYỆT',11);
+ const boxY=y-115;for(let i=0;i<4;i++){const x=42+i*128;page.drawRectangle({x,y:boxY,width:124,height:115,borderColor:rgb(.7,.72,.75),borderWidth:.5});page.drawText(SIGN_ROLES[i],{x:x+5,y:boxY+96,size:8,font});const sig=signatures.find(s=>s.step===i);if(sig?.image){const bytes=new Uint8Array(await sig.image.arrayBuffer());const image=bytes[0]===137?await doc.embedPng(bytes):await doc.embedJpg(bytes);const dims=image.scaleToFit(106,45);page.drawImage(image,{x:x+(124-dims.width)/2,y:boxY+35,width:dims.width,height:dims.height});}if(sig){const name=wrap(sig.name,7,113).slice(0,2);name.forEach((line,n)=>page.drawText(line,{x:x+5,y:boxY+23-n*9,size:7,font}));page.drawText(new Date(sig.at).toLocaleDateString('vi-VN'),{x:x+5,y:boxY+5,size:7,font});}}
+ doc.getPages().forEach((p,i)=>p.drawText(`${code||'AIS'} · ${i+1}/${doc.getPageCount()}`,{x:42,y:32,size:8,font,color:rgb(.4,.45,.5)}));return new Blob([await doc.save()],{type:'application/pdf'});
+}
+export function downloadPdf(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+export async function hashPdf(blob){const buffer=await crypto.subtle.digest('SHA-256',await blob.arrayBuffer());return [...new Uint8Array(buffer)].map(x=>x.toString(16).padStart(2,'0')).join('');}

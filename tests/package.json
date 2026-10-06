@@ -1,1 +1,12 @@
-{"private":true,"scripts":{"test":"node --experimental-vm-modules ui-regression.cjs"},"devDependencies":{"jsdom":"30.1.2"}}
+{
+  "private": true,
+  "scripts": {
+    "test": "node --experimental-vm-modules ui-regression.cjs && node models-and-pdf.cjs && node database-regression.cjs"
+  },
+  "devDependencies": {
+    "jsdom": "30.1.2",
+    "pdf-lib": "1.17.1",
+    "@pdf-lib/fontkit": "1.1.1",
+    "@electric-sql/pglite": "0.5.8"
+  }
+}

@@ -2,14 +2,14 @@
 
 :root {
   /* Nền & bề mặt — giấy ấm trung tính, KHÔNG còn xám xanh kiểu macOS */
-  --ink: #172b4d;
-  --ink-soft: #42526e;
-  --muted: #62718a;
-  --surface: #f4f7fb;
+  --ink: #18293f;
+  --ink-soft: #526175;
+  --muted: #697588;
+  --surface: #f5f4f0;
   --surface-card: #ffffff;
   --surface-base: #ffffff;          /* alias = surface-card, dùng cho panel/overlay lớn */
-  --surface-sunken: #e9eef5;
-  --surface-fill: #eef2f7;          /* nền input/nút phụ */
+  --surface-sunken: #eae8e1;
+  --surface-fill: #f0eee8;          /* nền input/nút phụ */
   --border: rgba(23, 43, 77, 0.10);
   --border-strong: rgba(23, 43, 77, 0.16);
   --separator: rgba(23, 43, 77, 0.08);
@@ -60,17 +60,17 @@
 
   /* Mặc định trước khi chọn phân hệ — đã giảm độ bão hoà nhẹ để hợp với
      nền giấy ấm mới (bản cũ chọn cho nền xanh lạnh, giờ trông chói). */
-  --accent: #0d6ea6;
-  --accent-deep: #0a5580;
-  --accent-tint: #e7f2f8;
-  --accent-rgb: 13, 110, 166;
+  --accent: #233b57;
+  --accent-deep: #172c43;
+  --accent-tint: #e9eef3;
+  --accent-rgb: 35, 59, 87;
 }
 
 html[data-division='aloha'] {
-  --accent: #0d6ea6;
-  --accent-deep: #0a5580;
-  --accent-tint: #e7f2f8;
-  --accent-rgb: 13, 110, 166;
+  --accent: #233b57;
+  --accent-deep: #172c43;
+  --accent-tint: #e9eef3;
+  --accent-rgb: 35, 59, 87;
 }
 
 html[data-division='ilingo'] {
@@ -172,3 +172,6 @@ input:not([type=checkbox]):not([type=radio]), select, textarea { border-color: v
   input, select, textarea { font-size: 16px !important; }
   .btn, .btn-primary, .btn-outline, .icon-btn, .menu-toggle { min-height: 44px; }
 }
+
+:root { --font-display: Georgia, 'Times New Roman', serif; --radius-md:8px; --radius-lg:12px; --gold:#ae894b; }
+h1,h2,h3,h4 { font-family:var(--font-display); }

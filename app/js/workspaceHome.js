@@ -1,0 +1,10 @@
+import { bootShell, canAccess } from './shell.js';
+import { NAV_CONFIG } from './navConfig.js';
+import { supabase, esc } from './supabase.js';
+import { t } from './i18n.js';
+const norm=v=>v.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d');
+(async()=>{const {profile}=await bootShell();document.getElementById('greeting').textContent=`Chào ${profile.fullName}.`;document.getElementById('today').textContent=new Date().toLocaleDateString('vi-VN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+const groups=NAV_CONFIG.filter(g=>g.section).map(g=>({...g,items:g.items.filter(i=>canAccess(i,profile))})).filter(g=>g.items.length);
+const render=()=>{const q=norm(document.getElementById('homeSearch').value);const visible=groups.map(g=>({...g,items:g.items.filter(i=>norm(t(i.labelKey,i.label)).includes(q))})).filter(g=>g.items.length);document.getElementById('workspaceGroups').innerHTML=visible.map(g=>`<section class="workspace-group"><h3>${esc(t(g.sectionKey,g.section))}</h3><div class="workspace-function-grid">${g.items.map(i=>`<a class="workspace-function" href="${i.href}">${i.icon}<span>${esc(t(i.labelKey,i.label))}</span><span aria-hidden="true">↗</span></a>`).join('')}</div></section>`).join('');document.getElementById('noResults').hidden=!!visible.length;};render();document.getElementById('homeSearch').oninput=render;
+const {data,error}=await supabase.from('notifications').select('title,created_at,link_url').order('created_at',{ascending:false}).limit(5);document.getElementById('recentNotices').innerHTML=error?'Không tải được thông báo.':(data||[]).map(n=>`<a href="/notifications.html" class="workspace-notice"><strong>${esc(n.title)}</strong><small>${new Date(n.created_at).toLocaleDateString('vi-VN')}</small></a>`).join('')||'Chưa có thông báo mới.';
+})().catch(e=>{console.error(e);if(!['NO_SESSION','INACTIVE','PASSWORD_CHANGE_REQUIRED'].includes(e.message))document.getElementById('workspaceGroups').textContent='Không tải được không gian làm việc. Vui lòng tải lại trang.';});

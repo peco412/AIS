@@ -143,6 +143,18 @@ async function loadContracts() {
 }
 
 // --- 5) Đơn công tác (hr/business-trips.js) -----------------------------
+let LINKED_SOURCE_IDS = new Set();
+async function loadDocumentApprovals() {
+  const { data, error } = await supabase.from('employee_documents')
+    .select('id,code,source_id,current_step,creator_id,manager_id,hr_id,director_id,created_at')
+    .eq('status', 'signing').limit(1000);
+  if (error) throw error;
+  LINKED_SOURCE_IDS = new Set((data || []).map(r => r.source_id).filter(Boolean));
+  const roles = ['Người làm đơn ký', 'Cán bộ quản lý ký', 'Phòng HCNS ký', 'Giám đốc ký'];
+  return (data || []).filter(r => [r.creator_id,r.manager_id,r.hr_id,r.director_id][r.current_step] === PROFILE.id)
+    .map(r => ({source:'Mẫu đơn & ký duyệt',icon:ICONS.doc,title:r.code,meta:'',stepLabel:roles[r.current_step],url:'/documents.html',updatedAt:r.created_at}));
+}
+
 async function loadBusinessTrips() {
   const { data, error } = await supabase.from('business_trips')
     .select('id, code, title, status, created_at, employee_id, employees!business_trips_employee_id_fkey(full_name, department_id, center_id)')
@@ -153,29 +165,18 @@ async function loadBusinessTrips() {
   const dmm = directManagerMap(data, (r) => r.employees && { ...r.employees, __requesterId: r.employee_id });
   const out = [];
   data.forEach((r) => {
+    if (LINKED_SOURCE_IDS.has(r.id)) return;
     let step = null;
     if (r.status === 'submitted' && dmm[r.employee_id]) step = 'Quản lý trực tiếp duyệt';
     else if (r.status === 'approved_1' && IS_HR) step = 'Phòng Nhân sự duyệt';
     else if (r.status === 'approved_2' && IS_EXEC) step = 'Ban điều hành duyệt';
     if (!step) return;
-    out.push({ source: 'Đơn công tác', icon: ICONS.doc, title: r.title || r.code, meta: esc(r.employees?.full_name || '—'), stepLabel: step, url: '/hr/business-trips.html', updatedAt: r.created_at });
+    out.push({ source: 'Đơn công tác', icon: ICONS.doc, title: r.title || r.code, meta: esc(r.employees?.full_name || '—'), stepLabel: step, url: '/hr/business-trip-history.html', updatedAt: r.created_at });
   });
   return out;
 }
 
 // --- 6) Đơn xin chấm công trễ (hr/late-clockin-requests.js) -------------
-async function loadLateClockin() {
-  const { data, error } = await supabase.from('late_clockin_requests')
-    .select('id, code, late_date, reason, status, employee_id, created_at, employees!late_clockin_requests_employee_id_fkey(full_name)')
-    .order('created_at', { ascending: false }).limit(300);
-  if (error || !data) return [];
-  const IS_HR_DEPUTY = PROFILE.departmentCode === 'HR' && PROFILE.roleCode === 'DEPT_DEPUTY';
-  if (!IS_HR_DEPUTY) return [];
-  return data.filter((r) => r.status === 'pending').map((r) => ({
-    source: 'Chấm công trễ', icon: ICONS.people, title: `${esc(r.employees?.full_name || '—')} — ${fmtDate(r.late_date)}`, meta: esc(r.reason || ''), stepLabel: 'Phó phòng NS duyệt', url: '/hr/late-clockin-requests.html', updatedAt: r.created_at,
-  }));
-}
-
 // --- 7) Đơn nghỉ phép (js/leaveFormFlow.js) ------------------------------
 async function loadLeaveRequests() {
   const { data, error } = await supabase.from('leave_requests')
@@ -191,6 +192,7 @@ async function loadLeaveRequests() {
   const IS_EXEC = PROFILE.roleCode === 'EXECUTIVE';
   const out = [];
   data.forEach((r) => {
+    if (LINKED_SOURCE_IDS.has(r.id)) return;
     const emp = r.employees;
     const isLevel1 = emp && (
       (emp.department_id && emp.department_id === PROFILE.departmentId && ['DEPT_HEAD', 'DEPT_DEPUTY'].includes(PROFILE.roleCode)) ||
@@ -201,7 +203,7 @@ async function loadLeaveRequests() {
     else if (r.status === 'approved_1' && (IS_HR || IS_EXEC)) step = 'Nhân sự duyệt (cấp 2)';
     else if (r.status === 'approved_2' && IS_EXEC) step = 'Ban điều hành duyệt (cấp 3)';
     if (!step) return;
-    out.push({ source: 'Đơn nghỉ phép', icon: ICONS.people, title: `${esc(emp?.full_name || '—')} — ${esc(r.form_code || r.code)}`, meta: '', stepLabel: step, url: '/hr/leave-requests.html', updatedAt: r.created_at });
+    out.push({ source: 'Đơn nghỉ phép', icon: ICONS.people, title: `${esc(emp?.full_name || '—')} — ${esc(r.form_code || r.code)}`, meta: '', stepLabel: step, url: '/hr/leave-history.html', updatedAt: r.created_at });
   });
   return out;
 }
@@ -359,7 +361,7 @@ async function loadAdExpenses() {
 
 const SOURCES = [
   loadPaymentRequests, loadAdvanceRequests, loadPurchaseOrders, loadContracts,
-  loadBusinessTrips, loadLateClockin, loadLeaveRequests, loadFacPurchaseRequests,
+  loadBusinessTrips, loadLeaveRequests, loadFacPurchaseRequests,
   loadEventProposals, loadFacilityRequests, loadCommunicationRequests,
   loadRefundRequests, loadPermissionRequests, loadInternalProposals, loadAdExpenses,
 ];
@@ -415,14 +417,16 @@ function render() {
 export async function getPendingApprovalCount(profile) {
   const { data: emp } = await supabase.from('employees').select('department_id').eq('id', profile.id).single();
   PROFILE = { ...profile, departmentId: emp?.department_id || profile.departmentId };
+  const documents = await loadDocumentApprovals();
   const results = await Promise.all(SOURCES.map((fn) => fn().catch(() => [])));
-  return results.flat().length;
+  return documents.length + results.flat().length;
 }
 
 async function loadAll() {
   document.getElementById('approvalList').innerHTML = '<div class="approval-empty">Đang tải dữ liệu từ tất cả phòng ban...</div>';
+  const documents = await loadDocumentApprovals();
   const results = await Promise.all(SOURCES.map((fn) => fn().catch((e) => { console.error(fn.name, e); return []; })));
-  ALL_ITEMS = results.flat();
+  ALL_ITEMS = [...documents, ...results.flat()];
   ACTIVE_FILTER = 'all';
   render();
 }

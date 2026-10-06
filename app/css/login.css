@@ -454,3 +454,5 @@
 }
 .btn-primary:hover::before { opacity: 0.55; filter: blur(6px); }
 @keyframes btnGradientShift { to { background-position: 200% 0; } }
+
+.login-brand{background:#18293f !important;color:#fff !important;border-radius:0 !important;}.login-brand h1{color:#f0d8a8 !important;font:64px Georgia,serif !important;}.login-brand p,.login-brand__footer,.login-brand .eyebrow{color:#d5deeb !important;}.login-form-col{background:#fff !important;}.login-form h2{font:36px Georgia,serif !important;}.login-watermark{display:none !important;}.login-form .btn-primary{background:#233b57;border-radius:5px;}.login-brand__headline{max-width:460px;}.login-form input{background:#fff;border:1px solid #c8ccd1;border-radius:5px;}

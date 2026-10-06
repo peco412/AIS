@@ -425,6 +425,7 @@ export async function initLeaveFormFlow() {
   // Tạo đơn mới — CHỈ hiện đúng 4 loại thuộc nhóm của chính người tạo đơn
   // (cán bộ hay giáo viên), không cho chọn nhầm loại của nhóm khác.
   // ---------------------------------------------------------------------
+  document.getElementById('btnAdd').addEventListener('click', e => { e.stopImmediatePropagation(); location.href='/documents.html'; }, true);
   const createModal = document.getElementById('createModal');
   const createError = document.getElementById('createError');
   const formCodeSelect = document.getElementById('formCode');
@@ -579,3 +580,5 @@ export async function initLeaveFormFlow() {
     await loadRows();
   } catch (e) { /* bootShell tự điều hướng */ }
 }
+
+// Historical records remain readable; new requests use the four-signature workspace.

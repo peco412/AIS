@@ -18,6 +18,7 @@
 <link rel="stylesheet" href="/css/dashboard.css" />
 <link rel="stylesheet" href="/css/module.css" />
 <link rel="stylesheet" href="/css/pdfEditor.css" />
+<link rel="stylesheet" href="/css/workspace.css">
 </head>
 <body data-page="/acc/payment-requests.html">
 
@@ -93,8 +94,8 @@
       <p class="cell-muted" style="margin-top:4px;">Hoá đơn, biên lai... có thể chọn nhiều file.</p>
     </div>
     <div class="field">
-      <label for="signedFileInput">File phiếu đã ký (PDF)</label>
-      <input type="file" id="signedFileInput" accept="application/pdf" />
+      <label for="signedFileInput">PDF tự động</label>
+      <input type="file" id="signedFileInput" accept="application/pdf" hidden /><p class="cell-muted">PDF được tạo tự động từ thông tin của phiếu; có sẵn vị trí ký xác nhận.</p>
       <p class="cell-muted" style="margin-top:4px;">Tải lên bản đã có chữ ký của bạn — có thể bổ sung sau nếu chưa có sẵn.</p>
     </div>
     <div class="modal-actions">

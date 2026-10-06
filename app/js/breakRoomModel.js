@@ -1,0 +1,3 @@
+export function zodiacFor(date){const m=date.getUTCMonth()+1,d=date.getUTCDate();const end=[19,18,20,19,20,21,22,22,22,23,22,21];const signs=['Ma Kết','Bảo Bình','Song Ngư','Bạch Dương','Kim Ngưu','Song Tử','Cự Giải','Sư Tử','Xử Nữ','Thiên Bình','Bọ Cạp','Nhân Mã','Ma Kết'];return signs[d>end[m-1]?m:m-1];}
+export function nextPlayer(player,direction){const d={left:[-1,0],right:[1,0],up:[0,-1],down:[0,1]}[direction];if(!d)return player;return {x:Math.max(0,Math.min(14,player.x+d[0])),y:Math.max(0,Math.min(9,player.y+d[1]))};}
+export function randomStar(player,random=Math.random){const cells=[];for(let y=0;y<10;y++)for(let x=0;x<15;x++)if(x!==player.x||y!==player.y)cells.push({x,y});return cells[Math.min(cells.length-1,Math.floor(random()*cells.length))];}

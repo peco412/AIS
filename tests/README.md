@@ -1,11 +1,10 @@
-# Kiểm tra bản chỉnh UI/UX
-
-Từ thư mục tests:
+# Kiểm thử AIS Workspace
 
 ```sh
+cd tests
 python3 static-audit.py
 npm install
 npm test
 ```
 
-Các test DOM dùng dữ liệu Supabase giả lập; không gửi yêu cầu đến dữ liệu thật. Không thay thế kiểm thử trình duyệt, RLS, thanh toán hoặc ký số trên staging. jsdom chỉ là công cụ kiểm thử, không thêm phụ thuộc vào frontend sản xuất.
+Ba bộ test: DOM/navigation giả lập Supabase; logic công và game cùng PDF Unicode thực; PostgreSQL PGlite kiểm tra migration, trạng thái, khóa và liên kết lương/đơn. Không ghi dữ liệu thực. Test DB dùng schema cũ rút gọn và hàm chốt phép giả lập; không thay kiểm thử full migration, RLS/storage Supabase và trình duyệt staging. Phụ thuộc test không đưa vào frontend.

@@ -100,6 +100,7 @@ document.getElementById('viewScope').addEventListener('change', loadRows);
 const modal = document.getElementById('tripModal');
 const form = document.getElementById('tripForm');
 const formError = document.getElementById('formError');
+document.getElementById('btnAdd').addEventListener('click', e => { e.stopImmediatePropagation(); location.href='/documents.html'; }, true);
 document.getElementById('btnAdd').addEventListener('click', () => { form.reset(); formError.classList.remove('show'); modal.classList.add('show'); });
 document.getElementById('closeModal').addEventListener('click', () => modal.classList.remove('show'));
 document.getElementById('cancelModal').addEventListener('click', () => modal.classList.remove('show'));

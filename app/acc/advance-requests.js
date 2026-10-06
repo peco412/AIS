@@ -1,3 +1,4 @@
+import { generatedFormPdf } from '/js/formPdfAdapter.js';
 import { bootShell } from '/js/shell.js';
 import { supabase, esc, resolveFileUrl, uploadPrivateFile, triggerPush } from '/js/supabase.js';
 import { t } from '/js/i18n.js';
@@ -307,13 +308,14 @@ document.getElementById('submitCreate').addEventListener('click', async () => {
   createError.classList.remove('show');
   const amount = document.getElementById('amount').value;
   const reason = document.getElementById('reason').value.trim();
-  const signedFile = document.getElementById('signedFileInput').files[0];
+  let signedFile = null;
   if (!amount || !reason) { createError.textContent = 'Vui lòng nhập đầy đủ số tiền và lý do.'; createError.classList.add('show'); return; }
 
   const submitBtn = document.getElementById('submitCreate');
   submitBtn.disabled = true; submitBtn.textContent = 'Đang gửi...';
 
   try {
+    signedFile = await generatedFormPdf(PROFILE, createModal, 'Phiếu tạm ứng');
     let signedUrl = null;
     if (signedFile) signedUrl = await uploadFile(signedFile, PROFILE.id, 'requester');
 

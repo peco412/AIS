@@ -18,6 +18,7 @@
 <link rel="stylesheet" href="/css/dashboard.css" />
 <link rel="stylesheet" href="/css/module.css" />
 <link rel="stylesheet" href="/css/pdfEditor.css" />
+<link rel="stylesheet" href="/css/workspace.css">
 </head>
 <body data-page="/fac/purchase-requests.html">
 
@@ -83,8 +84,8 @@
     <div class="field"><label for="reqDescription">Mô tả nội dung *</label><textarea id="reqDescription" rows="2" required placeholder="VD: Mua 5 máy chiếu cho phòng học A1-A5"></textarea></div>
     <div class="field"><label for="reqEstimatedAmount">Số tiền dự kiến (VNĐ)</label><input type="number" id="reqEstimatedAmount" min="0" /></div>
     <div class="field">
-      <label for="signedFileInput">File phiếu đã ký (PDF)</label>
-      <input type="file" id="signedFileInput" accept="application/pdf" />
+      <label for="signedFileInput">PDF tự động</label>
+      <input type="file" id="signedFileInput" accept="application/pdf" hidden /><p class="cell-muted">PDF được tạo tự động từ thông tin của phiếu; có sẵn vị trí ký xác nhận.</p>
       <p class="cell-muted" style="margin-top:4px;">Tải lên bản đã có chữ ký của bạn — có thể bổ sung sau nếu chưa có sẵn.</p>
     </div>
     <div class="modal-actions">

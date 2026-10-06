@@ -1,3 +1,4 @@
+import { generatedFormPdf } from '/js/formPdfAdapter.js';
 import { bootShell } from '/js/shell.js';
 import { supabase, esc, resolveFileUrl, uploadPrivateFile, openFile, notifyDepartmentHeads, triggerPush } from '/js/supabase.js';
 import { t } from '/js/i18n.js';
@@ -330,7 +331,7 @@ document.getElementById('submitCreate').addEventListener('click', async () => {
   const content = document.getElementById('content').value.trim();
   const purchaseOrderId = paymentType === 'regular' ? document.getElementById('purchaseOrderSelect').value : null;
   const originalDocs = document.getElementById('originalDocs').files;
-  const signedFile = document.getElementById('signedFileInput').files[0];
+  let signedFile = null;
 
   if (paymentType === 'regular' && !purchaseOrderId) { createError.textContent = 'Vui lòng chọn phiếu mua hàng gốc đã duyệt xong.'; createError.classList.add('show'); return; }
   if (!amount || !content) { createError.textContent = 'Vui lòng nhập đầy đủ số tiền và nội dung.'; createError.classList.add('show'); return; }
@@ -340,6 +341,7 @@ document.getElementById('submitCreate').addEventListener('click', async () => {
   submitBtn.disabled = true; submitBtn.textContent = 'Đang gửi...';
 
   try {
+    signedFile = await generatedFormPdf(PROFILE, createModal, 'Phiếu đề nghị thanh toán');
     const TEMPLATE = paymentType === 'trip' ? TEMPLATES.trip : TEMPLATES.regular;
     const docUrls = [];
     // Upload chứng từ gốc TRƯỚC — nhưng cần requester_id để đặt đường dẫn,

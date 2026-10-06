@@ -34,7 +34,7 @@ export function isMobileViewport() {
 }
 
 export function canAccess(item, profile) {
-  if (isMobileViewport() && !MOBILE_ALLOWED_HREFS.has(item.href)) return false;
+
   return item.visible(profile) || !!profile.grantedModules?.has(item.href);
 }
 
@@ -130,19 +130,23 @@ function resolveCurrentWorld(currentPage, profile) {
 }
 
 function renderNav(profile, currentPage) {
-  // AN HAN sidebar cay thu muc cu — thay bang he thong "4 The gioi" (ERP/
-  // CRM/Database/Ca nhan) + Icon Hub, dung theo yeu cau bo sidebar vi qua
-  // roi. Sidebar <aside> van con trong HTML cua tung trang (khong sua tay
-  // 80+ file), chi an di bang JS + CSS o day.
-  const sidebar = document.querySelector('.sidebar');
-  if (sidebar) sidebar.style.display = 'none';
-  document.querySelector('.app-shell')?.classList.add('app-shell--no-sidebar');
-
-  const currentWorld = resolveCurrentWorld(currentPage, profile);
-  injectBrandName();
-  injectHubLauncher(profile, currentWorld, currentPage);
-  injectMobileBottomNav(profile, currentWorld, currentPage);
-  if (!currentPage?.endsWith('/world-select.html')) injectSiblingSidebar(profile, currentPage);
+  const aside = document.querySelector('.sidebar') || document.createElement('aside');
+  aside.className = 'sidebar workspace-sidebar';
+  aside.setAttribute('aria-label', 'Điều hướng chính');
+  if (!aside.isConnected) document.querySelector('.app-shell')?.prepend(aside);
+  document.querySelector('.app-shell')?.classList.remove('app-shell--no-sidebar');
+  const oldWrap = document.querySelector('.main-content-area');
+  if (oldWrap) { const main = oldWrap.parentElement; while(oldWrap.firstChild) main.insertBefore(oldWrap.firstChild,oldWrap); oldWrap.remove(); main.classList.remove('main--with-subsidebar'); }
+  document.getElementById('subSidebar')?.remove();
+  const groups = NAV_CONFIG.map(g => ({...g, items:g.items.filter(i=>canAccess(i,profile))})).filter(g=>g.items.length);
+  aside.innerHTML = `<a class="workspace-brand" href="/world-select.html"><span>AIS</span><small>WORKSPACE</small></a><div class="workspace-nav-search"><label for="workspaceNavSearch">Tìm chức năng</label><input id="workspaceNavSearch" type="search" placeholder="Tìm theo tên…"></div><nav>${groups.map(g=>`<details class="workspace-nav-group" ${!g.section || g.items.some(i=>currentPage?.endsWith(i.href))?'open':''}><summary>${esc(t(g.sectionKey,g.section || 'Tổng quan'))}</summary>${g.items.map(i=>`<a href="${i.href}" class="workspace-nav-item ${currentPage?.endsWith(i.href)?'active':''}" ${currentPage?.endsWith(i.href)?'aria-current="page"':''}>${i.icon}<span>${esc(t(i.labelKey,i.label))}</span></a>`).join('')}</details>`).join('')}</nav><div class="workspace-sidebar-footer">ALOHA · iLingo<br>Hệ thống vận hành AIS</div>`;
+  const input=aside.querySelector('input');
+  input.oninput=()=>{const norm=v=>v.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d');const q=norm(input.value.trim());aside.querySelectorAll('details').forEach(d=>{let hits=0;d.querySelectorAll('a').forEach(a=>{a.hidden=q&&!norm(a.textContent).includes(q);if(!a.hidden)hits++;});d.hidden=!hits;if(q)d.open=true;});};
+  let toggle=document.getElementById('menuToggle');
+  if(!toggle){toggle=document.createElement('button');toggle.id='menuToggle';toggle.className='menu-toggle';document.querySelector('.topbar__left')?.prepend(toggle);}
+  if(toggle){toggle.innerHTML='☰';toggle.setAttribute('aria-label','Mở menu');toggle.onclick=()=>{const open=aside.classList.toggle('workspace-sidebar--open');toggle.setAttribute('aria-expanded',String(open));};}
+  aside.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>aside.classList.remove('workspace-sidebar--open')));
+  document.getElementById('mobileBottomNav')?.remove();
 }
 
 /**

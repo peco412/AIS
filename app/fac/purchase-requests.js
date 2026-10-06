@@ -1,3 +1,4 @@
+import { generatedFormPdf } from '/js/formPdfAdapter.js';
 import { bootShell } from '/js/shell.js';
 import { supabase, esc, resolveFileUrl, uploadPrivateFile, triggerPush } from '/js/supabase.js';
 import { t } from '/js/i18n.js';
@@ -246,13 +247,14 @@ document.getElementById('submitCreate').addEventListener('click', async () => {
   const reqType = document.querySelector('input[name="reqType"]:checked').value;
   const description = document.getElementById('reqDescription').value.trim();
   const estimatedAmount = Number(document.getElementById('reqEstimatedAmount').value) || null;
-  const signedFile = document.getElementById('signedFileInput').files[0];
+  let signedFile = null;
   if (!description) { createError.textContent = 'Vui lòng nhập mô tả nội dung.'; createError.classList.add('show'); return; }
 
   const submitBtn = document.getElementById('submitCreate');
   submitBtn.disabled = true; submitBtn.textContent = 'Đang gửi...';
 
   try {
+    signedFile = await generatedFormPdf(PROFILE, createModal, 'Phiếu đề nghị mua sắm / sửa chữa');
     let signedUrl = null;
     if (signedFile) signedUrl = await uploadFile(signedFile, PROFILE.id, 'requester');
 
